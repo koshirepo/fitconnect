@@ -1,0 +1,105 @@
+@baseUrl = http://127.0.0.1:8787
+@json = application/json
+@seedPassword = Test@1234
+@tenantId = tenant_0001
+@adminEmail = admin.seed-gym-1@seed.gym.test
+@memberEmail = member.1.seed-gym-1@seed.gym.test
+@memberMembershipId = membership_0004
+@subscriptionId = subscription_0003
+@chargeId = charge_0001
+
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin.seed-gym-1@seed.gym.test",
+  "password": "Test@1234"
+}
+
+###
+# @name memberLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "member.1.seed-gym-1@seed.gym.test",
+  "password": "Test@1234"
+}
+
+### List members
+GET {{baseUrl}}/tenants/{{tenantId}}/members?page=1&limit=10&role=MEMBER&status=ACTIVE
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### Get member detail
+GET {{baseUrl}}/tenants/{{tenantId}}/members/{{memberMembershipId}}
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### Get my profile as a member
+GET {{baseUrl}}/tenants/{{tenantId}}/me
+Authorization: Bearer {{memberLogin.response.body.$.data.accessToken}}
+
+### Update my profile as a member
+PATCH {{baseUrl}}/tenants/{{tenantId}}/me
+Authorization: Bearer {{memberLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "phone": "919999999999",
+  "avatarUrl": "https://example.com/avatar-member.png"
+}
+
+### Add a member
+# @name createMember
+POST {{baseUrl}}/tenants/{{tenantId}}/members
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "REST Client Member {{$timestamp}}",
+  "email": "rest.member.{{$timestamp}}@seed.gym.test",
+  "phone": "93{{$timestamp}}",
+  "role": "MEMBER",
+  "subscriptionId": "{{subscriptionId}}",
+  "chargeIds": ["{{chargeId}}"]
+}
+
+### Update the new member
+PATCH {{baseUrl}}/tenants/{{tenantId}}/members/{{createMember.response.body.$.data.membership.id}}
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "REST Client Member Updated",
+  "avatarUrl": "https://example.com/avatar-updated.png"
+}
+
+### Promote the new member to coach
+PATCH {{baseUrl}}/tenants/{{tenantId}}/members/{{createMember.response.body.$.data.membership.id}}/role
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "role": "COACH"
+}
+
+### Generate overdue/member report
+POST {{baseUrl}}/tenants/{{tenantId}}/members/report
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### Suspend the new member
+PATCH {{baseUrl}}/tenants/{{tenantId}}/members/{{createMember.response.body.$.data.membership.id}}/status
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "status": "SUSPENDED"
+}
+
+### Reset the new member password
+POST {{baseUrl}}/tenants/{{tenantId}}/members/{{createMember.response.body.$.data.membership.id}}/reset-password
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### Remove the new member
+DELETE {{baseUrl}}/tenants/{{tenantId}}/members/{{createMember.response.body.$.data.membership.id}}
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}

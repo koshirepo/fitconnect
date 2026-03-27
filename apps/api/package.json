@@ -1,0 +1,40 @@
+{
+  "name": "hono-prisma-d1-r2-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "postinstall": "node scripts/ensure-prisma-client.mjs",
+    "predev": "node scripts/ensure-prisma-client.mjs",
+    "dev": "wrangler dev",
+    "predeploy": "node scripts/ensure-prisma-client.mjs",
+    "deploy": "wrangler deploy",
+    "pretypecheck": "node scripts/ensure-prisma-client.mjs",
+    "typecheck": "tsc --noEmit",
+    "generate": "prisma generate",
+    "seed:local": "node scripts/ensure-prisma-client.mjs seed-local",
+    "db:migration:init": "prisma migrate diff --from-empty --to-schema ./prisma/schema.prisma --script --output prisma/migrations/0001_init.sql",
+    "db:migration:diff": "prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script",
+    "db:migrate:local": "wrangler d1 migrations apply api-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply api-db --remote",
+    "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "@prisma/adapter-d1": "^7.5.0",
+    "@prisma/client": "^7.5.0",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.3.1",
+    "hono": "^4.12.9",
+    "jose": "^6.2.2",
+    "nodemailer": "^8.0.4",
+    "web-push": "^3.6.7",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@types/nodemailer": "^7.0.11",
+    "prisma": "^7.5.0",
+    "typescript": "^6.0.2",
+    "wrangler": "^4.77.0"
+  }
+}

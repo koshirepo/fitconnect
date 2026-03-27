@@ -1,0 +1,83 @@
+@baseUrl = http://127.0.0.1:8787
+@json = application/json
+@seedPassword = Test@1234
+@tenantId = tenant_0001
+@adminEmail = admin.seed-gym-1@seed.gym.test
+@memberEmail = member.1.seed-gym-1@seed.gym.test
+@memberMembershipId = membership_0004
+@secondMemberMembershipId = membership_0005
+@selfCheckinDate = 2026-03-01
+@adminMarkDate = 2026-03-02
+
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin.seed-gym-1@seed.gym.test",
+  "password": "Test@1234"
+}
+
+# @name memberLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "member.1.seed-gym-1@seed.gym.test",
+  "password": "Test@1234"
+}
+
+### Member self check-in
+POST {{baseUrl}}/tenants/{{tenantId}}/attendance
+Authorization: Bearer {{memberLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "date": "{{selfCheckinDate}}",
+  "note": "Self check-in from REST Client"
+}
+
+### Admin marks attendance for one member
+POST {{baseUrl}}/tenants/{{tenantId}}/attendance/mark
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "membershipId": "{{memberMembershipId}}",
+  "date": "{{adminMarkDate}}",
+  "note": "Marked by admin from REST Client"
+}
+
+### Admin marks attendance for multiple members
+POST {{baseUrl}}/tenants/{{tenantId}}/attendance/mark-all
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "membershipIds": ["{{memberMembershipId}}", "{{secondMemberMembershipId}}"],
+  "date": "{{adminMarkDate}}"
+}
+
+### List attendance by date
+GET {{baseUrl}}/tenants/{{tenantId}}/attendance?date={{adminMarkDate}}&page=1&limit=20
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### List attendance history for one member
+GET {{baseUrl}}/tenants/{{tenantId}}/attendance/member/{{memberMembershipId}}?page=1&limit=20
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### Attendance summary
+GET {{baseUrl}}/tenants/{{tenantId}}/attendance/summary/{{memberMembershipId}}
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### Attendance calendar for the gym
+GET {{baseUrl}}/tenants/{{tenantId}}/attendance/calendar?month=2026-03
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### Attendance calendar for one member
+GET {{baseUrl}}/tenants/{{tenantId}}/attendance/member/{{memberMembershipId}}/calendar?month=2026-03
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### Remove the admin-marked attendance record
+DELETE {{baseUrl}}/tenants/{{tenantId}}/attendance/{{memberMembershipId}}/{{adminMarkDate}}
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}

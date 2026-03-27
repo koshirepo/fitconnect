@@ -1,0 +1,109 @@
+@baseUrl = http://127.0.0.1:8787
+@json = application/json
+@seedPassword = Test@1234
+@superAdminEmail = superadmin@seed.gym.test
+@memberEmail = member.1.seed-gym-1@seed.gym.test
+@seedProductId = product_0018
+
+# @name superAdminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@seed.gym.test",
+  "password": "Test@1234"
+}
+
+# @name memberLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "member.1.seed-gym-1@seed.gym.test",
+  "password": "Test@1234"
+}
+
+### List public products
+GET {{baseUrl}}/products?page=1&limit=20&category=Apparel
+
+### Get a public product
+GET {{baseUrl}}/products/{{seedProductId}}
+
+### Place an order as a logged-in member
+# @name createOrder
+POST {{baseUrl}}/orders
+Authorization: Bearer {{memberLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "buyerName": "Seed Member 1-1",
+  "buyerEmail": "member.1.seed-gym-1@seed.gym.test",
+  "buyerPhone": "919999999999",
+  "buyerAddress": "500 REST Commerce Road, Bengaluru",
+  "items": [
+    {
+      "productId": "{{seedProductId}}",
+      "quantity": 1
+    }
+  ]
+}
+
+### List my orders
+GET {{baseUrl}}/orders/me?page=1&limit=20
+Authorization: Bearer {{memberLogin.response.body.$.data.accessToken}}
+
+### Get an order by id
+GET {{baseUrl}}/orders/{{createOrder.response.body.$.data.order.id}}
+Authorization: Bearer {{memberLogin.response.body.$.data.accessToken}}
+
+### List admin products
+GET {{baseUrl}}/admin/products?page=1&limit=20&includeInactive=true
+Authorization: Bearer {{superAdminLogin.response.body.$.data.accessToken}}
+
+### Create an admin product
+# @name createProduct
+POST {{baseUrl}}/admin/products
+Authorization: Bearer {{superAdminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "REST Client Product {{$timestamp}}",
+  "description": "Created from the commerce REST Client file.",
+  "markdown": "## REST Client Product\n\nCreated for API testing.",
+  "photos": [
+    "https://placehold.co/800x800/png?text=REST+Client+Product"
+  ],
+  "category": "Accessories",
+  "price": 129900,
+  "stock": 20,
+  "minOrderQty": 1,
+  "maxOrderQty": 4,
+  "isActive": true
+}
+
+### Update the admin product
+PATCH {{baseUrl}}/admin/products/{{createProduct.response.body.$.data.product.id}}
+Authorization: Bearer {{superAdminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "price": 119900,
+  "stock": 25
+}
+
+### List all admin orders
+GET {{baseUrl}}/admin/orders?page=1&limit=20
+Authorization: Bearer {{superAdminLogin.response.body.$.data.accessToken}}
+
+### Get admin order detail
+GET {{baseUrl}}/admin/orders/{{createOrder.response.body.$.data.order.id}}
+Authorization: Bearer {{superAdminLogin.response.body.$.data.accessToken}}
+
+### Update admin order status
+PATCH {{baseUrl}}/admin/orders/{{createOrder.response.body.$.data.order.id}}/status
+Authorization: Bearer {{superAdminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "status": "SHIPPED"
+}

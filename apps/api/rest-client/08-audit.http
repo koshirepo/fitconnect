@@ -1,0 +1,36 @@
+@baseUrl = http://127.0.0.1:8787
+@json = application/json
+@seedPassword = Test@1234
+@tenantId = tenant_0001
+@superAdminEmail = superadmin@seed.gym.test
+@adminEmail = admin.seed-gym-1@seed.gym.test
+
+# @name superAdminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@seed.gym.test",
+  "password": "Test@1234"
+}
+
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin.seed-gym-1@seed.gym.test",
+  "password": "Test@1234"
+}
+
+### List platform audit logs
+GET {{baseUrl}}/audit?page=1&limit=20
+Authorization: Bearer {{superAdminLogin.response.body.$.data.accessToken}}
+
+### Filter platform audit logs
+GET {{baseUrl}}/audit?page=1&limit=20&entity=Order&action=UPDATE
+Authorization: Bearer {{superAdminLogin.response.body.$.data.accessToken}}
+
+### List tenant audit logs by raw tenant id
+GET {{baseUrl}}/audit/tenant/{{tenantId}}?page=1&limit=20
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}

@@ -1,0 +1,51 @@
+@baseUrl = http://127.0.0.1:8787
+@json = application/json
+@seedPassword = Test@1234
+@memberEmail = member.1.seed-gym-1@seed.gym.test
+@seedProductId = product_0018
+
+# @name memberLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "member.1.seed-gym-1@seed.gym.test",
+  "password": "Test@1234"
+}
+
+### List reviews for a product
+GET {{baseUrl}}/products/{{seedProductId}}/reviews?page=1&limit=10
+
+### Get review stats for a product
+GET {{baseUrl}}/products/{{seedProductId}}/reviews/stats
+
+### Create a review
+# @name createReview
+POST {{baseUrl}}/products/{{seedProductId}}/reviews
+Authorization: Bearer {{memberLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "rating": 5,
+  "title": "REST Client review",
+  "description": "Created from the review REST Client file.",
+  "isAnonymous": false
+}
+
+### Add a comment to the review
+POST {{baseUrl}}/reviews/{{createReview.response.body.$.data.id}}/comments
+Authorization: Bearer {{memberLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "text": "Follow-up comment created from REST Client.",
+  "isAnonymous": false
+}
+
+### Mark the review as helpful
+POST {{baseUrl}}/reviews/{{createReview.response.body.$.data.id}}/helpful
+Authorization: Bearer {{memberLogin.response.body.$.data.accessToken}}
+
+### Remove the helpful mark
+DELETE {{baseUrl}}/reviews/{{createReview.response.body.$.data.id}}/helpful
+Authorization: Bearer {{memberLogin.response.body.$.data.accessToken}}

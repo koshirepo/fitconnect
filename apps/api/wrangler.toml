@@ -1,0 +1,20 @@
+name = "hono-prisma-d1-r2-api"
+main = "src/index.ts"
+compatibility_date = "2026-03-27"
+compatibility_flags = ["nodejs_compat"]
+
+# Replace these placeholder values after creating your Cloudflare resources:
+#   npx wrangler d1 create api-db
+#   npx wrangler r2 bucket create api-files
+[[d1_databases]]
+binding = "DB"
+database_name = "api-db"
+database_id = "00000000-0000-0000-0000-000000000000"
+preview_database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "prisma/migrations"
+
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "api-files"
+preview_bucket_name = "api-files-preview"
+

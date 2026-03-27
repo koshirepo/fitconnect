@@ -1,0 +1,444 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  runtime  = "cloudflare"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ─── Enum values are stored as plain strings in SQLite ────────────────────────
+// PlatformRole: "USER" | "SUPER_ADMIN" | "SUPPORT"
+// TenantRole:   "MEMBER" | "COACH" | "ADMIN"
+// AccountStatus: "ACTIVE" | "SUSPENDED" | "DELETED"
+// PaymentStatus: "PENDING" | "COMPLETED" | "FAILED" | "REFUNDED"
+// OrderStatus:   "PENDING" | "SHIPPED" | "DELIVERED"
+// AuditAction:   "CREATE" | "UPDATE" | "DELETE" | "LOGIN" | "LOGOUT" | "ROLE_CHANGE" | "SETTINGS_CHANGE"
+
+// ─── Platform Models ──────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String
+  phone        String?  @unique
+  passwordHash String
+  avatarUrl    String?
+  platformRole String   @default("USER")
+  status       String   @default("ACTIVE")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  memberships              TenantMembership[]
+  refreshTokens            RefreshToken[]
+  passwordResetTokens      PasswordResetToken[]
+  auditLogs                AuditLog[]             @relation("AuditActor")
+  orders                   Order[]
+  reviews                  ProductReview[]
+  comments                 ProductReviewComment[]
+  helpful                  ProductReviewHelpful[]
+  pushSubscriptions        PushSubscription[]
+  recordedPlatformPayments PlatformPayment[]
+
+  @@index([email])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([token])
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([token])
+}
+
+// ─── Tenant Models ────────────────────────────────────────────────────────────
+
+model Tenant {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique /// URL-friendly identifier (e.g. "ironworks-gym")
+  email       String?
+  phone       String?   @unique
+  logoUrl     String?
+  address     String?
+  estd        DateTime?
+  status      String    @default("ACTIVE")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  markdown    String? /// Optional markdown description for the tenant (e.g. about page)
+  description String? /// Short plain-text tagline shown below the gym name on the public profile
+
+  platformExpiresAt DateTime?
+
+  memberships      TenantMembership[]
+  subscriptions    Subscription[]
+  payments         Payment[]
+  workoutPlans     WorkoutPlan[]
+  badges           Badge[]
+  auditLogs        AuditLog[]
+  settings         TenantSettings?
+  charges          TenantCharge[]
+  platformPayments PlatformPayment[]
+  attendances      Attendance[]
+
+  @@index([slug])
+}
+
+model TenantSettings {
+  id           String   @id @default(cuid())
+  tenantId     String   @unique
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  overdueDays  Int      @default(30) /// Days after subscription expiry to auto-inactivate member
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model TenantCharge {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String /// e.g. "Admission Fee", "Security Deposit"
+  amount      Int /// Amount in smallest currency unit (paise/cents)
+  isMandatory Boolean  @default(true) /// Must be paid when adding a new member
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  payments Payment[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}
+
+/// Junction table linking users to tenants with a tenant-scoped role.
+/// A user can belong to only one gym.
+model TenantMembership {
+  id                String                  @id @default(cuid())
+  tenantId          String
+  tenant            Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId            String                  @unique
+  user              User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memberId          Int /// Sequential member number, unique per tenant (starts at 1)
+  role              String                  @default("MEMBER")
+  status            String                  @default("ACTIVE")
+  dueDate           DateTime? /// Latest subscription validUntil – auto-updated on payment changes
+  joinedAt          DateTime                @default(now())
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  badges            Badge[]
+  payments          Payment[]               @relation("PaymentUser")
+  collectedPayments Payment[]               @relation("PaymentCollector")
+  createdPlans      WorkoutPlan[]           @relation("PlanCreator")
+  planAssignments   WorkoutPlanAssignment[] @relation("PlanAssignment")
+  attendances       Attendance[]
+  markedAttendances Attendance[]            @relation("AttendanceMarkedBy")
+
+  @@unique([tenantId, userId])
+  @@unique([tenantId, memberId])
+  @@index([tenantId])
+  @@index([userId])
+}
+
+// ─── Subscription & Payment ───────────────────────────────────────────────────
+
+model Subscription {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  title        String
+  description  String?
+  amount       Int /// Amount in smallest currency unit (e.g. paise/cents)
+  durationDays Int      @default(30)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  payments Payment[]
+
+  @@index([tenantId])
+}
+
+model Payment {
+  id             String            @id @default(cuid())
+  amount         Int
+  status         String            @default("PENDING")
+  tenantId       String
+  tenant         Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  membershipId   String
+  member         TenantMembership  @relation("PaymentUser", fields: [membershipId], references: [id])
+  collectorId    String?
+  collectedBy    TenantMembership? @relation("PaymentCollector", fields: [collectorId], references: [id])
+  subscriptionId String?
+  subscription   Subscription?     @relation(fields: [subscriptionId], references: [id])
+  chargeId       String?
+  charge         TenantCharge?     @relation(fields: [chargeId], references: [id])
+  description    String? /// Label for charge payments, e.g. "Admission Fee"
+  note           String?
+  paidAt         DateTime?
+  validFrom      DateTime?
+  validUntil     DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([tenantId])
+  @@index([membershipId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ─── Workout Plans ────────────────────────────────────────────────────────────
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  markdown    String? /// Optional markdown rich description for the product
+  photos      Json     @default("[]")
+  category    String
+  price       Int
+  stock       Int      @default(0)
+  minOrderQty Int      @default(1)
+  maxOrderQty Int      @default(100)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orderItems OrderItem[]
+  reviews    ProductReview[]
+
+  @@index([isActive])
+  @@index([category])
+}
+
+model ProductReview {
+  id            String   @id @default(cuid())
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId        String? /// NULL for anonymous reviews
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  rating        Int /// 1-5 star rating
+  title         String
+  description   String
+  isAnonymous   Boolean  @default(false)
+  verifiedBuyer Boolean  @default(false) /// true if user purchased this product
+  helpfulCount  Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  comments ProductReviewComment[]
+  helpful  ProductReviewHelpful[]
+
+  @@unique([productId, userId, createdAt]) /// Prevent multiple reviews per user per day (can adjust if needed)
+  @@index([productId])
+  @@index([userId])
+  @@index([rating])
+  @@index([createdAt])
+}
+
+model ProductReviewComment {
+  id          String        @id @default(cuid())
+  reviewId    String
+  review      ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  userId      String? /// NULL for anonymous comments
+  user        User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  text        String
+  isAnonymous Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([reviewId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model ProductReviewHelpful {
+  id        String        @id @default(cuid())
+  reviewId  String
+  review    ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  userId    String /// Only logged-in users can mark helpful
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+
+  @@unique([reviewId, userId])
+  @@index([reviewId])
+  @@index([userId])
+}
+
+model Order {
+  id             String   @id @default(cuid())
+  userId         String?
+  user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  buyerName      String
+  buyerEmail     String
+  buyerPhone     String
+  buyerAddress   String
+  status         String   @default("PENDING")
+  subtotalAmount Int      @default(0)
+  gstRatePct     Int      @default(18)
+  gstAmount      Int      @default(0)
+  totalAmount    Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  items OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productName String
+  quantity    Int
+  unitPrice   Int
+  lineTotal   Int
+  createdAt   DateTime @default(now())
+
+  @@unique([orderId, productId])
+  @@index([orderId])
+  @@index([productId])
+}
+
+model WorkoutPlan {
+  id          String           @id @default(cuid())
+  tenantId    String
+  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  creatorId   String
+  creator     TenantMembership @relation("PlanCreator", fields: [creatorId], references: [id])
+  title       String
+  description String?
+  exercises   Json             @default("[]")
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  assignments WorkoutPlanAssignment[]
+
+  @@index([tenantId])
+  @@index([creatorId])
+}
+
+model WorkoutPlanAssignment {
+  id           String           @id @default(cuid())
+  planId       String
+  plan         WorkoutPlan      @relation(fields: [planId], references: [id], onDelete: Cascade)
+  membershipId String
+  membership   TenantMembership @relation("PlanAssignment", fields: [membershipId], references: [id])
+  assignedAt   DateTime         @default(now())
+
+  @@unique([planId, membershipId])
+  @@index([membershipId])
+}
+
+// ─── Badges ───────────────────────────────────────────────────────────────────
+
+model Badge {
+  id          String             @id @default(cuid())
+  tenantId    String
+  tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  color       String             @default("#6366f1") /// Hex color for badge display
+  icon        String? /// Optional icon identifier (e.g. "trophy", "star", "flame")
+  isActive    Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  users       TenantMembership[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}
+
+// ─── Platform Billing ────────────────────────────────────────────────────────
+
+model PlatformPayment {
+  id             String   @id @default(cuid())
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  amount         Int /// Amount in smallest currency unit (paise/cents)
+  note           String?
+  extendsUntil   DateTime /// The new expiry date set by this payment
+  recordedBy     String
+  recordedByUser User     @relation(fields: [recordedBy], references: [id])
+  createdAt      DateTime @default(now())
+
+  @@index([tenantId])
+}
+
+// ─── Audit Log ────────────────────────────────────────────────────────────────
+
+model Attendance {
+  id           String            @id @default(cuid())
+  tenantId     String
+  tenant       Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  membershipId String
+  member       TenantMembership  @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  markedById   String? /// NULL = self check-in, otherwise the admin/coach who marked
+  markedBy     TenantMembership? @relation("AttendanceMarkedBy", fields: [markedById], references: [id])
+  date         DateTime /// The calendar day (no time component)
+  checkInAt    DateTime          @default(now())
+  note         String?
+  createdAt    DateTime          @default(now())
+
+  @@unique([tenantId, membershipId, date])
+  @@index([tenantId])
+  @@index([membershipId])
+  @@index([date])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  entity    String /// e.g. "User", "Tenant", "Payment"
+  entityId  String?
+  actorId   String?
+  actor     User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  tenantId  String?
+  tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  metadata  Json? /// Additional context (old values, new values, etc.)
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([actorId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+// ─── Push Subscriptions ───────────────────────────────────────────────────────
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+

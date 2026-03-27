@@ -1,0 +1,8 @@
+@baseUrl = http://127.0.0.1:8787
+@tenantSlug = seed-gym-1
+
+### List public gyms
+GET {{baseUrl}}/public/gyms?page=1&limit=20
+
+### Get one public gym by slug
+GET {{baseUrl}}/public/gyms/{{tenantSlug}}
