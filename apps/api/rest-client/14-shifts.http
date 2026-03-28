@@ -1,0 +1,67 @@
+# Documentation: 14-shifts.http REST client collection.
+# - Exercises admin shift CRUD plus active/inactive updates and public shift visibility.
+# - Use an admin token for tenant routes because shift management is admin-only.
+# - These requests are written for the VS Code REST Client extension and use its response-variable syntax extensively.
+@baseUrl = http://127.0.0.1:8787
+@json = application/json
+@tenantId = tenant_0001
+@tenantSlug = seed-gym-1
+
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin.seed-gym-1@seed.gym.test",
+  "password": "Test@1234"
+}
+
+### List shifts for a tenant as admin
+GET {{baseUrl}}/tenants/{{tenantId}}/shifts?includeInactive=true
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### Create a shift
+# @name createShift
+POST {{baseUrl}}/tenants/{{tenantId}}/shifts
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "REST Client Shift {{$timestamp}}",
+  "description": "Created from the REST client collection.",
+  "startTime": "06:00",
+  "endTime": "10:00",
+  "isActive": true
+}
+
+### Get the new shift by id
+GET {{baseUrl}}/tenants/{{tenantId}}/shifts/{{createShift.response.body.$.data.shift.id}}
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### Update the shift and inactivate it
+PATCH {{baseUrl}}/tenants/{{tenantId}}/shifts/{{createShift.response.body.$.data.shift.id}}
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "description": "Updated from the REST client collection.",
+  "startTime": "07:00",
+  "endTime": "11:00",
+  "isActive": false
+}
+
+### Reactivate the shift
+PATCH {{baseUrl}}/tenants/{{tenantId}}/shifts/{{createShift.response.body.$.data.shift.id}}
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": true
+}
+
+### List public shifts for the tenant slug
+GET {{baseUrl}}/public/gyms/{{tenantSlug}}/shifts
+
+### Delete the shift
+DELETE {{baseUrl}}/tenants/{{tenantId}}/shifts/{{createShift.response.body.$.data.shift.id}}
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}

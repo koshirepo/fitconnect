@@ -59,6 +59,7 @@ export const ModelName = {
   TenantCharge: 'TenantCharge',
   TenantMembership: 'TenantMembership',
   Subscription: 'Subscription',
+  Shift: 'Shift',
   Payment: 'Payment',
   Product: 'Product',
   ProductReview: 'ProductReview',
@@ -202,6 +203,21 @@ export const SubscriptionScalarFieldEnum = {
 } as const
 
 export type SubscriptionScalarFieldEnum = (typeof SubscriptionScalarFieldEnum)[keyof typeof SubscriptionScalarFieldEnum]
+
+
+export const ShiftScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  name: 'name',
+  description: 'description',
+  startTime: 'startTime',
+  endTime: 'endTime',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ShiftScalarFieldEnum = (typeof ShiftScalarFieldEnum)[keyof typeof ShiftScalarFieldEnum]
 
 
 export const PaymentScalarFieldEnum = {

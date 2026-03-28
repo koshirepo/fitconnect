@@ -80,6 +80,11 @@ export type TenantMembership = Prisma.TenantMembershipModel
  */
 export type Subscription = Prisma.SubscriptionModel
 /**
+ * Model Shift
+ * 
+ */
+export type Shift = Prisma.ShiftModel
+/**
  * Model Payment
  * 
  */

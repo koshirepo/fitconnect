@@ -24,7 +24,7 @@ function isConfigured(): boolean {
  */
 function ensureVapid() {
   if (!isConfigured()) {
-    throw new Error("VAPID keys not configured – push notifications are disabled.");
+    throw new Error("VAPID keys not configured â€“ push notifications are disabled.");
   }
   // VAPID settings are process-wide configuration for the `web-push` client,
   // so they are applied before each send flow begins.
@@ -71,7 +71,7 @@ export const pushService = {
             { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
             body,
           )
-          .catch(async (err) => {
+          .catch(async (err: { statusCode?: number }) => {
             // Browsers return 404/410 when an endpoint is gone; removing the
             // stored subscription here prevents repeated future failures.
             if (err.statusCode === 410 || err.statusCode === 404) {

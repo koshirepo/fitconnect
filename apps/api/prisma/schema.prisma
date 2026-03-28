@@ -11,7 +11,7 @@ datasource db {
   provider = "sqlite"
 }
 
-// ─── Enum values are stored as plain strings in SQLite ────────────────────────
+// â”€â”€â”€ Enum values are stored as plain strings in SQLite â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // PlatformRole: "USER" | "SUPER_ADMIN" | "SUPPORT"
 // TenantRole:   "MEMBER" | "COACH" | "ADMIN"
 // AccountStatus: "ACTIVE" | "SUSPENDED" | "DELETED"
@@ -19,7 +19,7 @@ datasource db {
 // OrderStatus:   "PENDING" | "SHIPPED" | "DELIVERED"
 // AuditAction:   "CREATE" | "UPDATE" | "DELETE" | "LOGIN" | "LOGOUT" | "ROLE_CHANGE" | "SETTINGS_CHANGE"
 
-// ─── Platform Models ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Platform Models â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 model User {
   id           String   @id @default(cuid())
@@ -73,7 +73,7 @@ model RefreshToken {
   @@index([token])
 }
 
-// ─── Tenant Models ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Tenant Models â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 model Tenant {
   id          String    @id @default(cuid())
@@ -94,6 +94,7 @@ model Tenant {
 
   memberships      TenantMembership[]
   subscriptions    Subscription[]
+  shifts           Shift[]
   payments         Payment[]
   workoutPlans     WorkoutPlan[]
   badges           Badge[]
@@ -143,7 +144,7 @@ model TenantMembership {
   memberId          Int /// Sequential member number, unique per tenant (starts at 1)
   role              String                  @default("MEMBER")
   status            String                  @default("ACTIVE")
-  dueDate           DateTime? /// Latest subscription validUntil – auto-updated on payment changes
+  dueDate           DateTime? /// Latest subscription validUntil â€“ auto-updated on payment changes
   joinedAt          DateTime                @default(now())
   createdAt         DateTime                @default(now())
   updatedAt         DateTime                @updatedAt
@@ -161,7 +162,7 @@ model TenantMembership {
   @@index([userId])
 }
 
-// ─── Subscription & Payment ───────────────────────────────────────────────────
+// â”€â”€â”€ Subscription & Payment â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 model Subscription {
   id           String   @id @default(cuid())
@@ -178,6 +179,22 @@ model Subscription {
   payments Payment[]
 
   @@index([tenantId])
+}
+
+model Shift {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  startTime   String /// 24-hour local time, e.g. "06:00"
+  endTime     String /// 24-hour local time, e.g. "10:00"
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([tenantId, name])
+  @@index([tenantId, isActive])
 }
 
 model Payment {
@@ -208,7 +225,7 @@ model Payment {
   @@index([createdAt])
 }
 
-// ─── Workout Plans ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Workout Plans â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 model Product {
   id          String   @id @default(cuid())
@@ -356,7 +373,7 @@ model WorkoutPlanAssignment {
   @@index([membershipId])
 }
 
-// ─── Badges ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 model Badge {
   id          String             @id @default(cuid())
@@ -375,7 +392,7 @@ model Badge {
   @@index([tenantId])
 }
 
-// ─── Platform Billing ────────────────────────────────────────────────────────
+// â”€â”€â”€ Platform Billing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 model PlatformPayment {
   id             String   @id @default(cuid())
@@ -391,7 +408,7 @@ model PlatformPayment {
   @@index([tenantId])
 }
 
-// ─── Audit Log ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Audit Log â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 model Attendance {
   id           String            @id @default(cuid())
@@ -431,7 +448,7 @@ model AuditLog {
   @@index([createdAt])
 }
 
-// ─── Push Subscriptions ───────────────────────────────────────────────────────
+// â”€â”€â”€ Push Subscriptions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 model PushSubscription {
   id        String   @id @default(cuid())

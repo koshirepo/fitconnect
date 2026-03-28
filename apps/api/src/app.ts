@@ -23,10 +23,9 @@ import { pushRoutes } from "./modules/push/push.routes";
 import { settingsRoutes } from "./modules/settings/settings.routes";
 import { attendanceRoutes } from "./modules/attendance/attendance.routes";
 import { uploadRoutes } from "./modules/uploads/uploads.routes";
+import { shiftRoutes } from "./modules/shifts/shifts.routes";
 
 const app = new Hono();
-
-// ─── Global Middleware ────────────────────────────────────────────────────────
 
 app.use("*", logger());
 app.use(
@@ -37,20 +36,17 @@ app.use(
   }),
 );
 
-// ─── Health Check ─────────────────────────────────────────────────────────────
-
 app.get("/", (c) => ok(c, { status: "ok", service: "gms-api" }));
-
-// ─── Routes ───────────────────────────────────────────────────────────────────
 
 app.route("/auth", authRoutes);
 app.route("/tenants", tenantRoutes);
-app.route("/tenants", memberRoutes); // /tenants/:tenantId/members, /me
-app.route("/tenants", workoutRoutes); // /tenants/:tenantId/workout-plans
-app.route("/tenants", paymentRoutes); // /tenants/:tenantId/payments & subscriptions
-app.route("/tenants", badgeRoutes); // /tenants/:tenantId/badges
-app.route("/tenants", settingsRoutes); // /tenants/:tenantId/settings & charges
-app.route("/tenants", attendanceRoutes); // /tenants/:tenantId/attendance
+app.route("/tenants", memberRoutes);
+app.route("/tenants", workoutRoutes);
+app.route("/tenants", paymentRoutes);
+app.route("/tenants", badgeRoutes);
+app.route("/tenants", settingsRoutes);
+app.route("/tenants", attendanceRoutes);
+app.route("/tenants", shiftRoutes);
 app.route("/audit", auditRoutes);
 app.route("/public", publicRoutes);
 app.route("/", commerceRoutes);
@@ -58,10 +54,7 @@ app.route("/", reviewRoutes);
 app.route("/push", pushRoutes);
 app.route("/uploads", uploadRoutes);
 
-// ─── Global Error Handler ─────────────────────────────────────────────────────
-
 app.onError((err, c) => {
-  // Prisma unique constraint violation → 409 Conflict
   if (
     err.constructor?.name === "PrismaClientKnownRequestError" &&
     (err as any).code === "P2002"
@@ -84,7 +77,6 @@ app.onError((err, c) => {
     return conflict(c, "A record with this value already exists.");
   }
 
-  // Prisma foreign key constraint → 400 Bad Request
   if (
     err.constructor?.name === "PrismaClientKnownRequestError" &&
     (err as any).code === "P2003"

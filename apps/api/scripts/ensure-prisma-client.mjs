@@ -61,6 +61,7 @@ const TABLE_DUMP_ORDER = [
   "TenantCharge",
   "TenantMembership",
   "Subscription",
+  "Shift",
   "Payment",
   "Product",
   "Order",
@@ -382,6 +383,10 @@ function seedDatabase(db, options) {
     INSERT INTO "Subscription" ("id", "tenantId", "title", "description", "amount", "durationDays", "isActive", "createdAt", "updatedAt")
     VALUES ($id, $tenantId, $title, $description, $amount, $durationDays, $isActive, $createdAt, $updatedAt)
   `);
+  const insertShift = db.prepare(`
+    INSERT INTO "Shift" ("id", "tenantId", "name", "description", "startTime", "endTime", "isActive", "createdAt", "updatedAt")
+    VALUES ($id, $tenantId, $name, $description, $startTime, $endTime, $isActive, $createdAt, $updatedAt)
+  `);
   const insertPayment = db.prepare(`
     INSERT INTO "Payment" (
       "id", "amount", "status", "tenantId", "membershipId", "collectorId", "subscriptionId",
@@ -442,6 +447,7 @@ function seedDatabase(db, options) {
   const counts = {
     users: 0,
     tenants: 0,
+    shifts: 0,
     memberships: 0,
     payments: 0,
     products: 0,
@@ -582,6 +588,28 @@ function seedDatabase(db, options) {
         run(insertSubscription, subscription);
         return subscription;
       });
+
+      for (const [name, description, startTime, endTime, isActive] of [
+        ["Morning Shift", "Early training window for before-work members.", "06:00", "10:00", true],
+        ["Afternoon Shift", "Midday slot with lighter floor traffic.", "12:00", "16:00", tenantIndex % 2 === 0],
+        ["Evening Shift", "Peak post-work training slot.", "17:00", "22:00", true],
+      ]) {
+        run(
+          insertShift,
+          {
+            id: nextId("shift"),
+            tenantId,
+            name,
+            description,
+            startTime,
+            endTime,
+            isActive,
+            createdAt,
+            updatedAt: createdAt,
+          },
+          "shifts"
+        );
+      }
 
       const coachMemberships = [];
       let nextMemberId = 2;

@@ -256,6 +256,7 @@ export type TenantWhereInput = {
   platformExpiresAt?: Prisma.DateTimeNullableFilter<"Tenant"> | Date | string | null
   memberships?: Prisma.TenantMembershipListRelationFilter
   subscriptions?: Prisma.SubscriptionListRelationFilter
+  shifts?: Prisma.ShiftListRelationFilter
   payments?: Prisma.PaymentListRelationFilter
   workoutPlans?: Prisma.WorkoutPlanListRelationFilter
   badges?: Prisma.BadgeListRelationFilter
@@ -283,6 +284,7 @@ export type TenantOrderByWithRelationInput = {
   platformExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   memberships?: Prisma.TenantMembershipOrderByRelationAggregateInput
   subscriptions?: Prisma.SubscriptionOrderByRelationAggregateInput
+  shifts?: Prisma.ShiftOrderByRelationAggregateInput
   payments?: Prisma.PaymentOrderByRelationAggregateInput
   workoutPlans?: Prisma.WorkoutPlanOrderByRelationAggregateInput
   badges?: Prisma.BadgeOrderByRelationAggregateInput
@@ -313,6 +315,7 @@ export type TenantWhereUniqueInput = Prisma.AtLeast<{
   platformExpiresAt?: Prisma.DateTimeNullableFilter<"Tenant"> | Date | string | null
   memberships?: Prisma.TenantMembershipListRelationFilter
   subscriptions?: Prisma.SubscriptionListRelationFilter
+  shifts?: Prisma.ShiftListRelationFilter
   payments?: Prisma.PaymentListRelationFilter
   workoutPlans?: Prisma.WorkoutPlanListRelationFilter
   badges?: Prisma.BadgeListRelationFilter
@@ -380,6 +383,7 @@ export type TenantCreateInput = {
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentCreateNestedManyWithoutTenantInput
   workoutPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutTenantInput
   badges?: Prisma.BadgeCreateNestedManyWithoutTenantInput
@@ -407,6 +411,7 @@ export type TenantUncheckedCreateInput = {
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutTenantInput
   workoutPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutTenantInput
   badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutTenantInput
@@ -434,6 +439,7 @@ export type TenantUpdateInput = {
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutTenantNestedInput
   workoutPlans?: Prisma.WorkoutPlanUpdateManyWithoutTenantNestedInput
   badges?: Prisma.BadgeUpdateManyWithoutTenantNestedInput
@@ -461,6 +467,7 @@ export type TenantUncheckedUpdateInput = {
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutTenantNestedInput
   workoutPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutTenantNestedInput
   badges?: Prisma.BadgeUncheckedUpdateManyWithoutTenantNestedInput
@@ -639,6 +646,20 @@ export type TenantUpdateOneRequiredWithoutSubscriptionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.TenantUpdateToOneWithWhereWithoutSubscriptionsInput, Prisma.TenantUpdateWithoutSubscriptionsInput>, Prisma.TenantUncheckedUpdateWithoutSubscriptionsInput>
 }
 
+export type TenantCreateNestedOneWithoutShiftsInput = {
+  create?: Prisma.XOR<Prisma.TenantCreateWithoutShiftsInput, Prisma.TenantUncheckedCreateWithoutShiftsInput>
+  connectOrCreate?: Prisma.TenantCreateOrConnectWithoutShiftsInput
+  connect?: Prisma.TenantWhereUniqueInput
+}
+
+export type TenantUpdateOneRequiredWithoutShiftsNestedInput = {
+  create?: Prisma.XOR<Prisma.TenantCreateWithoutShiftsInput, Prisma.TenantUncheckedCreateWithoutShiftsInput>
+  connectOrCreate?: Prisma.TenantCreateOrConnectWithoutShiftsInput
+  upsert?: Prisma.TenantUpsertWithoutShiftsInput
+  connect?: Prisma.TenantWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.TenantUpdateToOneWithWhereWithoutShiftsInput, Prisma.TenantUpdateWithoutShiftsInput>, Prisma.TenantUncheckedUpdateWithoutShiftsInput>
+}
+
 export type TenantCreateNestedOneWithoutPaymentsInput = {
   create?: Prisma.XOR<Prisma.TenantCreateWithoutPaymentsInput, Prisma.TenantUncheckedCreateWithoutPaymentsInput>
   connectOrCreate?: Prisma.TenantCreateOrConnectWithoutPaymentsInput
@@ -742,6 +763,7 @@ export type TenantCreateWithoutSettingsInput = {
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentCreateNestedManyWithoutTenantInput
   workoutPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutTenantInput
   badges?: Prisma.BadgeCreateNestedManyWithoutTenantInput
@@ -768,6 +790,7 @@ export type TenantUncheckedCreateWithoutSettingsInput = {
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutTenantInput
   workoutPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutTenantInput
   badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutTenantInput
@@ -810,6 +833,7 @@ export type TenantUpdateWithoutSettingsInput = {
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutTenantNestedInput
   workoutPlans?: Prisma.WorkoutPlanUpdateManyWithoutTenantNestedInput
   badges?: Prisma.BadgeUpdateManyWithoutTenantNestedInput
@@ -836,6 +860,7 @@ export type TenantUncheckedUpdateWithoutSettingsInput = {
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutTenantNestedInput
   workoutPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutTenantNestedInput
   badges?: Prisma.BadgeUncheckedUpdateManyWithoutTenantNestedInput
@@ -862,6 +887,7 @@ export type TenantCreateWithoutChargesInput = {
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentCreateNestedManyWithoutTenantInput
   workoutPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutTenantInput
   badges?: Prisma.BadgeCreateNestedManyWithoutTenantInput
@@ -888,6 +914,7 @@ export type TenantUncheckedCreateWithoutChargesInput = {
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutTenantInput
   workoutPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutTenantInput
   badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutTenantInput
@@ -930,6 +957,7 @@ export type TenantUpdateWithoutChargesInput = {
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutTenantNestedInput
   workoutPlans?: Prisma.WorkoutPlanUpdateManyWithoutTenantNestedInput
   badges?: Prisma.BadgeUpdateManyWithoutTenantNestedInput
@@ -956,6 +984,7 @@ export type TenantUncheckedUpdateWithoutChargesInput = {
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutTenantNestedInput
   workoutPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutTenantNestedInput
   badges?: Prisma.BadgeUncheckedUpdateManyWithoutTenantNestedInput
@@ -981,6 +1010,7 @@ export type TenantCreateWithoutMembershipsInput = {
   description?: string | null
   platformExpiresAt?: Date | string | null
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentCreateNestedManyWithoutTenantInput
   workoutPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutTenantInput
   badges?: Prisma.BadgeCreateNestedManyWithoutTenantInput
@@ -1007,6 +1037,7 @@ export type TenantUncheckedCreateWithoutMembershipsInput = {
   description?: string | null
   platformExpiresAt?: Date | string | null
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutTenantInput
   workoutPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutTenantInput
   badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutTenantInput
@@ -1049,6 +1080,7 @@ export type TenantUpdateWithoutMembershipsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutTenantNestedInput
   workoutPlans?: Prisma.WorkoutPlanUpdateManyWithoutTenantNestedInput
   badges?: Prisma.BadgeUpdateManyWithoutTenantNestedInput
@@ -1075,6 +1107,7 @@ export type TenantUncheckedUpdateWithoutMembershipsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutTenantNestedInput
   workoutPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutTenantNestedInput
   badges?: Prisma.BadgeUncheckedUpdateManyWithoutTenantNestedInput
@@ -1101,6 +1134,7 @@ export type TenantCreateWithoutSubscriptionsInput = {
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentCreateNestedManyWithoutTenantInput
   workoutPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutTenantInput
   badges?: Prisma.BadgeCreateNestedManyWithoutTenantInput
@@ -1127,6 +1161,7 @@ export type TenantUncheckedCreateWithoutSubscriptionsInput = {
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutTenantInput
   workoutPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutTenantInput
   badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutTenantInput
@@ -1169,6 +1204,7 @@ export type TenantUpdateWithoutSubscriptionsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutTenantNestedInput
   workoutPlans?: Prisma.WorkoutPlanUpdateManyWithoutTenantNestedInput
   badges?: Prisma.BadgeUpdateManyWithoutTenantNestedInput
@@ -1195,6 +1231,131 @@ export type TenantUncheckedUpdateWithoutSubscriptionsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutTenantNestedInput
+  workoutPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutTenantNestedInput
+  badges?: Prisma.BadgeUncheckedUpdateManyWithoutTenantNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTenantNestedInput
+  settings?: Prisma.TenantSettingsUncheckedUpdateOneWithoutTenantNestedInput
+  charges?: Prisma.TenantChargeUncheckedUpdateManyWithoutTenantNestedInput
+  platformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutTenantNestedInput
+  attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutTenantNestedInput
+}
+
+export type TenantCreateWithoutShiftsInput = {
+  id?: string
+  name: string
+  slug: string
+  email?: string | null
+  phone?: string | null
+  logoUrl?: string | null
+  address?: string | null
+  estd?: Date | string | null
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  markdown?: string | null
+  description?: string | null
+  platformExpiresAt?: Date | string | null
+  memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutTenantInput
+  workoutPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutTenantInput
+  badges?: Prisma.BadgeCreateNestedManyWithoutTenantInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTenantInput
+  settings?: Prisma.TenantSettingsCreateNestedOneWithoutTenantInput
+  charges?: Prisma.TenantChargeCreateNestedManyWithoutTenantInput
+  platformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutTenantInput
+  attendances?: Prisma.AttendanceCreateNestedManyWithoutTenantInput
+}
+
+export type TenantUncheckedCreateWithoutShiftsInput = {
+  id?: string
+  name: string
+  slug: string
+  email?: string | null
+  phone?: string | null
+  logoUrl?: string | null
+  address?: string | null
+  estd?: Date | string | null
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  markdown?: string | null
+  description?: string | null
+  platformExpiresAt?: Date | string | null
+  memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutTenantInput
+  workoutPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutTenantInput
+  badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutTenantInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTenantInput
+  settings?: Prisma.TenantSettingsUncheckedCreateNestedOneWithoutTenantInput
+  charges?: Prisma.TenantChargeUncheckedCreateNestedManyWithoutTenantInput
+  platformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutTenantInput
+  attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutTenantInput
+}
+
+export type TenantCreateOrConnectWithoutShiftsInput = {
+  where: Prisma.TenantWhereUniqueInput
+  create: Prisma.XOR<Prisma.TenantCreateWithoutShiftsInput, Prisma.TenantUncheckedCreateWithoutShiftsInput>
+}
+
+export type TenantUpsertWithoutShiftsInput = {
+  update: Prisma.XOR<Prisma.TenantUpdateWithoutShiftsInput, Prisma.TenantUncheckedUpdateWithoutShiftsInput>
+  create: Prisma.XOR<Prisma.TenantCreateWithoutShiftsInput, Prisma.TenantUncheckedCreateWithoutShiftsInput>
+  where?: Prisma.TenantWhereInput
+}
+
+export type TenantUpdateToOneWithWhereWithoutShiftsInput = {
+  where?: Prisma.TenantWhereInput
+  data: Prisma.XOR<Prisma.TenantUpdateWithoutShiftsInput, Prisma.TenantUncheckedUpdateWithoutShiftsInput>
+}
+
+export type TenantUpdateWithoutShiftsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  estd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutTenantNestedInput
+  workoutPlans?: Prisma.WorkoutPlanUpdateManyWithoutTenantNestedInput
+  badges?: Prisma.BadgeUpdateManyWithoutTenantNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutTenantNestedInput
+  settings?: Prisma.TenantSettingsUpdateOneWithoutTenantNestedInput
+  charges?: Prisma.TenantChargeUpdateManyWithoutTenantNestedInput
+  platformPayments?: Prisma.PlatformPaymentUpdateManyWithoutTenantNestedInput
+  attendances?: Prisma.AttendanceUpdateManyWithoutTenantNestedInput
+}
+
+export type TenantUncheckedUpdateWithoutShiftsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  estd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutTenantNestedInput
   workoutPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutTenantNestedInput
   badges?: Prisma.BadgeUncheckedUpdateManyWithoutTenantNestedInput
@@ -1222,6 +1383,7 @@ export type TenantCreateWithoutPaymentsInput = {
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
   workoutPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutTenantInput
   badges?: Prisma.BadgeCreateNestedManyWithoutTenantInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTenantInput
@@ -1248,6 +1410,7 @@ export type TenantUncheckedCreateWithoutPaymentsInput = {
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
   workoutPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutTenantInput
   badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutTenantInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTenantInput
@@ -1290,6 +1453,7 @@ export type TenantUpdateWithoutPaymentsInput = {
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
   workoutPlans?: Prisma.WorkoutPlanUpdateManyWithoutTenantNestedInput
   badges?: Prisma.BadgeUpdateManyWithoutTenantNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutTenantNestedInput
@@ -1316,6 +1480,7 @@ export type TenantUncheckedUpdateWithoutPaymentsInput = {
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
   workoutPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutTenantNestedInput
   badges?: Prisma.BadgeUncheckedUpdateManyWithoutTenantNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTenantNestedInput
@@ -1342,6 +1507,7 @@ export type TenantCreateWithoutWorkoutPlansInput = {
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentCreateNestedManyWithoutTenantInput
   badges?: Prisma.BadgeCreateNestedManyWithoutTenantInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTenantInput
@@ -1368,6 +1534,7 @@ export type TenantUncheckedCreateWithoutWorkoutPlansInput = {
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutTenantInput
   badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutTenantInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTenantInput
@@ -1410,6 +1577,7 @@ export type TenantUpdateWithoutWorkoutPlansInput = {
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutTenantNestedInput
   badges?: Prisma.BadgeUpdateManyWithoutTenantNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutTenantNestedInput
@@ -1436,6 +1604,7 @@ export type TenantUncheckedUpdateWithoutWorkoutPlansInput = {
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutTenantNestedInput
   badges?: Prisma.BadgeUncheckedUpdateManyWithoutTenantNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTenantNestedInput
@@ -1462,6 +1631,7 @@ export type TenantCreateWithoutBadgesInput = {
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentCreateNestedManyWithoutTenantInput
   workoutPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutTenantInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTenantInput
@@ -1488,6 +1658,7 @@ export type TenantUncheckedCreateWithoutBadgesInput = {
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutTenantInput
   workoutPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutTenantInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTenantInput
@@ -1530,6 +1701,7 @@ export type TenantUpdateWithoutBadgesInput = {
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutTenantNestedInput
   workoutPlans?: Prisma.WorkoutPlanUpdateManyWithoutTenantNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutTenantNestedInput
@@ -1556,6 +1728,7 @@ export type TenantUncheckedUpdateWithoutBadgesInput = {
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutTenantNestedInput
   workoutPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutTenantNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTenantNestedInput
@@ -1582,6 +1755,7 @@ export type TenantCreateWithoutPlatformPaymentsInput = {
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentCreateNestedManyWithoutTenantInput
   workoutPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutTenantInput
   badges?: Prisma.BadgeCreateNestedManyWithoutTenantInput
@@ -1608,6 +1782,7 @@ export type TenantUncheckedCreateWithoutPlatformPaymentsInput = {
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutTenantInput
   workoutPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutTenantInput
   badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutTenantInput
@@ -1650,6 +1825,7 @@ export type TenantUpdateWithoutPlatformPaymentsInput = {
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutTenantNestedInput
   workoutPlans?: Prisma.WorkoutPlanUpdateManyWithoutTenantNestedInput
   badges?: Prisma.BadgeUpdateManyWithoutTenantNestedInput
@@ -1676,6 +1852,7 @@ export type TenantUncheckedUpdateWithoutPlatformPaymentsInput = {
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutTenantNestedInput
   workoutPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutTenantNestedInput
   badges?: Prisma.BadgeUncheckedUpdateManyWithoutTenantNestedInput
@@ -1702,6 +1879,7 @@ export type TenantCreateWithoutAttendancesInput = {
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentCreateNestedManyWithoutTenantInput
   workoutPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutTenantInput
   badges?: Prisma.BadgeCreateNestedManyWithoutTenantInput
@@ -1728,6 +1906,7 @@ export type TenantUncheckedCreateWithoutAttendancesInput = {
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutTenantInput
   workoutPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutTenantInput
   badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutTenantInput
@@ -1770,6 +1949,7 @@ export type TenantUpdateWithoutAttendancesInput = {
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutTenantNestedInput
   workoutPlans?: Prisma.WorkoutPlanUpdateManyWithoutTenantNestedInput
   badges?: Prisma.BadgeUpdateManyWithoutTenantNestedInput
@@ -1796,6 +1976,7 @@ export type TenantUncheckedUpdateWithoutAttendancesInput = {
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutTenantNestedInput
   workoutPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutTenantNestedInput
   badges?: Prisma.BadgeUncheckedUpdateManyWithoutTenantNestedInput
@@ -1822,6 +2003,7 @@ export type TenantCreateWithoutAuditLogsInput = {
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentCreateNestedManyWithoutTenantInput
   workoutPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutTenantInput
   badges?: Prisma.BadgeCreateNestedManyWithoutTenantInput
@@ -1848,6 +2030,7 @@ export type TenantUncheckedCreateWithoutAuditLogsInput = {
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutTenantInput
   workoutPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutTenantInput
   badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutTenantInput
@@ -1890,6 +2073,7 @@ export type TenantUpdateWithoutAuditLogsInput = {
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutTenantNestedInput
   workoutPlans?: Prisma.WorkoutPlanUpdateManyWithoutTenantNestedInput
   badges?: Prisma.BadgeUpdateManyWithoutTenantNestedInput
@@ -1916,6 +2100,7 @@ export type TenantUncheckedUpdateWithoutAuditLogsInput = {
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutTenantNestedInput
   workoutPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutTenantNestedInput
   badges?: Prisma.BadgeUncheckedUpdateManyWithoutTenantNestedInput
@@ -1933,6 +2118,7 @@ export type TenantUncheckedUpdateWithoutAuditLogsInput = {
 export type TenantCountOutputType = {
   memberships: number
   subscriptions: number
+  shifts: number
   payments: number
   workoutPlans: number
   badges: number
@@ -1945,6 +2131,7 @@ export type TenantCountOutputType = {
 export type TenantCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   memberships?: boolean | TenantCountOutputTypeCountMembershipsArgs
   subscriptions?: boolean | TenantCountOutputTypeCountSubscriptionsArgs
+  shifts?: boolean | TenantCountOutputTypeCountShiftsArgs
   payments?: boolean | TenantCountOutputTypeCountPaymentsArgs
   workoutPlans?: boolean | TenantCountOutputTypeCountWorkoutPlansArgs
   badges?: boolean | TenantCountOutputTypeCountBadgesArgs
@@ -1976,6 +2163,13 @@ export type TenantCountOutputTypeCountMembershipsArgs<ExtArgs extends runtime.Ty
  */
 export type TenantCountOutputTypeCountSubscriptionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.SubscriptionWhereInput
+}
+
+/**
+ * TenantCountOutputType without action
+ */
+export type TenantCountOutputTypeCountShiftsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ShiftWhereInput
 }
 
 /**
@@ -2045,6 +2239,7 @@ export type TenantSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   platformExpiresAt?: boolean
   memberships?: boolean | Prisma.Tenant$membershipsArgs<ExtArgs>
   subscriptions?: boolean | Prisma.Tenant$subscriptionsArgs<ExtArgs>
+  shifts?: boolean | Prisma.Tenant$shiftsArgs<ExtArgs>
   payments?: boolean | Prisma.Tenant$paymentsArgs<ExtArgs>
   workoutPlans?: boolean | Prisma.Tenant$workoutPlansArgs<ExtArgs>
   badges?: boolean | Prisma.Tenant$badgesArgs<ExtArgs>
@@ -2111,6 +2306,7 @@ export type TenantOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
 export type TenantInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   memberships?: boolean | Prisma.Tenant$membershipsArgs<ExtArgs>
   subscriptions?: boolean | Prisma.Tenant$subscriptionsArgs<ExtArgs>
+  shifts?: boolean | Prisma.Tenant$shiftsArgs<ExtArgs>
   payments?: boolean | Prisma.Tenant$paymentsArgs<ExtArgs>
   workoutPlans?: boolean | Prisma.Tenant$workoutPlansArgs<ExtArgs>
   badges?: boolean | Prisma.Tenant$badgesArgs<ExtArgs>
@@ -2129,6 +2325,7 @@ export type $TenantPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
   objects: {
     memberships: Prisma.$TenantMembershipPayload<ExtArgs>[]
     subscriptions: Prisma.$SubscriptionPayload<ExtArgs>[]
+    shifts: Prisma.$ShiftPayload<ExtArgs>[]
     payments: Prisma.$PaymentPayload<ExtArgs>[]
     workoutPlans: Prisma.$WorkoutPlanPayload<ExtArgs>[]
     badges: Prisma.$BadgePayload<ExtArgs>[]
@@ -2558,6 +2755,7 @@ export interface Prisma__TenantClient<T, Null = never, ExtArgs extends runtime.T
   readonly [Symbol.toStringTag]: "PrismaPromise"
   memberships<T extends Prisma.Tenant$membershipsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$membershipsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TenantMembershipPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   subscriptions<T extends Prisma.Tenant$subscriptionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$subscriptionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SubscriptionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  shifts<T extends Prisma.Tenant$shiftsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$shiftsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShiftPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   payments<T extends Prisma.Tenant$paymentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$paymentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   workoutPlans<T extends Prisma.Tenant$workoutPlansArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$workoutPlansArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkoutPlanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   badges<T extends Prisma.Tenant$badgesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$badgesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BadgePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -3045,6 +3243,30 @@ export type Tenant$subscriptionsArgs<ExtArgs extends runtime.Types.Extensions.In
   take?: number
   skip?: number
   distinct?: Prisma.SubscriptionScalarFieldEnum | Prisma.SubscriptionScalarFieldEnum[]
+}
+
+/**
+ * Tenant.shifts
+ */
+export type Tenant$shiftsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Shift
+   */
+  select?: Prisma.ShiftSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Shift
+   */
+  omit?: Prisma.ShiftOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ShiftInclude<ExtArgs> | null
+  where?: Prisma.ShiftWhereInput
+  orderBy?: Prisma.ShiftOrderByWithRelationInput | Prisma.ShiftOrderByWithRelationInput[]
+  cursor?: Prisma.ShiftWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ShiftScalarFieldEnum | Prisma.ShiftScalarFieldEnum[]
 }
 
 /**
