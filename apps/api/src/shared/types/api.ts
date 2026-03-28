@@ -1,3 +1,10 @@
+/**
+ * Documentation: Shared API envelope contracts.
+ *
+ * - Defines the response and error shapes that both the API and any typed client can depend on for transport-level consistency.
+ * - Update these contracts together with `src/lib/response.ts` whenever the wire format changes.
+ * - Primary exports: ApiResponse, MessageResponse, PaginatedResponse, ApiError, ErrorCode.
+ */
 // ─── API Response Envelopes ───────────────────────────────────────────────────
 // Used by both API (to build responses) and PWA (to type-check responses).
 

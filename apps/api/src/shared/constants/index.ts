@@ -1,3 +1,10 @@
+/**
+ * Documentation: Cross-layer constants.
+ *
+ * - Defines pagination defaults, password limits, display labels, slug validation, and commerce defaults used across the API.
+ * - Keep these values here when they affect both validation and presentation so behavior stays synchronized between modules.
+ * - Primary exports: DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH, SLUG_REGEX, ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY, PLATFORM_ROLE_LABELS, TENANT_ROLE_LABELS, PAYMENT_STATUS_LABELS, ORDER_STATUS_LABELS, COMMERCE_DEFAULT_GST_RATE_PCT.
+ */
 // ─── Shared Constants ─────────────────────────────────────────────────────────
 
 /** Default pagination values */

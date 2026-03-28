@@ -1,8 +1,19 @@
+/**
+ * Documentation: Role-authorization middleware.
+ *
+ * - Builds middleware for platform-role and tenant-role checks after authentication has populated the request context.
+ * - Keep role gating here so route files stay declarative and authorization errors remain consistent.
+ * - Primary exports: requirePlatformRoles, requireTenantRoles.
+ */
 import { PlatformRole, type TenantRole } from "../shared/types/enums";
 import { badRequest, forbidden } from "../lib/response";
 import { createMiddleware } from "hono/factory";
 import type { AppBindings } from "../types/app-context";
 
+/**
+ * Build or execute the `require platform roles` middleware step for the middleware layer.
+ * Keep cross-cutting authentication and authorization checks centralized here so routes stay declarative.
+ */
 export const requirePlatformRoles = (allowedRoles: PlatformRole[]) => {
   return createMiddleware<AppBindings>(async (c, next) => {
     const user = c.get("authUser");

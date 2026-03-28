@@ -1,6 +1,17 @@
+/**
+ * Documentation: Attendance service.
+ *
+ * - Implements the business rules for member check-ins, staff attendance marking, summaries, and calendar views by coordinating repositories, shared helpers, and cross-cutting utilities like email or audit logging where needed.
+ * - Prefer placing workflow logic, derived calculations, and domain invariants here instead of inside controllers or repositories.
+ * - Primary exports: attendanceService.
+ */
 import { attendanceRepository } from "./attendance.repository";
 import type { MarkAttendanceInput, MarkAllAttendanceInput } from "./attendance.schema";
 
+/**
+ * Execute the `to date only` workflow for the attendance module.
+ * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+ */
 function toDateOnly(dateStr?: string): Date {
   if (dateStr) return new Date(dateStr + "T00:00:00.000Z");
   const now = new Date();

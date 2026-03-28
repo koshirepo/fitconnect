@@ -1,3 +1,10 @@
+/**
+ * Documentation: Optional-auth middleware.
+ *
+ * - Attempts bearer-token verification without rejecting anonymous requests, populating a nullable user object when a valid token is present.
+ * - This is useful for mixed public/private endpoints like checkout and review flows that behave differently for signed-in users.
+ * - Primary exports: optionalAuthenticate.
+ */
 import { createMiddleware } from "hono/factory";
 import { verifyAccessToken } from "../auth/jwt";
 import type { AppBindings } from "../types/app-context";

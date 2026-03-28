@@ -1,3 +1,7 @@
+# Documentation: 06-badges.http REST client collection.
+# - Exercises badge catalog management and badge assignment/removal for tenant members.
+# - Badge writes require admin privileges, so reuse an elevated token from the login request at the top of the file.
+# - These requests are written for the VS Code REST Client extension and use its response-variable syntax extensively.
 @baseUrl = http://127.0.0.1:8787
 @json = application/json
 @seedPassword = Test@1234

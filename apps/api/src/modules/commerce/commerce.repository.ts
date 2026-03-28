@@ -1,3 +1,10 @@
+/**
+ * Documentation: Commerce repository.
+ *
+ * - Encapsulates Prisma queries for product catalog management, ordering, and admin order operations, including relation loading and write patterns that are specific to the persistence layer.
+ * - Keep raw database concerns here so the service layer can reason about domain behavior without duplicating query details.
+ * - Primary exports: commerceRepository.
+ */
 import { prisma } from "../../lib/prisma";
 import type { OrderStatus } from "../../shared/types/enums";
 import type { CreateProductInput, UpdateProductInput } from "./commerce.schema";
@@ -46,6 +53,10 @@ const orderSelect = {
 } as const;
 
 export const commerceRepository = {
+  /**
+   * Run the `list public products` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async listPublicProducts(page: number, limit: number, category?: string, search?: string) {
     const where = {
       isActive: true,
@@ -74,6 +85,10 @@ export const commerceRepository = {
     return { products, total };
   },
 
+  /**
+   * Run the `list admin products` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async listAdminProducts(
     page: number,
     limit: number,
@@ -108,6 +123,10 @@ export const commerceRepository = {
     return { products, total };
   },
 
+  /**
+   * Run the `find product by id` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   findProductById(productId: string) {
     return prisma.product.findUnique({
       where: { id: productId },
@@ -115,6 +134,10 @@ export const commerceRepository = {
     });
   },
 
+  /**
+   * Run the `find public product by id` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   findPublicProductById(productId: string) {
     return prisma.product.findFirst({
       where: { id: productId, isActive: true },
@@ -122,6 +145,10 @@ export const commerceRepository = {
     });
   },
 
+  /**
+   * Run the `create product` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   createProduct(input: CreateProductInput) {
     return prisma.product.create({
       data: {
@@ -140,6 +167,10 @@ export const commerceRepository = {
     });
   },
 
+  /**
+   * Run the `update product` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   updateProduct(productId: string, input: UpdateProductInput) {
     return prisma.product.update({
       where: { id: productId },
@@ -159,6 +190,10 @@ export const commerceRepository = {
     });
   },
 
+  /**
+   * Run the `create order with items` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async createOrderWithItems(data: {
     userId?: string;
     buyerName: string;
@@ -239,6 +274,10 @@ export const commerceRepository = {
     });
   },
 
+  /**
+   * Run the `find order by id` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   findOrderById(orderId: string) {
     return prisma.order.findUnique({
       where: { id: orderId },
@@ -246,6 +285,10 @@ export const commerceRepository = {
     });
   },
 
+  /**
+   * Run the `list orders by user` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async listOrdersByUser(userId: string, page: number, limit: number) {
     const where = { userId };
     const [orders, total] = await Promise.all([
@@ -261,6 +304,10 @@ export const commerceRepository = {
     return { orders, total };
   },
 
+  /**
+   * Run the `list all orders` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async listAllOrders(page: number, limit: number, status?: string) {
     const where: { status?: OrderStatus } = {};
     if (status && ["PENDING", "SHIPPED", "DELIVERED"].includes(status)) {
@@ -280,6 +327,10 @@ export const commerceRepository = {
     return { orders, total };
   },
 
+  /**
+   * Run the `update order status` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   updateOrderStatus(orderId: string, status: OrderStatus) {
     return prisma.order.update({
       where: { id: orderId },

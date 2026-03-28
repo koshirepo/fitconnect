@@ -1,4 +1,8 @@
-@baseUrl = http://127.0.0.1:8787
+# Documentation: 00-auth.http REST client collection.
+# - Exercises authentication bootstrap, login, token refresh, current-user lookup, platform-user creation, and password reset endpoints.
+# - Run the named login request first when you need bearer tokens for the later calls in this file.
+# - These requests are written for the VS Code REST Client extension and use its response-variable syntax extensively.
+@baseUrl = https://fit-api.koshimicrosystem.workers.dev/
 @json = application/json
 @seedPassword = Test@1234
 @superAdminEmail = superadmin@seed.gym.test

@@ -1,3 +1,7 @@
+# Documentation: 10-commerce.http REST client collection.
+# - Exercises the product catalog, checkout flow, member order lookups, and admin product/order management endpoints.
+# - Some requests are public or optionally authenticated, but admin product/order maintenance requires elevated platform roles.
+# - These requests are written for the VS Code REST Client extension and use its response-variable syntax extensively.
 @baseUrl = http://127.0.0.1:8787
 @json = application/json
 @seedPassword = Test@1234

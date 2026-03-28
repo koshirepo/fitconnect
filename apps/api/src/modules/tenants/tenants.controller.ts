@@ -1,3 +1,10 @@
+/**
+ * Documentation: Tenants controller.
+ *
+ * - Owns the HTTP boundary for tenant onboarding, tenant profile maintenance, and tenant administration, including request parsing, service invocation, response shaping, and request-scoped side effects such as audit logging.
+ * - Controller code should stay thin: validate inputs, call the service layer, and convert outcomes into the shared response envelope.
+ * - Primary exports: tenantController.
+ */
 import type { Context } from "hono";
 import { tenantService } from "./tenants.service";
 import { auditLog } from "../../lib/audit";
@@ -15,6 +22,10 @@ import type { AppBindings } from "../../types/app-context";
 type AppContext = Context<AppBindings>;
 
 export const tenantController = {
+  /**
+   * Handle the `create` HTTP action for the tenants module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async create(c: AppContext) {
     const parsed = await parseBody(c, createTenantSchema);
     if (!parsed.ok) return parsed.response;
@@ -34,12 +45,20 @@ export const tenantController = {
     return ok(c, result.data, 201);
   },
 
+  /**
+   * Handle the `list` HTTP action for the tenants module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async list(c: AppContext) {
     const { page, limit } = parsePagination(c);
     const { data, total } = await tenantService.list(page, limit);
     return okPaginated(c, data, { page, limit, total });
   },
 
+  /**
+   * Handle the `get by id` HTTP action for the tenants module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async getById(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     console.log("Fetching tenant with ID:", tenantId); // Debug log
@@ -48,6 +67,10 @@ export const tenantController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `update` HTTP action for the tenants module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async update(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const parsed = await parseBody(c, updateTenantSchema);
@@ -68,6 +91,10 @@ export const tenantController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `update status` HTTP action for the tenants module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async updateStatus(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const parsed = await parseBody(c, updateTenantStatusSchema);
@@ -88,6 +115,10 @@ export const tenantController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `record platform payment` HTTP action for the tenants module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async recordPlatformPayment(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const parsed = await parseBody(c, recordPlatformPaymentSchema);
@@ -110,6 +141,10 @@ export const tenantController = {
     return ok(c, result.data, 201);
   },
 
+  /**
+   * Handle the `list platform payments` HTTP action for the tenants module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async listPlatformPayments(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const { page, limit } = parsePagination(c);

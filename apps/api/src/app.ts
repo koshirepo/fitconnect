@@ -1,3 +1,10 @@
+/**
+ * Documentation: Application composition entrypoint.
+ *
+ * - Builds the Hono application, applies global middleware, registers all route modules, and normalizes global error handling.
+ * - Translate cross-cutting failures like Prisma constraint errors into the shared API response envelope here instead of repeating that logic in controllers.
+ * - Primary exports: default export.
+ */
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";

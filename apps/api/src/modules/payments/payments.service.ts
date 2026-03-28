@@ -1,3 +1,10 @@
+/**
+ * Documentation: Payments service.
+ *
+ * - Implements the business rules for subscription management, payment collection, and membership validity tracking by coordinating repositories, shared helpers, and cross-cutting utilities like email or audit logging where needed.
+ * - Prefer placing workflow logic, derived calculations, and domain invariants here instead of inside controllers or repositories.
+ * - Primary exports: paymentService.
+ */
 import type { PaymentStatus, TenantRole } from "../../shared/types/enums";
 import { memberRepository } from "../members/members.repository";
 import { paymentRepository } from "./payments.repository";
@@ -9,6 +16,10 @@ import type {
 } from "./payments.schema";
 
 export const paymentService = {
+  /**
+   * Execute the `list payments` workflow for the payments module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async listPayments(
     tenantId: string,
     page: number,
@@ -45,6 +56,10 @@ export const paymentService = {
     return { data: { payments: flat }, total };
   },
 
+  /**
+   * Execute the `get my payments` workflow for the payments module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async getMyPayments(tenantId: string, userId: string) {
     const membership = await paymentRepository.findMembershipByUser(tenantId, userId);
     if (!membership) {
@@ -55,6 +70,10 @@ export const paymentService = {
     return { data: { payments } };
   },
 
+  /**
+   * Execute the `get payment by id` workflow for the payments module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async getPaymentById(
     tenantId: string,
     paymentId: string,
@@ -94,6 +113,10 @@ export const paymentService = {
     };
   },
 
+  /**
+   * Execute the `create payment` workflow for the payments module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async createPayment(tenantId: string, userId: string, input: CreatePaymentInput) {
     // Run independent validation lookups in parallel
     const [targetMembership, subscription, collector] = await Promise.all([
@@ -166,6 +189,10 @@ export const paymentService = {
     };
   },
 
+  /**
+   * Execute the `update payment` workflow for the payments module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async updatePayment(tenantId: string, paymentId: string, input: UpdatePaymentInput) {
     const existing = await paymentRepository.findPayment(paymentId, tenantId);
     if (!existing) {
@@ -196,6 +223,10 @@ export const paymentService = {
     return { data: { payment }, changes };
   },
 
+  /**
+   * Execute the `update payment status` workflow for the payments module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async updatePaymentStatus(tenantId: string, paymentId: string, status: PaymentStatus) {
     const existing = await paymentRepository.findPayment(paymentId, tenantId);
     if (!existing) {
@@ -212,16 +243,28 @@ export const paymentService = {
     return { data: { payment }, previousStatus: existing.status };
   },
 
+  /**
+   * Execute the `list subscriptions` workflow for the payments module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async listSubscriptions(tenantId: string) {
     const subscriptions = await paymentRepository.listSubscriptions(tenantId);
     return { data: { subscriptions } };
   },
 
+  /**
+   * Execute the `create subscription` workflow for the payments module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async createSubscription(tenantId: string, input: CreateSubscriptionInput) {
     const subscription = await paymentRepository.createSubscription(tenantId, input);
     return { data: { subscription } };
   },
 
+  /**
+   * Execute the `get analytics` workflow for the payments module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async getAnalytics(tenantId: string) {
     const analytics = await paymentRepository.getPaymentAnalytics(tenantId);
     return { data: { analytics } };

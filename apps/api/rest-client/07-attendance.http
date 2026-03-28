@@ -1,3 +1,7 @@
+# Documentation: 07-attendance.http REST client collection.
+# - Covers self check-in, staff attendance marking, deletion, summaries, and monthly calendar endpoints.
+# - This file is easiest to run against seeded data because several requests reference a known member id and date combination.
+# - These requests are written for the VS Code REST Client extension and use its response-variable syntax extensively.
 @baseUrl = http://127.0.0.1:8787
 @json = application/json
 @seedPassword = Test@1234

@@ -1,5 +1,16 @@
+/**
+ * Documentation: Payments schema definitions.
+ *
+ * - Defines the Zod schemas and inferred TypeScript input types used to validate requests for subscription management, payment collection, and membership validity tracking.
+ * - When a request payload or query contract changes, update this file first and then adjust the controller/service code that consumes the parsed input.
+ * - Primary exports: createPaymentSchema, updatePaymentStatusSchema, updatePaymentSchema, createSubscriptionSchema, CreatePaymentInput, UpdatePaymentInput, CreateSubscriptionInput.
+ */
 import { z } from "zod";
 
+/**
+ * Define or support the `to utc date only` validation contract for the payments module.
+ * Schema helpers keep input parsing rules colocated with the module that consumes them.
+ */
 const toUtcDateOnly = (value: Date) =>
   new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
 

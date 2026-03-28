@@ -1,3 +1,11 @@
+/**
+ * Documentation: Settings routes.
+ *
+ * - Declares the Hono routes and middleware chain for tenant settings and extra charge configuration. This route set is mounted from `/tenants` in the application entrypoint.
+ * - Keep routing and authorization wiring here, and delegate request handling to the companion controller instead of placing business logic in route callbacks.
+ * - Relative endpoints declared in this file: GET /:tenantId/settings, PUT /:tenantId/settings, GET /:tenantId/charges, POST /:tenantId/charges, PATCH /:tenantId/charges/:chargeId, DELETE /:tenantId/charges/:chargeId.
+ * - Primary exports: settingsRoutes.
+ */
 import { Hono } from "hono";
 import { TenantRole } from "../../shared/types/enums";
 import { authenticate } from "../../middleware/authenticate";

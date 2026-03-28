@@ -1,4 +1,11 @@
 /**
+ * Documentation: DTO-shaping helpers for nested Prisma results.
+ *
+ * - Promotes nested relation data into flatter API-friendly structures, especially for member-centric payloads returned from repositories.
+ * - Use these helpers when the database shape is awkward for the public API contract but you want to avoid duplicating mapping logic in services.
+ * - Primary exports: flattenMemberUser, flattenNestedMember, flattenCreator.
+ */
+/**
  * Flattens a Prisma membership query result that has a nested `user` relation
  * into a flat object with user fields promoted to the top level.
  *

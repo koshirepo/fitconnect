@@ -1,3 +1,10 @@
+/**
+ * Documentation: Auth schema definitions.
+ *
+ * - Defines the Zod schemas and inferred TypeScript input types used to validate requests for platform authentication, session lifecycle, bootstrap, and password recovery.
+ * - When a request payload or query contract changes, update this file first and then adjust the controller/service code that consumes the parsed input.
+ * - Primary exports: bootstrapSchema, loginSchema, refreshTokenSchema, createPlatformUserSchema, forgotPasswordSchema, resetPasswordSchema, BootstrapInput, LoginInput, CreatePlatformUserInput, ForgotPasswordInput, ResetPasswordInput.
+ */
 import { z } from "zod";
 import { MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH } from "../../shared/constants";
 

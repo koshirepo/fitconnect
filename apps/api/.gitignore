@@ -1,3 +1,6 @@
+# Documentation: Ignored local and generated artifacts.
+# - Excludes dependency folders, Wrangler state, build output, local secrets, and generated Worker type declarations from version control.
+# - Add new machine-generated outputs here when they should never be reviewed or committed.
 node_modules/
 .wrangler/
 dist/

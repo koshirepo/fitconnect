@@ -1,3 +1,10 @@
+/**
+ * Documentation: Shared API response helpers.
+ *
+ * - Creates success, message, pagination, and error envelopes that match the contracts exported from `src/shared/types/api.ts`.
+ * - Controllers should use these helpers instead of building ad-hoc JSON so clients can depend on a stable response shape.
+ * - Primary exports: ok, okMessage, okPaginated, error, badRequest, unauthorized, forbidden, notFound, conflict, validationError, internalError.
+ */
 import type { Context } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type {

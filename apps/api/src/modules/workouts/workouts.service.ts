@@ -1,9 +1,20 @@
+/**
+ * Documentation: Workouts service.
+ *
+ * - Implements the business rules for workout plan creation, assignment, and member program visibility by coordinating repositories, shared helpers, and cross-cutting utilities like email or audit logging where needed.
+ * - Prefer placing workflow logic, derived calculations, and domain invariants here instead of inside controllers or repositories.
+ * - Primary exports: workoutService.
+ */
 import type { Prisma } from "../../generated/prisma/client";
 import { workoutRepository } from "./workouts.repository";
 import { flattenCreator } from "../../lib/flatten";
 import type { CreatePlanInput, UpdatePlanInput } from "./workouts.schema";
 
 export const workoutService = {
+  /**
+   * Execute the `list plans` workflow for the workouts module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async listPlans(
     tenantId: string,
     userId: string,
@@ -37,6 +48,10 @@ export const workoutService = {
     return { data: { plans: flat }, total };
   },
 
+  /**
+   * Execute the `get plan` workflow for the workouts module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async getPlan(tenantId: string, planId: string, userId: string, role: string | undefined) {
     const plan = await workoutRepository.findPlanDetail(planId, tenantId);
     if (!plan) {
@@ -78,6 +93,10 @@ export const workoutService = {
     };
   },
 
+  /**
+   * Execute the `create plan` workflow for the workouts module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async createPlan(tenantId: string, userId: string, input: CreatePlanInput) {
     const membership = await workoutRepository.findMembership(tenantId, userId);
     if (!membership) {
@@ -95,6 +114,10 @@ export const workoutService = {
     return { data: { plan } };
   },
 
+  /**
+   * Execute the `update plan` workflow for the workouts module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async updatePlan(
     tenantId: string,
     planId: string,
@@ -119,6 +142,10 @@ export const workoutService = {
     return { data: { plan } };
   },
 
+  /**
+   * Execute the `delete plan` workflow for the workouts module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async deletePlan(tenantId: string, planId: string) {
     const existing = await workoutRepository.findPlan(planId, tenantId);
     if (!existing) {
@@ -129,6 +156,10 @@ export const workoutService = {
     return { data: true };
   },
 
+  /**
+   * Execute the `assign plan` workflow for the workouts module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async assignPlan(tenantId: string, planId: string, membershipId: string) {
     const plan = await workoutRepository.findPlan(planId, tenantId);
     if (!plan) {

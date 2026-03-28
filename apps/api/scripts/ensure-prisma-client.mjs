@@ -1,13 +1,19 @@
+/**
+ * Documentation: Prisma client freshness and seed orchestration script.
+ *
+ * - Ensures the generated Prisma client stays in sync with `prisma/schema.prisma` and also hosts the deterministic seed workflows used for local and remote databases.
+ * - This script sits on the critical path for install, build, dev, deploy, typecheck, and seeding commands, so keep changes backwards-compatible with package scripts.
+ */
 import { spawnSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { createHash, createHmac } from "node:crypto";
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import bcrypt from "bcryptjs";
-import { listLocalDatabases } from "@prisma/adapter-d1";
 import { DatabaseSync } from "node:sqlite";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.resolve(scriptDir, "..");
+const rootDir = path.basename(scriptDir).toLowerCase() === "scripts" ? path.resolve(scriptDir, "..") : scriptDir;
 const schemaPath = path.join(rootDir, "prisma", "schema.prisma");
 const clientPath = path.join(rootDir, "src", "generated", "prisma", "client.ts");
 const prismaBin = path.join(
@@ -16,6 +22,24 @@ const prismaBin = path.join(
   ".bin",
   process.platform === "win32" ? "prisma.cmd" : "prisma"
 );
+const prismaCliPath = path.join(rootDir, "node_modules", "prisma", "build", "index.js");
+const wranglerConfigPath = path.join(rootDir, "wrangler.toml");
+const wranglerBin = path.join(
+  rootDir,
+  "node_modules",
+  ".bin",
+  process.platform === "win32" ? "wrangler.cmd" : "wrangler"
+);
+const wranglerCliPath = path.join(rootDir, "node_modules", "wrangler", "bin", "wrangler.js");
+const localD1Path = path.join(
+  rootDir,
+  ".wrangler",
+  "state",
+  "v3",
+  "d1",
+  "miniflare-D1DatabaseObject"
+);
+const MINIFLARE_D1_UNIQUE_KEY = "miniflare-D1DatabaseObject";
 const DEFAULT_SEED_OPTIONS = {
   seed: 20260327,
   tenants: 6,
@@ -25,10 +49,34 @@ const DEFAULT_SEED_OPTIONS = {
   orders: 140,
   attendanceDays: 45,
   password: "Test@1234",
+  database: null,
+  outFile: path.join(rootDir, ".wrangler", "tmp", "seed-remote.sql"),
+  noExecute: false,
 };
 const ID_COUNTERS = new Map();
+const TABLE_DUMP_ORDER = [
+  "User",
+  "Tenant",
+  "TenantSettings",
+  "TenantCharge",
+  "TenantMembership",
+  "Subscription",
+  "Payment",
+  "Product",
+  "Order",
+  "OrderItem",
+  "WorkoutPlan",
+  "WorkoutPlanAssignment",
+  "Attendance",
+  "AuditLog",
+  "PlatformPayment",
+];
 let phoneCounter = 9000000000;
 
+/**
+ * Support the `should generate` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
 function shouldGenerate() {
   if (!existsSync(clientPath)) {
     return true;
@@ -37,6 +85,10 @@ function shouldGenerate() {
   return statSync(schemaPath).mtimeMs > statSync(clientPath).mtimeMs;
 }
 
+/**
+ * Support the `ensure prisma client` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
 function ensurePrismaClient() {
   if (!shouldGenerate()) {
     console.log("Prisma client is up to date.");
@@ -50,10 +102,7 @@ function ensurePrismaClient() {
 
   console.log("Generating Prisma client...");
 
-  const result = spawnSync(prismaBin, ["generate"], {
-    cwd: rootDir,
-    stdio: "inherit",
-  });
+  const result = runCli(prismaCliPath, prismaBin, ["generate"]);
 
   if (result.error) {
     throw result.error;
@@ -62,9 +111,13 @@ function ensurePrismaClient() {
   process.exit(result.status ?? 1);
 }
 
+/**
+ * Support the `parse seed options` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
 function parseSeedOptions(argv) {
   const options = { ...DEFAULT_SEED_OPTIONS };
-  const keys = {
+  const numericKeys = {
     seed: "seed",
     tenants: "tenants",
     "coaches-per-tenant": "coachesPerTenant",
@@ -72,7 +125,11 @@ function parseSeedOptions(argv) {
     products: "products",
     orders: "orders",
     "attendance-days": "attendanceDays",
+  };
+  const stringKeys = {
     password: "password",
+    database: "database",
+    "out-file": "outFile",
   };
 
   for (const arg of argv) {
@@ -80,15 +137,32 @@ function parseSeedOptions(argv) {
       throw new Error(`Unsupported argument: ${arg}`);
     }
 
-    const [rawKey, rawValue] = arg.slice(2).split("=");
-    const key = keys[rawKey];
-    if (!key) {
-      throw new Error(`Unknown option: --${rawKey}`);
+    const trimmed = arg.slice(2);
+    const separatorIndex = trimmed.indexOf("=");
+    const rawKey = separatorIndex === -1 ? trimmed : trimmed.slice(0, separatorIndex);
+    const rawValue = separatorIndex === -1 ? undefined : trimmed.slice(separatorIndex + 1);
+
+    if (rawKey === "no-execute") {
+      options.noExecute = rawValue === undefined ? true : rawValue === "true";
+      continue;
     }
 
-    if (key === "password") {
-      options.password = rawValue ?? DEFAULT_SEED_OPTIONS.password;
+    const stringKey = stringKeys[rawKey];
+    if (stringKey) {
+      if (stringKey === "password") {
+        options.password = rawValue ?? DEFAULT_SEED_OPTIONS.password;
+        continue;
+      }
+      if (!rawValue) {
+        throw new Error(`Expected a value for --${rawKey}`);
+      }
+      options[stringKey] = stringKey === "outFile" ? path.resolve(rootDir, rawValue) : rawValue;
       continue;
+    }
+
+    const numericKey = numericKeys[rawKey];
+    if (!numericKey) {
+      throw new Error(`Unknown option: --${rawKey}`);
     }
 
     const value = Number.parseInt(rawValue ?? "", 10);
@@ -96,12 +170,16 @@ function parseSeedOptions(argv) {
       throw new Error(`Expected a positive integer for --${rawKey}`);
     }
 
-    options[key] = value;
+    options[numericKey] = value;
   }
 
   return options;
 }
 
+/**
+ * Support the `create rng` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
 function createRng(seed) {
   let state = seed >>> 0;
   return () => {
@@ -113,25 +191,54 @@ function createRng(seed) {
   };
 }
 
+/**
+ * Support the `reset seed state` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
+function resetSeedState() {
+  ID_COUNTERS.clear();
+  phoneCounter = 9000000000;
+}
+
+/**
+ * Support the `next id` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
 function nextId(prefix) {
   const value = (ID_COUNTERS.get(prefix) ?? 0) + 1;
   ID_COUNTERS.set(prefix, value);
   return `${prefix}_${String(value).padStart(4, "0")}`;
 }
 
+/**
+ * Support the `next phone` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
 function nextPhone() {
   phoneCounter += 1;
   return String(phoneCounter);
 }
 
+/**
+ * Support the `random int` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
 function randomInt(min, max, random) {
   return Math.floor(random() * (max - min + 1)) + min;
 }
 
+/**
+ * Support the `pick` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
 function pick(values, random) {
   return values[Math.floor(random() * values.length)];
 }
 
+/**
+ * Support the `sample` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
 function sample(values, count, random) {
   const copy = [...values];
   for (let index = copy.length - 1; index > 0; index -= 1) {
@@ -141,6 +248,10 @@ function sample(values, count, random) {
   return copy.slice(0, Math.min(count, copy.length));
 }
 
+/**
+ * Support the `days ago` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
 function daysAgo(baseDate, days, hour, minute) {
   const value = new Date(baseDate);
   value.setUTCDate(value.getUTCDate() - days);
@@ -148,20 +259,36 @@ function daysAgo(baseDate, days, hour, minute) {
   return value;
 }
 
+/**
+ * Support the `add days` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
 function addDays(date, days) {
   const value = new Date(date);
   value.setUTCDate(value.getUTCDate() + days);
   return value;
 }
 
+/**
+ * Support the `iso` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
 function iso(date) {
   return date.toISOString();
 }
 
+/**
+ * Support the `slugify` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
 function slugify(value) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
+/**
+ * Support the `list migration files` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
 function listMigrationFiles() {
   const migrationsDir = path.join(rootDir, "prisma", "migrations");
   return readdirSync(migrationsDir, { withFileTypes: true })
@@ -173,6 +300,10 @@ function listMigrationFiles() {
     .sort((left, right) => left.name.localeCompare(right.name));
 }
 
+/**
+ * Support the `reset database` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
 function resetDatabase(db, migrations) {
   db.exec('PRAGMA foreign_keys = OFF;');
   db.exec(`
@@ -206,23 +337,13 @@ function resetDatabase(db, migrations) {
   }
 }
 
-function seedLocal(argv) {
-  const options = parseSeedOptions(argv);
+/**
+ * Support the `seed database` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
+function seedDatabase(db, options) {
+  resetSeedState();
   const random = createRng(options.seed);
-  const dbPath = listLocalDatabases().at(-1);
-  if (!dbPath) {
-    throw new Error(
-      "No local D1 database was found. Run `npm run dev` once so Wrangler creates `.wrangler/state` first.",
-    );
-  }
-
-  const migrations = listMigrationFiles();
-  if (migrations.length === 0) {
-    throw new Error("No SQL migrations were found in prisma/migrations.");
-  }
-
-  const db = new DatabaseSync(dbPath);
-  resetDatabase(db, migrations);
 
   const insertUser = db.prepare(`
     INSERT INTO "User" (
@@ -339,8 +460,8 @@ function seedLocal(argv) {
     const normalized = Array.isArray(params)
       ? params.map(normalizeSqlValue)
       : Object.fromEntries(
-          Object.entries(params).map(([entryKey, entryValue]) => [entryKey, normalizeSqlValue(entryValue)])
-        );
+        Object.entries(params).map(([entryKey, entryValue]) => [entryKey, normalizeSqlValue(entryValue)])
+      );
     statement.run(normalized);
     if (key) {
       counts[key] += 1;
@@ -366,11 +487,13 @@ function seedLocal(argv) {
     return user;
   }
 
-  const superAdmin = createUser("Seed Super Admin", "superadmin@seed.gym.test", "SUPER_ADMIN");
-  const supportUser = createUser("Seed Support User", "support@seed.gym.test", "SUPPORT");
-
   db.exec("BEGIN IMMEDIATE TRANSACTION");
+  let superAdmin;
+  let supportUser;
   try {
+    superAdmin = createUser("Seed Super Admin", "superadmin@seed.gym.test", "SUPER_ADMIN");
+    supportUser = createUser("Seed Support User", "support@seed.gym.test", "SUPPORT");
+
     for (let tenantIndex = 1; tenantIndex <= options.tenants; tenantIndex += 1) {
       const tenantName = `Seed Gym ${tenantIndex}`;
       const slug = slugify(tenantName);
@@ -787,13 +910,268 @@ function seedLocal(argv) {
     throw error;
   }
 
-  console.log("Local D1 database rebuilt and seeded.");
+  return {
+    counts,
+    tenantAdmins,
+    superAdmin,
+    supportUser,
+    password: options.password,
+  };
+}
+
+/**
+ * Support the `escape identifier` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
+function escapeIdentifier(value) {
+  return `"${String(value).replace(/"/g, '""')}"`;
+}
+
+/**
+ * Support the `sql literal` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
+function sqlLiteral(value) {
+  if (value === null) {
+    return "NULL";
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? String(value) : "NULL";
+  }
+  if (typeof value === "boolean") {
+    return value ? "1" : "0";
+  }
+  return `'${String(value).replace(/'/g, "''")}'`;
+}
+
+/**
+ * Support the `dump table inserts` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
+function dumpTableInserts(db, tableName) {
+  const columns = db
+    .prepare(`PRAGMA table_info(${sqlLiteral(tableName)})`)
+    .all()
+    .map((column) => column.name);
+  if (columns.length === 0) {
+    return [];
+  }
+
+  const rows = db.prepare(`SELECT * FROM ${escapeIdentifier(tableName)}`).all();
+  if (rows.length === 0) {
+    return [];
+  }
+
+  const columnList = columns.map(escapeIdentifier).join(", ");
+  return rows.map((row) => {
+    const values = columns.map((column) => sqlLiteral(row[column])).join(", ");
+    return `INSERT INTO ${escapeIdentifier(tableName)} (${columnList}) VALUES (${values});`;
+  });
+}
+
+/**
+ * Support the `build seed sql` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
+function buildSeedSql(db) {
+  const tables = new Set(
+    db
+      .prepare(`
+        SELECT "name"
+        FROM "sqlite_master"
+        WHERE "type" = 'table'
+          AND "name" NOT LIKE 'sqlite_%'
+          AND "name" NOT IN ('_cf_METADATA', 'd1_migrations')
+      `)
+      .all()
+      .map((row) => row.name)
+  );
+  const orderedTables = [
+    ...TABLE_DUMP_ORDER.filter((tableName) => tables.has(tableName)),
+    ...[...tables]
+      .filter((tableName) => !TABLE_DUMP_ORDER.includes(tableName))
+      .sort((left, right) => left.localeCompare(right)),
+  ];
+  const deleteStatements = [...orderedTables]
+    .reverse()
+    .map((tableName) => `DELETE FROM ${escapeIdentifier(tableName)};`);
+  const insertStatements = [];
+
+  for (const tableName of orderedTables) {
+    insertStatements.push(...dumpTableInserts(db, tableName));
+  }
+
+  return [
+    "-- Generated by ensure-prisma-client.mjs",
+    ...deleteStatements,
+    ...insertStatements,
+    "",
+  ].join("\n");
+}
+
+/**
+ * Support the `parse wrangler d1 config` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
+function parseWranglerD1Config() {
+  if (!existsSync(wranglerConfigPath)) {
+    throw new Error("wrangler.toml was not found. Local D1 seeding requires Wrangler config.");
+  }
+
+  const lines = readFileSync(wranglerConfigPath, "utf8").split(/\r?\n/);
+  const entries = [];
+  let current = null;
+
+  const flushCurrent = () => {
+    if (current) {
+      entries.push(current);
+      current = null;
+    }
+  };
+
+  for (const line of lines) {
+    if (/^\s*\[\[d1_databases\]\]\s*$/.test(line)) {
+      flushCurrent();
+      current = {
+        binding: undefined,
+        databaseName: undefined,
+        databaseId: undefined,
+        previewDatabaseId: undefined,
+      };
+      continue;
+    }
+
+    if (/^\s*\[\[.+\]\]\s*$/.test(line)) {
+      flushCurrent();
+      continue;
+    }
+
+    if (!current) {
+      continue;
+    }
+
+    const bindingMatch = line.match(/^\s*binding\s*=\s*"([^"]+)"/);
+    if (bindingMatch) {
+      current.binding = bindingMatch[1];
+      continue;
+    }
+
+    const databaseNameMatch = line.match(/^\s*database_name\s*=\s*"([^"]+)"/);
+    if (databaseNameMatch) {
+      current.databaseName = databaseNameMatch[1];
+      continue;
+    }
+
+    const databaseIdMatch = line.match(/^\s*database_id\s*=\s*"([^"]+)"/);
+    if (databaseIdMatch) {
+      current.databaseId = databaseIdMatch[1];
+      continue;
+    }
+
+    const previewDatabaseIdMatch = line.match(/^\s*preview_database_id\s*=\s*"([^"]+)"/);
+    if (previewDatabaseIdMatch) {
+      current.previewDatabaseId = previewDatabaseIdMatch[1];
+    }
+  }
+
+  flushCurrent();
+  return entries.filter((entry) => entry.binding);
+}
+
+/**
+ * Support the `durable object namespace id from name` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
+function durableObjectNamespaceIdFromName(uniqueKey, name) {
+  const key = createHash("sha256").update(uniqueKey).digest();
+  const nameHmac = createHmac("sha256", key).update(name).digest().subarray(0, 16);
+  const hmac = createHmac("sha256", key).update(nameHmac).digest().subarray(0, 16);
+  return Buffer.concat([nameHmac, hmac]).toString("hex");
+}
+
+/**
+ * Support the `resolve local database targets` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
+function resolveLocalDatabaseTargets(cliValue) {
+  const entries = parseWranglerD1Config();
+  if (entries.length === 0) {
+    throw new Error("No [[d1_databases]] entries were found in wrangler.toml.");
+  }
+
+  const matches = cliValue
+    ? entries.filter((entry) => entry.databaseName === cliValue || entry.binding === cliValue)
+    : entries;
+
+  if (matches.length === 0) {
+    throw new Error(
+      `Could not find a local D1 binding matching "${cliValue}" in wrangler.toml.`
+    );
+  }
+
+  return matches.map((entry) => {
+    const namespace = entry.previewDatabaseId ?? entry.databaseId ?? entry.binding;
+    const durableObjectId = durableObjectNamespaceIdFromName(MINIFLARE_D1_UNIQUE_KEY, namespace);
+    return {
+      binding: entry.binding,
+      databaseName: entry.databaseName ?? entry.binding,
+      namespace,
+      path: path.join(localD1Path, `${durableObjectId}.sqlite`),
+    };
+  });
+}
+
+/**
+ * Support the `resolve remote database name` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
+function resolveRemoteDatabaseName(cliValue) {
+  if (cliValue) {
+    return cliValue;
+  }
+
+  const config = readFileSync(wranglerConfigPath, "utf8");
+  const match = config.match(/^\s*database_name\s*=\s*"([^"]+)"/m);
+  if (!match) {
+    throw new Error('Could not find `database_name` in wrangler.toml. Pass `--database=<name>`.');
+  }
+  return match[1];
+}
+
+/**
+ * Support the `ensure wrangler installed` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
+function ensureWranglerInstalled() {
+  if (!existsSync(wranglerBin) || !existsSync(wranglerCliPath)) {
+    throw new Error("Wrangler CLI not found. Run `npm install` first.");
+  }
+}
+
+/**
+ * Support the `run cli` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
+function runCli(cliPath, fallbackBinPath, args) {
+  const command = existsSync(cliPath) ? process.execPath : fallbackBinPath;
+  const commandArgs = existsSync(cliPath) ? [cliPath, ...args] : args;
+
+  return spawnSync(command, commandArgs, {
+    cwd: rootDir,
+    stdio: "inherit",
+  });
+}
+
+/**
+ * Support the `print summary` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
+function printSummary(summary, metadata = {}) {
   console.log(
     JSON.stringify(
       {
-        database: dbPath,
-        migrations: migrations.map((item) => item.name),
-        ...counts,
+        ...metadata,
+        ...summary.counts,
       },
       null,
       2
@@ -801,18 +1179,126 @@ function seedLocal(argv) {
   );
   console.log("");
   console.log("Seeded credentials:");
-  console.log(`- Super admin: ${superAdmin.email}`);
-  console.log(`- Support: ${supportUser.email}`);
-  if (tenantAdmins[0]) {
-    console.log(`- First tenant admin: ${tenantAdmins[0].email}`);
+  console.log(`- Super admin: ${summary.superAdmin.email}`);
+  console.log(`- Support: ${summary.supportUser.email}`);
+  if (summary.tenantAdmins[0]) {
+    console.log(`- First tenant admin: ${summary.tenantAdmins[0].email}`);
   }
-  console.log(`- Shared password: ${options.password}`);
+  console.log(`- Shared password: ${summary.password}`);
 }
 
-const command = process.argv[2];
-if (command === "seed-local") {
-  seedLocal(process.argv.slice(3));
-} else {
+/**
+ * Support the `seed local` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
+function seedLocal(argv) {
+  const options = parseSeedOptions(argv);
+  const migrations = listMigrationFiles();
+  if (migrations.length === 0) {
+    throw new Error("No SQL migrations were found in prisma/migrations.");
+  }
+
+  const targets = resolveLocalDatabaseTargets(options.database);
+  mkdirSync(localD1Path, { recursive: true });
+
+  let summary;
+  for (const target of targets) {
+    const db = new DatabaseSync(target.path);
+    resetDatabase(db, migrations);
+    summary = seedDatabase(db, options);
+  }
+
+  console.log("Local D1 database rebuilt and seeded.");
+  printSummary(summary, {
+    databases: targets.map((target) => ({
+      binding: target.binding,
+      databaseName: target.databaseName,
+      namespace: target.namespace,
+      path: target.path,
+    })),
+    migrations: migrations.map((item) => item.name),
+  });
+}
+
+/**
+ * Support the `seed remote` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
+function seedRemote(argv) {
+  const options = parseSeedOptions(argv);
+  const migrations = listMigrationFiles();
+  if (migrations.length === 0) {
+    throw new Error("No SQL migrations were found in prisma/migrations.");
+  }
+
+  const db = new DatabaseSync(":memory:");
+  resetDatabase(db, migrations);
+  const summary = seedDatabase(db, options);
+  const sql = buildSeedSql(db);
+
+  mkdirSync(path.dirname(options.outFile), { recursive: true });
+  writeFileSync(options.outFile, sql, "utf8");
+
+  const metadata = {
+    sqlFile: options.outFile,
+    migrations: migrations.map((item) => item.name),
+  };
+
+  if (options.noExecute) {
+    console.log(`Remote seed SQL written to ${options.outFile}`);
+    printSummary(summary, metadata);
+    return;
+  }
+
+  ensureWranglerInstalled();
+  const databaseName = resolveRemoteDatabaseName(options.database);
+  console.log(`Executing remote seed against D1 database "${databaseName}"...`);
+
+  const result = runCli(wranglerCliPath, wranglerBin, [
+    "d1",
+    "execute",
+    databaseName,
+    "--remote",
+    "--file",
+    options.outFile,
+  ]);
+
+  if (result.error) {
+    throw result.error;
+  }
+  if ((result.status ?? 1) !== 0) {
+    process.exit(result.status ?? 1);
+  }
+
+  printSummary(summary, {
+    ...metadata,
+    database: databaseName,
+  });
+}
+
+/**
+ * Support the `main` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
+function main() {
+  const command = process.argv[2];
+
+  if (command === "seed-local") {
+    seedLocal(process.argv.slice(3));
+    return;
+  }
+
+  if (command === "seed-remote") {
+    seedRemote(process.argv.slice(3));
+    return;
+  }
+
   ensurePrismaClient();
 }
 
+try {
+  main();
+} catch (error) {
+  console.error(error instanceof Error ? error.message : error);
+  process.exit(1);
+}

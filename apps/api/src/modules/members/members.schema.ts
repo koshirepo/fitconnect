@@ -1,3 +1,10 @@
+/**
+ * Documentation: Members schema definitions.
+ *
+ * - Defines the Zod schemas and inferred TypeScript input types used to validate requests for tenant membership lifecycle, profile updates, reporting, and status management.
+ * - When a request payload or query contract changes, update this file first and then adjust the controller/service code that consumes the parsed input.
+ * - Primary exports: addMemberSchema, updateMemberRoleSchema, updateMyProfileSchema, updateMemberSchema, updateMemberStatusSchema, AddMemberInput, UpdateMemberRoleInput, UpdateMyProfileInput, UpdateMemberInput, UpdateMemberStatusInput.
+ */
 import { z } from "zod";
 import {
   MIN_PASSWORD_LENGTH,

@@ -1,3 +1,6 @@
+# Documentation: Cloudflare Worker deployment configuration.
+# - Declares the Worker entrypoint, compatibility settings, and the D1/R2 bindings consumed by the runtime code.
+# - Binding names in this file must remain aligned with `src/index.ts`, `src/lib/prisma.ts`, and the upload routes before local or remote deploys will work.
 name = "hono-prisma-d1-r2-api"
 main = "src/index.ts"
 compatibility_date = "2026-03-27"

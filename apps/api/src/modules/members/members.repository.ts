@@ -1,8 +1,19 @@
+/**
+ * Documentation: Members repository.
+ *
+ * - Encapsulates Prisma queries for tenant membership lifecycle, profile updates, reporting, and status management, including relation loading and write patterns that are specific to the persistence layer.
+ * - Keep raw database concerns here so the service layer can reason about domain behavior without duplicating query details.
+ * - Primary exports: memberRepository.
+ */
 import { prisma } from "../../lib/prisma";
 import type { Prisma } from "../../generated/prisma/client";
 import type { PlatformRole, TenantRole } from "../../shared/types/enums";
 
 export const memberRepository = {
+  /**
+   * Run the `find user by email` persistence operation for the members module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   findUserByEmail(email: string) {
     return prisma.user.findFirst({
       where: { email },
@@ -10,6 +21,10 @@ export const memberRepository = {
     });
   },
 
+  /**
+   * Run the `create user` persistence operation for the members module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   createUser(data: {
     name: string;
     email: string;
@@ -24,6 +39,10 @@ export const memberRepository = {
     });
   },
 
+  /**
+   * Run the `find membership` persistence operation for the members module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   findMembership(tenantId: string, userId: string) {
     return prisma.tenantMembership.findUnique({
       where: { tenantId_userId: { tenantId, userId } },
@@ -31,6 +50,10 @@ export const memberRepository = {
     });
   },
 
+  /**
+   * Run the `find membership by id` persistence operation for the members module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   findMembershipById(id: string, tenantId: string) {
     return prisma.tenantMembership.findFirst({
       where: { id, tenantId },
@@ -44,6 +67,10 @@ export const memberRepository = {
     });
   },
 
+  /**
+   * Run the `find membership by user id` persistence operation for the members module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   findMembershipByUserId(tenantId: string, userId: string) {
     return prisma.tenantMembership.findUnique({
       where: { tenantId_userId: { tenantId, userId } },
@@ -51,6 +78,10 @@ export const memberRepository = {
     });
   },
 
+  /**
+   * Run the `create membership` persistence operation for the members module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async createMembership(
     tenantId: string,
     userId: string,
@@ -76,6 +107,10 @@ export const memberRepository = {
     });
   },
 
+  /**
+   * Run the `list members` persistence operation for the members module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async listMembers(
     tenantId: string,
     page: number,
@@ -142,6 +177,10 @@ export const memberRepository = {
     return { members, total };
   },
 
+  /**
+   * Run the `get profile` persistence operation for the members module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   getProfile(tenantId: string, userId: string) {
     return prisma.tenantMembership.findUnique({
       where: { tenantId_userId: { tenantId, userId } },
@@ -179,6 +218,10 @@ export const memberRepository = {
     });
   },
 
+  /**
+   * Run the `find user password hash` persistence operation for the members module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   findUserPasswordHash(userId: string) {
     return prisma.user.findUnique({
       where: { id: userId },
@@ -186,6 +229,10 @@ export const memberRepository = {
     });
   },
 
+  /**
+   * Run the `update user` persistence operation for the members module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   updateUser(userId: string, data: Record<string, unknown>) {
     return prisma.user.update({
       where: { id: userId },
@@ -201,12 +248,20 @@ export const memberRepository = {
     });
   },
 
+  /**
+   * Run the `count active admins` persistence operation for the members module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   countActiveAdmins(tenantId: string) {
     return prisma.tenantMembership.count({
       where: { tenantId, role: "ADMIN", status: "ACTIVE" },
     });
   },
 
+  /**
+   * Run the `update member role` persistence operation for the members module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   updateMemberRole(membershipId: string, role: TenantRole) {
     return prisma.tenantMembership.update({
       where: { id: membershipId },
@@ -219,6 +274,10 @@ export const memberRepository = {
     });
   },
 
+  /**
+   * Run the `update membership status` persistence operation for the members module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   updateMembershipStatus(membershipId: string, status: "ACTIVE" | "SUSPENDED") {
     return prisma.tenantMembership.update({
       where: { id: membershipId },
@@ -227,6 +286,10 @@ export const memberRepository = {
     });
   },
 
+  /**
+   * Run the `soft delete member` persistence operation for the members module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   softDeleteMember(membershipId: string) {
     return prisma.tenantMembership.update({
       where: { id: membershipId },
@@ -234,6 +297,10 @@ export const memberRepository = {
     });
   },
 
+  /**
+   * Run the `get dashboard stats` persistence operation for the members module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async getDashboardStats(tenantId: string) {
     const now = new Date();
     const startOfToday = new Date(
@@ -286,6 +353,10 @@ export const memberRepository = {
     return { total, active, suspended, joinedToday, joinedWeek, joinedMonth };
   },
 
+  /**
+   * Run the `get finance stats` persistence operation for the members module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async getFinanceStats(tenantId: string) {
     const now = new Date();
     const startOfToday = new Date(
@@ -341,6 +412,10 @@ export const memberRepository = {
     };
   },
 
+  /**
+   * Run the `get overdue members` persistence operation for the members module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async getOverdueMembers(tenantId: string, overdueDays: number) {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - overdueDays);
@@ -359,6 +434,10 @@ export const memberRepository = {
     });
   },
 
+  /**
+   * Run the `suspend many` persistence operation for the members module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async suspendMany(ids: string[]) {
     return prisma.tenantMembership.updateMany({
       where: { id: { in: ids } },
@@ -366,6 +445,10 @@ export const memberRepository = {
     });
   },
 
+  /**
+   * Run the `get member detail` persistence operation for the members module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   getMemberDetail(membershipId: string, tenantId: string) {
     return prisma.tenantMembership.findFirst({
       where: { id: membershipId, tenantId },

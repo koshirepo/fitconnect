@@ -1,8 +1,19 @@
+/**
+ * Documentation: Transactional email service.
+ *
+ * - Lazily configures a Nodemailer transport from environment variables and renders the HTML templates used by auth and member workflows.
+ * - Password reset, welcome, suspension, and report emails all live here so outbound email behavior remains easy to audit and extend.
+ * - Primary exports: emailService, WelcomeEmailPayload.
+ */
 import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
 
 let _transporter: Transporter | undefined;
 
+/**
+ * Utility helper for the email module that owns the `get transporter` step.
+ * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
+ */
 function getTransporter(): Transporter {
   if (!_transporter) {
     const EMAIL_HOST = process.env.EMAIL_HOST ?? "smtp.gmail.com";
@@ -28,10 +39,18 @@ function getTransporter(): Transporter {
   return _transporter;
 }
 
+/**
+ * Utility helper for the email module that owns the `get from` step.
+ * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
+ */
 function getFrom(): string {
   return process.env.EMAIL_FROM ?? '"Fit Connect" <noreply@fitconnect.app>';
 }
 
+/**
+ * Utility helper for the email module that owns the `format amount inr` step.
+ * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
+ */
 function formatAmountInr(paise: number) {
   return `₹${(paise / 100).toLocaleString("en-IN")}`;
 }
@@ -49,6 +68,10 @@ export interface WelcomeEmailPayload {
 }
 
 export const emailService = {
+  /**
+   * Utility helper for the email module that owns the `send password reset email` step.
+   * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
+   */
   sendPasswordResetEmail(to: string, name: string, resetUrl: string) {
     return getTransporter().sendMail({
       from: getFrom(),
@@ -76,6 +99,10 @@ export const emailService = {
     });
   },
 
+  /**
+   * Utility helper for the email module that owns the `send welcome email` step.
+   * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
+   */
   sendWelcomeEmail(payload: WelcomeEmailPayload) {
     const total = payload.payments.reduce((s, p) => s + p.amount, 0);
 
@@ -140,6 +167,10 @@ export const emailService = {
       `,
     });
   },
+  /**
+   * Utility helper for the email module that owns the `send suspension email` step.
+   * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
+   */
   sendSuspensionEmail(to: string, memberName: string, gymName: string, overdueDays: number) {
     return getTransporter().sendMail({
       from: getFrom(),
@@ -159,6 +190,10 @@ export const emailService = {
     });
   },
 
+  /**
+   * Utility helper for the email module that owns the `send report email` step.
+   * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
+   */
   sendReportEmail(payload: {
     to: string;
     adminName: string;
@@ -248,6 +283,10 @@ export const emailService = {
   },
 };
 
+/**
+ * Utility helper for the email module that owns the `verify transport` step.
+ * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
+ */
 async function verifyTransport() {
   const user = process.env.EMAIL_USER;
   const pass = process.env.EMAIL_PASSWORD;

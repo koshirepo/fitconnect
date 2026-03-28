@@ -1,6 +1,7 @@
 {
   "name": "hono-prisma-d1-r2-api",
   "version": "0.1.0",
+  "description": "Gym management API for Cloudflare Workers using Hono, Prisma, D1, R2, email, push notifications, and REST client collections.",
   "private": true,
   "type": "module",
   "scripts": {
@@ -15,6 +16,8 @@
     "typecheck": "tsc --noEmit",
     "generate": "prisma generate",
     "seed:local": "node scripts/ensure-prisma-client.mjs seed-local",
+    "seed:remote": "npm run db:migrate:remote && node scripts/ensure-prisma-client.mjs seed-remote",
+    "seed:remote:sql": "node scripts/ensure-prisma-client.mjs seed-remote --no-execute",
     "db:migration:init": "prisma migrate diff --from-empty --to-schema ./prisma/schema.prisma --script --output prisma/migrations/0001_init.sql",
     "db:migration:diff": "prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script",
     "db:migrate:local": "wrangler d1 migrations apply fit-db --local",

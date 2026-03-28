@@ -1,3 +1,6 @@
+-- Documentation: Initial database migration.
+-- - Creates the baseline SQLite/D1 schema that corresponds to the current Prisma model definitions.
+-- - Keep later schema changes in new numbered migration files rather than editing historical migration SQL unless you are intentionally rebuilding local-only history.
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL PRIMARY KEY,

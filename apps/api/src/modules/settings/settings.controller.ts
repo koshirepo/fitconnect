@@ -1,3 +1,10 @@
+/**
+ * Documentation: Settings controller.
+ *
+ * - Owns the HTTP boundary for tenant settings and extra charge configuration, including request parsing, service invocation, response shaping, and request-scoped side effects such as audit logging.
+ * - Controller code should stay thin: validate inputs, call the service layer, and convert outcomes into the shared response envelope.
+ * - Primary exports: settingsController.
+ */
 import type { Context } from "hono";
 import { settingsService } from "./settings.service";
 import { auditLog } from "../../lib/audit";
@@ -11,6 +18,10 @@ type AppContext = Context<AppBindings>;
 export const settingsController = {
   // ─── Settings ───────────────────────────────────────────────────────────────
 
+  /**
+   * Handle the `get settings` HTTP action for the settings module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async getSettings(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const result = await settingsService.getSettings(tenantId);
@@ -18,6 +29,10 @@ export const settingsController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `update settings` HTTP action for the settings module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async updateSettings(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const parsed = await parseBody(c, updateSettingsSchema);
@@ -40,6 +55,10 @@ export const settingsController = {
 
   // ─── Charges ────────────────────────────────────────────────────────────────
 
+  /**
+   * Handle the `list charges` HTTP action for the settings module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async listCharges(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const result = await settingsService.listCharges(tenantId);
@@ -47,6 +66,10 @@ export const settingsController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `create charge` HTTP action for the settings module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async createCharge(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const parsed = await parseBody(c, createChargeSchema);
@@ -68,6 +91,10 @@ export const settingsController = {
     return ok(c, result.data, 201);
   },
 
+  /**
+   * Handle the `update charge` HTTP action for the settings module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async updateCharge(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const chargeId = c.req.param("chargeId")!;
@@ -94,6 +121,10 @@ export const settingsController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `delete charge` HTTP action for the settings module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async deleteCharge(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const chargeId = c.req.param("chargeId")!;

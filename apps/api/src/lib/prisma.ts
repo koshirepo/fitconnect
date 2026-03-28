@@ -1,3 +1,10 @@
+/**
+ * Documentation: Lazy Prisma client binding for D1.
+ *
+ * - Caches the generated Prisma client per active D1 binding and exposes a proxy so downstream code can import `prisma` directly.
+ * - `setD1` must run before any repository query; the Worker entrypoint is responsible for that initialization order.
+ * - Primary exports: prisma, setD1.
+ */
 import { PrismaClient } from "../generated/prisma/client";
 
 type PrismaState = {
@@ -11,6 +18,10 @@ type GlobalPrismaState = typeof globalThis & {
 
 const state = ((globalThis as GlobalPrismaState).__gmsPrismaState ??= {});
 
+/**
+ * Utility helper for the prisma module that owns the `reset client` step.
+ * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
+ */
 function resetClient() {
   if (state.client) {
     void state.client.$disconnect().catch(() => undefined);
@@ -19,6 +30,10 @@ function resetClient() {
   state.db = undefined;
 }
 
+/**
+ * Utility helper for the prisma module that owns the `set d1` step.
+ * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
+ */
 export async function setD1(db: D1Database) {
   if (state.client && state.db === db) {
     return;
@@ -33,6 +48,10 @@ export async function setD1(db: D1Database) {
   });
 }
 
+/**
+ * Utility helper for the prisma module that owns the `get prisma` step.
+ * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
+ */
 function getPrisma(): PrismaClient {
   if (state.client) {
     return state.client;

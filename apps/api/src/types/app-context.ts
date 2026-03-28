@@ -1,3 +1,10 @@
+/**
+ * Documentation: Shared Hono context typing.
+ *
+ * - Defines the request-scoped auth variables and Worker binding types that middleware and route modules rely on.
+ * - Keep this file aligned with JWT payload structure and Cloudflare binding names when context or environment contracts change.
+ * - Primary exports: AuthUser, TenantAccess, AppVariables, AppBindings.
+ */
 import type { PlatformRole, TenantRole } from "../shared/types/enums";
 import type { JwtTenants } from "../auth/jwt";
 

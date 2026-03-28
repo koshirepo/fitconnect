@@ -1,3 +1,7 @@
+# Documentation: 11-review.http REST client collection.
+# - Covers product review creation, listing, statistics, comments, and helpful-vote interactions.
+# - Optional-auth and authenticated review variants are both included, so run the login request only when testing signed-in behavior.
+# - These requests are written for the VS Code REST Client extension and use its response-variable syntax extensively.
 @baseUrl = http://127.0.0.1:8787
 @json = application/json
 @seedPassword = Test@1234

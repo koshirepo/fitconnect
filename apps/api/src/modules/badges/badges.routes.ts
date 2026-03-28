@@ -1,3 +1,11 @@
+/**
+ * Documentation: Badges routes.
+ *
+ * - Declares the Hono routes and middleware chain for badge definitions and member badge assignment. This route set is mounted from `/tenants` in the application entrypoint.
+ * - Keep routing and authorization wiring here, and delegate request handling to the companion controller instead of placing business logic in route callbacks.
+ * - Relative endpoints declared in this file: GET /:tenantId/badges, POST /:tenantId/badges, GET /:tenantId/badges/:badgeId, PATCH /:tenantId/badges/:badgeId, DELETE /:tenantId/badges/:badgeId, GET /:tenantId/badges/:badgeId/assignments, POST /:tenantId/badges/:badgeId/assign, DELETE /:tenantId/badges/:badgeId/assign/:membershipId, GET /:tenantId/members/:membershipId/badges.
+ * - Primary exports: badgeRoutes.
+ */
 import { Hono } from "hono";
 import { TenantRole } from "../../shared/types/enums";
 import { authenticate } from "../../middleware/authenticate";

@@ -1,3 +1,7 @@
+# Documentation: 05-workouts.http REST client collection.
+# - Covers workout-plan CRUD, assignment, and plan visibility endpoints for staff and members.
+# - Run the staff-auth request in this file first because most workout operations are tenant-scoped and role-gated.
+# - These requests are written for the VS Code REST Client extension and use its response-variable syntax extensively.
 @baseUrl = http://127.0.0.1:8787
 @json = application/json
 @seedPassword = Test@1234

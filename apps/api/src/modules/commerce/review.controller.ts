@@ -1,3 +1,10 @@
+/**
+ * Documentation: Review controller.
+ *
+ * - Owns the HTTP boundary for product reviews, comments, and helpful-vote interactions, including request parsing, service invocation, response shaping, and request-scoped side effects such as audit logging.
+ * - Controller code should stay thin: validate inputs, call the service layer, and convert outcomes into the shared response envelope.
+ * - Primary exports: reviewController.
+ */
 import type { Context } from "hono";
 import { ok, okPaginated, badRequest, notFound } from "../../lib/response";
 import { parseBody } from "../../lib/http";
@@ -9,6 +16,10 @@ import type { AppBindings } from "../../types/app-context";
 type AppContext = Context<AppBindings>;
 
 export const reviewController = {
+  /**
+   * Handle the `list by product` HTTP action for the commerce module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async listByProduct(c: AppContext) {
     const productId = c.req.param("productId");
     const page = parseInt(c.req.query("page") || "1", 10);
@@ -26,6 +37,10 @@ export const reviewController = {
     });
   },
 
+  /**
+   * Handle the `create review` HTTP action for the commerce module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async createReview(c: AppContext) {
     const productId = c.req.param("productId");
 
@@ -42,6 +57,10 @@ export const reviewController = {
     return ok(c, result.data.review, 201);
   },
 
+  /**
+   * Handle the `add comment` HTTP action for the commerce module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async addComment(c: AppContext) {
     const reviewId = c.req.param("reviewId");
 
@@ -64,6 +83,10 @@ export const reviewController = {
     return ok(c, result.data.comment, 201);
   },
 
+  /**
+   * Handle the `mark helpful` HTTP action for the commerce module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async markHelpful(c: AppContext) {
     const reviewId = c.req.param("reviewId");
     const userId = c.get("authUser").id;
@@ -82,6 +105,10 @@ export const reviewController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `unmark helpful` HTTP action for the commerce module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async unmarkHelpful(c: AppContext) {
     const reviewId = c.req.param("reviewId");
     const userId = c.get("authUser").id;
@@ -100,6 +127,10 @@ export const reviewController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `get rating stats` HTTP action for the commerce module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async getRatingStats(c: AppContext) {
     const productId = c.req.param("productId");
 

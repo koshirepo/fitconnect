@@ -1,3 +1,10 @@
+/**
+ * Documentation: Required-auth middleware.
+ *
+ * - Validates bearer access tokens and attaches the decoded user identity plus tenant-role map to the Hono context.
+ * - Use this middleware on any route that must fail closed when the caller is unauthenticated.
+ * - Primary exports: authenticate.
+ */
 import { createMiddleware } from "hono/factory";
 import { verifyAccessToken } from "../auth/jwt";
 import { unauthorized } from "../lib/response";

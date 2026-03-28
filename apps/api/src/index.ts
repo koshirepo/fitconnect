@@ -1,3 +1,10 @@
+/**
+ * Documentation: Cloudflare Worker runtime adapter.
+ *
+ * - Bridges the Hono app into the Worker `fetch` and `scheduled` handlers, exposing Cloudflare bindings to the Node-style utilities used elsewhere in the codebase.
+ * - Initializes the D1-backed Prisma client for each request/scheduled run and keeps the scheduled overdue-enforcement job colocated with the Worker entrypoint.
+ * - Primary exports: default export.
+ */
 import app from "./app";
 import { setD1 } from "./lib/prisma";
 
@@ -9,6 +16,10 @@ type WorkerEnv = {
   [key: string]: unknown;
 };
 
+/**
+ * Support the `apply string bindings to env` step in the Cloudflare Worker entrypoint.
+ * Worker helpers isolate binding, environment, and scheduled-job setup from the request handler itself.
+ */
 function applyStringBindingsToEnv(env: WorkerEnv) {
   for (const [key, value] of Object.entries(env)) {
     if (typeof value === "string") {
@@ -17,6 +28,10 @@ function applyStringBindingsToEnv(env: WorkerEnv) {
   }
 }
 
+/**
+ * Support the `with binding aliases` step in the Cloudflare Worker entrypoint.
+ * Worker helpers isolate binding, environment, and scheduled-job setup from the request handler itself.
+ */
 function withBindingAliases(env: WorkerEnv): WorkerEnv {
   return {
     ...env,

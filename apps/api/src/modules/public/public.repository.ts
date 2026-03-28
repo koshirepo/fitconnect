@@ -1,3 +1,10 @@
+/**
+ * Documentation: Public repository.
+ *
+ * - Encapsulates Prisma queries for public gym discovery and tenant profile exposure, including relation loading and write patterns that are specific to the persistence layer.
+ * - Keep raw database concerns here so the service layer can reason about domain behavior without duplicating query details.
+ * - Primary exports: publicRepository.
+ */
 import { prisma } from "../../lib/prisma";
 
 const publicTenantSelect = {
@@ -21,6 +28,10 @@ const publicTenantSelect = {
 } as const;
 
 export const publicRepository = {
+  /**
+   * Run the `find tenant by slug` persistence operation for the public module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   findTenantBySlug(slug: string) {
     return prisma.tenant.findFirst({
       where: { slug, status: "ACTIVE" },
@@ -41,6 +52,10 @@ export const publicRepository = {
     });
   },
 
+  /**
+   * Run the `list active tenants` persistence operation for the public module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async listActiveTenants(page: number, limit: number) {
     const skip = (page - 1) * limit;
     const [tenants, total] = await Promise.all([

@@ -1,3 +1,6 @@
+// Documentation: Source-of-truth database schema.
+// - Defines the D1-backed relational model for users, tenants, memberships, payments, commerce, attendance, audit logging, and push subscriptions.
+// - Prisma client generation and SQL migration generation both derive from this file, so schema edits must be followed by a migration diff and client refresh.
 generator client {
   provider     = "prisma-client"
   output       = "../src/generated/prisma"

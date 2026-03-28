@@ -1,3 +1,10 @@
+/**
+ * Documentation: Settings schema definitions.
+ *
+ * - Defines the Zod schemas and inferred TypeScript input types used to validate requests for tenant settings and extra charge configuration.
+ * - When a request payload or query contract changes, update this file first and then adjust the controller/service code that consumes the parsed input.
+ * - Primary exports: updateSettingsSchema, createChargeSchema, updateChargeSchema, UpdateSettingsInput, CreateChargeInput, UpdateChargeInput.
+ */
 import { z } from "zod";
 
 export const updateSettingsSchema = z.object({

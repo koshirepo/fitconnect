@@ -1,6 +1,17 @@
+/**
+ * Documentation: Attendance repository.
+ *
+ * - Encapsulates Prisma queries for member check-ins, staff attendance marking, summaries, and calendar views, including relation loading and write patterns that are specific to the persistence layer.
+ * - Keep raw database concerns here so the service layer can reason about domain behavior without duplicating query details.
+ * - Primary exports: attendanceRepository.
+ */
 import { prisma } from "../../lib/prisma";
 
 export const attendanceRepository = {
+  /**
+   * Run the `mark attendance` persistence operation for the attendance module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   markAttendance(
     tenantId: string,
     membershipId: string,
@@ -30,6 +41,10 @@ export const attendanceRepository = {
     });
   },
 
+  /**
+   * Run the `delete attendance` persistence operation for the attendance module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   deleteAttendance(tenantId: string, membershipId: string, date: Date) {
     return prisma.attendance.delete({
       where: {
@@ -38,6 +53,10 @@ export const attendanceRepository = {
     });
   },
 
+  /**
+   * Run the `list by date` persistence operation for the attendance module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async listByDate(tenantId: string, date: Date, page: number, limit: number) {
     const where = { tenantId, date };
     const [records, total] = await Promise.all([
@@ -71,6 +90,10 @@ export const attendanceRepository = {
     return { records, total };
   },
 
+  /**
+   * Run the `list by member` persistence operation for the attendance module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async listByMember(tenantId: string, membershipId: string, page: number, limit: number) {
     const where = { tenantId, membershipId };
     const [records, total] = await Promise.all([
@@ -97,6 +120,10 @@ export const attendanceRepository = {
     return { records, total };
   },
 
+  /**
+   * Run the `count by date range` persistence operation for the attendance module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   countByDateRange(tenantId: string, membershipId: string, from: Date, to: Date) {
     return prisma.attendance.count({
       where: { tenantId, membershipId, date: { gte: from, lte: to } },
@@ -112,6 +139,10 @@ export const attendanceRepository = {
     return new Set(records.map((r) => r.membershipId));
   },
 
+  /**
+   * Run the `find membership` persistence operation for the attendance module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   findMembership(tenantId: string, membershipId: string) {
     return prisma.tenantMembership.findFirst({
       where: { id: membershipId, tenantId, status: "ACTIVE" },
@@ -119,6 +150,10 @@ export const attendanceRepository = {
     });
   },
 
+  /**
+   * Run the `find membership by user id` persistence operation for the attendance module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   findMembershipByUserId(tenantId: string, userId: string) {
     return prisma.tenantMembership.findFirst({
       where: { tenantId, userId, status: "ACTIVE" },

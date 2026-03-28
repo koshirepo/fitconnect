@@ -1,7 +1,18 @@
+/**
+ * Documentation: JWT access and refresh token utilities.
+ *
+ * - Signs and verifies HMAC-based access tokens, and defines the tenant-role map shape embedded in JWT claims.
+ * - Generates opaque refresh tokens plus their expiry timestamps for persistence in the auth repository.
+ * - Primary exports: signAccessToken, verifyAccessToken, generateRefreshToken, refreshTokenExpiresAt, JwtTenants.
+ */
 import { SignJWT, jwtVerify } from "jose";
 import type { PlatformRole, TenantRole } from "../shared/types/enums";
 import { config } from "../config";
 
+/**
+ * Utility helper for the auth module that owns the `get jwt secret` step.
+ * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
+ */
 function getJwtSecret(): Uint8Array {
   return new TextEncoder().encode(config.jwtSecret);
 }
@@ -17,6 +28,10 @@ type AccessTokenPayload = {
   type: "access";
 };
 
+/**
+ * Utility helper for the auth module that owns the `sign access token` step.
+ * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
+ */
 export const signAccessToken = async (input: {
   userId: string;
   platformRole: PlatformRole;
@@ -34,6 +49,10 @@ export const signAccessToken = async (input: {
     .sign(getJwtSecret());
 };
 
+/**
+ * Utility helper for the auth module that owns the `verify access token` step.
+ * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
+ */
 export const verifyAccessToken = async (token: string) => {
   const { payload } = await jwtVerify(token, getJwtSecret(), {
     algorithms: ["HS256"],
@@ -56,6 +75,10 @@ export const verifyAccessToken = async (token: string) => {
 
 // ─── Refresh Token ────────────────────────────────────────────────────────────
 
+/**
+ * Utility helper for the auth module that owns the `generate refresh token` step.
+ * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
+ */
 export const generateRefreshToken = (): string => {
   const bytes = crypto.getRandomValues(new Uint8Array(48));
   return Array.from(bytes)
@@ -63,6 +86,10 @@ export const generateRefreshToken = (): string => {
     .join("");
 };
 
+/**
+ * Utility helper for the auth module that owns the `refresh token expires at` step.
+ * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
+ */
 export const refreshTokenExpiresAt = (): Date => {
   return new Date(Date.now() + config.jwtRefreshTtlSeconds * 1000);
 };

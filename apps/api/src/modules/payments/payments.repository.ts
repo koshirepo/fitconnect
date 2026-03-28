@@ -1,7 +1,18 @@
+/**
+ * Documentation: Payments repository.
+ *
+ * - Encapsulates Prisma queries for subscription management, payment collection, and membership validity tracking, including relation loading and write patterns that are specific to the persistence layer.
+ * - Keep raw database concerns here so the service layer can reason about domain behavior without duplicating query details.
+ * - Primary exports: paymentRepository.
+ */
 import { prisma } from "../../lib/prisma";
 import type { PaymentStatus } from "../../shared/types/enums";
 
 export const paymentRepository = {
+  /**
+   * Run the `list payments` persistence operation for the payments module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async listPayments(
     tenantId: string,
     page: number,
@@ -66,6 +77,10 @@ export const paymentRepository = {
     return { payments, total };
   },
 
+  /**
+   * Run the `find membership by user` persistence operation for the payments module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   findMembershipByUser(tenantId: string, userId: string) {
     return prisma.tenantMembership.findUnique({
       where: { tenantId_userId: { tenantId, userId } },
@@ -73,6 +88,10 @@ export const paymentRepository = {
     });
   },
 
+  /**
+   * Run the `list my payments` persistence operation for the payments module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   listMyPayments(membershipId: string) {
     return prisma.payment.findMany({
       where: { membershipId },
@@ -91,6 +110,10 @@ export const paymentRepository = {
     });
   },
 
+  /**
+   * Run the `find active membership` persistence operation for the payments module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   findActiveMembership(membershipId: string, tenantId: string) {
     return prisma.tenantMembership.findFirst({
       where: { id: membershipId, tenantId, status: "ACTIVE" },
@@ -98,6 +121,10 @@ export const paymentRepository = {
     });
   },
 
+  /**
+   * Run the `find membership by id` persistence operation for the payments module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   findMembershipById(membershipId: string, tenantId: string) {
     return prisma.tenantMembership.findFirst({
       where: { id: membershipId, tenantId },
@@ -105,6 +132,10 @@ export const paymentRepository = {
     });
   },
 
+  /**
+   * Run the `find subscription` persistence operation for the payments module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   findSubscription(subscriptionId: string, tenantId: string) {
     return prisma.subscription.findFirst({
       where: { id: subscriptionId, tenantId },
@@ -112,6 +143,10 @@ export const paymentRepository = {
     });
   },
 
+  /**
+   * Run the `create payment` persistence operation for the payments module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   createPayment(data: {
     tenantId: string;
     membershipId: string;
@@ -144,6 +179,10 @@ export const paymentRepository = {
     });
   },
 
+  /**
+   * Run the `find payment` persistence operation for the payments module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   findPayment(paymentId: string, tenantId: string) {
     return prisma.payment.findFirst({
       where: { id: paymentId, tenantId },
@@ -160,6 +199,10 @@ export const paymentRepository = {
     });
   },
 
+  /**
+   * Run the `find payment detail` persistence operation for the payments module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   findPaymentDetail(paymentId: string, tenantId: string) {
     return prisma.payment.findFirst({
       where: { id: paymentId, tenantId },
@@ -200,6 +243,10 @@ export const paymentRepository = {
     });
   },
 
+  /**
+   * Run the `update payment status` persistence operation for the payments module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   updatePaymentStatus(paymentId: string, status: PaymentStatus) {
     return prisma.payment.update({
       where: { id: paymentId },
@@ -211,6 +258,10 @@ export const paymentRepository = {
     });
   },
 
+  /**
+   * Run the `list subscriptions` persistence operation for the payments module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   listSubscriptions(tenantId: string) {
     return prisma.subscription.findMany({
       where: { tenantId, isActive: true },
@@ -226,6 +277,10 @@ export const paymentRepository = {
     });
   },
 
+  /**
+   * Run the `create subscription` persistence operation for the payments module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   createSubscription(
     tenantId: string,
     data: {
@@ -241,6 +296,10 @@ export const paymentRepository = {
     });
   },
 
+  /**
+   * Run the `update payment` persistence operation for the payments module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   updatePayment(
     paymentId: string,
     data: {
@@ -271,6 +330,10 @@ export const paymentRepository = {
     });
   },
 
+  /**
+   * Run the `get payment analytics` persistence operation for the payments module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async getPaymentAnalytics(tenantId: string) {
     const now = new Date();
 

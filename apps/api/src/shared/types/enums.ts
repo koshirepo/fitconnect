@@ -1,3 +1,10 @@
+/**
+ * Documentation: Shared enum-like constant maps.
+ *
+ * - Exports string-literal role, status, and audit-action sets that keep server and client code aligned without introducing a separate enum runtime.
+ * - Use these constants when validating or comparing business-state strings so magic values do not spread through the codebase.
+ * - Primary exports: PlatformRole, TenantRole, AccountStatus, PaymentStatus, OrderStatus, AuditAction.
+ */
 // ─── Platform Roles & Enums ───────────────────────────────────────────────────
 // These mirror the Prisma schema "enums" (stored as plain strings in SQLite).
 // Both API and PWA import from here – single source of truth.

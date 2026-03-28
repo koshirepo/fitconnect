@@ -1,3 +1,11 @@
+/**
+ * Documentation: Attendance routes.
+ *
+ * - Declares the Hono routes and middleware chain for member check-ins, staff attendance marking, summaries, and calendar views. This route set is mounted from `/tenants` in the application entrypoint.
+ * - Keep routing and authorization wiring here, and delegate request handling to the companion controller instead of placing business logic in route callbacks.
+ * - Relative endpoints declared in this file: POST /:tenantId/attendance, POST /:tenantId/attendance/mark, POST /:tenantId/attendance/mark-all, DELETE /:tenantId/attendance/:membershipId/:date, GET /:tenantId/attendance, GET /:tenantId/attendance/member/:membershipId, GET /:tenantId/attendance/summary/:membershipId, GET /:tenantId/attendance/calendar, GET /:tenantId/attendance/member/:membershipId/calendar.
+ * - Primary exports: attendanceRoutes.
+ */
 import { Hono } from "hono";
 import { TenantRole } from "../../shared/types/enums";
 import { authenticate } from "../../middleware/authenticate";

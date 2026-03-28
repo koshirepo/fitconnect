@@ -1,3 +1,10 @@
+/**
+ * Documentation: Members service.
+ *
+ * - Implements the business rules for tenant membership lifecycle, profile updates, reporting, and status management by coordinating repositories, shared helpers, and cross-cutting utilities like email or audit logging where needed.
+ * - Prefer placing workflow logic, derived calculations, and domain invariants here instead of inside controllers or repositories.
+ * - Primary exports: memberService.
+ */
 import { PlatformRole, type TenantRole } from "../../shared/types/enums";
 import {
   hashPassword,
@@ -23,6 +30,10 @@ type AddMemberResult = {
 };
 const DEFAULT_OVERDUE_DAYS = 30;
 
+/**
+ * Execute the `enforce overdue memberships for tenant` workflow for the members module.
+ * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+ */
 async function enforceOverdueMembershipsForTenant(
   tenantId: string,
   gymName: string,
@@ -74,6 +85,10 @@ async function enforceOverdueMembershipsForTenant(
 }
 
 export const memberService = {
+  /**
+   * Execute the `add member` workflow for the members module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async addMember(
     tenantId: string,
     input: AddMemberInput,
@@ -285,6 +300,10 @@ export const memberService = {
     };
   },
 
+  /**
+   * Execute the `list members` workflow for the members module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async listMembers(
     tenantId: string,
     page: number,
@@ -319,6 +338,10 @@ export const memberService = {
     };
   },
 
+  /**
+   * Execute the `get member detail` workflow for the members module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async getMemberDetail(tenantId: string, membershipId: string) {
     const member = await memberRepository.getMemberDetail(
       membershipId,
@@ -328,6 +351,10 @@ export const memberService = {
     return { data: { member: flattenMemberUser(member) } };
   },
 
+  /**
+   * Execute the `get my profile` workflow for the members module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async getMyProfile(tenantId: string, userId: string) {
     const profile = await memberRepository.getProfile(tenantId, userId);
     if (!profile) {
@@ -336,6 +363,10 @@ export const memberService = {
     return { data: { profile: flattenMemberUser(profile) } };
   },
 
+  /**
+   * Execute the `update my profile` workflow for the members module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async updateMyProfile(
     tenantId: string,
     userId: string,
@@ -382,6 +413,10 @@ export const memberService = {
     };
   },
 
+  /**
+   * Execute the `update member` workflow for the members module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async updateMember(
     tenantId: string,
     membershipId: string,
@@ -432,6 +467,10 @@ export const memberService = {
     return { data: { member: flattenMemberUser(updated!) } };
   },
 
+  /**
+   * Execute the `update member role` workflow for the members module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async updateMemberRole(
     tenantId: string,
     membershipId: string,
@@ -466,6 +505,10 @@ export const memberService = {
     };
   },
 
+  /**
+   * Execute the `update member status` workflow for the members module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async updateMemberStatus(
     tenantId: string,
     membershipId: string,
@@ -485,6 +528,10 @@ export const memberService = {
     return { data: { membership: updated }, previousStatus: membership.status };
   },
 
+  /**
+   * Execute the `remove member` workflow for the members module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async removeMember(tenantId: string, membershipId: string) {
     const membership = await memberRepository.findMembershipById(
       membershipId,
@@ -498,6 +545,10 @@ export const memberService = {
     return { data: true };
   },
 
+  /**
+   * Execute the `generate report` workflow for the members module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async generateReport(
     tenantId: string,
     adminUserId: string,
@@ -574,6 +625,10 @@ export const memberService = {
     return { data: reportData };
   },
 
+  /**
+   * Execute the `run scheduled overdue enforcement` workflow for the members module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async runScheduledOverdueEnforcement(
     scheduleBackgroundTask?: BackgroundTaskScheduler,
   ) {
@@ -615,6 +670,10 @@ export const memberService = {
     return { data: summary };
   },
 
+  /**
+   * Execute the `reset member password` workflow for the members module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async resetMemberPassword(tenantId: string, membershipId: string) {
     const membership = await memberRepository.findMembershipById(
       membershipId,

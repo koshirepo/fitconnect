@@ -1,3 +1,10 @@
+/**
+ * Documentation: Payments controller.
+ *
+ * - Owns the HTTP boundary for subscription management, payment collection, and membership validity tracking, including request parsing, service invocation, response shaping, and request-scoped side effects such as audit logging.
+ * - Controller code should stay thin: validate inputs, call the service layer, and convert outcomes into the shared response envelope.
+ * - Primary exports: paymentController.
+ */
 import type { Context } from "hono";
 import { paymentService } from "./payments.service";
 import { auditLog } from "../../lib/audit";
@@ -15,6 +22,10 @@ import type { AppBindings } from "../../types/app-context";
 type AppContext = Context<AppBindings>;
 
 export const paymentController = {
+  /**
+   * Handle the `list payments` HTTP action for the payments module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async listPayments(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const { page, limit } = parsePagination(c);
@@ -33,6 +44,10 @@ export const paymentController = {
     return okPaginated(c, data, { page, limit, total });
   },
 
+  /**
+   * Handle the `get my payments` HTTP action for the payments module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async getMyPayments(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const result = await paymentService.getMyPayments(tenantId, c.get("authUser").id);
@@ -40,6 +55,10 @@ export const paymentController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `get payment by id` HTTP action for the payments module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async getPaymentById(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const paymentId = c.req.param("paymentId")!;
@@ -61,6 +80,10 @@ export const paymentController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `create payment` HTTP action for the payments module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async createPayment(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const parsed = await parseBody(c, createPaymentSchema);
@@ -88,6 +111,10 @@ export const paymentController = {
     return ok(c, result.data, 201);
   },
 
+  /**
+   * Handle the `update payment` HTTP action for the payments module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async updatePayment(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const paymentId = c.req.param("paymentId")!;
@@ -110,6 +137,10 @@ export const paymentController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `update payment status` HTTP action for the payments module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async updatePaymentStatus(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const paymentId = c.req.param("paymentId")!;
@@ -137,6 +168,10 @@ export const paymentController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `list subscriptions` HTTP action for the payments module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async listSubscriptions(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const result = await paymentService.listSubscriptions(tenantId);
@@ -144,6 +179,10 @@ export const paymentController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `create subscription` HTTP action for the payments module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async createSubscription(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const parsed = await parseBody(c, createSubscriptionSchema);
@@ -163,6 +202,10 @@ export const paymentController = {
     return ok(c, result.data, 201);
   },
 
+  /**
+   * Handle the `get analytics` HTTP action for the payments module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async getAnalytics(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const result = await paymentService.getAnalytics(tenantId);

@@ -1,3 +1,10 @@
+/**
+ * Documentation: Members controller.
+ *
+ * - Owns the HTTP boundary for tenant membership lifecycle, profile updates, reporting, and status management, including request parsing, service invocation, response shaping, and request-scoped side effects such as audit logging.
+ * - Controller code should stay thin: validate inputs, call the service layer, and convert outcomes into the shared response envelope.
+ * - Primary exports: memberController.
+ */
 import type { Context } from "hono";
 import { memberService } from "./members.service";
 import { auditLog } from "../../lib/audit";
@@ -25,6 +32,10 @@ import type { AppBindings } from "../../types/app-context";
 type AppContext = Context<AppBindings>;
 
 export const memberController = {
+  /**
+   * Handle the `add member` HTTP action for the members module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async addMember(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const parsed = await parseBody(c, addMemberSchema);
@@ -58,6 +69,10 @@ export const memberController = {
     return ok(c, result.data, 201);
   },
 
+  /**
+   * Handle the `list members` HTTP action for the members module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async listMembers(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const { page, limit } = parsePagination(c);
@@ -78,6 +93,10 @@ export const memberController = {
     return okPaginated(c, data, { page, limit, total });
   },
 
+  /**
+   * Handle the `get member detail` HTTP action for the members module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async getMemberDetail(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const membershipId = c.req.param("membershipId")!;
@@ -88,6 +107,10 @@ export const memberController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `get my profile` HTTP action for the members module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async getMyProfile(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const userId = c.get("authUser").id;
@@ -98,6 +121,10 @@ export const memberController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `update my profile` HTTP action for the members module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async updateMyProfile(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const userId = c.get("authUser").id;
@@ -132,6 +159,10 @@ export const memberController = {
     return ok(c, { user: result.data.user });
   },
 
+  /**
+   * Handle the `update member` HTTP action for the members module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async updateMember(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const membershipId = c.req.param("membershipId")!;
@@ -162,6 +193,10 @@ export const memberController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `update member role` HTTP action for the members module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async updateMemberRole(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const membershipId = c.req.param("membershipId")!;
@@ -192,6 +227,10 @@ export const memberController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `generate report` HTTP action for the members module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async generateReport(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const result = await memberService.generateReport(
@@ -215,6 +254,10 @@ export const memberController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `update member status` HTTP action for the members module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async updateMemberStatus(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const membershipId = c.req.param("membershipId")!;
@@ -241,6 +284,10 @@ export const memberController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `remove member` HTTP action for the members module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async removeMember(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const membershipId = c.req.param("membershipId")!;
@@ -261,6 +308,10 @@ export const memberController = {
     return okMessage(c, "Member removed.");
   },
 
+  /**
+   * Handle the `reset member password` HTTP action for the members module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async resetMemberPassword(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const membershipId = c.req.param("membershipId")!;

@@ -1,3 +1,11 @@
+/**
+ * Documentation: Uploads routes.
+ *
+ * - Declares the Hono routes and middleware chain for R2-backed media uploads for avatars and product images. This route set is mounted from `/uploads` in the application entrypoint.
+ * - Keep routing and authorization wiring here, and delegate request handling to the companion controller instead of placing business logic in route callbacks.
+ * - Relative endpoints declared in this file: POST /avatar, POST /product-photo.
+ * - Primary exports: uploadRoutes.
+ */
 import { Hono } from "hono";
 import { authenticate } from "../../middleware/authenticate";
 import { badRequest, ok } from "../../lib/response";

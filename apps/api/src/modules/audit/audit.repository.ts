@@ -1,3 +1,10 @@
+/**
+ * Documentation: Audit repository.
+ *
+ * - Encapsulates Prisma queries for audit log querying for privileged users, including relation loading and write patterns that are specific to the persistence layer.
+ * - Keep raw database concerns here so the service layer can reason about domain behavior without duplicating query details.
+ * - Primary exports: auditRepository.
+ */
 import { prisma } from "../../lib/prisma";
 import type { AuditAction } from "../../shared/types/enums";
 
@@ -26,6 +33,10 @@ const tenantAuditLogSelect = {
 } as const;
 
 export const auditRepository = {
+  /**
+   * Run the `list platform logs` persistence operation for the audit module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async listPlatformLogs(
     page: number,
     limit: number,
@@ -49,6 +60,10 @@ export const auditRepository = {
     return { logs, total };
   },
 
+  /**
+   * Run the `list tenant logs` persistence operation for the audit module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async listTenantLogs(tenantId: string, page: number, limit: number) {
     const [logs, total] = await Promise.all([
       prisma.auditLog.findMany({

@@ -1,3 +1,10 @@
+/**
+ * Documentation: Tenants repository.
+ *
+ * - Encapsulates Prisma queries for tenant onboarding, tenant profile maintenance, and tenant administration, including relation loading and write patterns that are specific to the persistence layer.
+ * - Keep raw database concerns here so the service layer can reason about domain behavior without duplicating query details.
+ * - Primary exports: tenantRepository.
+ */
 import { prisma } from "../../lib/prisma";
 import type { AccountStatus } from "../../shared/types/enums";
 
@@ -49,6 +56,10 @@ const tenantListSelect = {
 } as const;
 
 export const tenantRepository = {
+  /**
+   * Run the `find by slug` persistence operation for the tenants module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   findBySlug(slug: string) {
     return prisma.tenant.findUnique({
       where: { slug },
@@ -56,6 +67,10 @@ export const tenantRepository = {
     });
   },
 
+  /**
+   * Run the `find by phone` persistence operation for the tenants module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   findByPhone(phone: string) {
     return prisma.tenant.findFirst({
       where: { phone },
@@ -63,6 +78,10 @@ export const tenantRepository = {
     });
   },
 
+  /**
+   * Run the `find user by email` persistence operation for the tenants module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   findUserByEmail(email: string) {
     return prisma.user.findFirst({
       where: { email },
@@ -70,6 +89,10 @@ export const tenantRepository = {
     });
   },
 
+  /**
+   * Run the `find user by phone` persistence operation for the tenants module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   findUserByPhone(phone: string) {
     return prisma.user.findUnique({
       where: { phone },
@@ -77,6 +100,10 @@ export const tenantRepository = {
     });
   },
 
+  /**
+   * Run the `find by id` persistence operation for the tenants module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   findById(id: string) {
     return prisma.tenant.findUnique({
       where: { slug: id },
@@ -84,6 +111,10 @@ export const tenantRepository = {
     });
   },
 
+  /**
+   * Run the `create` persistence operation for the tenants module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   create(data: {
     name: string;
     slug: string;
@@ -103,6 +134,10 @@ export const tenantRepository = {
     });
   },
 
+  /**
+   * Run the `create with admin` persistence operation for the tenants module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async createWithAdmin(input: {
     tenant: CreateTenantData;
     admin: CreateTenantAdminData;
@@ -154,6 +189,10 @@ export const tenantRepository = {
     return tenant;
   },
 
+  /**
+   * Run the `update` persistence operation for the tenants module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   update(id: string, data: Record<string, unknown>) {
     return prisma.tenant.update({
       where: { id },
@@ -162,6 +201,10 @@ export const tenantRepository = {
     });
   },
 
+  /**
+   * Run the `update status` persistence operation for the tenants module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   updateStatus(id: string, status: AccountStatus) {
     return prisma.tenant.update({
       where: { id },
@@ -170,6 +213,10 @@ export const tenantRepository = {
     });
   },
 
+  /**
+   * Run the `list` persistence operation for the tenants module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async list(page: number, limit: number) {
     const skip = (page - 1) * limit;
     const [tenants, total] = await Promise.all([
@@ -184,6 +231,10 @@ export const tenantRepository = {
     return { tenants, total };
   },
 
+  /**
+   * Run the `create platform payment` persistence operation for the tenants module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async createPlatformPayment(data: {
     tenantId: string;
     amount: number;
@@ -213,6 +264,10 @@ export const tenantRepository = {
     return payment;
   },
 
+  /**
+   * Run the `list platform payments` persistence operation for the tenants module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async listPlatformPayments(tenantId: string, page: number, limit: number) {
     const skip = (page - 1) * limit;
     const [payments, total] = await Promise.all([
@@ -237,6 +292,10 @@ export const tenantRepository = {
     return { payments, total };
   },
 
+  /**
+   * Run the `list active tenants for overdue enforcement` persistence operation for the tenants module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   listActiveTenantsForOverdueEnforcement() {
     return prisma.tenant.findMany({
       where: { status: "ACTIVE" },

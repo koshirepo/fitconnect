@@ -1,3 +1,10 @@
+/**
+ * Documentation: Auth controller.
+ *
+ * - Owns the HTTP boundary for platform authentication, session lifecycle, bootstrap, and password recovery, including request parsing, service invocation, response shaping, and request-scoped side effects such as audit logging.
+ * - Controller code should stay thin: validate inputs, call the service layer, and convert outcomes into the shared response envelope.
+ * - Primary exports: authController.
+ */
 import type { Context } from "hono";
 import { authService } from "./auth.service";
 import { auditLog } from "../../lib/audit";
@@ -16,6 +23,10 @@ import type { AppBindings } from "../../types/app-context";
 type AppContext = Context<AppBindings>;
 
 export const authController = {
+  /**
+   * Handle the `bootstrap` HTTP action for the auth module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async bootstrap(c: AppContext) {
     const parsed = await parseBody(c, bootstrapSchema);
     if (!parsed.ok) return parsed.response;
@@ -35,6 +46,10 @@ export const authController = {
     return ok(c, result.data, 201);
   },
 
+  /**
+   * Handle the `login` HTTP action for the auth module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async login(c: AppContext) {
     const parsed = await parseBody(c, loginSchema);
     if (!parsed.ok) return parsed.response;
@@ -55,6 +70,10 @@ export const authController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `refresh` HTTP action for the auth module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async refresh(c: AppContext) {
     const parsed = await parseBody(c, refreshTokenSchema);
     if (!parsed.ok) return parsed.response;
@@ -67,6 +86,10 @@ export const authController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `logout` HTTP action for the auth module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async logout(c: AppContext) {
     const parsed = await parseBody(c, refreshTokenSchema);
     if (!parsed.ok) return parsed.response;
@@ -87,6 +110,10 @@ export const authController = {
     return okMessage(c, "Logged out successfully.");
   },
 
+  /**
+   * Handle the `me` HTTP action for the auth module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async me(c: AppContext) {
     const user = c.get("authUser");
     const result = await authService.getMe(user.id);
@@ -95,6 +122,10 @@ export const authController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `create platform user` HTTP action for the auth module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async createPlatformUser(c: AppContext) {
     const parsed = await parseBody(c, createPlatformUserSchema);
     if (!parsed.ok) return parsed.response;
@@ -114,6 +145,10 @@ export const authController = {
     return ok(c, result.data, 201);
   },
 
+  /**
+   * Handle the `forgot password` HTTP action for the auth module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async forgotPassword(c: AppContext) {
     const parsed = await parseBody(c, forgotPasswordSchema);
     if (!parsed.ok) return parsed.response;
@@ -122,6 +157,10 @@ export const authController = {
     return okMessage(c, "If that email is registered, a reset link has been sent.");
   },
 
+  /**
+   * Handle the `reset password` HTTP action for the auth module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async resetPassword(c: AppContext) {
     const parsed = await parseBody(c, resetPasswordSchema);
     if (!parsed.ok) return parsed.response;

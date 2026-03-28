@@ -1,3 +1,10 @@
+/**
+ * Documentation: Settings service.
+ *
+ * - Implements the business rules for tenant settings and extra charge configuration by coordinating repositories, shared helpers, and cross-cutting utilities like email or audit logging where needed.
+ * - Prefer placing workflow logic, derived calculations, and domain invariants here instead of inside controllers or repositories.
+ * - Primary exports: settingsService.
+ */
 import { settingsRepository } from "./settings.repository";
 import type {
   UpdateSettingsInput,
@@ -12,6 +19,10 @@ const DEFAULT_SETTINGS = {
 export const settingsService = {
   // ─── Settings ───────────────────────────────────────────────────────────────
 
+  /**
+   * Execute the `get settings` workflow for the settings module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async getSettings(tenantId: string) {
     const settings = await settingsRepository.getSettings(tenantId);
     return {
@@ -25,6 +36,10 @@ export const settingsService = {
     };
   },
 
+  /**
+   * Execute the `update settings` workflow for the settings module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async updateSettings(tenantId: string, input: UpdateSettingsInput) {
     const data: Record<string, unknown> = {};
     if (input.overdueDays !== undefined) data.overdueDays = input.overdueDays;
@@ -41,11 +56,19 @@ export const settingsService = {
 
   // ─── Charges ────────────────────────────────────────────────────────────────
 
+  /**
+   * Execute the `list charges` workflow for the settings module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async listCharges(tenantId: string) {
     const charges = await settingsRepository.listCharges(tenantId);
     return { data: { charges } };
   },
 
+  /**
+   * Execute the `create charge` workflow for the settings module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async createCharge(tenantId: string, input: CreateChargeInput) {
     const existing = await settingsRepository.findChargeByName(
       tenantId,
@@ -62,6 +85,10 @@ export const settingsService = {
     return { data: { charge } };
   },
 
+  /**
+   * Execute the `update charge` workflow for the settings module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async updateCharge(
     tenantId: string,
     chargeId: string,
@@ -89,6 +116,10 @@ export const settingsService = {
     return { data: { charge } };
   },
 
+  /**
+   * Execute the `delete charge` workflow for the settings module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async deleteCharge(tenantId: string, chargeId: string) {
     const existing = await settingsRepository.findCharge(chargeId, tenantId);
     if (!existing) {

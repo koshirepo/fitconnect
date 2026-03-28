@@ -1,3 +1,10 @@
+/**
+ * Documentation: Badges controller.
+ *
+ * - Owns the HTTP boundary for badge definitions and member badge assignment, including request parsing, service invocation, response shaping, and request-scoped side effects such as audit logging.
+ * - Controller code should stay thin: validate inputs, call the service layer, and convert outcomes into the shared response envelope.
+ * - Primary exports: badgeController.
+ */
 import type { Context } from "hono";
 import { badgeService } from "./badges.service";
 import { auditLog } from "../../lib/audit";
@@ -10,6 +17,10 @@ import type { AppBindings } from "../../types/app-context";
 type AppContext = Context<AppBindings>;
 
 export const badgeController = {
+  /**
+   * Handle the `create` HTTP action for the badges module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async create(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const parsed = await parseBody(c, createBadgeSchema);
@@ -31,6 +42,10 @@ export const badgeController = {
     return ok(c, result.data, 201);
   },
 
+  /**
+   * Handle the `list` HTTP action for the badges module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async list(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const { page, limit } = parsePagination(c);
@@ -40,6 +55,10 @@ export const badgeController = {
     return okPaginated(c, data, { page, limit, total });
   },
 
+  /**
+   * Handle the `get by id` HTTP action for the badges module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async getById(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const badgeId = c.req.param("badgeId")!;
@@ -50,6 +69,10 @@ export const badgeController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `update` HTTP action for the badges module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async update(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const badgeId = c.req.param("badgeId")!;
@@ -76,6 +99,10 @@ export const badgeController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `delete` HTTP action for the badges module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async delete(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const badgeId = c.req.param("badgeId")!;
@@ -95,6 +122,10 @@ export const badgeController = {
     return okMessage(c, "Badge deleted.");
   },
 
+  /**
+   * Handle the `assign` HTTP action for the badges module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async assign(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const badgeId = c.req.param("badgeId")!;
@@ -122,6 +153,10 @@ export const badgeController = {
     return ok(c, result.data, 201);
   },
 
+  /**
+   * Handle the `unassign` HTTP action for the badges module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async unassign(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const badgeId = c.req.param("badgeId")!;
@@ -142,6 +177,10 @@ export const badgeController = {
     return okMessage(c, "Badge removed from member.");
   },
 
+  /**
+   * Handle the `list assignments` HTTP action for the badges module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async listAssignments(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const badgeId = c.req.param("badgeId")!;
@@ -152,6 +191,10 @@ export const badgeController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `member badges` HTTP action for the badges module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async memberBadges(c: AppContext) {
     const membershipId = c.req.param("membershipId")!;
 

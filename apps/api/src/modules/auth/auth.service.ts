@@ -1,3 +1,10 @@
+/**
+ * Documentation: Auth service.
+ *
+ * - Implements the business rules for platform authentication, session lifecycle, bootstrap, and password recovery by coordinating repositories, shared helpers, and cross-cutting utilities like email or audit logging where needed.
+ * - Prefer placing workflow logic, derived calculations, and domain invariants here instead of inside controllers or repositories.
+ * - Primary exports: authService.
+ */
 import { PlatformRole } from "../../shared/types/enums";
 import {
   signAccessToken,
@@ -21,6 +28,10 @@ import type {
   ResetPasswordInput,
 } from "./auth.schema";
 
+/**
+ * Execute the `map membership` workflow for the auth module.
+ * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+ */
 function mapMembership(
   m:
     | { tenantId: string; role: string; tenant: { name: string; slug: string } }
@@ -46,6 +57,10 @@ function buildTenantsMap(
 }
 
 export const authService = {
+  /**
+   * Execute the `bootstrap` workflow for the auth module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async bootstrap(input: BootstrapInput) {
     const existingCount = await authRepository.countSuperAdmins();
     if (existingCount > 0) {
@@ -75,12 +90,18 @@ export const authService = {
     return { data: { accessToken, refreshToken, user } };
   },
 
+  /**
+   * Execute the `login` workflow for the auth module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async login(input: LoginInput) {
     const user = await authRepository.findUserByEmail(input.email);
     if (!user) {
       return { error: "Invalid email or password.", status: 401 as const };
     }
 
+    // Authentication and account-state checks intentionally share the same
+    // generic credential error until the user identity has been confirmed.
     if (user.status !== "ACTIVE") {
       return {
         error: "Account is suspended or deleted.",
@@ -96,6 +117,8 @@ export const authService = {
       return { error: "Invalid email or password.", status: 401 as const };
     }
 
+    // Tenant memberships are embedded into the access token so downstream
+    // authorization middleware can resolve tenant roles without a database hit.
     const accessToken = await signAccessToken({
       userId: user.id,
       platformRole: user.platformRole as PlatformRole,
@@ -125,9 +148,15 @@ export const authService = {
     };
   },
 
+  /**
+   * Execute the `refresh` workflow for the auth module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async refresh(token: string) {
     const stored = await authRepository.findRefreshToken(token);
 
+    // A refresh token is usable only while it exists, is unrevoked, and has
+    // not crossed its expiry window.
     if (!stored || stored.revokedAt || stored.expiresAt < new Date()) {
       return {
         error: "Invalid or expired refresh token.",
@@ -143,6 +172,8 @@ export const authService = {
     }
 
     const newRefreshToken = generateRefreshToken();
+    // Rotate the long-lived credential first so the database state always
+    // reflects the newest refresh token before a new access token is issued.
     await authRepository.rotateRefreshToken(
       stored.id,
       stored.user.id,
@@ -159,10 +190,18 @@ export const authService = {
     return { data: { accessToken, refreshToken: newRefreshToken } };
   },
 
+  /**
+   * Execute the `logout` workflow for the auth module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async logout(token: string, userId?: string) {
     await authRepository.revokeRefreshToken(token, userId);
   },
 
+  /**
+   * Execute the `get me` workflow for the auth module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async getMe(userId: string) {
     const user = await authRepository.findUserById(userId);
     if (!user) return { error: "User not found." };
@@ -179,6 +218,10 @@ export const authService = {
     };
   },
 
+  /**
+   * Execute the `create platform user` workflow for the auth module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async createPlatformUser(input: CreatePlatformUserInput) {
     const existing = await authRepository.findUserByEmail(input.email);
     if (existing) {
@@ -197,6 +240,10 @@ export const authService = {
     return { data: { user, generatedPassword } };
   },
 
+  /**
+   * Execute the `forgot password` workflow for the auth module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async forgotPassword(input: ForgotPasswordInput) {
     // Always return success to avoid leaking whether email exists
     const user = await authRepository.findUserByEmail(input.email);
@@ -213,6 +260,8 @@ export const authService = {
     const resetUrl = `${appUrl}/reset-password?token=${token}`;
 
     // Fire-and-forget — don't await so endpoint responds instantly
+    // Fire-and-forget keeps the endpoint latency predictable even if the SMTP
+    // provider is slow or temporarily unavailable.
     emailService
       .sendPasswordResetEmail(user.email, user.name, resetUrl)
       .catch((err) => {
@@ -222,9 +271,15 @@ export const authService = {
     return { data: true };
   },
 
+  /**
+   * Execute the `reset password` workflow for the auth module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async resetPassword(input: ResetPasswordInput) {
     const record = await authRepository.findPasswordResetToken(input.token);
 
+    // Each branch below maps to a different token lifecycle rule so callers
+    // get a precise failure reason without exposing unrelated account data.
     if (!record)
       return { error: "Invalid or expired reset link.", status: 400 as const };
     if (record.usedAt)
@@ -238,6 +293,8 @@ export const authService = {
       return { error: "Account is suspended.", status: 403 as const };
 
     const passwordHash = await hashPassword(input.password);
+    // Update the password and consume the token together so a successful reset
+    // cannot be replayed with the same one-time link.
     await Promise.all([
       authRepository.updateUser(record.userId, { passwordHash }),
       authRepository.markPasswordResetTokenUsed(record.id),

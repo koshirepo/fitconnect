@@ -1,3 +1,11 @@
+/**
+ * Documentation: Commerce routes.
+ *
+ * - Declares the Hono routes and middleware chain for product catalog management, ordering, and admin order operations. This route set is mounted from `/` in the application entrypoint.
+ * - Keep routing and authorization wiring here, and delegate request handling to the companion controller instead of placing business logic in route callbacks.
+ * - Relative endpoints declared in this file: GET /products, GET /products/:id, POST /orders, GET /orders/me, GET /orders/:id, GET /admin/products, POST /admin/products, PATCH /admin/products/:productId, GET /admin/orders, GET /admin/orders/:orderId, PATCH /admin/orders/:orderId/status.
+ * - Primary exports: commerceRoutes.
+ */
 import { Hono } from "hono";
 import { PlatformRole } from "../../shared/types/enums";
 import { authenticate } from "../../middleware/authenticate";

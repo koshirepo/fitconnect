@@ -1,3 +1,10 @@
+/**
+ * Documentation: Badges service.
+ *
+ * - Implements the business rules for badge definitions and member badge assignment by coordinating repositories, shared helpers, and cross-cutting utilities like email or audit logging where needed.
+ * - Prefer placing workflow logic, derived calculations, and domain invariants here instead of inside controllers or repositories.
+ * - Primary exports: badgeService.
+ */
 import { badgeRepository } from "./badges.repository";
 import { flattenNestedMember } from "../../lib/flatten";
 import type { CreateBadgeInput, UpdateBadgeInput, AssignBadgeInput } from "./badges.schema";
@@ -8,6 +15,10 @@ type BadgeRecord = Awaited<ReturnType<typeof badgeRepository.update>>;
 type UpdateBadgeResult = ServiceResult<{ badge: BadgeRecord }>;
 
 export const badgeService = {
+  /**
+   * Execute the `create` workflow for the badges module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async create(tenantId: string, data: CreateBadgeInput) {
     const existing = await badgeRepository.findByTenantAndName(tenantId, data.name);
     if (existing) {
@@ -17,17 +28,29 @@ export const badgeService = {
     return { data: { badge } };
   },
 
+  /**
+   * Execute the `list` workflow for the badges module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async list(tenantId: string, page: number, limit: number, includeInactive: boolean) {
     const { badges, total } = await badgeRepository.list(tenantId, page, limit, includeInactive);
     return { data: badges, total };
   },
 
+  /**
+   * Execute the `get by id` workflow for the badges module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async getById(tenantId: string, badgeId: string) {
     const badge = await badgeRepository.findById(badgeId, tenantId);
     if (!badge) return { error: "Badge not found.", status: 404 as const };
     return { data: { badge } };
   },
 
+  /**
+   * Execute the `update` workflow for the badges module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async update(
     tenantId: string,
     badgeId: string,
@@ -46,6 +69,10 @@ export const badgeService = {
     return { data: { badge: updated } };
   },
 
+  /**
+   * Execute the `delete` workflow for the badges module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async delete(tenantId: string, badgeId: string) {
     const badge = await badgeRepository.findById(badgeId, tenantId);
     if (!badge) return { error: "Badge not found.", status: 404 as const };
@@ -54,6 +81,10 @@ export const badgeService = {
     return { data: null };
   },
 
+  /**
+   * Execute the `assign` workflow for the badges module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async assign(tenantId: string, badgeId: string, input: AssignBadgeInput) {
     const badge = await badgeRepository.findById(badgeId, tenantId);
     if (!badge) return { error: "Badge not found.", status: 404 as const };
@@ -78,6 +109,10 @@ export const badgeService = {
     };
   },
 
+  /**
+   * Execute the `unassign` workflow for the badges module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async unassign(tenantId: string, badgeId: string, membershipId: string) {
     const badge = await badgeRepository.findById(badgeId, tenantId);
     if (!badge) return { error: "Badge not found.", status: 404 as const };
@@ -89,6 +124,10 @@ export const badgeService = {
     return { data: null };
   },
 
+  /**
+   * Execute the `list assignments` workflow for the badges module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async listAssignments(tenantId: string, badgeId: string) {
     const badge = await badgeRepository.findById(badgeId, tenantId);
     if (!badge) return { error: "Badge not found.", status: 404 as const };
@@ -100,6 +139,10 @@ export const badgeService = {
     return { data: { assignments: flat } };
   },
 
+  /**
+   * Execute the `list member badges` workflow for the badges module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async listMemberBadges(membershipId: string) {
     const badges = await badgeRepository.listMemberBadges(membershipId);
     return { data: { badges } };

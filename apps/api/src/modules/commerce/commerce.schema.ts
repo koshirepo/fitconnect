@@ -1,5 +1,16 @@
+/**
+ * Documentation: Commerce schema definitions.
+ *
+ * - Defines the Zod schemas and inferred TypeScript input types used to validate requests for product catalog management, ordering, and admin order operations.
+ * - When a request payload or query contract changes, update this file first and then adjust the controller/service code that consumes the parsed input.
+ * - Primary exports: createProductSchema, updateProductSchema, placeOrderSchema, updateOrderStatusSchema, CreateProductInput, UpdateProductInput, PlaceOrderInput, UpdateOrderStatusInput.
+ */
 import { z } from "zod";
 
+/**
+ * Define or support the `is youtube url` validation contract for the commerce module.
+ * Schema helpers keep input parsing rules colocated with the module that consumes them.
+ */
 function isYoutubeUrl(value: string) {
   try {
     const url = new URL(value);

@@ -1,3 +1,10 @@
+/**
+ * Documentation: Tenants schema definitions.
+ *
+ * - Defines the Zod schemas and inferred TypeScript input types used to validate requests for tenant onboarding, tenant profile maintenance, and tenant administration.
+ * - When a request payload or query contract changes, update this file first and then adjust the controller/service code that consumes the parsed input.
+ * - Primary exports: createTenantAdminSchema, createTenantSchema, updateTenantSchema, updateTenantStatusSchema, recordPlatformPaymentSchema, CreateTenantInput, UpdateTenantInput, RecordPlatformPaymentInput.
+ */
 import { z } from "zod";
 import { SLUG_REGEX } from "../../shared/constants";
 

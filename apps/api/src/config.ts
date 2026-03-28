@@ -1,9 +1,20 @@
+/**
+ * Documentation: Runtime configuration helpers.
+ *
+ * - Centralizes validated environment-variable access for JWT secrets, token TTLs, bcrypt settings, and optional push-notification configuration.
+ * - Read configuration through these getters so startup and request-time failures remain explicit and consistent across modules.
+ * - Primary exports: config.
+ */
 function requireEnv(key: string): string {
   const value = process.env[key];
   if (!value) throw new Error(`Missing ${key} in environment variables.`);
   return value;
 }
 
+/**
+ * Utility helper for the config that owns the `parse positive number` step.
+ * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
+ */
 function parsePositiveNumber(key: string, fallback: string): number {
   const val = Number(process.env[key] ?? fallback);
   if (!Number.isFinite(val) || val <= 0) throw new Error(`${key} must be a positive number.`);

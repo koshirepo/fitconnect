@@ -1,3 +1,10 @@
+/**
+ * Documentation: Review repository.
+ *
+ * - Encapsulates Prisma queries for product reviews, comments, and helpful-vote interactions, including relation loading and write patterns that are specific to the persistence layer.
+ * - Keep raw database concerns here so the service layer can reason about domain behavior without duplicating query details.
+ * - Primary exports: reviewRepository.
+ */
 import { prisma } from "../../lib/prisma";
 
 const reviewSelect = {
@@ -39,6 +46,10 @@ const reviewSelect = {
 
 export const reviewRepository = {
   // Get paginated reviews for a product
+  /**
+   * Run the `list by product` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async listByProduct(productId: string, page: number, limit: number) {
     const [reviews, total] = await Promise.all([
       prisma.productReview.findMany({
@@ -61,6 +72,10 @@ export const reviewRepository = {
   },
 
   // Get review with all details
+  /**
+   * Run the `get by id` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async getById(reviewId: string) {
     return prisma.productReview.findUnique({
       where: { id: reviewId },
@@ -69,6 +84,10 @@ export const reviewRepository = {
   },
 
   // Create a new review
+  /**
+   * Run the `create` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async create(
     productId: string,
     userId: string | null,
@@ -94,6 +113,10 @@ export const reviewRepository = {
   },
 
   // Add comment to a review
+  /**
+   * Run the `add comment` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async addComment(reviewId: string, userId: string | null, text: string, isAnonymous: boolean) {
     return prisma.productReviewComment.create({
       data: {
@@ -120,6 +143,10 @@ export const reviewRepository = {
   },
 
   // Mark review as helpful
+  /**
+   * Run the `mark helpful` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async markHelpful(reviewId: string, userId: string) {
     // Upsert: create if doesn't exist, ignore if already exists
     await prisma.productReviewHelpful.upsert({
@@ -143,6 +170,10 @@ export const reviewRepository = {
   },
 
   // Unmark review as helpful
+  /**
+   * Run the `unmark helpful` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async unmarkHelpful(reviewId: string, userId: string) {
     const existing = await prisma.productReviewHelpful.findUnique({
       where: {
@@ -170,6 +201,10 @@ export const reviewRepository = {
   },
 
   // Get average rating for a product
+  /**
+   * Run the `get product rating stats` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async getProductRatingStats(productId: string) {
     const stats = await prisma.productReview.aggregate({
       where: { productId },
@@ -195,6 +230,10 @@ export const reviewRepository = {
   },
 
   // Check if user has marked review as helpful
+  /**
+   * Run the `is marked helpful` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
   async isMarkedHelpful(reviewId: string, userId: string) {
     const record = await prisma.productReviewHelpful.findUnique({
       where: {

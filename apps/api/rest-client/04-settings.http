@@ -1,3 +1,7 @@
+# Documentation: 04-settings.http REST client collection.
+# - Exercises tenant settings retrieval/update plus the CRUD flow for extra tenant charges.
+# - Use an admin token for write requests because the charge catalog drives downstream payment behavior.
+# - These requests are written for the VS Code REST Client extension and use its response-variable syntax extensively.
 @baseUrl = http://127.0.0.1:8787
 @json = application/json
 @seedPassword = Test@1234

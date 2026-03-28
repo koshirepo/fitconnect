@@ -1,3 +1,10 @@
+/**
+ * Documentation: Workouts controller.
+ *
+ * - Owns the HTTP boundary for workout plan creation, assignment, and member program visibility, including request parsing, service invocation, response shaping, and request-scoped side effects such as audit logging.
+ * - Controller code should stay thin: validate inputs, call the service layer, and convert outcomes into the shared response envelope.
+ * - Primary exports: workoutController.
+ */
 import type { Context } from "hono";
 import { workoutService } from "./workouts.service";
 import { auditLog } from "../../lib/audit";
@@ -9,6 +16,10 @@ import type { AppBindings } from "../../types/app-context";
 
 type AppContext = Context<AppBindings>;
 export const workoutController = {
+  /**
+   * Handle the `list plans` HTTP action for the workouts module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async listPlans(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const { page, limit } = parsePagination(c);
@@ -25,6 +36,10 @@ export const workoutController = {
     return okPaginated(c, data, { page, limit, total });
   },
 
+  /**
+   * Handle the `get plan` HTTP action for the workouts module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async getPlan(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const planId = c.req.param("planId")!;
@@ -40,6 +55,10 @@ export const workoutController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `create plan` HTTP action for the workouts module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async createPlan(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const parsed = await parseBody(c, createPlanSchema);
@@ -61,6 +80,10 @@ export const workoutController = {
     return ok(c, result.data, 201);
   },
 
+  /**
+   * Handle the `update plan` HTTP action for the workouts module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async updatePlan(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const planId = c.req.param("planId")!;
@@ -92,6 +115,10 @@ export const workoutController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `delete plan` HTTP action for the workouts module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async deletePlan(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const planId = c.req.param("planId")!;
@@ -111,6 +138,10 @@ export const workoutController = {
     return okMessage(c, "Workout plan deleted.");
   },
 
+  /**
+   * Handle the `assign plan` HTTP action for the workouts module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async assignPlan(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const planId = c.req.param("planId")!;

@@ -1,3 +1,10 @@
+/**
+ * Documentation: Tenants service.
+ *
+ * - Implements the business rules for tenant onboarding, tenant profile maintenance, and tenant administration by coordinating repositories, shared helpers, and cross-cutting utilities like email or audit logging where needed.
+ * - Prefer placing workflow logic, derived calculations, and domain invariants here instead of inside controllers or repositories.
+ * - Primary exports: tenantService.
+ */
 import type { AccountStatus } from "../../shared/types/enums";
 import { toSlug } from "../../shared/utils";
 import { hashPassword, generateRandomPassword } from "../../auth/password";
@@ -8,12 +15,20 @@ import type {
   RecordPlatformPaymentInput,
 } from "./tenants.schema";
 
+/**
+ * Execute the `normalize slug` workflow for the tenants module.
+ * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+ */
 function normalizeSlug(name: string) {
   const fromName = toSlug(name);
   if (fromName.length >= 2) return fromName;
   return "gym";
 }
 
+/**
+ * Execute the `generate unique slug` workflow for the tenants module.
+ * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+ */
 async function generateUniqueSlug(baseSlug: string) {
   let candidate = baseSlug;
   let suffix = 2;
@@ -27,8 +42,14 @@ async function generateUniqueSlug(baseSlug: string) {
 }
 
 export const tenantService = {
+  /**
+   * Execute the `create` workflow for the tenants module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async create(input: CreateTenantInput) {
     const requestedSlug = input.slug?.trim();
+    // If no slug is supplied, derive one from the tenant name and keep
+    // incrementing until the public identifier is unique.
     const slug = requestedSlug
       ? requestedSlug
       : await generateUniqueSlug(normalizeSlug(input.name));
@@ -52,6 +73,8 @@ export const tenantService = {
       input.admin.phone ? tenantRepository.findUserByPhone(input.admin.phone) : null,
     ]);
 
+    // Tenant onboarding can reuse an existing platform user, but only when the
+    // submitted email and phone resolve to the same identity.
     if (
       existingUserByEmail &&
       existingUserByPhone &&
@@ -87,6 +110,8 @@ export const tenantService = {
     let generatedPassword: string | undefined;
     let adminPayload: Parameters<typeof tenantRepository.createWithAdmin>[0]["admin"];
 
+    // Reuse the existing user account when possible so a single admin does
+    // not accumulate duplicate platform identities across tenants.
     if (existingAdmin) {
       adminPayload = { userId: existingAdmin.id };
     } else {
@@ -100,6 +125,8 @@ export const tenantService = {
       };
     }
 
+    // The repository handles tenant creation, admin provisioning, and the
+    // initial tenant-admin membership bootstrap in one write boundary.
     const tenant = await tenantRepository.createWithAdmin({
       tenant: {
         name: input.name,
@@ -121,27 +148,47 @@ export const tenantService = {
     };
   },
 
+  /**
+   * Execute the `list` workflow for the tenants module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async list(page: number, limit: number) {
     const { tenants, total } = await tenantRepository.list(page, limit);
     return { data: { tenants }, total };
   },
 
+  /**
+   * Execute the `get by id` workflow for the tenants module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async getById(id: string) {
     const tenant = await tenantRepository.findById(id);
     if (!tenant) return { error: "Tenant not found." };
     return { data: { tenant } };
   },
 
+  /**
+   * Execute the `update` workflow for the tenants module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async update(id: string, input: UpdateTenantInput) {
     const tenant = await tenantRepository.update(id, input);
     return { data: { tenant } };
   },
 
+  /**
+   * Execute the `update status` workflow for the tenants module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async updateStatus(id: string, status: AccountStatus) {
     const tenant = await tenantRepository.updateStatus(id, status);
     return { data: { tenant } };
   },
 
+  /**
+   * Execute the `record platform payment` workflow for the tenants module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async recordPlatformPayment(
     tenantId: string,
     input: RecordPlatformPaymentInput,
@@ -150,6 +197,8 @@ export const tenantService = {
     const tenant = await tenantRepository.findById(tenantId);
     if (!tenant) return { error: "Tenant not found." };
 
+    // Platform payments extend the tenant's platform access window; they do
+    // not affect member subscription validity inside the tenant.
     const payment = await tenantRepository.createPlatformPayment({
       tenantId: tenant.id,
       amount: input.amount,
@@ -161,10 +210,16 @@ export const tenantService = {
     return { data: { payment } };
   },
 
+  /**
+   * Execute the `list platform payments` workflow for the tenants module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
   async listPlatformPayments(tenantId: string, page: number, limit: number) {
     const tenant = await tenantRepository.findById(tenantId);
     if (!tenant) return { error: "Tenant not found." };
 
+    // Resolve the tenant once up front so pagination only runs for valid
+    // tenants and callers get a clean not-found error otherwise.
     const { payments, total } = await tenantRepository.listPlatformPayments(tenant.id, page, limit);
     return { data: { payments }, total };
   },

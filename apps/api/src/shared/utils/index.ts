@@ -1,3 +1,10 @@
+/**
+ * Documentation: Pure shared utility functions.
+ *
+ * - Contains framework-agnostic helpers for formatting money and dates, generating initials, and working with tenant slugs.
+ * - Because these functions have no runtime dependencies on Hono or Prisma, they are safe to reuse in the API and any frontend client.
+ * - Primary exports: formatCurrency, formatDate, formatDateTime, getInitials, isValidSlug, toSlug.
+ */
 // ─── Shared Utilities ─────────────────────────────────────────────────────────
 // Pure functions with no framework dependencies – safe for API and PWA.
 

@@ -1,3 +1,10 @@
+/**
+ * Documentation: Attendance controller.
+ *
+ * - Owns the HTTP boundary for member check-ins, staff attendance marking, summaries, and calendar views, including request parsing, service invocation, response shaping, and request-scoped side effects such as audit logging.
+ * - Controller code should stay thin: validate inputs, call the service layer, and convert outcomes into the shared response envelope.
+ * - Primary exports: attendanceController.
+ */
 import type { Context } from "hono";
 import { attendanceService } from "./attendance.service";
 import { auditLog } from "../../lib/audit";

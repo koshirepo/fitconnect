@@ -1,3 +1,10 @@
+/**
+ * Documentation: Shared domain model and payload interfaces.
+ *
+ * - Collects the DTOs used across authentication, tenants, members, payments, commerce, attendance, and other business areas.
+ * - Treat this file as the typed contract surface for clients that consume the API rather than as a mirror of raw Prisma model output.
+ * - Primary exports: User, TenantMembershipSummary, AuthResponse, TokenRefreshResponse, Tenant, CreateTenantAdminPayload, CreateTenantPayload, UpdateTenantPayload, PublicTenantDetail, PublicGymSummary, TenantMember, TenantProfile, AddMemberPayload, UpdateProfilePayload, MemberDetail, Subscription, CreateSubscriptionPayload, Payment, PaymentSummary, CreatePaymentPayload, UpdatePaymentPayload, PlatformPayment, RecordPlatformPaymentPayload, Product, CreateProductPayload, UpdateProductPayload, OrderItem, Order, PlaceOrderPayload, Exercise, WorkoutPlan, CreateWorkoutPlanPayload, UpdateWorkoutPlanPayload, AuditLog, Badge, CreateBadgePayload, UpdateBadgePayload, AssignBadgePayload, TenantSettings, UpdateTenantSettingsPayload, TenantCharge, CreateTenantChargePayload, UpdateTenantChargePayload, AttendanceRecord, AttendanceSummary, MarkAttendancePayload, MarkAllAttendancePayload.
+ */
 import type {
   PlatformRole,
   TenantRole,

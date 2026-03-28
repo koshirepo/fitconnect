@@ -1,3 +1,10 @@
+/**
+ * Documentation: Commerce controller.
+ *
+ * - Owns the HTTP boundary for product catalog management, ordering, and admin order operations, including request parsing, service invocation, response shaping, and request-scoped side effects such as audit logging.
+ * - Controller code should stay thin: validate inputs, call the service layer, and convert outcomes into the shared response envelope.
+ * - Primary exports: commerceController.
+ */
 import type { Context } from "hono";
 import { parseBody } from "../../lib/http";
 import { parsePagination } from "../../lib/pagination";
@@ -15,6 +22,10 @@ import type { AppBindings } from "../../types/app-context";
 type AppContext = Context<AppBindings>;
 
 export const commerceController = {
+  /**
+   * Handle the `list public products` HTTP action for the commerce module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async listPublicProducts(c: AppContext) {
     const { page, limit } = parsePagination(c);
     const category = c.req.query("category");
@@ -23,6 +34,10 @@ export const commerceController = {
     return okPaginated(c, data, { page, limit, total });
   },
 
+  /**
+   * Handle the `get public product by id` HTTP action for the commerce module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async getPublicProductById(c: AppContext) {
     const productId = c.req.param("id")!;
     const result = await commerceService.getPublicProductById(productId);
@@ -30,6 +45,10 @@ export const commerceController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `place order` HTTP action for the commerce module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async placeOrder(c: AppContext) {
     const parsed = await parseBody(c, placeOrderSchema);
     if (!parsed.ok) return parsed.response;
@@ -40,6 +59,10 @@ export const commerceController = {
     return ok(c, result.data, 201);
   },
 
+  /**
+   * Handle the `get order by id` HTTP action for the commerce module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async getOrderById(c: AppContext) {
     const orderId = c.req.param("id")!;
     const result = await commerceService.getOrderById(orderId);
@@ -47,6 +70,10 @@ export const commerceController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `list my orders` HTTP action for the commerce module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async listMyOrders(c: AppContext) {
     const { page, limit } = parsePagination(c);
     const userId = c.get("authUser").id;
@@ -54,6 +81,10 @@ export const commerceController = {
     return okPaginated(c, data, { page, limit, total });
   },
 
+  /**
+   * Handle the `list admin products` HTTP action for the commerce module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async listAdminProducts(c: AppContext) {
     const { page, limit } = parsePagination(c);
     const includeInactive = c.req.query("includeInactive") !== "false";
@@ -69,6 +100,10 @@ export const commerceController = {
     return okPaginated(c, data, { page, limit, total });
   },
 
+  /**
+   * Handle the `create product` HTTP action for the commerce module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async createProduct(c: AppContext) {
     const parsed = await parseBody(c, createProductSchema);
     if (!parsed.ok) return parsed.response;
@@ -87,6 +122,10 @@ export const commerceController = {
     return ok(c, result.data, 201);
   },
 
+  /**
+   * Handle the `update product` HTTP action for the commerce module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async updateProduct(c: AppContext) {
     const productId = c.req.param("productId")!;
     const parsed = await parseBody(c, updateProductSchema);
@@ -110,6 +149,10 @@ export const commerceController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `list admin orders` HTTP action for the commerce module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async listAdminOrders(c: AppContext) {
     const { page, limit } = parsePagination(c);
     const status = c.req.query("status");
@@ -117,6 +160,10 @@ export const commerceController = {
     return okPaginated(c, data, { page, limit, total });
   },
 
+  /**
+   * Handle the `get admin order by id` HTTP action for the commerce module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async getAdminOrderById(c: AppContext) {
     const orderId = c.req.param("orderId")!;
     const result = await commerceService.getOrderById(orderId);
@@ -124,6 +171,10 @@ export const commerceController = {
     return ok(c, result.data);
   },
 
+  /**
+   * Handle the `update order status` HTTP action for the commerce module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
   async updateOrderStatus(c: AppContext) {
     const orderId = c.req.param("orderId")!;
     const parsed = await parseBody(c, updateOrderStatusSchema);

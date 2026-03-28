@@ -1,3 +1,6 @@
+// Documentation: TypeScript compiler configuration.
+// - Configures strict ES2022 module type-checking for the Worker runtime without emitting build output during verification commands.
+// - The included file list intentionally covers runtime source, Prisma config, and Worker type declarations so `npm run typecheck` validates the maintained codebase end to end.
 {
   "compilerOptions": {
     "target": "ES2022",
