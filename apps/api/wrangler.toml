@@ -8,13 +8,13 @@ compatibility_flags = ["nodejs_compat"]
 #   npx wrangler r2 bucket create api-files
 [[d1_databases]]
 binding = "DB"
-database_name = "api-db"
-database_id = "00000000-0000-0000-0000-000000000000"
-preview_database_id = "00000000-0000-0000-0000-000000000000"
+database_name = "fit-db"
+database_id = "d9d38b6c-1ff4-4e4f-8491-5ce06a21e8ad"
+preview_database_id = "d9d38b6c-1ff4-4e4f-8491-5ce06a21e8ad"
 migrations_dir = "prisma/migrations"
 
 [[r2_buckets]]
 binding = "FILES"
-bucket_name = "api-files"
-preview_bucket_name = "api-files-preview"
+bucket_name = "fit-bucket"
+preview_bucket_name = "api-files"
 
