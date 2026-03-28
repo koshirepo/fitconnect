@@ -1,5 +1,5 @@
 {
-  "name": "gms-pwa",
+  "name": "fit-pwa",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -7,7 +7,7 @@
     "dev": "vite --mode development",
     "preview": "vite preview",
     "build": "tsc -b && vite build",
-    "deploy": "pnpm run build && wrangler pages deploy dist --project-name=gms-pwa",
+    "deploy": "pnpm run build && wrangler pages deploy dist --project-name=fit-pwa",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "lint": "eslint .",
     "format": "prettier --write .",
