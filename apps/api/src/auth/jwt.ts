@@ -10,7 +10,6 @@ function getJwtSecret(): Uint8Array {
 
 /** Tenant membership map encoded into JWT: { [tenantId]: role } */
 export type JwtTenants = Record<string, TenantRole>;
-
 type AccessTokenPayload = {
   sub: string;
   platformRole: PlatformRole;
