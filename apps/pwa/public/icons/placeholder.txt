@@ -1,0 +1,37 @@
+PWA Icons Placeholder
+====================
+
+This folder should contain the following icon files for PWA support:
+
+Required Icons:
+- icon-16x16.png (favicon)
+- icon-32x32.png (favicon)
+- icon-72x72.png
+- icon-96x96.png
+- icon-128x128.png
+- icon-144x144.png
+- icon-152x152.png
+- icon-192x192.png (recommended for Android)
+- icon-384x384.png
+- icon-512x512.png (required for PWA)
+
+Apple Icons:
+- apple-touch-icon.png (180x180)
+
+Safari:
+- safari-pinned-tab.svg (SVG monochrome icon)
+
+Favicon:
+- favicon.ico (multi-size favicon, typically 16x16, 32x32, 48x48)
+
+Generation Tips:
+================
+You can generate these icons using:
+1. Online tools like realfavicongenerator.net
+2. npm packages like "pwa-asset-generator"
+3. Design tools like Figma/Adobe XD
+
+Recommended base design:
+- Use the FitConnect logo on a red (#dc2626) background
+- Ensure good visibility at small sizes
+- Use transparent backgrounds for Apple icons (optional)

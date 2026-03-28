@@ -1,0 +1,77 @@
+// ─── Re-export all types from the shared package ─────────────────────────────
+// This file now serves as a local barrel so existing imports like
+//   import type { User } from "@/types/api"
+// continue to work without changes across all pages and components.
+
+export type {
+  // Enums
+  PlatformRole,
+  TenantRole,
+  AccountStatus,
+  PaymentStatus,
+  OrderStatus,
+  AuditAction,
+  // Models
+  User,
+  TenantMembershipSummary,
+  AuthResponse,
+  TokenRefreshResponse,
+  Tenant,
+  CreateTenantAdminPayload,
+  CreateTenantPayload,
+  UpdateTenantPayload,
+  TenantMember,
+  TenantProfile,
+  AddMemberPayload,
+  UpdateProfilePayload,
+  UpdateMemberPayload,
+  MemberDetail,
+  Shift,
+  CreateShiftPayload,
+  UpdateShiftPayload,
+  Subscription,
+  CreateSubscriptionPayload,
+  Payment,
+  PaymentSummary,
+  CreatePaymentPayload,
+  UpdatePaymentPayload,
+  Product,
+  CreateProductPayload,
+  UpdateProductPayload,
+  Order,
+  OrderItem,
+  PlaceOrderPayload,
+  Exercise,
+  WorkoutPlan,
+  CreateWorkoutPlanPayload,
+  UpdateWorkoutPlanPayload,
+  AuditLog,
+  // Badges
+  Badge,
+  CreateBadgePayload,
+  UpdateBadgePayload,
+  AssignBadgePayload,
+  // Settings
+  TenantSettings,
+  UpdateTenantSettingsPayload,
+  TenantCharge,
+  CreateTenantChargePayload,
+  UpdateTenantChargePayload,
+  // Attendance
+  AttendanceRecord,
+  AttendanceSummary,
+  MarkAttendancePayload,
+  MarkAllAttendancePayload,
+  // Platform Billing
+  PlatformPayment,
+  RecordPlatformPaymentPayload,
+  // Public
+  PublicTenantDetail,
+  PublicGymSummary,
+  // API wrappers
+  ErrorCode,
+  ApiResponse,
+  MessageResponse,
+  PaginatedResponse,
+  ApiError,
+} from "@/shared";
