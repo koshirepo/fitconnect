@@ -31,3 +31,6 @@ EMAIL_FROM="Fit Connect <rudragymbakhri@gmail.com>"
 subject= "mailto: <rudragymbakhri@gmail.com>"
 publicKey= "BGM8SxeUeDufKP-etZ5Q-GJpW9GTmBhay_fGHK2vBlsIWVfbsbHzPD_TLVbSl35oBOnjL2qdG47YibTHhwASP2c"
 privateKey= "XUMs9wlnPcoMHr2SvMLS2GU_SWDaaOuTynQCO_NWR8s"
+
+
+JWT_SECRET="this is my jwtSecret"
