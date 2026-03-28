@@ -12,6 +12,7 @@ import { PageLoader } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatShiftWindow } from "@/lib/shifts";
 import { formatDate } from "@/lib/utils";
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import {
   ArrowLeft,
   Mail,
@@ -27,6 +28,7 @@ import {
   ShieldCheck,
   Clock3,
   CircleDollarSign,
+  MessageCircle,
 } from "lucide-react";
 import type { PublicTenantDetail } from "@/types/api";
 
@@ -81,6 +83,10 @@ export default function TenantPublicPage() {
   const lowestPlanAmount = tenant.subscriptions.length
     ? Math.min(...tenant.subscriptions.map((sub) => sub.amount))
     : null;
+  const whatsappUrl = buildWhatsAppUrl(
+    tenant.phone,
+    `Hi ${tenant.name}, I would like to know more about your gym memberships.`,
+  );
 
   return (
     <div className="min-h-screen bg-[radial-gradient(1200px_500px_at_15%_-20%,rgba(59,130,246,0.12),transparent),radial-gradient(900px_500px_at_100%_0%,rgba(16,185,129,0.1),transparent)] bg-background text-foreground">
@@ -339,13 +345,24 @@ export default function TenantPublicPage() {
                   {tenant.phone}
                 </a>
               )}
+              {whatsappUrl && (
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
+                >
+                  <MessageCircle className="h-4 w-4 text-muted-foreground" />
+                  Chat on WhatsApp
+                </a>
+              )}
               {tenant.address && (
                 <div className="flex items-start gap-3 text-sm text-muted-foreground">
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
                   {tenant.address}
                 </div>
               )}
-              {!tenant.email && !tenant.phone && !tenant.address && (
+              {!tenant.email && !tenant.phone && !tenant.address && !whatsappUrl && (
                 <p className="text-sm text-muted-foreground">No contact details available.</p>
               )}
             </CardContent>
