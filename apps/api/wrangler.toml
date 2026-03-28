@@ -18,3 +18,16 @@ migrations_dir = "prisma/migrations"
 [[r2_buckets]]
 binding = "FILES"
 bucket_name = "fit-bucket"
+
+[vars]
+R2_PUBLIC_URL = "https://pub-f9794d5233bf467ca886bdf6c65a7cbe.r2.dev"
+EMAIL_HOST="smtp.gmail.com"
+EMAIL_PORT=587
+EMAIL_SECURE=false
+EMAIL_USER=rudragymbakhri@gmail.com
+EMAIL_PASSWORD=tuqt clna cdkb bmwb
+EMAIL_FROM="Fit Connect" <rudragymbakhri@gmail.com>
+
+subject= mailto: <rudragymbakhri@gmail.com>
+publicKey= BGM8SxeUeDufKP-etZ5Q-GJpW9GTmBhay_fGHK2vBlsIWVfbsbHzPD_TLVbSl35oBOnjL2qdG47YibTHhwASP2c
+privateKey= XUMs9wlnPcoMHr2SvMLS2GU_SWDaaOuTynQCO_NWR8s
