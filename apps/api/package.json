@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "postinstall": "node scripts/ensure-prisma-client.mjs",
+    "prebuild": "node scripts/ensure-prisma-client.mjs",
+    "build": "wrangler deploy --dry-run --outdir dist",
     "predev": "node scripts/ensure-prisma-client.mjs",
     "dev": "wrangler dev",
     "predeploy": "node scripts/ensure-prisma-client.mjs",

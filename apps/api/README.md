@@ -124,6 +124,70 @@ npm run db:migrate:remote
 npm run cf-typegen
 ```
 
+## Deployment
+
+Use Wrangler to bundle and deploy this Worker. Do not use a generic command like `bun build src/index.ts --outdir dist --target bun`; Prisma's generated Cloudflare client imports a WASM module that Wrangler bundles correctly and Bun's generic build does not.
+
+1. Create your remote Cloudflare resources if you have not already:
+
+```bash
+npx wrangler d1 create api-db
+npx wrangler r2 bucket create api-files
+```
+
+2. Update the real database IDs and bucket names in `wrangler.toml`.
+
+3. Set required production secrets and vars in Cloudflare.
+
+Required:
+
+- `JWT_SECRET`
+
+Recommended, depending on enabled features:
+
+- `CORS_ORIGIN`
+- `APP_URL`
+- `R2_PUBLIC_URL`
+- `EMAIL_HOST`
+- `EMAIL_PORT`
+- `EMAIL_SECURE`
+- `EMAIL_USER`
+- `EMAIL_PASSWORD`
+- `EMAIL_FROM`
+- `EMAIL_VERIFY_ON_STARTUP`
+- `VAPID_PUBLIC_KEY`
+- `VAPID_PRIVATE_KEY`
+- `VAPID_EMAIL`
+
+Example secret command:
+
+```bash
+npx wrangler secret put JWT_SECRET
+```
+
+4. Apply all checked-in SQL migrations to the remote D1 database:
+
+```bash
+npm run db:migrate:remote
+```
+
+5. Run a local production-style bundle check:
+
+```bash
+npm run build
+```
+
+6. Deploy the Worker:
+
+```bash
+npm run deploy
+```
+
+If your hosting or CI provider asks for commands, use:
+
+- Build command: `npm run build`
+- Deploy command: `npm run deploy`
+
 ## Local seed data
 
 `npm run seed:local` rebuilds the local D1 database from the SQL files in `prisma/migrations` and then loads a large deterministic dataset for testing.
