@@ -4,17 +4,14 @@ compatibility_date = "2026-03-27"
 compatibility_flags = ["nodejs_compat"]
 
 # Replace these placeholder values after creating your Cloudflare resources:
-#   npx wrangler d1 create api-db
-#   npx wrangler r2 bucket create api-files
+#   npx wrangler d1 create fit-db
+#   npx wrangler r2 bucket create fit-bucket
 [[d1_databases]]
 binding = "DB"
 database_name = "fit-db"
-database_id = "d9d38b6c-1ff4-4e4f-8491-5ce06a21e8ad"
-preview_database_id = "d9d38b6c-1ff4-4e4f-8491-5ce06a21e8ad"
+database_id = "36389687-c406-4607-9232-ef411bb0d754"
 migrations_dir = "prisma/migrations"
 
 [[r2_buckets]]
 binding = "FILES"
 bucket_name = "fit-bucket"
-preview_bucket_name = "api-files"
-

@@ -39,9 +39,9 @@ The local Worker requires `JWT_SECRET` for `/auth/login`. The template now inclu
 3. Create your Cloudflare resources:
 
 ```bash
-npx wrangler d1 create api-db
-npx wrangler r2 bucket create api-files
-npx wrangler r2 bucket create api-files-preview
+npx wrangler d1 create fit-db
+npx wrangler r2 bucket create fit-bucket
+npx wrangler r2 bucket create fit-bucket-preview
 ```
 
 4. Update the placeholder IDs and bucket names in `wrangler.toml`.
@@ -131,8 +131,8 @@ Use Wrangler to bundle and deploy this Worker. Do not use a generic command like
 1. Create your remote Cloudflare resources if you have not already:
 
 ```bash
-npx wrangler d1 create api-db
-npx wrangler r2 bucket create api-files
+npx wrangler d1 create fit-db
+npx wrangler r2 bucket create fit-bucket
 ```
 
 2. Update the real database IDs and bucket names in `wrangler.toml`.
