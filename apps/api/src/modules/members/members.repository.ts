@@ -9,6 +9,18 @@ import { prisma } from "../../lib/prisma";
 import type { Prisma } from "../../generated/prisma/client";
 import type { PlatformRole, TenantRole } from "../../shared/types/enums";
 
+const shiftSelect = {
+  id: true,
+  tenantId: true,
+  name: true,
+  description: true,
+  startTime: true,
+  endTime: true,
+  isActive: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
+
 export const memberRepository = {
   /**
    * Run the `find user by email` persistence operation for the members module.
@@ -86,6 +98,7 @@ export const memberRepository = {
     tenantId: string,
     userId: string,
     role: TenantRole,
+    shiftId?: string,
   ) {
     // D1 doesn't support interactive transactions.
     // Count first, then create. The @@unique([tenantId, memberId]) constraint
@@ -97,11 +110,13 @@ export const memberRepository = {
         userId,
         role,
         memberId: count + 1,
+        ...(shiftId ? { shiftId } : {}),
       },
       select: {
         id: true,
         memberId: true,
         role: true,
+        shift: { select: shiftSelect },
         user: { select: { id: true, name: true, email: true, phone: true } },
       },
     });
@@ -160,6 +175,7 @@ export const memberRepository = {
           status: true,
           dueDate: true,
           joinedAt: true,
+          shift: { select: shiftSelect },
           user: {
             select: {
               id: true,
@@ -190,6 +206,7 @@ export const memberRepository = {
         role: true,
         status: true,
         joinedAt: true,
+        shift: { select: shiftSelect },
         user: {
           select: {
             id: true,
@@ -458,6 +475,7 @@ export const memberRepository = {
         role: true,
         status: true,
         joinedAt: true,
+        shift: { select: shiftSelect },
         user: {
           select: {
             id: true,

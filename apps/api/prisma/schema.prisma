@@ -145,6 +145,8 @@ model TenantMembership {
   role              String                  @default("MEMBER")
   status            String                  @default("ACTIVE")
   dueDate           DateTime? /// Latest subscription validUntil â€“ auto-updated on payment changes
+  shiftId           String?
+  shift             Shift?                  @relation(fields: [shiftId], references: [id], onDelete: SetNull)
   joinedAt          DateTime                @default(now())
   createdAt         DateTime                @default(now())
   updatedAt         DateTime                @updatedAt
@@ -160,6 +162,7 @@ model TenantMembership {
   @@unique([tenantId, memberId])
   @@index([tenantId])
   @@index([userId])
+  @@index([shiftId])
 }
 
 // â”€â”€â”€ Subscription & Payment â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -192,6 +195,7 @@ model Shift {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  members     TenantMembership[]
 
   @@unique([tenantId, name])
   @@index([tenantId, isActive])

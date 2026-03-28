@@ -2257,6 +2257,7 @@ export const TenantMembershipScalarFieldEnum = {
   role: 'role',
   status: 'status',
   dueDate: 'dueDate',
+  shiftId: 'shiftId',
   joinedAt: 'joinedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

@@ -22,6 +22,7 @@ export const addMemberSchema = z.object({
   avatarUrl: z.string().optional(),
   subscriptionId: z.string().optional(),
   chargeIds: z.array(z.string()).optional(),
+  shiftId: z.string().optional(),
 });
 
 export const updateMemberRoleSchema = z.object({
@@ -60,6 +61,7 @@ export const updateMemberSchema = z.object({
     .min(MIN_PASSWORD_LENGTH)
     .max(MAX_PASSWORD_LENGTH)
     .optional(),
+  shiftId: z.string().nullable().optional(),
 });
 
 export const updateMemberStatusSchema = z.object({

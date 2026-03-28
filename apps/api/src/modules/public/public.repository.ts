@@ -48,6 +48,21 @@ export const publicRepository = {
           },
           orderBy: { amount: "asc" as const },
         },
+        shifts: {
+          where: { isActive: true },
+          select: {
+            id: true,
+            tenantId: true,
+            name: true,
+            description: true,
+            startTime: true,
+            endTime: true,
+            isActive: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+          orderBy: [{ startTime: "asc" as const }, { name: "asc" as const }],
+        },
       },
     });
   },

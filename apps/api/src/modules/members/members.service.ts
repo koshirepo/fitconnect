@@ -40,10 +40,14 @@ async function enforceOverdueMembershipsForTenant(
   overdueDays: number,
   scheduleBackgroundTask?: BackgroundTaskScheduler,
 ) {
-  const overdueMembers = await memberRepository.getOverdueMembers(
+  const overdueMembers = (await memberRepository.getOverdueMembers(
     tenantId,
     overdueDays,
-  );
+  )) as Array<{
+    id: string;
+    memberId: number;
+    user: { name: string; email: string };
+  }>;
   const suspended: { id: string; memberId: number; name: string }[] = [];
 
   if (overdueMembers.length === 0) {
@@ -131,8 +135,19 @@ export const memberService = {
       title: string;
     } | null = null;
     let charges: { id: string; name: string; amount: number }[] = [];
+    let shift: {
+      id: string;
+      tenantId: string;
+      name: string;
+      description: string | null;
+      startTime: string;
+      endTime: string;
+      isActive: boolean;
+      createdAt: Date;
+      updatedAt: Date;
+    } | null = null;
 
-    const [subscriptionResult, chargesResult] = await Promise.all([
+    const [subscriptionResult, chargesResult, shiftResult] = await Promise.all([
       input.subscriptionId
         ? prisma.subscription.findFirst({
             where: { id: input.subscriptionId, tenantId, isActive: true },
@@ -148,13 +163,33 @@ export const memberService = {
             where: { tenantId, isMandatory: true, isActive: true },
             select: { id: true, name: true, amount: true },
           }),
+      input.shiftId
+        ? prisma.shift.findFirst({
+            where: { id: input.shiftId, tenantId, isActive: true },
+            select: {
+              id: true,
+              tenantId: true,
+              name: true,
+              description: true,
+              startTime: true,
+              endTime: true,
+              isActive: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          })
+        : null,
     ]);
 
     subscription = subscriptionResult;
     charges = chargesResult;
+    shift = shiftResult;
 
     if (input.subscriptionId && !subscription) {
       return { error: "Subscription plan not found.", status: 404 as const };
+    }
+    if (input.shiftId && !shift) {
+      return { error: "Shift not found.", status: 404 as const };
     }
 
     // Get collector membership
@@ -167,6 +202,7 @@ export const memberService = {
       tenantId,
       user.id,
       input.role as TenantRole,
+      input.shiftId,
     );
 
     // Find the collector (caller's membership)
@@ -260,8 +296,12 @@ export const memberService = {
     }
 
     // Build WhatsApp message for auto-open on frontend
-    const formatInr = (paise: number) =>
-      `₹${(paise / 100).toLocaleString("en-IN")}`;
+    const formatInr = (amount: number) =>
+      new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR",
+        minimumFractionDigits: 0,
+      }).format(amount);
     const total = payments.reduce((s, p) => s + p.amount, 0);
     const paymentLines = payments
       .map((p) => `  • ${p.description ?? "Payment"}: ${formatInr(p.amount)}`)
@@ -439,6 +479,20 @@ export const memberService = {
     }
 
     let membershipUpdate: Record<string, unknown> = {};
+    if (input.shiftId !== undefined) {
+      if (input.shiftId === null) {
+        membershipUpdate.shiftId = null;
+      } else {
+        const shift = await prisma.shift.findFirst({
+          where: { id: input.shiftId, tenantId, isActive: true },
+          select: { id: true },
+        });
+        if (!shift) {
+          return { error: "Shift not found.", status: 404 as const };
+        }
+        membershipUpdate.shiftId = shift.id;
+      }
+    }
 
     if (
       Object.keys(userUpdate).length === 0 &&

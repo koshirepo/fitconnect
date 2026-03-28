@@ -44,13 +44,13 @@ export const attendanceService = {
       targetMembershipId = membership.id;
     }
 
-    const record = await attendanceRepository.markAttendance(
+    const record = (await attendanceRepository.markAttendance(
       tenantId,
       targetMembershipId,
       date,
       isSelf ? null : actorMembershipId,
       input.note,
-    );
+    )) as any;
 
     return {
       data: {
@@ -82,12 +82,11 @@ export const attendanceService = {
   /** Remove attendance record (admin/coach only) */
   async removeAttendance(tenantId: string, membershipId: string, dateStr: string) {
     const date = toDateOnly(dateStr);
-    try {
-      await attendanceRepository.deleteAttendance(tenantId, membershipId, date);
-      return { data: { message: "Attendance removed." } };
-    } catch {
+    const result = await attendanceRepository.deleteAttendance(tenantId, membershipId, date);
+    if (result.count === 0) {
       return { error: "Attendance record not found.", status: 404 as const };
     }
+    return { data: { message: "Attendance removed." } };
   },
 
   /** List attendance for a specific date */
@@ -96,7 +95,7 @@ export const attendanceService = {
     const { records, total } = await attendanceRepository.listByDate(tenantId, d, page, limit);
     return {
       data: {
-        attendance: records.map((r) => ({
+        attendance: records.map((r: any) => ({
           id: r.id,
           date: r.date,
           checkInAt: r.checkInAt,
@@ -122,7 +121,7 @@ export const attendanceService = {
     );
     return {
       data: {
-        attendance: records.map((r) => ({
+        attendance: records.map((r: any) => ({
           id: r.id,
           date: r.date,
           checkInAt: r.checkInAt,
@@ -184,7 +183,7 @@ export const attendanceService = {
       string,
       { count: number; members: { id: string; memberId: number | null; name: string }[] }
     > = {};
-    for (const r of records) {
+    for (const r of records as any[]) {
       const key = r.date.toISOString().slice(0, 10);
       if (!dayMap[key]) dayMap[key] = { count: 0, members: [] };
       dayMap[key].count++;

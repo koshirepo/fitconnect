@@ -114,6 +114,7 @@ export interface PublicTenantDetail {
     amount: number;
     durationDays: number;
   }[];
+  shifts: Shift[];
 }
 
 export interface PublicGymSummary {
@@ -141,6 +142,7 @@ export interface TenantMember {
   joinedAt: string;
   isDue?: boolean;
   dueDate?: string | null;
+  shift?: Shift | null;
 }
 
 export interface TenantProfile {
@@ -155,6 +157,7 @@ export interface TenantProfile {
   role: TenantRole;
   status: AccountStatus;
   joinedAt: string;
+  shift?: Shift | null;
   payments?: PaymentSummary[];
 }
 
@@ -166,6 +169,7 @@ export interface AddMemberPayload {
   avatarUrl?: string;
   subscriptionId?: string;
   chargeIds?: string[];
+  shiftId?: string;
 }
 
 export interface UpdateProfilePayload {
@@ -174,6 +178,14 @@ export interface UpdateProfilePayload {
   avatarUrl?: string | null;
   currentPassword?: string;
   newPassword?: string;
+}
+
+export interface UpdateMemberPayload {
+  name?: string;
+  phone?: string | null;
+  avatarUrl?: string | null;
+  newPassword?: string;
+  shiftId?: string | null;
 }
 
 export interface MemberDetail {
@@ -188,6 +200,7 @@ export interface MemberDetail {
   role: TenantRole;
   status: AccountStatus;
   joinedAt: string;
+  shift?: Shift | null;
   payments: {
     id: string;
     amount: number;
@@ -215,6 +228,34 @@ export interface MemberDetail {
       description?: string | null;
     };
   }[];
+}
+
+export interface Shift {
+  id: string;
+  tenantId: string;
+  name: string;
+  description?: string | null;
+  startTime: string;
+  endTime: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface CreateShiftPayload {
+  name: string;
+  description?: string;
+  startTime: string;
+  endTime: string;
+  isActive?: boolean;
+}
+
+export interface UpdateShiftPayload {
+  name?: string;
+  description?: string;
+  startTime?: string;
+  endTime?: string;
+  isActive?: boolean;
 }
 
 // ─── Subscriptions ────────────────────────────────────────────────────────────

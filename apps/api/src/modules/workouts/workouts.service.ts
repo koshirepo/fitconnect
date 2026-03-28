@@ -81,7 +81,7 @@ export const workoutService = {
           ...plan,
           exercises: (plan.exercises ?? []) as unknown as Array<Record<string, unknown>>,
           creator: plan.creator ? flattenCreator(plan.creator) : undefined,
-          assignments: plan.assignments.map((a) => ({
+          assignments: plan.assignments.map((a: any) => ({
             id: a.id,
             assignedAt: a.assignedAt,
             membershipId: a.membership.id,

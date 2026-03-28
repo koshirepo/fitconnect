@@ -72,6 +72,7 @@ const TABLE_DUMP_ORDER = [
   "AuditLog",
   "PlatformPayment",
 ];
+const TABLE_DUMP_PRIORITY = new Map(TABLE_DUMP_ORDER.map((tableName, index) => [tableName, index]));
 let phoneCounter = 9000000000;
 
 /**
@@ -429,6 +430,14 @@ function seedDatabase(db, options) {
     INSERT INTO "WorkoutPlanAssignment" ("id", "planId", "membershipId", "assignedAt")
     VALUES ($id, $planId, $membershipId, $assignedAt)
   `);
+  const insertBadge = db.prepare(`
+    INSERT INTO "Badge" ("id", "tenantId", "name", "description", "color", "icon", "isActive", "createdAt", "updatedAt")
+    VALUES ($id, $tenantId, $name, $description, $color, $icon, $isActive, $createdAt, $updatedAt)
+  `);
+  const insertBadgeAssignment = db.prepare(`
+    INSERT INTO "_BadgeToTenantMembership" ("A", "B")
+    VALUES ($badgeId, $membershipId)
+  `);
   const insertAttendance = db.prepare(`
     INSERT INTO "Attendance" ("id", "tenantId", "membershipId", "markedById", "date", "checkInAt", "note", "createdAt")
     VALUES ($id, $tenantId, $membershipId, $markedById, $date, $checkInAt, $note, $createdAt)
@@ -449,6 +458,8 @@ function seedDatabase(db, options) {
     tenants: 0,
     shifts: 0,
     memberships: 0,
+    badges: 0,
+    badgeAssignments: 0,
     payments: 0,
     products: 0,
     orders: 0,
@@ -551,9 +562,9 @@ function seedDatabase(db, options) {
       run(insertTenantMembership, adminMembership, "memberships");
 
       const charges = [
-        ["Admission Fee", 99900, true],
-        ["Security Deposit", 50000, true],
-        ["Locker Rental", 29900, false],
+        ["Admission Fee", 999, true],
+        ["Security Deposit", 500, true],
+        ["Locker Rental", 299, false],
       ].map(([name, amount, isMandatory]) => {
         const charge = {
           id: nextId("charge"),
@@ -570,9 +581,9 @@ function seedDatabase(db, options) {
       });
 
       const subscriptions = [
-        ["Monthly", 149900, 30],
-        ["Quarterly", 389900, 90],
-        ["Annual", 1399900, 365],
+        ["Monthly", 1499, 30],
+        ["Quarterly", 3899, 90],
+        ["Annual", 13999, 365],
       ].map(([title, amount, durationDays]) => {
         const subscription = {
           id: nextId("subscription"),
@@ -639,7 +650,7 @@ function seedDatabase(db, options) {
       run(insertPlatformPayment, {
         id: nextId("platform_payment"),
         tenantId,
-        amount: 999900,
+        amount: 9999,
         note: "Seeded platform billing",
         extendsUntil: iso(addDays(now, 180)),
         recordedBy: superAdmin.id,
@@ -750,6 +761,90 @@ function seedDatabase(db, options) {
         }
       }
 
+      const badgeCatalog = [
+        {
+          name: "Consistency Streak",
+          description: "Recognizes members who keep showing up week after week.",
+          color: "#0f766e",
+          icon: "calendar-check",
+          isActive: true,
+        },
+        {
+          name: "Early Bird",
+          description: "Awarded to members who own the morning shift.",
+          color: "#f59e0b",
+          icon: "sunrise",
+          isActive: true,
+        },
+        {
+          name: "Strength PR",
+          description: "Celebrates a major personal record or lifting milestone.",
+          color: "#dc2626",
+          icon: "dumbbell",
+          isActive: true,
+        },
+        {
+          name: "Transformation",
+          description: "Highlights visible progress built through long-term discipline.",
+          color: "#7c3aed",
+          icon: "sparkles",
+          isActive: true,
+        },
+        {
+          name: "Coach's Choice",
+          description: "Given to members who bring exceptional effort and attitude.",
+          color: "#2563eb",
+          icon: "star",
+          isActive: true,
+        },
+      ].map((definition) => {
+        const badgeCreatedAt = iso(daysAgo(now, randomInt(0, 120, random), 9, 30));
+        const badge = {
+          id: nextId("badge"),
+          tenantId,
+          ...definition,
+          createdAt: badgeCreatedAt,
+          updatedAt: badgeCreatedAt,
+        };
+        run(insertBadge, badge, "badges");
+        return badge;
+      });
+
+      const badgeRecipients = [
+        { badgeId: badgeCatalog[0].id, members: sample(activeMembers, Math.min(6, activeMembers.length), random) },
+        {
+          badgeId: badgeCatalog[1].id,
+          members: sample(activeMembers.filter((membership) => membership.memberId % 2 === 0), 4, random),
+        },
+        {
+          badgeId: badgeCatalog[2].id,
+          members: sample([...coachMemberships, ...activeMembers], Math.min(4, coachMemberships.length + activeMembers.length), random),
+        },
+        { badgeId: badgeCatalog[3].id, members: sample(activeMembers.slice().reverse(), Math.min(3, activeMembers.length), random) },
+        {
+          badgeId: badgeCatalog[4].id,
+          members: sample([adminMembership, ...activeMembers], Math.min(3, activeMembers.length + 1), random),
+        },
+      ];
+      const badgeAssignmentPairs = new Set();
+      for (const badgeAssignment of badgeRecipients) {
+        for (const membership of badgeAssignment.members) {
+          const key = `${badgeAssignment.badgeId}:${membership.id}`;
+          if (badgeAssignmentPairs.has(key)) {
+            continue;
+          }
+          badgeAssignmentPairs.add(key);
+          run(
+            insertBadgeAssignment,
+            {
+              badgeId: badgeAssignment.badgeId,
+              membershipId: membership.id,
+            },
+            "badgeAssignments"
+          );
+        }
+      }
+
       for (let planIndex = 1; planIndex <= 4; planIndex += 1) {
         const planId = nextId("workout_plan");
         const planCreatedAt = iso(daysAgo(now, randomInt(0, 120, random), 6, 45));
@@ -840,7 +935,7 @@ function seedDatabase(db, options) {
         markdown: `## Seed Product ${index}`,
         photos: JSON.stringify([`https://placehold.co/800x800/png?text=Product+${index}`]),
         category,
-        price: 29900 + index * 2500,
+        price: 299 + index * 25,
         stock: 40 + (index % 15) * 5,
         minOrderQty: 1,
         maxOrderQty: 4,
@@ -998,6 +1093,68 @@ function dumpTableInserts(db, tableName) {
 }
 
 /**
+ * Support the `compare table names` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
+function compareTableNames(left, right) {
+  const leftPriority = TABLE_DUMP_PRIORITY.get(left) ?? Number.MAX_SAFE_INTEGER;
+  const rightPriority = TABLE_DUMP_PRIORITY.get(right) ?? Number.MAX_SAFE_INTEGER;
+
+  if (leftPriority !== rightPriority) {
+    return leftPriority - rightPriority;
+  }
+
+  return left.localeCompare(right);
+}
+
+/**
+ * Support the `order tables for dump` step in the Prisma maintenance script.
+ * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
+ */
+function orderTablesForDump(db, tableNames) {
+  const tables = new Set(tableNames);
+  const remaining = new Set(tableNames);
+  const dependencies = new Map(
+    tableNames.map((tableName) => [
+      tableName,
+      new Set(
+        db
+          .prepare(`PRAGMA foreign_key_list(${sqlLiteral(tableName)})`)
+          .all()
+          .map((row) => row.table)
+          .filter((dependencyName) => dependencyName !== tableName && tables.has(dependencyName))
+      ),
+    ])
+  );
+  const orderedTables = [];
+
+  while (remaining.size > 0) {
+    const readyTables = [...remaining]
+      .filter((tableName) => {
+        for (const dependencyName of dependencies.get(tableName) ?? []) {
+          if (remaining.has(dependencyName)) {
+            return false;
+          }
+        }
+
+        return true;
+      })
+      .sort(compareTableNames);
+
+    if (readyTables.length === 0) {
+      orderedTables.push(...[...remaining].sort(compareTableNames));
+      break;
+    }
+
+    const [nextTable] = readyTables;
+    orderedTables.push(nextTable);
+    remaining.delete(nextTable);
+  }
+
+  return orderedTables;
+}
+
+/**
  * Support the `build seed sql` step in the Prisma maintenance script.
  * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
  */
@@ -1014,12 +1171,7 @@ function buildSeedSql(db) {
       .all()
       .map((row) => row.name)
   );
-  const orderedTables = [
-    ...TABLE_DUMP_ORDER.filter((tableName) => tables.has(tableName)),
-    ...[...tables]
-      .filter((tableName) => !TABLE_DUMP_ORDER.includes(tableName))
-      .sort((left, right) => left.localeCompare(right)),
-  ];
+  const orderedTables = orderTablesForDump(db, [...tables]);
   const deleteStatements = [...orderedTables]
     .reverse()
     .map((tableName) => `DELETE FROM ${escapeIdentifier(tableName)};`);

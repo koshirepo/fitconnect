@@ -51,8 +51,12 @@ function getFrom(): string {
  * Utility helper for the email module that owns the `format amount inr` step.
  * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
  */
-function formatAmountInr(paise: number) {
-  return `₹${(paise / 100).toLocaleString("en-IN")}`;
+function formatAmountInr(amount: number) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: 0,
+  }).format(amount);
 }
 
 export interface WelcomeEmailPayload {

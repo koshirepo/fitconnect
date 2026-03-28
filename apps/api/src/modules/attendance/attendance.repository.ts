@@ -7,6 +7,15 @@
  */
 import { prisma } from "../../lib/prisma";
 
+function dayRange(date: Date) {
+  const start = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+  );
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 1);
+  return { start, end };
+}
+
 export const attendanceRepository = {
   /**
    * Run the `mark attendance` persistence operation for the attendance module.
@@ -46,9 +55,12 @@ export const attendanceRepository = {
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
   deleteAttendance(tenantId: string, membershipId: string, date: Date) {
-    return prisma.attendance.delete({
+    const { start, end } = dayRange(date);
+    return prisma.attendance.deleteMany({
       where: {
-        tenantId_membershipId_date: { tenantId, membershipId, date },
+        tenantId,
+        membershipId,
+        date: { gte: start, lt: end },
       },
     });
   },
@@ -58,7 +70,11 @@ export const attendanceRepository = {
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
   async listByDate(tenantId: string, date: Date, page: number, limit: number) {
-    const where = { tenantId, date };
+    const { start, end } = dayRange(date);
+    const where = {
+      tenantId,
+      date: { gte: start, lt: end },
+    };
     const [records, total] = await Promise.all([
       prisma.attendance.findMany({
         where,
@@ -132,8 +148,9 @@ export const attendanceRepository = {
 
   /** Get all membershipIds that have attendance on a given date */
   async presentMembershipIds(tenantId: string, date: Date) {
+    const { start, end } = dayRange(date);
     const records = await prisma.attendance.findMany({
-      where: { tenantId, date },
+      where: { tenantId, date: { gte: start, lt: end } },
       select: { membershipId: true },
     });
     return new Set(records.map((r) => r.membershipId));

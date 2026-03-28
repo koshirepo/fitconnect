@@ -8,13 +8,13 @@
 // ─── Shared Utilities ─────────────────────────────────────────────────────────
 // Pure functions with no framework dependencies – safe for API and PWA.
 
-/** Format amount (in paisa) to INR currency string */
+/** Format amount (in rupees) to INR currency string */
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
     minimumFractionDigits: 0,
-  }).format(amount / 100);
+  }).format(amount);
 }
 
 /** Format ISO date string to readable date */
