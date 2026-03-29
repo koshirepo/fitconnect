@@ -118,7 +118,8 @@ export const badgeRepository = {
           where: { id: membershipId },
           select: {
             id: true,
-            user: { select: { id: true, name: true, email: true, phone: true } },
+            memberId: true,
+            user: { select: { id: true, name: true, email: true, phone: true, avatarUrl: true } },
           },
         },
       },
@@ -146,6 +147,7 @@ export const badgeRepository = {
       orderBy: { joinedAt: "desc" },
       select: {
         id: true,
+        memberId: true,
         user: { select: { id: true, name: true, email: true, phone: true, avatarUrl: true } },
       },
     });
