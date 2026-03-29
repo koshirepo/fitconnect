@@ -3,7 +3,7 @@
  *
  * - Declares the Hono routes and middleware chain for subscription management, payment collection, and membership validity tracking. This route set is mounted from `/tenants` in the application entrypoint.
  * - Keep routing and authorization wiring here, and delegate request handling to the companion controller instead of placing business logic in route callbacks.
- * - Relative endpoints declared in this file: GET /:tenantId/payments, GET /:tenantId/my-payments, POST /:tenantId/payments, GET /:tenantId/payments/analytics, GET /:tenantId/payments/:paymentId, PATCH /:tenantId/payments/:paymentId, PUT /:tenantId/payments/:paymentId, GET /:tenantId/subscriptions, POST /:tenantId/subscriptions.
+ * - Relative endpoints declared in this file: GET /:tenantId/payments, GET /:tenantId/my-payments, POST /:tenantId/payments, GET /:tenantId/payments/analytics, GET /:tenantId/payments/:paymentId, PATCH /:tenantId/payments/:paymentId, PUT /:tenantId/payments/:paymentId, GET /:tenantId/subscriptions, POST /:tenantId/subscriptions, PATCH /:tenantId/subscriptions/:subscriptionId, DELETE /:tenantId/subscriptions/:subscriptionId.
  * - Primary exports: paymentRoutes.
  */
 import { Hono } from "hono";
@@ -76,4 +76,18 @@ paymentRoutes.post(
   authenticate,
   requireTenantRoles([TenantRole.ADMIN]),
   paymentController.createSubscription,
+);
+
+paymentRoutes.patch(
+  "/:tenantId/subscriptions/:subscriptionId",
+  authenticate,
+  requireTenantRoles([TenantRole.ADMIN]),
+  paymentController.updateSubscription,
+);
+
+paymentRoutes.delete(
+  "/:tenantId/subscriptions/:subscriptionId",
+  authenticate,
+  requireTenantRoles([TenantRole.ADMIN]),
+  paymentController.deleteSubscription,
 );

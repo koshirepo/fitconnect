@@ -10,12 +10,13 @@ import { paymentService } from "./payments.service";
 import { auditLog } from "../../lib/audit";
 import { parseBody } from "../../lib/http";
 import { parsePagination } from "../../lib/pagination";
-import { ok, okPaginated, forbidden, notFound } from "../../lib/response";
+import { ok, okPaginated, forbidden, notFound, okMessage, conflict } from "../../lib/response";
 import {
   createPaymentSchema,
   updatePaymentStatusSchema,
   updatePaymentSchema,
   createSubscriptionSchema,
+  updateSubscriptionSchema,
 } from "./payments.schema";
 import type { AppBindings } from "../../types/app-context";
 
@@ -174,8 +175,10 @@ export const paymentController = {
    */
   async listSubscriptions(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
-    const result = await paymentService.listSubscriptions(tenantId);
-    c.header("Cache-Control", "private, max-age=300");
+    const includeInactive =
+      c.get("tenantAccess")?.role === "ADMIN" && c.req.query("includeInactive") === "true";
+    const result = await paymentService.listSubscriptions(tenantId, includeInactive);
+    c.header("Cache-Control", "no-store");
     return ok(c, result.data);
   },
 
@@ -200,6 +203,58 @@ export const paymentController = {
     });
 
     return ok(c, result.data, 201);
+  },
+
+  /**
+   * Handle the `update subscription` HTTP action for the payments module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
+  async updateSubscription(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    const subscriptionId = c.req.param("subscriptionId")!;
+    const parsed = await parseBody(c, updateSubscriptionSchema);
+    if (!parsed.ok) return parsed.response;
+
+    const result = await paymentService.updateSubscription(tenantId, subscriptionId, parsed.data);
+    if ("error" in result) return notFound(c, result.error!);
+
+    await auditLog({
+      action: "UPDATE",
+      entity: "Subscription",
+      entityId: subscriptionId,
+      actorId: c.get("authUser").id,
+      tenantId,
+      metadata: parsed.data,
+      ip: c.req.header("x-forwarded-for") ?? undefined,
+    });
+
+    return ok(c, result.data);
+  },
+
+  /**
+   * Handle the `delete subscription` HTTP action for the payments module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
+  async deleteSubscription(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    const subscriptionId = c.req.param("subscriptionId")!;
+
+    const result = await paymentService.deleteSubscription(tenantId, subscriptionId);
+    if ("error" in result) {
+      if (result.status === 409) return conflict(c, result.error!);
+      return notFound(c, result.error!);
+    }
+
+    await auditLog({
+      action: "DELETE",
+      entity: "Subscription",
+      entityId: subscriptionId,
+      actorId: c.get("authUser").id,
+      tenantId,
+      ip: c.req.header("x-forwarded-for") ?? undefined,
+    });
+
+    return okMessage(c, "Subscription deleted.");
   },
 
   /**

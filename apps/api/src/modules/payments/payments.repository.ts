@@ -144,6 +144,24 @@ export const paymentRepository = {
   },
 
   /**
+   * Run the `find subscription detail` persistence operation for the payments module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
+  findSubscriptionDetail(subscriptionId: string, tenantId: string) {
+    return prisma.subscription.findFirst({
+      where: { id: subscriptionId, tenantId },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        amount: true,
+        durationDays: true,
+        isActive: true,
+      },
+    });
+  },
+
+  /**
    * Run the `create payment` persistence operation for the payments module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
@@ -262,10 +280,13 @@ export const paymentRepository = {
    * Run the `list subscriptions` persistence operation for the payments module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
-  listSubscriptions(tenantId: string) {
+  listSubscriptions(tenantId: string, includeInactive = false) {
     return prisma.subscription.findMany({
-      where: { tenantId, isActive: true },
-      orderBy: { amount: "asc" },
+      where: {
+        tenantId,
+        ...(includeInactive ? {} : { isActive: true }),
+      },
+      orderBy: [{ isActive: "desc" }, { amount: "asc" }],
       select: {
         id: true,
         title: true,
@@ -292,7 +313,62 @@ export const paymentRepository = {
   ) {
     return prisma.subscription.create({
       data: { ...data, tenantId },
-      select: { id: true, title: true, amount: true, durationDays: true },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        amount: true,
+        durationDays: true,
+        isActive: true,
+      },
+    });
+  },
+
+  /**
+   * Run the `update subscription` persistence operation for the payments module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
+  updateSubscription(
+    subscriptionId: string,
+    data: {
+      title?: string;
+      description?: string | null;
+      amount?: number;
+      durationDays?: number;
+      isActive?: boolean;
+    },
+  ) {
+    return prisma.subscription.update({
+      where: { id: subscriptionId },
+      data,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        amount: true,
+        durationDays: true,
+        isActive: true,
+      },
+    });
+  },
+
+  /**
+   * Run the `count payments for subscription` persistence operation for the payments module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
+  countPaymentsForSubscription(subscriptionId: string) {
+    return prisma.payment.count({
+      where: { subscriptionId },
+    });
+  },
+
+  /**
+   * Run the `delete subscription` persistence operation for the payments module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
+  deleteSubscription(subscriptionId: string) {
+    return prisma.subscription.delete({
+      where: { id: subscriptionId },
     });
   },
 

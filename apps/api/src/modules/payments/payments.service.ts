@@ -13,6 +13,7 @@ import type {
   CreatePaymentInput,
   UpdatePaymentInput,
   CreateSubscriptionInput,
+  UpdateSubscriptionInput,
 } from "./payments.schema";
 
 export const paymentService = {
@@ -247,8 +248,8 @@ export const paymentService = {
    * Execute the `list subscriptions` workflow for the payments module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
-  async listSubscriptions(tenantId: string) {
-    const subscriptions = await paymentRepository.listSubscriptions(tenantId);
+  async listSubscriptions(tenantId: string, includeInactive = false) {
+    const subscriptions = await paymentRepository.listSubscriptions(tenantId, includeInactive);
     return { data: { subscriptions } };
   },
 
@@ -259,6 +260,46 @@ export const paymentService = {
   async createSubscription(tenantId: string, input: CreateSubscriptionInput) {
     const subscription = await paymentRepository.createSubscription(tenantId, input);
     return { data: { subscription } };
+  },
+
+  /**
+   * Execute the `update subscription` workflow for the payments module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
+  async updateSubscription(
+    tenantId: string,
+    subscriptionId: string,
+    input: UpdateSubscriptionInput,
+  ) {
+    const existing = await paymentRepository.findSubscriptionDetail(subscriptionId, tenantId);
+    if (!existing) {
+      return { error: "Subscription not found.", status: 404 as const };
+    }
+
+    const subscription = await paymentRepository.updateSubscription(subscriptionId, input);
+    return { data: { subscription }, previous: existing };
+  },
+
+  /**
+   * Execute the `delete subscription` workflow for the payments module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
+  async deleteSubscription(tenantId: string, subscriptionId: string) {
+    const existing = await paymentRepository.findSubscriptionDetail(subscriptionId, tenantId);
+    if (!existing) {
+      return { error: "Subscription not found.", status: 404 as const };
+    }
+
+    const paymentCount = await paymentRepository.countPaymentsForSubscription(subscriptionId);
+    if (paymentCount > 0) {
+      return {
+        error: "This plan already has payment history. Inactivate it instead of deleting it.",
+        status: 409 as const,
+      };
+    }
+
+    await paymentRepository.deleteSubscription(subscriptionId);
+    return { data: { subscriptionId } };
   },
 
   /**

@@ -276,6 +276,14 @@ export interface CreateSubscriptionPayload {
   durationDays?: number;
 }
 
+export interface UpdateSubscriptionPayload {
+  title?: string;
+  description?: string | null;
+  amount?: number;
+  durationDays?: number;
+  isActive?: boolean;
+}
+
 // ─── Payments ─────────────────────────────────────────────────────────────────
 
 export interface Payment {

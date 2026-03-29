@@ -3,7 +3,7 @@
  *
  * - Defines the Zod schemas and inferred TypeScript input types used to validate requests for subscription management, payment collection, and membership validity tracking.
  * - When a request payload or query contract changes, update this file first and then adjust the controller/service code that consumes the parsed input.
- * - Primary exports: createPaymentSchema, updatePaymentStatusSchema, updatePaymentSchema, createSubscriptionSchema, CreatePaymentInput, UpdatePaymentInput, CreateSubscriptionInput.
+ * - Primary exports: createPaymentSchema, updatePaymentStatusSchema, updatePaymentSchema, createSubscriptionSchema, updateSubscriptionSchema, CreatePaymentInput, UpdatePaymentInput, CreateSubscriptionInput, UpdateSubscriptionInput.
  */
 import { z } from "zod";
 
@@ -86,6 +86,19 @@ export const createSubscriptionSchema = z.object({
   durationDays: z.number().int().min(1).default(30),
 });
 
+export const updateSubscriptionSchema = z
+  .object({
+    title: z.string().min(2).max(200).optional(),
+    description: z.string().max(1000).optional().nullable(),
+    amount: z.number().int().min(0).optional(),
+    durationDays: z.number().int().min(1).optional(),
+    isActive: z.boolean().optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field is required.",
+  });
+
 export type CreatePaymentInput = z.infer<typeof createPaymentSchema>;
 export type UpdatePaymentInput = z.infer<typeof updatePaymentSchema>;
 export type CreateSubscriptionInput = z.infer<typeof createSubscriptionSchema>;
+export type UpdateSubscriptionInput = z.infer<typeof updateSubscriptionSchema>;
