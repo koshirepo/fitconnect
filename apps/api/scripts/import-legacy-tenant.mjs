@@ -9,8 +9,9 @@
  *   `node scripts/import-legacy-tenant.mjs --members-file=... --payments-file=...`
  */
 import bcrypt from "bcryptjs";
+import { spawnSync } from "node:child_process";
 import { createHash, createHmac } from "node:crypto";
-import { copyFileSync, existsSync, readFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -27,7 +28,20 @@ const localD1Path = path.join(
   "miniflare-D1DatabaseObject",
 );
 const MINIFLARE_D1_UNIQUE_KEY = "miniflare-D1DatabaseObject";
+const wranglerBin = path.join(
+  rootDir,
+  "node_modules",
+  ".bin",
+  process.platform === "win32" ? "wrangler.cmd" : "wrangler",
+);
+const wranglerCliPath = path.join(rootDir, "node_modules", "wrangler", "bin", "wrangler.js");
 const DEFAULT_PASSWORD = "Test@1234";
+const PLACEHOLDER_DP_VALUES = new Set([
+  "",
+  "assets/defaultdp.png",
+  "assets/black-removebg.png",
+  "assets/black/removebg.png",
+]);
 const DEFAULTS = {
   tenantName: "Rudra Gym",
   tenantSlug: "rudra-gym",
@@ -35,7 +49,12 @@ const DEFAULTS = {
   membersFile: null,
   paymentsFile: null,
   replace: false,
+  remote: false,
+  remoteDatabase: null,
+  remoteOutFile: path.join(rootDir, ".wrangler", "tmp", "import-legacy-tenant-remote.sql"),
+  noExecuteRemote: false,
   password: DEFAULT_PASSWORD,
+  uploadsPublicUrl: null,
 };
 
 function parseArgs(argv) {
@@ -53,6 +72,14 @@ function parseArgs(argv) {
 
     if (rawKey === "replace") {
       options.replace = rawValue === undefined ? true : rawValue === "true";
+      continue;
+    }
+    if (rawKey === "remote") {
+      options.remote = rawValue === undefined ? true : rawValue === "true";
+      continue;
+    }
+    if (rawKey === "no-execute-remote") {
+      options.noExecuteRemote = rawValue === undefined ? true : rawValue === "true";
       continue;
     }
 
@@ -76,8 +103,17 @@ function parseArgs(argv) {
       case "database":
         options.database = rawValue;
         break;
+      case "remote-database":
+        options.remoteDatabase = rawValue;
+        break;
+      case "remote-out-file":
+        options.remoteOutFile = rawValue;
+        break;
       case "password":
         options.password = rawValue;
+        break;
+      case "uploads-public-url":
+        options.uploadsPublicUrl = rawValue;
         break;
       default:
         throw new Error(`Unknown option: --${rawKey}`);
@@ -95,6 +131,7 @@ function parseArgs(argv) {
     ...options,
     membersFile: path.resolve(options.membersFile),
     paymentsFile: path.resolve(options.paymentsFile),
+    remoteOutFile: path.resolve(options.remoteOutFile),
   };
 }
 
@@ -159,6 +196,13 @@ function parseWranglerD1Config() {
 
   flushCurrent();
   return entries.filter((entry) => entry.binding);
+}
+
+function parseWranglerVar(key) {
+  if (!existsSync(wranglerConfigPath)) return null;
+  const config = readFileSync(wranglerConfigPath, "utf8");
+  const match = config.match(new RegExp(`^\\s*${key}\\s*=\\s*"([^"]+)"`, "m"));
+  return match?.[1] ?? null;
 }
 
 function durableObjectNamespaceIdFromName(uniqueKey, name) {
@@ -351,10 +395,229 @@ function normalizeMemberStatus(rawStatus, latestDueDate, now) {
   return "SUSPENDED";
 }
 
+function resolveUploadsPublicUrl(cliValue) {
+  return (
+    cliValue?.trim() ||
+    process.env.R2_PUBLIC_URL?.trim() ||
+    parseWranglerVar("R2_PUBLIC_URL") ||
+    null
+  );
+}
+
+function resolveAvatarUrl(rawValue, uploadsPublicUrl) {
+  if (!rawValue?.trim() || !uploadsPublicUrl) return null;
+
+  const trimmed = rawValue.trim();
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  const normalized = trimmed.replace(/\\/g, "/");
+  if (PLACEHOLDER_DP_VALUES.has(normalized.toLowerCase())) {
+    return null;
+  }
+
+  const fileName = normalized.split("/").pop()?.trim();
+  if (!fileName) return null;
+
+  if (normalized.toLowerCase().startsWith("dp/")) {
+    return `${uploadsPublicUrl.replace(/\/+$/u, "")}/avatars/${encodeURIComponent(fileName)}`;
+  }
+
+  return null;
+}
+
+function resolveRemoteDatabaseName(cliValue) {
+  const entries = parseWranglerD1Config();
+  if (entries.length === 0) {
+    throw new Error("No [[d1_databases]] entries were found in wrangler.toml.");
+  }
+
+  const match = cliValue
+    ? entries.find(
+        (entry) =>
+          entry.databaseName === cliValue ||
+          entry.binding === cliValue ||
+          entry.databaseId === cliValue,
+      )
+    : entries[0];
+
+  if (!match?.databaseName) {
+    throw new Error(`Could not find a remote D1 database matching "${cliValue}" in wrangler.toml.`);
+  }
+
+  return match.databaseName;
+}
+
+function runWrangler(args) {
+  const command = existsSync(wranglerCliPath) ? process.execPath : wranglerBin;
+  const commandArgs = existsSync(wranglerCliPath) ? [wranglerCliPath, ...args] : args;
+  const result = spawnSync(command, commandArgs, {
+    cwd: rootDir,
+    encoding: "utf8",
+    stdio: "inherit",
+  });
+
+  if (result.error) {
+    throw result.error;
+  }
+  if (result.status !== 0) {
+    throw new Error(`Wrangler exited with code ${result.status}.`);
+  }
+}
+
+function escapeIdentifier(value) {
+  return `"${String(value).replace(/"/g, '""')}"`;
+}
+
+function sqlLiteral(value) {
+  if (value === null || value === undefined) {
+    return "NULL";
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? String(value) : "NULL";
+  }
+  if (typeof value === "boolean") {
+    return value ? "1" : "0";
+  }
+  return `'${String(value).replace(/'/g, "''")}'`;
+}
+
+function compareTableNames(left, right) {
+  return left.localeCompare(right);
+}
+
+function orderTablesForDump(db, tableNames) {
+  const tables = new Set(tableNames);
+  const remaining = new Set(tableNames);
+  const dependencies = new Map(
+    tableNames.map((tableName) => [
+      tableName,
+      new Set(
+        db
+          .prepare(`PRAGMA foreign_key_list(${sqlLiteral(tableName)})`)
+          .all()
+          .map((row) => row.table)
+          .filter((dependencyName) => dependencyName !== tableName && tables.has(dependencyName)),
+      ),
+    ]),
+  );
+  const orderedTables = [];
+
+  while (remaining.size > 0) {
+    const readyTables = [...remaining]
+      .filter((tableName) => {
+        for (const dependencyName of dependencies.get(tableName) ?? []) {
+          if (remaining.has(dependencyName)) {
+            return false;
+          }
+        }
+        return true;
+      })
+      .sort(compareTableNames);
+
+    if (readyTables.length === 0) {
+      orderedTables.push(...[...remaining].sort(compareTableNames));
+      break;
+    }
+
+    const [nextTable] = readyTables;
+    orderedTables.push(nextTable);
+    remaining.delete(nextTable);
+  }
+
+  return orderedTables;
+}
+
+function buildInClause(columnName, values) {
+  if (values.length === 0) {
+    return { where: "1 = 0", params: [] };
+  }
+
+  return {
+    where: `${escapeIdentifier(columnName)} IN (${values.map(() => "?").join(", ")})`,
+    params: values,
+  };
+}
+
+function dumpTableInsertsWhere(db, tableName, whereClause, params = []) {
+  const tableInfo = db.prepare(`PRAGMA table_info(${sqlLiteral(tableName)})`).all();
+  const columns = tableInfo.map((column) => column.name);
+  if (columns.length === 0) {
+    return [];
+  }
+
+  const pkColumns = tableInfo
+    .filter((column) => Number(column.pk) > 0)
+    .sort((left, right) => Number(left.pk) - Number(right.pk))
+    .map((column) => column.name);
+  const orderByClause = pkColumns.length > 0
+    ? ` ORDER BY ${pkColumns.map(escapeIdentifier).join(", ")}`
+    : "";
+  const rows = db
+    .prepare(`SELECT * FROM ${escapeIdentifier(tableName)} WHERE ${whereClause}${orderByClause}`)
+    .all(...params);
+
+  if (rows.length === 0) {
+    return [];
+  }
+
+  const columnList = columns.map(escapeIdentifier).join(", ");
+  return rows.map((row) => {
+    const values = columns.map((column) => sqlLiteral(row[column])).join(", ");
+    return `INSERT INTO ${escapeIdentifier(tableName)} (${columnList}) VALUES (${values});`;
+  });
+}
+
+function buildRemoteTenantSeedSql(db, options) {
+  const memberships = db
+    .prepare(`SELECT "id", "userId" FROM "TenantMembership" WHERE "tenantId" = ? ORDER BY "memberId"`)
+    .all(options.tenantId);
+  const userIds = memberships.map((row) => row.userId);
+  const tableFilters = new Map([
+    ["Tenant", { where: `"slug" = ?`, params: [options.tenantSlug] }],
+    ["TenantSettings", { where: `"tenantId" = ?`, params: [options.tenantId] }],
+    ["Shift", { where: `"tenantId" = ?`, params: [options.tenantId] }],
+    ["Subscription", { where: `"tenantId" = ?`, params: [options.tenantId] }],
+    ["User", buildInClause("id", userIds)],
+    ["TenantMembership", { where: `"tenantId" = ?`, params: [options.tenantId] }],
+    ["Payment", { where: `"tenantId" = ?`, params: [options.tenantId] }],
+  ]);
+  const orderedTables = orderTablesForDump(db, [...tableFilters.keys()]);
+  const deleteStatements = options.replace
+    ? [
+        `DELETE FROM "Tenant" WHERE "slug" = ${sqlLiteral(options.tenantSlug)};`,
+        `DELETE FROM "User" WHERE "id" GLOB ${sqlLiteral(`${options.memberPrefix}_user_*`)} OR "id" GLOB ${sqlLiteral(`${options.memberPrefix}_staff_user_*`)};`,
+      ]
+    : [];
+  const insertStatements = [];
+  const rowCounts = {};
+
+  for (const tableName of orderedTables) {
+    const filter = tableFilters.get(tableName);
+    const statements = dumpTableInsertsWhere(db, tableName, filter.where, filter.params);
+    insertStatements.push(...statements);
+    rowCounts[tableName] = statements.length;
+  }
+
+  return {
+    sql: [
+      "-- Generated by import-legacy-tenant.mjs",
+      "PRAGMA defer_foreign_keys = ON;",
+      ...deleteStatements,
+      ...insertStatements,
+      "",
+    ].join("\n"),
+    rowCounts,
+    userCount: userIds.length,
+  };
+}
+
 function main() {
   const options = parseArgs(process.argv.slice(2));
   const dbPath = resolveLocalDatabasePath(options.database);
   const backupPath = `${dbPath}.bak-${Date.now()}-rudra-import`;
+  const uploadsPublicUrl = resolveUploadsPublicUrl(options.uploadsPublicUrl);
 
   copyFileSync(dbPath, backupPath);
 
@@ -383,6 +646,7 @@ function main() {
   }
 
   db.exec("BEGIN");
+  let localCommitted = false;
 
   try {
     if (existingTenant) {
@@ -665,6 +929,7 @@ function main() {
     let duplicateOrInvalidPhoneCount = 0;
     let preservedEmailCount = 0;
     let syntheticEmailCount = 0;
+    let avatarImportedCount = 0;
 
     for (const row of membersRows) {
       const legacyMemberId = Number.parseInt(row["Admission Number"], 10);
@@ -687,6 +952,7 @@ function main() {
         `${tenantSlug}.member.${String(legacyMemberId).padStart(4, "0")}@import.local`,
       );
       const finalPhone = pickUniquePhone(row.Phone);
+      const avatarUrl = resolveAvatarUrl(row.DP, uploadsPublicUrl);
       const membershipStatus = normalizeMemberStatus(row.status, latestDueDate, now);
 
       if (shouldPreserveEmail) {
@@ -700,6 +966,9 @@ function main() {
       } else if (row.Phone?.trim()) {
         duplicateOrInvalidPhoneCount += 1;
       }
+      if (avatarUrl) {
+        avatarImportedCount += 1;
+      }
 
       insertUser.run(
         userId,
@@ -707,7 +976,7 @@ function main() {
         finalEmail,
         finalPhone,
         passwordHash,
-        null,
+        avatarUrl,
         "USER",
         membershipStatus === "ACTIVE" ? "ACTIVE" : "SUSPENDED",
         iso(joinedAt),
@@ -766,6 +1035,33 @@ function main() {
     }
 
     db.exec("COMMIT");
+    localCommitted = true;
+
+    let remote = null;
+    if (options.remote) {
+      const remoteDatabase = resolveRemoteDatabaseName(options.remoteDatabase);
+      const remoteSeed = buildRemoteTenantSeedSql(db, {
+        tenantId,
+        tenantSlug,
+        memberPrefix,
+        replace: options.replace,
+      });
+
+      mkdirSync(path.dirname(options.remoteOutFile), { recursive: true });
+      writeFileSync(options.remoteOutFile, remoteSeed.sql, "utf8");
+
+      if (!options.noExecuteRemote) {
+        runWrangler(["d1", "execute", remoteDatabase, "--remote", "--yes", "--file", options.remoteOutFile]);
+      }
+
+      remote = {
+        database: remoteDatabase,
+        outFile: options.remoteOutFile,
+        executed: !options.noExecuteRemote,
+        rowCounts: remoteSeed.rowCounts,
+        userCount: remoteSeed.userCount,
+      };
+    }
 
     console.log(
       JSON.stringify(
@@ -786,6 +1082,9 @@ function main() {
           duplicateOrInvalidPhoneCount,
           preservedEmailCount,
           syntheticEmailCount,
+          avatarImportedCount,
+          uploadsPublicUrl,
+          remote,
           login: {
             email: mainAdminEmail,
             password: options.password,
@@ -796,7 +1095,9 @@ function main() {
       ),
     );
   } catch (error) {
-    db.exec("ROLLBACK");
+    if (!localCommitted) {
+      db.exec("ROLLBACK");
+    }
     throw error;
   } finally {
     db.close();
