@@ -4,6 +4,7 @@ import type {
   CreateBadgePayload,
   UpdateBadgePayload,
   AssignBadgePayload,
+  TenantMember,
   PaginatedResponse,
   ApiResponse,
 } from "@/types/api";
@@ -35,7 +36,7 @@ export const badgesApi = {
       ApiResponse<{
         assignments: {
           id: string;
-          membership?: { id: string; name: string; email: string };
+          membership?: Pick<TenantMember, "id" | "name" | "email" | "avatarUrl" | "memberId">;
         }[];
       }>
     >(`/tenants/${tenantId}/badges/${badgeId}/assignments`),

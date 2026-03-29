@@ -7,9 +7,10 @@ import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { Badge as BadgeUI } from "@/components/ui/badge";
+import AvatarCard from "@/components/ui/avatarCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import MemberSelector from "@/components/ui/memberSelector";
 import {
   Dialog,
   DialogContent,
@@ -53,6 +54,7 @@ export default function BadgesPage() {
   const [assignBadgeId, setAssignBadgeId] = React.useState<string | null>(null);
   const [assignBadgeName, setAssignBadgeName] = React.useState("");
   const [members, setMembers] = React.useState<TenantMember[]>([]);
+  const [selectedMember, setSelectedMember] = React.useState<TenantMember | null>(null);
   const [selectedMemberId, setSelectedMemberId] = React.useState("");
   const [assignNote, setAssignNote] = React.useState("");
   const [assignError, setAssignError] = React.useState("");
@@ -67,7 +69,13 @@ export default function BadgesPage() {
   const [viewBadgeName, setViewBadgeName] = React.useState("");
   const [viewAssignments, setViewAssignments] = React.useState<
     {
-      membership?: { id: string; name: string; email: string };
+      membership?: {
+        id: string;
+        name: string;
+        email: string;
+        avatarUrl?: string | null;
+        memberId?: number;
+      };
     }[]
   >([]);
 
@@ -176,6 +184,7 @@ export default function BadgesPage() {
     if (!currentTenantId) return;
     setAssignBadgeId(badgeId);
     setAssignBadgeName(badgeName);
+    setSelectedMember(null);
     setSelectedMemberId("");
     setAssignNote("");
     setAssignError("");
@@ -441,17 +450,15 @@ export default function BadgesPage() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Select Member</Label>
-              <Select
-                value={selectedMemberId}
-                onChange={(e) => setSelectedMemberId(e.target.value)}
-              >
-                <option value="">Choose a member...</option>
-                {members.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name} ({m.role})
-                  </option>
-                ))}
-              </Select>
+              <MemberSelector
+                members={members}
+                selectedMember={selectedMember}
+                onSelect={(member) => {
+                  setSelectedMember(member);
+                  setSelectedMemberId(member.id);
+                }}
+                placeholder="Choose a member..."
+              />
             </div>
             <div className="space-y-2">
               <Label>Note (optional)</Label>
@@ -492,12 +499,22 @@ export default function BadgesPage() {
               {viewAssignments.map((a) => (
                 <div
                   key={a.membership?.id ?? `${viewBadgeName}-${a.membership?.email ?? "member"}`}
-                  className="flex items-center justify-between rounded-md border px-3 py-2"
+                  className="rounded-md border px-3 py-2"
                 >
-                  <div>
-                    <p className="text-sm font-medium">{a.membership?.name}</p>
-                    <p className="text-xs text-muted-foreground">{a.membership?.email}</p>
-                  </div>
+                  {a.membership ? (
+                    <AvatarCard
+                      name={a.membership.name}
+                      avatarUrl={a.membership.avatarUrl}
+                      memberId={a.membership.memberId}
+                      variant="sm"
+                    >
+                      <p className="text-xs text-muted-foreground truncate">
+                        {a.membership.email}
+                      </p>
+                    </AvatarCard>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Member details unavailable</p>
+                  )}
                 </div>
               ))}
             </div>
