@@ -31,6 +31,7 @@ export type {
   UpdateShiftPayload,
   Subscription,
   CreateSubscriptionPayload,
+  UpdateSubscriptionPayload,
   Payment,
   PaymentSummary,
   CreatePaymentPayload,

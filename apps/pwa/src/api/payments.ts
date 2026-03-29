@@ -5,6 +5,7 @@ import type {
   UpdatePaymentPayload,
   Subscription,
   CreateSubscriptionPayload,
+  UpdateSubscriptionPayload,
   PaginatedResponse,
   ApiResponse,
 } from "@/types/api";
@@ -53,13 +54,30 @@ export const paymentsApi = {
 
   // ─── Subscriptions ─────────────────────────────────────────────────────────
 
-  listSubscriptions: (tenantId: string) =>
-    api.get<ApiResponse<{ subscriptions: Subscription[] }>>(`/tenants/${tenantId}/subscriptions`),
+  listSubscriptions: (tenantId: string, includeInactive = false) =>
+    api.get<ApiResponse<{ subscriptions: Subscription[] }>>(`/tenants/${tenantId}/subscriptions`, {
+      params: includeInactive ? { includeInactive: true } : undefined,
+    }),
 
   createSubscription: (tenantId: string, data: CreateSubscriptionPayload) =>
     api.post<ApiResponse<{ subscription: Subscription }>>(
       `/tenants/${tenantId}/subscriptions`,
       data,
+    ),
+
+  updateSubscription: (
+    tenantId: string,
+    subscriptionId: string,
+    data: UpdateSubscriptionPayload,
+  ) =>
+    api.patch<ApiResponse<{ subscription: Subscription }>>(
+      `/tenants/${tenantId}/subscriptions/${subscriptionId}`,
+      data,
+    ),
+
+  deleteSubscription: (tenantId: string, subscriptionId: string) =>
+    api.delete<ApiResponse<{ message: string }>>(
+      `/tenants/${tenantId}/subscriptions/${subscriptionId}`,
     ),
 
   analytics: (tenantId: string) =>
