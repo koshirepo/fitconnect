@@ -2,7 +2,6 @@ import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { attendanceApi } from "@/api/attendance";
-import { tenantsApi } from "@/api/tenants";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -10,6 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageLoader, Spinner } from "@/components/ui/spinner";
 import AvatarCard from "@/components/ui/avatarCard";
 import { formatDate } from "@/lib/utils";
+import { loadAllTenantMembers } from "@/lib/tenant-members";
 import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
 import {
   CalendarCheck,
@@ -116,10 +116,9 @@ export default function AttendancePage() {
   // Load members for bulk marking
   React.useEffect(() => {
     if (!showBulk || !currentTenantId) return;
-    tenantsApi
-      .listMembers(currentTenantId, 1, 200, "", "", "ACTIVE")
-      .then((res) => {
-        setMembers(res.data.data.members);
+    loadAllTenantMembers(currentTenantId, { status: "ACTIVE" })
+      .then((allMembers) => {
+        setMembers(allMembers);
       })
       .catch(() => {});
   }, [showBulk, currentTenantId]);
@@ -203,7 +202,9 @@ export default function AttendancePage() {
   const filteredMembers = members.filter(
     (m) =>
       !presentIds.has(m.id) &&
-      `${m.name} ${m.email}`.toLowerCase().includes(memberSearch.toLowerCase()),
+      `${m.name} ${m.email} ${m.phone ?? ""} ${m.memberId ?? ""}`
+        .toLowerCase()
+        .includes(memberSearch.toLowerCase()),
   );
 
   const isToday =
@@ -302,7 +303,7 @@ export default function AttendancePage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search members..."
+                placeholder="Search by name, phone, email, or admission no..."
                 value={memberSearch}
                 onChange={(e) => setMemberSearch(e.target.value)}
                 className="w-full pl-10 pr-10 py-2 border border-input rounded-md bg-background text-sm"

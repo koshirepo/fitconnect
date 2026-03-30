@@ -8,6 +8,7 @@ import { attendanceApi } from "@/api/attendance";
 import { shiftsApi } from "@/api/shifts";
 import { getApiError } from "@/api/client";
 import { formatDate, getInitials } from "@/shared";
+import { getDueDateState } from "@/lib/member-due";
 import { formatShiftLabel, formatShiftWindow } from "@/lib/shifts";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -486,11 +487,25 @@ export default function MemberDetailPage() {
     </>
   );
 
+  const mobilePhotoRingClass =
+    getDueDateState(member.dueDate) === "overdue"
+      ? "ring-4 ring-red-500"
+      : getDueDateState(member.dueDate) === "current"
+        ? "ring-4 ring-emerald-500"
+        : member.status === "ACTIVE"
+          ? "ring-4 ring-blue-500"
+          : "ring-4 ring-yellow-500";
+
   return (
     <div className="space-y-6">
       {/* ── Mobile header: full-width photo ──────────────────────────────── */}
       <div className="sm:hidden space-y-4">
-        <div className="relative w-32 h-32 mx-auto overflow-hidden rounded-2xl bg-muted">
+        <div
+          className={cn(
+            "relative w-32 h-32 mx-auto overflow-hidden rounded-2xl bg-muted",
+            mobilePhotoRingClass,
+          )}
+        >
           {member.avatarUrl ? (
             <img src={member.avatarUrl} alt={member.name} className="h-full w-full object-cover" />
           ) : (
@@ -595,6 +610,7 @@ export default function MemberDetailPage() {
             memberId={member.memberId}
             className="min-w-0"
             role={member.role}
+            dueDate={member.dueDate}
             isActive={member.status === "ACTIVE"}
             avatarClassName="h-20 w-20 text-xl"
           >

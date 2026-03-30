@@ -2,7 +2,6 @@ import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { badgesApi } from "@/api/badges";
-import { tenantsApi } from "@/api/tenants";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +22,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Plus, Award, Trash2, UserPlus, Edit, Users } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
+import { loadAllTenantMembers } from "@/lib/tenant-members";
 import type { Badge, TenantMember } from "@/types/api";
 
 export default function BadgesPage() {
@@ -189,8 +189,8 @@ export default function BadgesPage() {
     setAssignNote("");
     setAssignError("");
     try {
-      const res = await tenantsApi.listMembers(currentTenantId, 1, 100);
-      setMembers(res.data.data.members);
+      const allMembers = await loadAllTenantMembers(currentTenantId);
+      setMembers(allMembers);
     } catch {
       //
     }

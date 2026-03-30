@@ -2,13 +2,11 @@ import * as React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { workoutsApi } from "@/api/workouts";
-import { tenantsApi } from "@/api/tenants";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -18,6 +16,8 @@ import { formatDate } from "@/lib/utils";
 import { ArrowLeft, Dumbbell, Pencil, Plus, Trash2, UserPlus, Users, X } from "lucide-react";
 import type { WorkoutPlan, Exercise, TenantMember } from "@/types/api";
 import AvatarCard from "@/components/ui/avatarCard";
+import MemberSelector from "@/components/ui/memberSelector";
+import { loadAllTenantMembers } from "@/lib/tenant-members";
 
 export default function WorkoutDetailPage() {
   const { planId } = useParams<{ planId: string }>();
@@ -43,6 +43,7 @@ export default function WorkoutDetailPage() {
   // Assign
   const [assignOpen, setAssignOpen] = React.useState(false);
   const [members, setMembers] = React.useState<TenantMember[]>([]);
+  const [selectedMember, setSelectedMember] = React.useState<TenantMember | null>(null);
   const [selectedMemberId, setSelectedMemberId] = React.useState("");
   const [assigning, setAssigning] = React.useState(false);
 
@@ -104,11 +105,12 @@ export default function WorkoutDetailPage() {
   const openAssign = async () => {
     if (!currentTenantId) return;
     try {
-      const res = await tenantsApi.listMembers(currentTenantId, 1, 100);
-      setMembers(res.data.data.members);
+      const allMembers = await loadAllTenantMembers(currentTenantId);
+      setMembers(allMembers);
     } catch {
       //
     }
+    setSelectedMember(null);
     setSelectedMemberId("");
     setAssignOpen(true);
   };
@@ -119,6 +121,7 @@ export default function WorkoutDetailPage() {
     try {
       await workoutsApi.assign(currentTenantId, planId, selectedMemberId);
       setAssignOpen(false);
+      setSelectedMember(null);
       setSelectedMemberId("");
       await loadPlan();
     } catch (err: unknown) {
@@ -437,14 +440,15 @@ export default function WorkoutDetailPage() {
         <Card className="border-primary/30">
           <CardContent className="p-4 space-y-3">
             <Label>Assign to Member</Label>
-            <Select value={selectedMemberId} onChange={(e) => setSelectedMemberId(e.target.value)}>
-              <option value="">Choose a member...</option>
-              {members.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name} ({m.role})
-                </option>
-              ))}
-            </Select>
+            <MemberSelector
+              members={members}
+              selectedMember={selectedMember}
+              onSelect={(member) => {
+                setSelectedMember(member);
+                setSelectedMemberId(member.id);
+              }}
+              placeholder="Choose a member..."
+            />
             <div className="flex gap-2 justify-end">
               <Button variant="outline" size="sm" onClick={() => setAssignOpen(false)}>
                 Cancel

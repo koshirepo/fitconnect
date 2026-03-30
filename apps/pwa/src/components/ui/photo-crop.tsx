@@ -289,7 +289,7 @@ export function PhotoCrop({ src, onConfirm, onCancel, outputSize = 400 }: PhotoC
             src={src}
             alt="Crop preview"
             draggable={false}
-            className="pointer-events-none absolute"
+            className="pointer-events-none absolute max-w-none"
             style={{
               width: layout.iw * layout.baseScale * zoom,
               height: layout.ih * layout.baseScale * zoom,

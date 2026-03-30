@@ -2,13 +2,11 @@ import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { workoutsApi } from "@/api/workouts";
-import { tenantsApi } from "@/api/tenants";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -24,6 +22,8 @@ import { formatDate } from "@/lib/utils";
 import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
 import { Plus, Dumbbell, Trash2, UserPlus, X } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import MemberSelector from "@/components/ui/memberSelector";
+import { loadAllTenantMembers } from "@/lib/tenant-members";
 import type { WorkoutPlan, Exercise, TenantMember } from "@/types/api";
 
 export default function WorkoutsPage() {
@@ -51,6 +51,7 @@ export default function WorkoutsPage() {
   const [assignDialogOpen, setAssignDialogOpen] = React.useState(false);
   const [assignPlanId, setAssignPlanId] = React.useState<string | null>(null);
   const [members, setMembers] = React.useState<TenantMember[]>([]);
+  const [selectedMember, setSelectedMember] = React.useState<TenantMember | null>(null);
   const [selectedMemberId, setSelectedMemberId] = React.useState("");
 
   // Delete confirm
@@ -167,9 +168,11 @@ export default function WorkoutsPage() {
   const openAssign = async (planId: string) => {
     if (!currentTenantId) return;
     setAssignPlanId(planId);
+    setSelectedMember(null);
+    setSelectedMemberId("");
     try {
-      const res = await tenantsApi.listMembers(currentTenantId, 1, 100);
-      setMembers(res.data.data.members);
+      const allMembers = await loadAllTenantMembers(currentTenantId);
+      setMembers(allMembers);
     } catch {
       //
     }
@@ -181,6 +184,7 @@ export default function WorkoutsPage() {
     try {
       await workoutsApi.assign(currentTenantId, assignPlanId, selectedMemberId);
       setAssignDialogOpen(false);
+      setSelectedMember(null);
       setSelectedMemberId("");
       fetchPlans(1, "replace");
     } catch {
@@ -416,17 +420,15 @@ export default function WorkoutsPage() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Select Member</Label>
-              <Select
-                value={selectedMemberId}
-                onChange={(e) => setSelectedMemberId(e.target.value)}
-              >
-                <option value="">Choose a member...</option>
-                {members.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name} ({m.role})
-                  </option>
-                ))}
-              </Select>
+              <MemberSelector
+                members={members}
+                selectedMember={selectedMember}
+                onSelect={(member) => {
+                  setSelectedMember(member);
+                  setSelectedMemberId(member.id);
+                }}
+                placeholder="Choose a member..."
+              />
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setAssignDialogOpen(false)}>
