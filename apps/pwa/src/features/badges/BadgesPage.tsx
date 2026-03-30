@@ -189,7 +189,7 @@ export default function BadgesPage() {
     setAssignNote("");
     setAssignError("");
     try {
-      const allMembers = await loadAllTenantMembers(currentTenantId);
+      const allMembers = await loadAllTenantMembers(currentTenantId, { status: "ACTIVE" });
       setMembers(allMembers);
     } catch {
       //

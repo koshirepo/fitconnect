@@ -171,7 +171,7 @@ export default function WorkoutsPage() {
     setSelectedMember(null);
     setSelectedMemberId("");
     try {
-      const allMembers = await loadAllTenantMembers(currentTenantId);
+      const allMembers = await loadAllTenantMembers(currentTenantId, { status: "ACTIVE" });
       setMembers(allMembers);
     } catch {
       //

@@ -105,7 +105,7 @@ export default function WorkoutDetailPage() {
   const openAssign = async () => {
     if (!currentTenantId) return;
     try {
-      const allMembers = await loadAllTenantMembers(currentTenantId);
+      const allMembers = await loadAllTenantMembers(currentTenantId, { status: "ACTIVE" });
       setMembers(allMembers);
     } catch {
       //

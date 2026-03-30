@@ -154,31 +154,30 @@ export function PhotoCrop({ src, onConfirm, onCancel, outputSize = 400 }: PhotoC
       }
     };
 
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
+      setZoom((prev) => {
+        const next = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, prev + delta));
+        setOffset((o) => clampOffsetRef.current(o.x, o.y, next));
+        return next;
+      });
+    };
+
     el.addEventListener("touchstart", onTouchStart, { passive: true });
     el.addEventListener("touchmove", onTouchMove, { passive: false });
     el.addEventListener("touchend", onTouchEnd, { passive: true });
+    el.addEventListener("wheel", onWheel, { passive: false });
 
     return () => {
       el.removeEventListener("touchstart", onTouchStart);
       el.removeEventListener("touchmove", onTouchMove);
       el.removeEventListener("touchend", onTouchEnd);
+      el.removeEventListener("wheel", onWheel);
     };
   }, []);
 
   // ─── Scroll-to-zoom ────────────────────────────────────────────────────
-  const handleWheel = React.useCallback(
-    (e: React.WheelEvent) => {
-      e.preventDefault();
-      const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
-      setZoom((prev) => {
-        const next = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, prev + delta));
-        setOffset((o) => clampOffset(o.x, o.y, next));
-        return next;
-      });
-    },
-    [clampOffset],
-  );
-
   // ─── Zoom buttons ──────────────────────────────────────────────────────
   const adjustZoom = React.useCallback(
     (delta: number) => {
@@ -281,7 +280,6 @@ export function PhotoCrop({ src, onConfirm, onCancel, outputSize = 400 }: PhotoC
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
-        onWheel={handleWheel}
       >
         {/* The image */}
         {imgLoaded && layout && (
