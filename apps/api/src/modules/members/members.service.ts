@@ -106,14 +106,12 @@ export const memberService = {
 
     // Upsert user (they may already exist on the platform)
     let user = await memberRepository.findUserByEmail(input.email);
-    let generatedPassword: string | undefined;
     if (!user) {
-      generatedPassword = generateRandomPassword();
       user = await memberRepository.createUser({
         name: input.name,
         email: input.email,
         phone: input.phone,
-        passwordHash: await hashPassword(generatedPassword),
+        passwordHash: await hashPassword(input.phone),
         platformRole: PlatformRole.USER,
         ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
       });
@@ -267,34 +265,6 @@ export const memberService = {
     });
     const gymName = tenant?.name ?? "Fit Connect";
 
-    // Send welcome email with credentials + payment summary.
-    if (generatedPassword) {
-      const sendWelcomeEmail = emailService
-        .sendWelcomeEmail({
-          to: input.email,
-          memberName: input.name,
-          gymName,
-          email: input.email,
-          password: generatedPassword,
-          memberId: membership.memberId,
-          payments: payments.map((p) => ({
-            description: p.description,
-            amount: p.amount,
-          })),
-          subscriptionTitle: subscription?.title,
-          subscriptionDays: subscription?.durationDays,
-        })
-        .catch((err) => {
-          console.error("Welcome email failed.", err);
-        });
-
-      if (scheduleBackgroundTask) {
-        scheduleBackgroundTask(sendWelcomeEmail);
-      } else {
-        await sendWelcomeEmail;
-      }
-    }
-
     // Build WhatsApp message for auto-open on frontend
     const formatInr = (amount: number) =>
       new Intl.NumberFormat("en-IN", {
@@ -321,9 +291,7 @@ export const memberService = {
         ? `\n📋 Plan: *${subscription.title}* (${subscription.durationDays} days)`
         : null,
       ``,
-      generatedPassword
-        ? `🔑 Your login password has been sent to your email (${input.email}). Please check your inbox.`
-        : null,
+     `🔑 Your login password is your Phone number and Username is your email (${input.email}). Please check your inbox.`,
       ``,
       `Thank you for joining us! 💪`,
     ]
@@ -335,7 +303,6 @@ export const memberService = {
         membership: flattenNestedMember(membership),
         payments,
         whatsappText,
-        ...(generatedPassword ? { emailSent: true } : {}),
       },
     };
   },
