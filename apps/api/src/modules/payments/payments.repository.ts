@@ -28,16 +28,15 @@ export const paymentRepository = {
     if (membershipId) {
       where.membershipId = membershipId;
     }
-    if (search) {
-      where.member = {
-        user: {
-          OR: [
-            { name: { contains: search } },
-            { email: { contains: search } },
-            { phone: { contains: search } },
-          ],
-        },
-      };
+    const trimmedSearch = search?.trim();
+    if (trimmedSearch) {
+      const memberIdSearch = /^\d+$/.test(trimmedSearch) ? Number(trimmedSearch) : null;
+      where.OR = [
+        { member: { user: { name: { contains: trimmedSearch } } } },
+        { member: { user: { email: { contains: trimmedSearch } } } },
+        { member: { user: { phone: { contains: trimmedSearch } } } },
+        ...(memberIdSearch !== null ? [{ member: { memberId: memberIdSearch } }] : []),
+      ];
     }
 
     const [payments, total] = await Promise.all([

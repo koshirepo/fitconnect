@@ -152,10 +152,14 @@ export const memberRepository = {
     if (roleFilter && ["MEMBER", "COACH", "ADMIN"].includes(roleFilter)) {
       where.role = roleFilter as TenantRole;
     }
-    if (search && search.trim()) {
+    const trimmedSearch = search?.trim();
+    if (trimmedSearch) {
+      const memberIdSearch = /^\d+$/.test(trimmedSearch) ? Number(trimmedSearch) : null;
       where.OR = [
-        { user: { name: { contains: search } } },
-        { user: { email: { contains: search } } },
+        { user: { name: { contains: trimmedSearch } } },
+        { user: { email: { contains: trimmedSearch } } },
+        { user: { phone: { contains: trimmedSearch } } },
+        ...(memberIdSearch !== null ? [{ memberId: memberIdSearch }] : []),
       ];
     }
     if (badgeId) {
@@ -205,6 +209,7 @@ export const memberRepository = {
         memberId: true,
         role: true,
         status: true,
+        dueDate: true,
         joinedAt: true,
         shift: { select: shiftSelect },
         user: {
@@ -474,6 +479,7 @@ export const memberRepository = {
         memberId: true,
         role: true,
         status: true,
+        dueDate: true,
         joinedAt: true,
         shift: { select: shiftSelect },
         user: {
