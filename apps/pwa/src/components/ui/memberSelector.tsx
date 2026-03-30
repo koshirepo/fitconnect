@@ -34,7 +34,7 @@ export default function MemberSelector({
   const [search, setSearch] = React.useState("");
 
   const filteredMembers = members.filter((m) =>
-    `${m.name} ${m.email} ${m.memberId ?? ""}`
+    `${m.name} ${m.email} ${m.phone ?? ""} ${m.memberId ?? ""}`
       .toLowerCase()
       .includes(search.toLowerCase()),
   );
@@ -59,6 +59,7 @@ export default function MemberSelector({
             name={selectedMember.name}
             avatarUrl={selectedMember.avatarUrl}
             memberId={selectedMember.memberId}
+            dueDate={selectedMember.dueDate}
             variant="sm"
           >
             <div className="text-xs text-muted-foreground">
@@ -83,7 +84,7 @@ export default function MemberSelector({
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name or email..."
+                placeholder="Search by name, phone, email, or admission no..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10 pr-10"
@@ -117,6 +118,7 @@ export default function MemberSelector({
                         name={m.name}
                         avatarUrl={m.avatarUrl}
                         memberId={m.memberId}
+                        dueDate={m.dueDate}
                         variant="sm"
                       >
                         <div className="text-xs text-muted-foreground space-y-1">

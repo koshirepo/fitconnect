@@ -150,6 +150,7 @@ export interface TenantProfile {
   role: TenantRole;
   status: AccountStatus;
   joinedAt: string;
+  dueDate?: string | null;
   shift?: Shift | null;
   payments?: PaymentSummary[];
 }
@@ -194,6 +195,7 @@ export interface MemberDetail {
   role: TenantRole;
   status: AccountStatus;
   joinedAt: string;
+  dueDate?: string | null;
   shift?: Shift | null;
   payments: {
     id: string;

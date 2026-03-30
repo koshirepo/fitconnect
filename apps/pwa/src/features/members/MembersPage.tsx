@@ -262,7 +262,7 @@ export default function MembersPage() {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search by name or email..."
+            placeholder="Search by name, phone, email, or admission no..."
             value={search}
             onChange={(e) => updateParams({ search: e.target.value })}
             className="w-full pl-10 pr-10 py-2 border border-input rounded-md bg-background text-sm"
@@ -337,6 +337,7 @@ export default function MembersPage() {
                       name={m.name}
                       avatarUrl={m.avatarUrl}
                       memberId={m.memberId}
+                      dueDate={m.dueDate}
                       variant="lg"
                       role={m.role}
                       isActive={m.status === "ACTIVE"}

@@ -14,7 +14,40 @@ import MemberSelector from "@/components/ui/memberSelector";
 import { PageLoader } from "@/components/ui/spinner";
 import { Select } from "@/components/ui/select";
 import { AlertCircle, Plus } from "lucide-react";
-import type { TenantMember, Subscription } from "@/types/api";
+import type { MemberDetail, TenantMember, Subscription } from "@/types/api";
+
+function toTenantMember(member: TenantMember | MemberDetail): TenantMember {
+  return {
+    id: member.id,
+    memberId: member.memberId,
+    userId: member.userId,
+    name: member.name,
+    email: member.email,
+    phone: member.phone,
+    avatarUrl: member.avatarUrl,
+    role: member.role,
+    status: member.status,
+    joinedAt: member.joinedAt,
+    dueDate: member.dueDate ?? null,
+    shift: member.shift ?? null,
+  };
+}
+
+async function loadAllMembers(tenantId: string): Promise<TenantMember[]> {
+  const firstPage = await tenantsApi.listMembers(tenantId, 1, 100);
+  const firstBatch = firstPage.data.data.members;
+  const totalPages = firstPage.data.meta.totalPages;
+
+  if (totalPages <= 1) return firstBatch;
+
+  const remainingPages = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, index) =>
+      tenantsApi.listMembers(tenantId, index + 2, 100),
+    ),
+  );
+
+  return [...firstBatch, ...remainingPages.flatMap((page) => page.data.data.members)];
+}
 
 export default function RecordPaymentPage() {
   const { membershipId } = useParams<{ membershipId?: string }>();
@@ -40,27 +73,53 @@ export default function RecordPaymentPage() {
 
   React.useEffect(() => {
     if (!currentTenantId) return;
+    let cancelled = false;
+
     setLoading(true);
+    setError("");
+    setSelectedMember(null);
+    setFMembershipId(membershipId ?? "");
+
+    const selectedMemberRequest = membershipId
+      ? tenantsApi
+          .getMemberDetail(currentTenantId, membershipId)
+          .then((res) => toTenantMember(res.data.data.member))
+          .catch(() => null)
+      : Promise.resolve<TenantMember | null>(null);
 
     Promise.all([
-      tenantsApi.listMembers(currentTenantId, 1, 100),
+      loadAllMembers(currentTenantId),
       paymentsApi.listSubscriptions(currentTenantId),
+      selectedMemberRequest,
     ])
-      .then(([membersRes, subsRes]) => {
-        setMembers(membersRes.data.data.members);
+      .then(([allMembers, subsRes, routedMember]) => {
+        if (cancelled) return;
+
+        const rosterMembers = allMembers;
+        const membersWithSelected =
+          routedMember && !rosterMembers.some((m) => m.id === routedMember.id)
+            ? [routedMember, ...rosterMembers]
+            : rosterMembers;
+
+        setMembers(membersWithSelected);
         setSubscriptions(subsRes.data.data.subscriptions);
 
-        // If membershipId is provided, select that member
-        if (membershipId) {
-          const member = membersRes.data.data.members.find((m) => m.id === membershipId);
-          if (member) {
-            setSelectedMember(member);
-            setFMembershipId(member.id);
-          }
-        }
+        const initialMember =
+          routedMember ?? membersWithSelected.find((m) => m.id === membershipId) ?? null;
+
+        setSelectedMember(initialMember);
+        setFMembershipId(initialMember?.id ?? membershipId ?? "");
       })
-      .catch(() => setError("Failed to load data"))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (!cancelled) setError("Failed to load data");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [currentTenantId, membershipId]);
 
   const handleMemberChange = (memberId: string) => {

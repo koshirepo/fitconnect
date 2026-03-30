@@ -1,6 +1,7 @@
 import { getInitials } from "@/shared";
 import { Avatar } from "./avatar";
 import { cn } from "@/lib/utils";
+import { getDueDateState } from "@/lib/member-due";
 import { Shield, Dumbbell } from "lucide-react";
 
 const variantConfig = {
@@ -51,6 +52,7 @@ interface AvatarCardProps {
   className?: string;
   /** Whether the user is active */
   isActive?: boolean;
+  dueDate?: string | null;
   /** User role for icon overlay (only shown for admin/trainer roles) */
   role?: UserRole;
 }
@@ -65,9 +67,21 @@ export default function AvatarCard({
   children,
   className,
   isActive,
+  dueDate,
   role,
 }: AvatarCardProps) {
   const config = variantConfig[variant];
+  const dueDateState = getDueDateState(dueDate);
+  const ringClass =
+    dueDateState === "overdue"
+      ? "ring-2 ring-red-500"
+      : dueDateState === "current"
+        ? "ring-2 ring-emerald-500"
+        : isActive
+          ? "ring-2 ring-blue-500"
+          : isActive !== undefined
+            ? "ring-2 ring-yellow-500"
+            : "";
 
   // Get role icon and size based on variant
   const getRoleIcon = () => {
@@ -104,16 +118,7 @@ export default function AvatarCard({
         className,
       )}
     >
-      <div
-        className={cn(
-          "relative",
-          isActive && "ring-2 ring-blue-500",
-          !isActive && isActive !== undefined && "ring-2 ring-yellow-500",
-        )}
-        style={{
-          borderRadius: "9999px",
-        }}
-      >
+      <div className={cn("relative", ringClass)} style={{ borderRadius: "9999px" }}>
         <Avatar
           src={avatarUrl}
           fallback={getInitials(name)}

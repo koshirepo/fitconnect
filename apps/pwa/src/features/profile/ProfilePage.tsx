@@ -157,6 +157,7 @@ export default function ProfilePage() {
                 variant="xl"
                 vertical
                 role={profile.role}
+                dueDate={profile.dueDate}
                 isActive={profile.status === "ACTIVE"}
               >
                 <p className="text-sm text-muted-foreground">{profile.email}</p>

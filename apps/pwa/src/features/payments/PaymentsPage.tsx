@@ -264,7 +264,7 @@ export default function PaymentsPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search by member name, email or phone..."
+              placeholder="Search by name, phone, email, or admission no..."
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
