@@ -39,6 +39,7 @@ export const settingsController = {
     if (!parsed.ok) return parsed.response;
 
     const result = await settingsService.updateSettings(tenantId, parsed.data);
+    if ("error" in result) return conflict(c, result.error!);
 
     await auditLog({
       action: "SETTINGS_CHANGE",
@@ -46,7 +47,14 @@ export const settingsController = {
       entityId: tenantId,
       actorId: c.get("authUser").id,
       tenantId,
-      metadata: parsed.data,
+      metadata: {
+        ...(parsed.data.overdueDays !== undefined
+          ? { overdueDays: parsed.data.overdueDays }
+          : {}),
+        ...(parsed.data.whatsappTemplates
+          ? { whatsappTemplateKeys: Object.keys(parsed.data.whatsappTemplates) }
+          : {}),
+      },
       ip: c.req.header("x-forwarded-for") ?? undefined,
     });
 

@@ -6,9 +6,15 @@
  * - Primary exports: updateSettingsSchema, createChargeSchema, updateChargeSchema, UpdateSettingsInput, CreateChargeInput, UpdateChargeInput.
  */
 import { z } from "zod";
+import { whatsappTemplateKeys } from "../../lib/whatsapp-templates";
+
+const whatsappTemplateShape = Object.fromEntries(
+  whatsappTemplateKeys.map((key) => [key, z.string().trim().min(1).max(4000).optional()]),
+) as Record<string, z.ZodOptional<z.ZodString>>;
 
 export const updateSettingsSchema = z.object({
   overdueDays: z.number().int().min(1).max(365).optional(),
+  whatsappTemplates: z.object(whatsappTemplateShape).optional(),
 });
 
 export const createChargeSchema = z.object({

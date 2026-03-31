@@ -546,14 +546,31 @@ export interface AssignBadgePayload {
   membershipId: string;
 }
 
+export type WhatsAppTemplateKey =
+  | "new_member_welcome"
+  | "payment_reminder"
+  | "payment_receipt";
+
+export interface WhatsAppTemplate {
+  key: WhatsAppTemplateKey;
+  label: string;
+  description: string;
+  variables: string[];
+  body: string;
+  defaultBody: string;
+  isCustom: boolean;
+}
+
 // ─── Tenant Settings ──────────────────────────────────────────────────────────
 
 export interface TenantSettings {
   overdueDays: number;
+  whatsappTemplates: WhatsAppTemplate[];
 }
 
 export interface UpdateTenantSettingsPayload {
   overdueDays?: number;
+  whatsappTemplates?: Partial<Record<WhatsAppTemplateKey, string>>;
 }
 
 export interface TenantCharge {

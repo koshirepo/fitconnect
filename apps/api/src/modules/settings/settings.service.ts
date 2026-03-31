@@ -11,9 +11,11 @@ import type {
   CreateChargeInput,
   UpdateChargeInput,
 } from "./settings.schema";
+import { getWhatsAppTemplates } from "../../lib/whatsapp-templates";
 
 const DEFAULT_SETTINGS = {
   overdueDays: 30,
+  whatsappTemplates: getWhatsAppTemplates(),
 };
 
 export const settingsService = {
@@ -30,6 +32,7 @@ export const settingsService = {
         settings: settings
           ? {
               overdueDays: settings.overdueDays,
+              whatsappTemplates: getWhatsAppTemplates(settings.whatsappTemplates),
             }
           : DEFAULT_SETTINGS,
       },
@@ -41,14 +44,29 @@ export const settingsService = {
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
   async updateSettings(tenantId: string, input: UpdateSettingsInput) {
+    if (
+      input.whatsappTemplates !== undefined &&
+      !(await settingsRepository.supportsWhatsAppTemplates())
+    ) {
+      return {
+        error:
+          "WhatsApp templates require the latest database migration. Apply the pending TenantSettings migration and try again.",
+        status: 409 as const,
+      };
+    }
+
     const data: Record<string, unknown> = {};
     if (input.overdueDays !== undefined) data.overdueDays = input.overdueDays;
+    if (input.whatsappTemplates !== undefined) {
+      data.whatsappTemplates = input.whatsappTemplates;
+    }
 
     const settings = await settingsRepository.upsertSettings(tenantId, data);
     return {
       data: {
         settings: {
           overdueDays: settings.overdueDays,
+          whatsappTemplates: getWhatsAppTemplates(settings.whatsappTemplates),
         },
       },
     };

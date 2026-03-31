@@ -112,6 +112,7 @@ model TenantSettings {
   tenantId     String   @unique
   tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   overdueDays  Int      @default(30) /// Days after subscription expiry to auto-inactivate member
+  whatsappTemplates Json @default("{}") /// Tenant-level WhatsApp template overrides keyed by message purpose
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

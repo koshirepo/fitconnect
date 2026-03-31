@@ -153,6 +153,7 @@ export const TenantSettingsScalarFieldEnum = {
   id: 'id',
   tenantId: 'tenantId',
   overdueDays: 'overdueDays',
+  whatsappTemplates: 'whatsappTemplates',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

@@ -20,7 +20,9 @@ import type {
 } from "./members.schema";
 import { prisma } from "../../lib/prisma";
 import { emailService } from "../../lib/email";
+import { settingsRepository } from "../settings/settings.repository";
 import { tenantRepository } from "../tenants/tenants.repository";
+import { renderWhatsAppTemplate } from "../../lib/whatsapp-templates";
 
 type BackgroundTaskScheduler = (promise: Promise<unknown>) => void;
 type ServiceError = { error: string; status?: 400 | 403 | 404 | 409 };
@@ -355,11 +357,14 @@ export const memberService = {
 
     const payments = await Promise.all(paymentPromises);
 
-    // Fetch tenant name for notifications
-    const tenant = await prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { name: true },
-    });
+    // Fetch tenant name and template overrides for notifications
+    const [tenant, settings] = await Promise.all([
+      prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { name: true },
+      }),
+      settingsRepository.getSettings(tenantId),
+    ]);
     const gymName = tenant?.name ?? "Fit Connect";
 
     // Build WhatsApp message for auto-open on frontend
@@ -371,29 +376,29 @@ export const memberService = {
       }).format(amount);
     const total = payments.reduce((s, p) => s + p.amount, 0);
     const paymentLines = payments
-      .map((p) => `  • ${p.description ?? "Payment"}: ${formatInr(p.amount)}`)
+      .map((p) => `- ${p.description ?? "Payment"}: ${formatInr(p.amount)}`)
       .join("\n");
 
-    const whatsappText = [
-      `🎉 Welcome to *${gymName}*!`,
-      ``,
-      `Hi *${input.name}*,`,
-      `Your membership has been created successfully.`,
-      `🆔 Member ID: *${membership.memberId}*`,
-      ``,
-      payments.length > 0 ? `💰 *Payment Summary*` : null,
-      payments.length > 0 ? paymentLines : null,
-      payments.length > 0 ? `  *Total: ${formatInr(total)}*` : null,
-      subscription
-        ? `\n📋 Plan: *${subscription.title}* (${subscription.durationDays} days)`
-        : null,
-      ``,
-     `🔑 Your login password is your Phone number and Username is your email (${input.email}). Please check your inbox.`,
-      ``,
-      `Thank you for joining us! 💪`,
-    ]
-      .filter(Boolean)
-      .join("\n");
+    const paymentSummarySection =
+      payments.length > 0
+        ? `Payment Summary\n${paymentLines}\nTotal: ${formatInr(total)}\n\n`
+        : "";
+    const subscriptionLine = subscription
+      ? `Plan: *${subscription.title}* (${subscription.durationDays} days)\n\n`
+      : "";
+
+    const whatsappText = renderWhatsAppTemplate(
+      "new_member_welcome",
+      {
+        gymName,
+        memberName: input.name,
+        memberId: membership.memberId,
+        email: input.email,
+        paymentSummarySection,
+        subscriptionLine,
+      },
+      settings?.whatsappTemplates,
+    );
 
     return {
       data: {

@@ -54,6 +54,7 @@ export type TenantSettingsCountAggregateOutputType = {
   id: number
   tenantId: number
   overdueDays: number
+  whatsappTemplates: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -88,6 +89,7 @@ export type TenantSettingsCountAggregateInputType = {
   id?: true
   tenantId?: true
   overdueDays?: true
+  whatsappTemplates?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -183,6 +185,7 @@ export type TenantSettingsGroupByOutputType = {
   id: string
   tenantId: string
   overdueDays: number
+  whatsappTemplates: runtime.JsonValue
   createdAt: Date
   updatedAt: Date
   _count: TenantSettingsCountAggregateOutputType | null
@@ -214,6 +217,7 @@ export type TenantSettingsWhereInput = {
   id?: Prisma.StringFilter<"TenantSettings"> | string
   tenantId?: Prisma.StringFilter<"TenantSettings"> | string
   overdueDays?: Prisma.IntFilter<"TenantSettings"> | number
+  whatsappTemplates?: Prisma.JsonFilter<"TenantSettings">
   createdAt?: Prisma.DateTimeFilter<"TenantSettings"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TenantSettings"> | Date | string
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
@@ -223,6 +227,7 @@ export type TenantSettingsOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   tenantId?: Prisma.SortOrder
   overdueDays?: Prisma.SortOrder
+  whatsappTemplates?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   tenant?: Prisma.TenantOrderByWithRelationInput
@@ -235,6 +240,7 @@ export type TenantSettingsWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.TenantSettingsWhereInput[]
   NOT?: Prisma.TenantSettingsWhereInput | Prisma.TenantSettingsWhereInput[]
   overdueDays?: Prisma.IntFilter<"TenantSettings"> | number
+  whatsappTemplates?: Prisma.JsonFilter<"TenantSettings">
   createdAt?: Prisma.DateTimeFilter<"TenantSettings"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TenantSettings"> | Date | string
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
@@ -244,6 +250,7 @@ export type TenantSettingsOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   tenantId?: Prisma.SortOrder
   overdueDays?: Prisma.SortOrder
+  whatsappTemplates?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.TenantSettingsCountOrderByAggregateInput
@@ -260,6 +267,7 @@ export type TenantSettingsScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"TenantSettings"> | string
   tenantId?: Prisma.StringWithAggregatesFilter<"TenantSettings"> | string
   overdueDays?: Prisma.IntWithAggregatesFilter<"TenantSettings"> | number
+  whatsappTemplates?: Prisma.JsonWithAggregatesFilter<"TenantSettings">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"TenantSettings"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"TenantSettings"> | Date | string
 }
@@ -267,6 +275,7 @@ export type TenantSettingsScalarWhereWithAggregatesInput = {
 export type TenantSettingsCreateInput = {
   id?: string
   overdueDays?: number
+  whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutSettingsInput
@@ -276,6 +285,7 @@ export type TenantSettingsUncheckedCreateInput = {
   id?: string
   tenantId: string
   overdueDays?: number
+  whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -283,6 +293,7 @@ export type TenantSettingsUncheckedCreateInput = {
 export type TenantSettingsUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   overdueDays?: Prisma.IntFieldUpdateOperationsInput | number
+  whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutSettingsNestedInput
@@ -292,6 +303,7 @@ export type TenantSettingsUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   overdueDays?: Prisma.IntFieldUpdateOperationsInput | number
+  whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -300,6 +312,7 @@ export type TenantSettingsCreateManyInput = {
   id?: string
   tenantId: string
   overdueDays?: number
+  whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -307,6 +320,7 @@ export type TenantSettingsCreateManyInput = {
 export type TenantSettingsUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   overdueDays?: Prisma.IntFieldUpdateOperationsInput | number
+  whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -315,6 +329,7 @@ export type TenantSettingsUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   overdueDays?: Prisma.IntFieldUpdateOperationsInput | number
+  whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -328,6 +343,7 @@ export type TenantSettingsCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   tenantId?: Prisma.SortOrder
   overdueDays?: Prisma.SortOrder
+  whatsappTemplates?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -399,6 +415,7 @@ export type IntFieldUpdateOperationsInput = {
 export type TenantSettingsCreateWithoutTenantInput = {
   id?: string
   overdueDays?: number
+  whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -406,6 +423,7 @@ export type TenantSettingsCreateWithoutTenantInput = {
 export type TenantSettingsUncheckedCreateWithoutTenantInput = {
   id?: string
   overdueDays?: number
+  whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -429,6 +447,7 @@ export type TenantSettingsUpdateToOneWithWhereWithoutTenantInput = {
 export type TenantSettingsUpdateWithoutTenantInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   overdueDays?: Prisma.IntFieldUpdateOperationsInput | number
+  whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -436,6 +455,7 @@ export type TenantSettingsUpdateWithoutTenantInput = {
 export type TenantSettingsUncheckedUpdateWithoutTenantInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   overdueDays?: Prisma.IntFieldUpdateOperationsInput | number
+  whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -446,6 +466,7 @@ export type TenantSettingsSelect<ExtArgs extends runtime.Types.Extensions.Intern
   id?: boolean
   tenantId?: boolean
   overdueDays?: boolean
+  whatsappTemplates?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
@@ -455,6 +476,7 @@ export type TenantSettingsSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   id?: boolean
   tenantId?: boolean
   overdueDays?: boolean
+  whatsappTemplates?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
@@ -464,6 +486,7 @@ export type TenantSettingsSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   id?: boolean
   tenantId?: boolean
   overdueDays?: boolean
+  whatsappTemplates?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
@@ -473,11 +496,12 @@ export type TenantSettingsSelectScalar = {
   id?: boolean
   tenantId?: boolean
   overdueDays?: boolean
+  whatsappTemplates?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type TenantSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "overdueDays" | "createdAt" | "updatedAt", ExtArgs["result"]["tenantSettings"]>
+export type TenantSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "overdueDays" | "whatsappTemplates" | "createdAt" | "updatedAt", ExtArgs["result"]["tenantSettings"]>
 export type TenantSettingsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
 }
@@ -500,6 +524,10 @@ export type $TenantSettingsPayload<ExtArgs extends runtime.Types.Extensions.Inte
      * Days after subscription expiry to auto-inactivate member
      */
     overdueDays: number
+    /**
+     * Tenant-level WhatsApp template overrides keyed by message purpose
+     */
+    whatsappTemplates: runtime.JsonValue
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["tenantSettings"]>
@@ -929,6 +957,7 @@ export interface TenantSettingsFieldRefs {
   readonly id: Prisma.FieldRef<"TenantSettings", 'String'>
   readonly tenantId: Prisma.FieldRef<"TenantSettings", 'String'>
   readonly overdueDays: Prisma.FieldRef<"TenantSettings", 'Int'>
+  readonly whatsappTemplates: Prisma.FieldRef<"TenantSettings", 'Json'>
   readonly createdAt: Prisma.FieldRef<"TenantSettings", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"TenantSettings", 'DateTime'>
 }

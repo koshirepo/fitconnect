@@ -7,6 +7,61 @@
  */
 import { prisma } from "../../lib/prisma";
 
+type SettingsRecord = {
+  overdueDays: number;
+  whatsappTemplates?: unknown;
+};
+
+type LegacySettingsRow = {
+  overdueDays: number;
+};
+
+type SqliteTableInfoRow = {
+  name: string;
+};
+
+const WHATSAPP_TEMPLATES_COLUMN = "whatsappTemplates";
+
+async function hasWhatsAppTemplatesColumn() {
+  const rows = await prisma.$queryRawUnsafe<SqliteTableInfoRow[]>(
+    'PRAGMA table_info("TenantSettings")',
+  );
+  return rows.some((row) => row.name === WHATSAPP_TEMPLATES_COLUMN);
+}
+
+async function getLegacySettings(tenantId: string): Promise<SettingsRecord | null> {
+  const rows = await prisma.$queryRawUnsafe<LegacySettingsRow[]>(
+    'SELECT "overdueDays" FROM "TenantSettings" WHERE "tenantId" = ? LIMIT 1',
+    tenantId,
+  );
+  const row = rows[0];
+  return row ? { overdueDays: Number(row.overdueDays) } : null;
+}
+
+async function upsertLegacySettings(
+  tenantId: string,
+  data: Record<string, unknown>,
+): Promise<SettingsRecord> {
+  const existing = await getLegacySettings(tenantId);
+  const overdueDays =
+    typeof data.overdueDays === "number"
+      ? data.overdueDays
+      : existing?.overdueDays ?? 30;
+
+  await prisma.$executeRawUnsafe(
+    `INSERT INTO "TenantSettings" ("id", "tenantId", "overdueDays", "createdAt", "updatedAt")
+     VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+     ON CONFLICT("tenantId") DO UPDATE SET
+       "overdueDays" = excluded."overdueDays",
+       "updatedAt" = CURRENT_TIMESTAMP`,
+    crypto.randomUUID(),
+    tenantId,
+    overdueDays,
+  );
+
+  return { overdueDays };
+}
+
 export const settingsRepository = {
   // ─── Settings ───────────────────────────────────────────────────────────────
 
@@ -14,15 +69,30 @@ export const settingsRepository = {
    * Run the `get settings` persistence operation for the settings module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
-  getSettings(tenantId: string) {
+  async getSettings(tenantId: string): Promise<SettingsRecord | null> {
+    if (!(await hasWhatsAppTemplatesColumn())) {
+      return getLegacySettings(tenantId);
+    }
+
     return prisma.tenantSettings.findUnique({ where: { tenantId } });
+  },
+
+  async supportsWhatsAppTemplates() {
+    return hasWhatsAppTemplatesColumn();
   },
 
   /**
    * Run the `upsert settings` persistence operation for the settings module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
-  upsertSettings(tenantId: string, data: Record<string, unknown>) {
+  async upsertSettings(
+    tenantId: string,
+    data: Record<string, unknown>,
+  ): Promise<SettingsRecord> {
+    if (!(await hasWhatsAppTemplatesColumn())) {
+      return upsertLegacySettings(tenantId, data);
+    }
+
     return prisma.tenantSettings.upsert({
       where: { tenantId },
       create: { tenantId, ...data },
