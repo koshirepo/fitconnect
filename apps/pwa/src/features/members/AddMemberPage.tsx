@@ -298,6 +298,7 @@ export default function AddMemberPage() {
           <CardContent>
             <MemberForm
               mode="create"
+              initialData={memberData ?? undefined}
               error={error}
               submitting={false}
               shiftOptions={shifts}
