@@ -5,11 +5,10 @@ import { paymentsApi } from "@/api/payments";
 import { workoutsApi } from "@/api/workouts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { Users, CreditCard, Dumbbell, Building2, FileBarChart } from "lucide-react";
+import { Users, CreditCard, Dumbbell, Building2 } from "lucide-react";
 import type { TenantProfile, Payment, WorkoutPlan } from "@/types/api";
 import { useNavigate } from "react-router-dom";
 
@@ -100,12 +99,6 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
-        {role === "ADMIN" && (
-          <Button onClick={() => navigate("/finance")} variant="outline" size="sm">
-            <FileBarChart className="h-4 w-4 mr-2" />
-            Finance & Reports
-          </Button>
-        )}
       </div>
 
       {/* Stats Cards */}
