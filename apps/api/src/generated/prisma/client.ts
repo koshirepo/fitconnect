@@ -85,6 +85,11 @@ export type Subscription = Prisma.SubscriptionModel
  */
 export type Shift = Prisma.ShiftModel
 /**
+ * Model Todo
+ * 
+ */
+export type Todo = Prisma.TodoModel
+/**
  * Model Payment
  * 
  */

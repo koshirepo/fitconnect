@@ -11,6 +11,7 @@ import type {
   AccountStatus,
   PaymentStatus,
   OrderStatus,
+  TodoVisibility,
   AuditAction,
 } from "./enums";
 
@@ -598,6 +599,43 @@ export interface UpdateTenantChargePayload {
 }
 
 // ─── Attendance ───────────────────────────────────────────────────────────────
+
+export interface TodoActor {
+  membershipId: string;
+  userId: string;
+  memberId: number;
+  name: string;
+  avatarUrl?: string | null;
+  role: TenantRole;
+}
+
+export interface Todo {
+  id: string;
+  tenantId: string;
+  title: string;
+  description?: string | null;
+  visibility: TodoVisibility;
+  isCompleted: boolean;
+  completedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: TodoActor | null;
+  updatedBy?: TodoActor | null;
+  completedBy?: TodoActor | null;
+}
+
+export interface CreateTodoPayload {
+  title: string;
+  description?: string;
+  visibility?: TodoVisibility;
+}
+
+export interface UpdateTodoPayload {
+  title?: string;
+  description?: string | null;
+  visibility?: TodoVisibility;
+  isCompleted?: boolean;
+}
 
 export interface AttendanceRecord {
   id: string;

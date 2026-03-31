@@ -275,6 +275,9 @@ export type TenantMembershipWhereInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentListRelationFilter
   attendances?: Prisma.AttendanceListRelationFilter
   markedAttendances?: Prisma.AttendanceListRelationFilter
+  createdTodos?: Prisma.TodoListRelationFilter
+  updatedTodos?: Prisma.TodoListRelationFilter
+  completedTodos?: Prisma.TodoListRelationFilter
 }
 
 export type TenantMembershipOrderByWithRelationInput = {
@@ -299,6 +302,9 @@ export type TenantMembershipOrderByWithRelationInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentOrderByRelationAggregateInput
   attendances?: Prisma.AttendanceOrderByRelationAggregateInput
   markedAttendances?: Prisma.AttendanceOrderByRelationAggregateInput
+  createdTodos?: Prisma.TodoOrderByRelationAggregateInput
+  updatedTodos?: Prisma.TodoOrderByRelationAggregateInput
+  completedTodos?: Prisma.TodoOrderByRelationAggregateInput
 }
 
 export type TenantMembershipWhereUniqueInput = Prisma.AtLeast<{
@@ -328,6 +334,9 @@ export type TenantMembershipWhereUniqueInput = Prisma.AtLeast<{
   planAssignments?: Prisma.WorkoutPlanAssignmentListRelationFilter
   attendances?: Prisma.AttendanceListRelationFilter
   markedAttendances?: Prisma.AttendanceListRelationFilter
+  createdTodos?: Prisma.TodoListRelationFilter
+  updatedTodos?: Prisma.TodoListRelationFilter
+  completedTodos?: Prisma.TodoListRelationFilter
 }, "id" | "userId" | "tenantId_userId" | "tenantId_memberId">
 
 export type TenantMembershipOrderByWithAggregationInput = {
@@ -385,6 +394,9 @@ export type TenantMembershipCreateInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentCreateNestedManyWithoutMembershipInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutMemberInput
   markedAttendances?: Prisma.AttendanceCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
 }
 
 export type TenantMembershipUncheckedCreateInput = {
@@ -406,6 +418,9 @@ export type TenantMembershipUncheckedCreateInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedCreateNestedManyWithoutMembershipInput
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMemberInput
   markedAttendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
 }
 
 export type TenantMembershipUpdateInput = {
@@ -427,6 +442,9 @@ export type TenantMembershipUpdateInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUpdateManyWithoutMembershipNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutMemberNestedInput
   markedAttendances?: Prisma.AttendanceUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateInput = {
@@ -448,6 +466,9 @@ export type TenantMembershipUncheckedUpdateInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedUpdateManyWithoutMembershipNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMemberNestedInput
   markedAttendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
 }
 
 export type TenantMembershipCreateManyInput = {
@@ -559,14 +580,14 @@ export type TenantMembershipSumOrderByAggregateInput = {
   memberId?: Prisma.SortOrder
 }
 
-export type TenantMembershipScalarRelationFilter = {
-  is?: Prisma.TenantMembershipWhereInput
-  isNot?: Prisma.TenantMembershipWhereInput
-}
-
 export type TenantMembershipNullableScalarRelationFilter = {
   is?: Prisma.TenantMembershipWhereInput | null
   isNot?: Prisma.TenantMembershipWhereInput | null
+}
+
+export type TenantMembershipScalarRelationFilter = {
+  is?: Prisma.TenantMembershipWhereInput
+  isNot?: Prisma.TenantMembershipWhereInput
 }
 
 export type TenantMembershipCreateNestedManyWithoutUserInput = {
@@ -693,6 +714,54 @@ export type TenantMembershipUncheckedUpdateManyWithoutShiftNestedInput = {
   update?: Prisma.TenantMembershipUpdateWithWhereUniqueWithoutShiftInput | Prisma.TenantMembershipUpdateWithWhereUniqueWithoutShiftInput[]
   updateMany?: Prisma.TenantMembershipUpdateManyWithWhereWithoutShiftInput | Prisma.TenantMembershipUpdateManyWithWhereWithoutShiftInput[]
   deleteMany?: Prisma.TenantMembershipScalarWhereInput | Prisma.TenantMembershipScalarWhereInput[]
+}
+
+export type TenantMembershipCreateNestedOneWithoutCreatedTodosInput = {
+  create?: Prisma.XOR<Prisma.TenantMembershipCreateWithoutCreatedTodosInput, Prisma.TenantMembershipUncheckedCreateWithoutCreatedTodosInput>
+  connectOrCreate?: Prisma.TenantMembershipCreateOrConnectWithoutCreatedTodosInput
+  connect?: Prisma.TenantMembershipWhereUniqueInput
+}
+
+export type TenantMembershipCreateNestedOneWithoutUpdatedTodosInput = {
+  create?: Prisma.XOR<Prisma.TenantMembershipCreateWithoutUpdatedTodosInput, Prisma.TenantMembershipUncheckedCreateWithoutUpdatedTodosInput>
+  connectOrCreate?: Prisma.TenantMembershipCreateOrConnectWithoutUpdatedTodosInput
+  connect?: Prisma.TenantMembershipWhereUniqueInput
+}
+
+export type TenantMembershipCreateNestedOneWithoutCompletedTodosInput = {
+  create?: Prisma.XOR<Prisma.TenantMembershipCreateWithoutCompletedTodosInput, Prisma.TenantMembershipUncheckedCreateWithoutCompletedTodosInput>
+  connectOrCreate?: Prisma.TenantMembershipCreateOrConnectWithoutCompletedTodosInput
+  connect?: Prisma.TenantMembershipWhereUniqueInput
+}
+
+export type TenantMembershipUpdateOneWithoutCreatedTodosNestedInput = {
+  create?: Prisma.XOR<Prisma.TenantMembershipCreateWithoutCreatedTodosInput, Prisma.TenantMembershipUncheckedCreateWithoutCreatedTodosInput>
+  connectOrCreate?: Prisma.TenantMembershipCreateOrConnectWithoutCreatedTodosInput
+  upsert?: Prisma.TenantMembershipUpsertWithoutCreatedTodosInput
+  disconnect?: Prisma.TenantMembershipWhereInput | boolean
+  delete?: Prisma.TenantMembershipWhereInput | boolean
+  connect?: Prisma.TenantMembershipWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.TenantMembershipUpdateToOneWithWhereWithoutCreatedTodosInput, Prisma.TenantMembershipUpdateWithoutCreatedTodosInput>, Prisma.TenantMembershipUncheckedUpdateWithoutCreatedTodosInput>
+}
+
+export type TenantMembershipUpdateOneWithoutUpdatedTodosNestedInput = {
+  create?: Prisma.XOR<Prisma.TenantMembershipCreateWithoutUpdatedTodosInput, Prisma.TenantMembershipUncheckedCreateWithoutUpdatedTodosInput>
+  connectOrCreate?: Prisma.TenantMembershipCreateOrConnectWithoutUpdatedTodosInput
+  upsert?: Prisma.TenantMembershipUpsertWithoutUpdatedTodosInput
+  disconnect?: Prisma.TenantMembershipWhereInput | boolean
+  delete?: Prisma.TenantMembershipWhereInput | boolean
+  connect?: Prisma.TenantMembershipWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.TenantMembershipUpdateToOneWithWhereWithoutUpdatedTodosInput, Prisma.TenantMembershipUpdateWithoutUpdatedTodosInput>, Prisma.TenantMembershipUncheckedUpdateWithoutUpdatedTodosInput>
+}
+
+export type TenantMembershipUpdateOneWithoutCompletedTodosNestedInput = {
+  create?: Prisma.XOR<Prisma.TenantMembershipCreateWithoutCompletedTodosInput, Prisma.TenantMembershipUncheckedCreateWithoutCompletedTodosInput>
+  connectOrCreate?: Prisma.TenantMembershipCreateOrConnectWithoutCompletedTodosInput
+  upsert?: Prisma.TenantMembershipUpsertWithoutCompletedTodosInput
+  disconnect?: Prisma.TenantMembershipWhereInput | boolean
+  delete?: Prisma.TenantMembershipWhereInput | boolean
+  connect?: Prisma.TenantMembershipWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.TenantMembershipUpdateToOneWithWhereWithoutCompletedTodosInput, Prisma.TenantMembershipUpdateWithoutCompletedTodosInput>, Prisma.TenantMembershipUncheckedUpdateWithoutCompletedTodosInput>
 }
 
 export type TenantMembershipCreateNestedOneWithoutPaymentsInput = {
@@ -839,6 +908,9 @@ export type TenantMembershipCreateWithoutUserInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentCreateNestedManyWithoutMembershipInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutMemberInput
   markedAttendances?: Prisma.AttendanceCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutUserInput = {
@@ -859,6 +931,9 @@ export type TenantMembershipUncheckedCreateWithoutUserInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedCreateNestedManyWithoutMembershipInput
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMemberInput
   markedAttendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutUserInput = {
@@ -921,6 +996,9 @@ export type TenantMembershipCreateWithoutTenantInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentCreateNestedManyWithoutMembershipInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutMemberInput
   markedAttendances?: Prisma.AttendanceCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutTenantInput = {
@@ -941,6 +1019,9 @@ export type TenantMembershipUncheckedCreateWithoutTenantInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedCreateNestedManyWithoutMembershipInput
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMemberInput
   markedAttendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutTenantInput = {
@@ -986,6 +1067,9 @@ export type TenantMembershipCreateWithoutShiftInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentCreateNestedManyWithoutMembershipInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutMemberInput
   markedAttendances?: Prisma.AttendanceCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutShiftInput = {
@@ -1006,6 +1090,9 @@ export type TenantMembershipUncheckedCreateWithoutShiftInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedCreateNestedManyWithoutMembershipInput
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMemberInput
   markedAttendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutShiftInput = {
@@ -1033,6 +1120,330 @@ export type TenantMembershipUpdateManyWithWhereWithoutShiftInput = {
   data: Prisma.XOR<Prisma.TenantMembershipUpdateManyMutationInput, Prisma.TenantMembershipUncheckedUpdateManyWithoutShiftInput>
 }
 
+export type TenantMembershipCreateWithoutCreatedTodosInput = {
+  id?: string
+  memberId: number
+  role?: string
+  status?: string
+  dueDate?: Date | string | null
+  joinedAt?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tenant: Prisma.TenantCreateNestedOneWithoutMembershipsInput
+  user: Prisma.UserCreateNestedOneWithoutMembershipsInput
+  shift?: Prisma.ShiftCreateNestedOneWithoutMembersInput
+  badges?: Prisma.BadgeCreateNestedManyWithoutUsersInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutMemberInput
+  collectedPayments?: Prisma.PaymentCreateNestedManyWithoutCollectedByInput
+  createdPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutCreatorInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentCreateNestedManyWithoutMembershipInput
+  attendances?: Prisma.AttendanceCreateNestedManyWithoutMemberInput
+  markedAttendances?: Prisma.AttendanceCreateNestedManyWithoutMarkedByInput
+  updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
+}
+
+export type TenantMembershipUncheckedCreateWithoutCreatedTodosInput = {
+  id?: string
+  tenantId: string
+  userId: string
+  memberId: number
+  role?: string
+  status?: string
+  dueDate?: Date | string | null
+  shiftId?: string | null
+  joinedAt?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutUsersInput
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutMemberInput
+  collectedPayments?: Prisma.PaymentUncheckedCreateNestedManyWithoutCollectedByInput
+  createdPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutCreatorInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedCreateNestedManyWithoutMembershipInput
+  attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMemberInput
+  markedAttendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMarkedByInput
+  updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
+}
+
+export type TenantMembershipCreateOrConnectWithoutCreatedTodosInput = {
+  where: Prisma.TenantMembershipWhereUniqueInput
+  create: Prisma.XOR<Prisma.TenantMembershipCreateWithoutCreatedTodosInput, Prisma.TenantMembershipUncheckedCreateWithoutCreatedTodosInput>
+}
+
+export type TenantMembershipCreateWithoutUpdatedTodosInput = {
+  id?: string
+  memberId: number
+  role?: string
+  status?: string
+  dueDate?: Date | string | null
+  joinedAt?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tenant: Prisma.TenantCreateNestedOneWithoutMembershipsInput
+  user: Prisma.UserCreateNestedOneWithoutMembershipsInput
+  shift?: Prisma.ShiftCreateNestedOneWithoutMembersInput
+  badges?: Prisma.BadgeCreateNestedManyWithoutUsersInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutMemberInput
+  collectedPayments?: Prisma.PaymentCreateNestedManyWithoutCollectedByInput
+  createdPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutCreatorInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentCreateNestedManyWithoutMembershipInput
+  attendances?: Prisma.AttendanceCreateNestedManyWithoutMemberInput
+  markedAttendances?: Prisma.AttendanceCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
+  completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
+}
+
+export type TenantMembershipUncheckedCreateWithoutUpdatedTodosInput = {
+  id?: string
+  tenantId: string
+  userId: string
+  memberId: number
+  role?: string
+  status?: string
+  dueDate?: Date | string | null
+  shiftId?: string | null
+  joinedAt?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutUsersInput
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutMemberInput
+  collectedPayments?: Prisma.PaymentUncheckedCreateNestedManyWithoutCollectedByInput
+  createdPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutCreatorInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedCreateNestedManyWithoutMembershipInput
+  attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMemberInput
+  markedAttendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
+  completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
+}
+
+export type TenantMembershipCreateOrConnectWithoutUpdatedTodosInput = {
+  where: Prisma.TenantMembershipWhereUniqueInput
+  create: Prisma.XOR<Prisma.TenantMembershipCreateWithoutUpdatedTodosInput, Prisma.TenantMembershipUncheckedCreateWithoutUpdatedTodosInput>
+}
+
+export type TenantMembershipCreateWithoutCompletedTodosInput = {
+  id?: string
+  memberId: number
+  role?: string
+  status?: string
+  dueDate?: Date | string | null
+  joinedAt?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tenant: Prisma.TenantCreateNestedOneWithoutMembershipsInput
+  user: Prisma.UserCreateNestedOneWithoutMembershipsInput
+  shift?: Prisma.ShiftCreateNestedOneWithoutMembersInput
+  badges?: Prisma.BadgeCreateNestedManyWithoutUsersInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutMemberInput
+  collectedPayments?: Prisma.PaymentCreateNestedManyWithoutCollectedByInput
+  createdPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutCreatorInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentCreateNestedManyWithoutMembershipInput
+  attendances?: Prisma.AttendanceCreateNestedManyWithoutMemberInput
+  markedAttendances?: Prisma.AttendanceCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
+}
+
+export type TenantMembershipUncheckedCreateWithoutCompletedTodosInput = {
+  id?: string
+  tenantId: string
+  userId: string
+  memberId: number
+  role?: string
+  status?: string
+  dueDate?: Date | string | null
+  shiftId?: string | null
+  joinedAt?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutUsersInput
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutMemberInput
+  collectedPayments?: Prisma.PaymentUncheckedCreateNestedManyWithoutCollectedByInput
+  createdPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutCreatorInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedCreateNestedManyWithoutMembershipInput
+  attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMemberInput
+  markedAttendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
+}
+
+export type TenantMembershipCreateOrConnectWithoutCompletedTodosInput = {
+  where: Prisma.TenantMembershipWhereUniqueInput
+  create: Prisma.XOR<Prisma.TenantMembershipCreateWithoutCompletedTodosInput, Prisma.TenantMembershipUncheckedCreateWithoutCompletedTodosInput>
+}
+
+export type TenantMembershipUpsertWithoutCreatedTodosInput = {
+  update: Prisma.XOR<Prisma.TenantMembershipUpdateWithoutCreatedTodosInput, Prisma.TenantMembershipUncheckedUpdateWithoutCreatedTodosInput>
+  create: Prisma.XOR<Prisma.TenantMembershipCreateWithoutCreatedTodosInput, Prisma.TenantMembershipUncheckedCreateWithoutCreatedTodosInput>
+  where?: Prisma.TenantMembershipWhereInput
+}
+
+export type TenantMembershipUpdateToOneWithWhereWithoutCreatedTodosInput = {
+  where?: Prisma.TenantMembershipWhereInput
+  data: Prisma.XOR<Prisma.TenantMembershipUpdateWithoutCreatedTodosInput, Prisma.TenantMembershipUncheckedUpdateWithoutCreatedTodosInput>
+}
+
+export type TenantMembershipUpdateWithoutCreatedTodosInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  memberId?: Prisma.IntFieldUpdateOperationsInput | number
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tenant?: Prisma.TenantUpdateOneRequiredWithoutMembershipsNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutMembershipsNestedInput
+  shift?: Prisma.ShiftUpdateOneWithoutMembersNestedInput
+  badges?: Prisma.BadgeUpdateManyWithoutUsersNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutMemberNestedInput
+  collectedPayments?: Prisma.PaymentUpdateManyWithoutCollectedByNestedInput
+  createdPlans?: Prisma.WorkoutPlanUpdateManyWithoutCreatorNestedInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUpdateManyWithoutMembershipNestedInput
+  attendances?: Prisma.AttendanceUpdateManyWithoutMemberNestedInput
+  markedAttendances?: Prisma.AttendanceUpdateManyWithoutMarkedByNestedInput
+  updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
+}
+
+export type TenantMembershipUncheckedUpdateWithoutCreatedTodosInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  memberId?: Prisma.IntFieldUpdateOperationsInput | number
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  badges?: Prisma.BadgeUncheckedUpdateManyWithoutUsersNestedInput
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutMemberNestedInput
+  collectedPayments?: Prisma.PaymentUncheckedUpdateManyWithoutCollectedByNestedInput
+  createdPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutCreatorNestedInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedUpdateManyWithoutMembershipNestedInput
+  attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMemberNestedInput
+  markedAttendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMarkedByNestedInput
+  updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
+}
+
+export type TenantMembershipUpsertWithoutUpdatedTodosInput = {
+  update: Prisma.XOR<Prisma.TenantMembershipUpdateWithoutUpdatedTodosInput, Prisma.TenantMembershipUncheckedUpdateWithoutUpdatedTodosInput>
+  create: Prisma.XOR<Prisma.TenantMembershipCreateWithoutUpdatedTodosInput, Prisma.TenantMembershipUncheckedCreateWithoutUpdatedTodosInput>
+  where?: Prisma.TenantMembershipWhereInput
+}
+
+export type TenantMembershipUpdateToOneWithWhereWithoutUpdatedTodosInput = {
+  where?: Prisma.TenantMembershipWhereInput
+  data: Prisma.XOR<Prisma.TenantMembershipUpdateWithoutUpdatedTodosInput, Prisma.TenantMembershipUncheckedUpdateWithoutUpdatedTodosInput>
+}
+
+export type TenantMembershipUpdateWithoutUpdatedTodosInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  memberId?: Prisma.IntFieldUpdateOperationsInput | number
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tenant?: Prisma.TenantUpdateOneRequiredWithoutMembershipsNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutMembershipsNestedInput
+  shift?: Prisma.ShiftUpdateOneWithoutMembersNestedInput
+  badges?: Prisma.BadgeUpdateManyWithoutUsersNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutMemberNestedInput
+  collectedPayments?: Prisma.PaymentUpdateManyWithoutCollectedByNestedInput
+  createdPlans?: Prisma.WorkoutPlanUpdateManyWithoutCreatorNestedInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUpdateManyWithoutMembershipNestedInput
+  attendances?: Prisma.AttendanceUpdateManyWithoutMemberNestedInput
+  markedAttendances?: Prisma.AttendanceUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
+  completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
+}
+
+export type TenantMembershipUncheckedUpdateWithoutUpdatedTodosInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  memberId?: Prisma.IntFieldUpdateOperationsInput | number
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  badges?: Prisma.BadgeUncheckedUpdateManyWithoutUsersNestedInput
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutMemberNestedInput
+  collectedPayments?: Prisma.PaymentUncheckedUpdateManyWithoutCollectedByNestedInput
+  createdPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutCreatorNestedInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedUpdateManyWithoutMembershipNestedInput
+  attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMemberNestedInput
+  markedAttendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
+  completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
+}
+
+export type TenantMembershipUpsertWithoutCompletedTodosInput = {
+  update: Prisma.XOR<Prisma.TenantMembershipUpdateWithoutCompletedTodosInput, Prisma.TenantMembershipUncheckedUpdateWithoutCompletedTodosInput>
+  create: Prisma.XOR<Prisma.TenantMembershipCreateWithoutCompletedTodosInput, Prisma.TenantMembershipUncheckedCreateWithoutCompletedTodosInput>
+  where?: Prisma.TenantMembershipWhereInput
+}
+
+export type TenantMembershipUpdateToOneWithWhereWithoutCompletedTodosInput = {
+  where?: Prisma.TenantMembershipWhereInput
+  data: Prisma.XOR<Prisma.TenantMembershipUpdateWithoutCompletedTodosInput, Prisma.TenantMembershipUncheckedUpdateWithoutCompletedTodosInput>
+}
+
+export type TenantMembershipUpdateWithoutCompletedTodosInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  memberId?: Prisma.IntFieldUpdateOperationsInput | number
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tenant?: Prisma.TenantUpdateOneRequiredWithoutMembershipsNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutMembershipsNestedInput
+  shift?: Prisma.ShiftUpdateOneWithoutMembersNestedInput
+  badges?: Prisma.BadgeUpdateManyWithoutUsersNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutMemberNestedInput
+  collectedPayments?: Prisma.PaymentUpdateManyWithoutCollectedByNestedInput
+  createdPlans?: Prisma.WorkoutPlanUpdateManyWithoutCreatorNestedInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUpdateManyWithoutMembershipNestedInput
+  attendances?: Prisma.AttendanceUpdateManyWithoutMemberNestedInput
+  markedAttendances?: Prisma.AttendanceUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
+}
+
+export type TenantMembershipUncheckedUpdateWithoutCompletedTodosInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  memberId?: Prisma.IntFieldUpdateOperationsInput | number
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  badges?: Prisma.BadgeUncheckedUpdateManyWithoutUsersNestedInput
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutMemberNestedInput
+  collectedPayments?: Prisma.PaymentUncheckedUpdateManyWithoutCollectedByNestedInput
+  createdPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutCreatorNestedInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedUpdateManyWithoutMembershipNestedInput
+  attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMemberNestedInput
+  markedAttendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
+}
+
 export type TenantMembershipCreateWithoutPaymentsInput = {
   id?: string
   memberId: number
@@ -1051,6 +1462,9 @@ export type TenantMembershipCreateWithoutPaymentsInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentCreateNestedManyWithoutMembershipInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutMemberInput
   markedAttendances?: Prisma.AttendanceCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutPaymentsInput = {
@@ -1071,6 +1485,9 @@ export type TenantMembershipUncheckedCreateWithoutPaymentsInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedCreateNestedManyWithoutMembershipInput
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMemberInput
   markedAttendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutPaymentsInput = {
@@ -1096,6 +1513,9 @@ export type TenantMembershipCreateWithoutCollectedPaymentsInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentCreateNestedManyWithoutMembershipInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutMemberInput
   markedAttendances?: Prisma.AttendanceCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutCollectedPaymentsInput = {
@@ -1116,6 +1536,9 @@ export type TenantMembershipUncheckedCreateWithoutCollectedPaymentsInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedCreateNestedManyWithoutMembershipInput
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMemberInput
   markedAttendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutCollectedPaymentsInput = {
@@ -1152,6 +1575,9 @@ export type TenantMembershipUpdateWithoutPaymentsInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUpdateManyWithoutMembershipNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutMemberNestedInput
   markedAttendances?: Prisma.AttendanceUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutPaymentsInput = {
@@ -1172,6 +1598,9 @@ export type TenantMembershipUncheckedUpdateWithoutPaymentsInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedUpdateManyWithoutMembershipNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMemberNestedInput
   markedAttendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
 }
 
 export type TenantMembershipUpsertWithoutCollectedPaymentsInput = {
@@ -1203,6 +1632,9 @@ export type TenantMembershipUpdateWithoutCollectedPaymentsInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUpdateManyWithoutMembershipNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutMemberNestedInput
   markedAttendances?: Prisma.AttendanceUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutCollectedPaymentsInput = {
@@ -1223,6 +1655,9 @@ export type TenantMembershipUncheckedUpdateWithoutCollectedPaymentsInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedUpdateManyWithoutMembershipNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMemberNestedInput
   markedAttendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
 }
 
 export type TenantMembershipCreateWithoutCreatedPlansInput = {
@@ -1243,6 +1678,9 @@ export type TenantMembershipCreateWithoutCreatedPlansInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentCreateNestedManyWithoutMembershipInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutMemberInput
   markedAttendances?: Prisma.AttendanceCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutCreatedPlansInput = {
@@ -1263,6 +1701,9 @@ export type TenantMembershipUncheckedCreateWithoutCreatedPlansInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedCreateNestedManyWithoutMembershipInput
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMemberInput
   markedAttendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutCreatedPlansInput = {
@@ -1299,6 +1740,9 @@ export type TenantMembershipUpdateWithoutCreatedPlansInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUpdateManyWithoutMembershipNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutMemberNestedInput
   markedAttendances?: Prisma.AttendanceUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutCreatedPlansInput = {
@@ -1319,6 +1763,9 @@ export type TenantMembershipUncheckedUpdateWithoutCreatedPlansInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedUpdateManyWithoutMembershipNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMemberNestedInput
   markedAttendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
 }
 
 export type TenantMembershipCreateWithoutPlanAssignmentsInput = {
@@ -1339,6 +1786,9 @@ export type TenantMembershipCreateWithoutPlanAssignmentsInput = {
   createdPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutCreatorInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutMemberInput
   markedAttendances?: Prisma.AttendanceCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutPlanAssignmentsInput = {
@@ -1359,6 +1809,9 @@ export type TenantMembershipUncheckedCreateWithoutPlanAssignmentsInput = {
   createdPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutCreatorInput
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMemberInput
   markedAttendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutPlanAssignmentsInput = {
@@ -1395,6 +1848,9 @@ export type TenantMembershipUpdateWithoutPlanAssignmentsInput = {
   createdPlans?: Prisma.WorkoutPlanUpdateManyWithoutCreatorNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutMemberNestedInput
   markedAttendances?: Prisma.AttendanceUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutPlanAssignmentsInput = {
@@ -1415,6 +1871,9 @@ export type TenantMembershipUncheckedUpdateWithoutPlanAssignmentsInput = {
   createdPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutCreatorNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMemberNestedInput
   markedAttendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
 }
 
 export type TenantMembershipCreateWithoutBadgesInput = {
@@ -1435,6 +1894,9 @@ export type TenantMembershipCreateWithoutBadgesInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentCreateNestedManyWithoutMembershipInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutMemberInput
   markedAttendances?: Prisma.AttendanceCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutBadgesInput = {
@@ -1455,6 +1917,9 @@ export type TenantMembershipUncheckedCreateWithoutBadgesInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedCreateNestedManyWithoutMembershipInput
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMemberInput
   markedAttendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutBadgesInput = {
@@ -1496,6 +1961,9 @@ export type TenantMembershipCreateWithoutAttendancesInput = {
   createdPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutCreatorInput
   planAssignments?: Prisma.WorkoutPlanAssignmentCreateNestedManyWithoutMembershipInput
   markedAttendances?: Prisma.AttendanceCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutAttendancesInput = {
@@ -1516,6 +1984,9 @@ export type TenantMembershipUncheckedCreateWithoutAttendancesInput = {
   createdPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutCreatorInput
   planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedCreateNestedManyWithoutMembershipInput
   markedAttendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutAttendancesInput = {
@@ -1541,6 +2012,9 @@ export type TenantMembershipCreateWithoutMarkedAttendancesInput = {
   createdPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutCreatorInput
   planAssignments?: Prisma.WorkoutPlanAssignmentCreateNestedManyWithoutMembershipInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutMemberInput
+  createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutMarkedAttendancesInput = {
@@ -1561,6 +2035,9 @@ export type TenantMembershipUncheckedCreateWithoutMarkedAttendancesInput = {
   createdPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutCreatorInput
   planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedCreateNestedManyWithoutMembershipInput
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMemberInput
+  createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutMarkedAttendancesInput = {
@@ -1597,6 +2074,9 @@ export type TenantMembershipUpdateWithoutAttendancesInput = {
   createdPlans?: Prisma.WorkoutPlanUpdateManyWithoutCreatorNestedInput
   planAssignments?: Prisma.WorkoutPlanAssignmentUpdateManyWithoutMembershipNestedInput
   markedAttendances?: Prisma.AttendanceUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutAttendancesInput = {
@@ -1617,6 +2097,9 @@ export type TenantMembershipUncheckedUpdateWithoutAttendancesInput = {
   createdPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutCreatorNestedInput
   planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedUpdateManyWithoutMembershipNestedInput
   markedAttendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
 }
 
 export type TenantMembershipUpsertWithoutMarkedAttendancesInput = {
@@ -1648,6 +2131,9 @@ export type TenantMembershipUpdateWithoutMarkedAttendancesInput = {
   createdPlans?: Prisma.WorkoutPlanUpdateManyWithoutCreatorNestedInput
   planAssignments?: Prisma.WorkoutPlanAssignmentUpdateManyWithoutMembershipNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutMemberNestedInput
+  createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutMarkedAttendancesInput = {
@@ -1668,6 +2154,9 @@ export type TenantMembershipUncheckedUpdateWithoutMarkedAttendancesInput = {
   createdPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutCreatorNestedInput
   planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedUpdateManyWithoutMembershipNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMemberNestedInput
+  createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
 }
 
 export type TenantMembershipCreateManyUserInput = {
@@ -1701,6 +2190,9 @@ export type TenantMembershipUpdateWithoutUserInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUpdateManyWithoutMembershipNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutMemberNestedInput
   markedAttendances?: Prisma.AttendanceUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutUserInput = {
@@ -1721,6 +2213,9 @@ export type TenantMembershipUncheckedUpdateWithoutUserInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedUpdateManyWithoutMembershipNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMemberNestedInput
   markedAttendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateManyWithoutUserInput = {
@@ -1767,6 +2262,9 @@ export type TenantMembershipUpdateWithoutTenantInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUpdateManyWithoutMembershipNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutMemberNestedInput
   markedAttendances?: Prisma.AttendanceUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutTenantInput = {
@@ -1787,6 +2285,9 @@ export type TenantMembershipUncheckedUpdateWithoutTenantInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedUpdateManyWithoutMembershipNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMemberNestedInput
   markedAttendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateManyWithoutTenantInput = {
@@ -1833,6 +2334,9 @@ export type TenantMembershipUpdateWithoutShiftInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUpdateManyWithoutMembershipNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutMemberNestedInput
   markedAttendances?: Prisma.AttendanceUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutShiftInput = {
@@ -1853,6 +2357,9 @@ export type TenantMembershipUncheckedUpdateWithoutShiftInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedUpdateManyWithoutMembershipNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMemberNestedInput
   markedAttendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateManyWithoutShiftInput = {
@@ -1886,6 +2393,9 @@ export type TenantMembershipUpdateWithoutBadgesInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUpdateManyWithoutMembershipNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutMemberNestedInput
   markedAttendances?: Prisma.AttendanceUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutBadgesInput = {
@@ -1906,6 +2416,9 @@ export type TenantMembershipUncheckedUpdateWithoutBadgesInput = {
   planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedUpdateManyWithoutMembershipNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMemberNestedInput
   markedAttendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateManyWithoutBadgesInput = {
@@ -1935,6 +2448,9 @@ export type TenantMembershipCountOutputType = {
   planAssignments: number
   attendances: number
   markedAttendances: number
+  createdTodos: number
+  updatedTodos: number
+  completedTodos: number
 }
 
 export type TenantMembershipCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1945,6 +2461,9 @@ export type TenantMembershipCountOutputTypeSelect<ExtArgs extends runtime.Types.
   planAssignments?: boolean | TenantMembershipCountOutputTypeCountPlanAssignmentsArgs
   attendances?: boolean | TenantMembershipCountOutputTypeCountAttendancesArgs
   markedAttendances?: boolean | TenantMembershipCountOutputTypeCountMarkedAttendancesArgs
+  createdTodos?: boolean | TenantMembershipCountOutputTypeCountCreatedTodosArgs
+  updatedTodos?: boolean | TenantMembershipCountOutputTypeCountUpdatedTodosArgs
+  completedTodos?: boolean | TenantMembershipCountOutputTypeCountCompletedTodosArgs
 }
 
 /**
@@ -2006,6 +2525,27 @@ export type TenantMembershipCountOutputTypeCountMarkedAttendancesArgs<ExtArgs ex
   where?: Prisma.AttendanceWhereInput
 }
 
+/**
+ * TenantMembershipCountOutputType without action
+ */
+export type TenantMembershipCountOutputTypeCountCreatedTodosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TodoWhereInput
+}
+
+/**
+ * TenantMembershipCountOutputType without action
+ */
+export type TenantMembershipCountOutputTypeCountUpdatedTodosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TodoWhereInput
+}
+
+/**
+ * TenantMembershipCountOutputType without action
+ */
+export type TenantMembershipCountOutputTypeCountCompletedTodosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TodoWhereInput
+}
+
 
 export type TenantMembershipSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -2029,6 +2569,9 @@ export type TenantMembershipSelect<ExtArgs extends runtime.Types.Extensions.Inte
   planAssignments?: boolean | Prisma.TenantMembership$planAssignmentsArgs<ExtArgs>
   attendances?: boolean | Prisma.TenantMembership$attendancesArgs<ExtArgs>
   markedAttendances?: boolean | Prisma.TenantMembership$markedAttendancesArgs<ExtArgs>
+  createdTodos?: boolean | Prisma.TenantMembership$createdTodosArgs<ExtArgs>
+  updatedTodos?: boolean | Prisma.TenantMembership$updatedTodosArgs<ExtArgs>
+  completedTodos?: boolean | Prisma.TenantMembership$completedTodosArgs<ExtArgs>
   _count?: boolean | Prisma.TenantMembershipCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["tenantMembership"]>
 
@@ -2092,6 +2635,9 @@ export type TenantMembershipInclude<ExtArgs extends runtime.Types.Extensions.Int
   planAssignments?: boolean | Prisma.TenantMembership$planAssignmentsArgs<ExtArgs>
   attendances?: boolean | Prisma.TenantMembership$attendancesArgs<ExtArgs>
   markedAttendances?: boolean | Prisma.TenantMembership$markedAttendancesArgs<ExtArgs>
+  createdTodos?: boolean | Prisma.TenantMembership$createdTodosArgs<ExtArgs>
+  updatedTodos?: boolean | Prisma.TenantMembership$updatedTodosArgs<ExtArgs>
+  completedTodos?: boolean | Prisma.TenantMembership$completedTodosArgs<ExtArgs>
   _count?: boolean | Prisma.TenantMembershipCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type TenantMembershipIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2118,6 +2664,9 @@ export type $TenantMembershipPayload<ExtArgs extends runtime.Types.Extensions.In
     planAssignments: Prisma.$WorkoutPlanAssignmentPayload<ExtArgs>[]
     attendances: Prisma.$AttendancePayload<ExtArgs>[]
     markedAttendances: Prisma.$AttendancePayload<ExtArgs>[]
+    createdTodos: Prisma.$TodoPayload<ExtArgs>[]
+    updatedTodos: Prisma.$TodoPayload<ExtArgs>[]
+    completedTodos: Prisma.$TodoPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2541,6 +3090,9 @@ export interface Prisma__TenantMembershipClient<T, Null = never, ExtArgs extends
   planAssignments<T extends Prisma.TenantMembership$planAssignmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantMembership$planAssignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkoutPlanAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   attendances<T extends Prisma.TenantMembership$attendancesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantMembership$attendancesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AttendancePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   markedAttendances<T extends Prisma.TenantMembership$markedAttendancesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantMembership$markedAttendancesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AttendancePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  createdTodos<T extends Prisma.TenantMembership$createdTodosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantMembership$createdTodosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  updatedTodos<T extends Prisma.TenantMembership$updatedTodosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantMembership$updatedTodosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  completedTodos<T extends Prisma.TenantMembership$completedTodosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantMembership$completedTodosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3164,6 +3716,78 @@ export type TenantMembership$markedAttendancesArgs<ExtArgs extends runtime.Types
   take?: number
   skip?: number
   distinct?: Prisma.AttendanceScalarFieldEnum | Prisma.AttendanceScalarFieldEnum[]
+}
+
+/**
+ * TenantMembership.createdTodos
+ */
+export type TenantMembership$createdTodosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Todo
+   */
+  select?: Prisma.TodoSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Todo
+   */
+  omit?: Prisma.TodoOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TodoInclude<ExtArgs> | null
+  where?: Prisma.TodoWhereInput
+  orderBy?: Prisma.TodoOrderByWithRelationInput | Prisma.TodoOrderByWithRelationInput[]
+  cursor?: Prisma.TodoWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TodoScalarFieldEnum | Prisma.TodoScalarFieldEnum[]
+}
+
+/**
+ * TenantMembership.updatedTodos
+ */
+export type TenantMembership$updatedTodosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Todo
+   */
+  select?: Prisma.TodoSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Todo
+   */
+  omit?: Prisma.TodoOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TodoInclude<ExtArgs> | null
+  where?: Prisma.TodoWhereInput
+  orderBy?: Prisma.TodoOrderByWithRelationInput | Prisma.TodoOrderByWithRelationInput[]
+  cursor?: Prisma.TodoWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TodoScalarFieldEnum | Prisma.TodoScalarFieldEnum[]
+}
+
+/**
+ * TenantMembership.completedTodos
+ */
+export type TenantMembership$completedTodosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Todo
+   */
+  select?: Prisma.TodoSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Todo
+   */
+  omit?: Prisma.TodoOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TodoInclude<ExtArgs> | null
+  where?: Prisma.TodoWhereInput
+  orderBy?: Prisma.TodoOrderByWithRelationInput | Prisma.TodoOrderByWithRelationInput[]
+  cursor?: Prisma.TodoWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TodoScalarFieldEnum | Prisma.TodoScalarFieldEnum[]
 }
 
 /**

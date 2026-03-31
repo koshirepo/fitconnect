@@ -24,6 +24,7 @@ import { settingsRoutes } from "./modules/settings/settings.routes";
 import { attendanceRoutes } from "./modules/attendance/attendance.routes";
 import { uploadRoutes } from "./modules/uploads/uploads.routes";
 import { shiftRoutes } from "./modules/shifts/shifts.routes";
+import { todoRoutes } from "./modules/todos/todos.routes";
 
 const app = new Hono();
 
@@ -47,6 +48,7 @@ app.route("/tenants", badgeRoutes);
 app.route("/tenants", settingsRoutes);
 app.route("/tenants", attendanceRoutes);
 app.route("/tenants", shiftRoutes);
+app.route("/tenants", todoRoutes);
 app.route("/audit", auditRoutes);
 app.route("/public", publicRoutes);
 app.route("/", commerceRoutes);

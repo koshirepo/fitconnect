@@ -60,6 +60,7 @@ export const ModelName = {
   TenantMembership: 'TenantMembership',
   Subscription: 'Subscription',
   Shift: 'Shift',
+  Todo: 'Todo',
   Payment: 'Payment',
   Product: 'Product',
   ProductReview: 'ProductReview',
@@ -220,6 +221,24 @@ export const ShiftScalarFieldEnum = {
 } as const
 
 export type ShiftScalarFieldEnum = (typeof ShiftScalarFieldEnum)[keyof typeof ShiftScalarFieldEnum]
+
+
+export const TodoScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  title: 'title',
+  description: 'description',
+  visibility: 'visibility',
+  isCompleted: 'isCompleted',
+  completedAt: 'completedAt',
+  createdById: 'createdById',
+  updatedById: 'updatedById',
+  completedById: 'completedById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TodoScalarFieldEnum = (typeof TodoScalarFieldEnum)[keyof typeof TodoScalarFieldEnum]
 
 
 export const PaymentScalarFieldEnum = {

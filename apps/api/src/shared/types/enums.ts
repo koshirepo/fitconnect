@@ -1,9 +1,9 @@
 /**
  * Documentation: Shared enum-like constant maps.
  *
- * - Exports string-literal role, status, and audit-action sets that keep server and client code aligned without introducing a separate enum runtime.
+ * - Exports string-literal role, status, visibility, and audit-action sets that keep server and client code aligned without introducing a separate enum runtime.
  * - Use these constants when validating or comparing business-state strings so magic values do not spread through the codebase.
- * - Primary exports: PlatformRole, TenantRole, AccountStatus, PaymentStatus, OrderStatus, AuditAction.
+ * - Primary exports: PlatformRole, TenantRole, AccountStatus, PaymentStatus, OrderStatus, TodoVisibility, AuditAction.
  */
 // ─── Platform Roles & Enums ───────────────────────────────────────────────────
 // These mirror the Prisma schema "enums" (stored as plain strings in SQLite).
@@ -44,6 +44,13 @@ export const OrderStatus = {
   DELIVERED: "DELIVERED",
 } as const;
 export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus];
+
+export const TodoVisibility = {
+  PRIVATE: "PRIVATE",
+  PROTECTED: "PROTECTED",
+  PUBLIC: "PUBLIC",
+} as const;
+export type TodoVisibility = (typeof TodoVisibility)[keyof typeof TodoVisibility];
 
 export const AuditAction = {
   CREATE: "CREATE",
