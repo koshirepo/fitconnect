@@ -90,17 +90,6 @@ export const tenantRepository = {
   },
 
   /**
-   * Run the `find user by phone` persistence operation for the tenants module.
-   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
-   */
-  findUserByPhone(phone: string) {
-    return prisma.user.findUnique({
-      where: { phone },
-      select: { id: true, email: true, phone: true, status: true },
-    });
-  },
-
-  /**
    * Run the `find by id` persistence operation for the tenants module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */

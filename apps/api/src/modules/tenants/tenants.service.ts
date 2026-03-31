@@ -68,41 +68,9 @@ export const tenantService = {
       }
     }
 
-    const [existingUserByEmail, existingUserByPhone] = await Promise.all([
-      tenantRepository.findUserByEmail(input.admin.email),
-      input.admin.phone ? tenantRepository.findUserByPhone(input.admin.phone) : null,
-    ]);
-
-    // Tenant onboarding can reuse an existing platform user, but only when the
-    // submitted email and phone resolve to the same identity.
-    if (
-      existingUserByEmail &&
-      existingUserByPhone &&
-      existingUserByEmail.id !== existingUserByPhone.id
-    ) {
-      return {
-        error:
-          "Admin email and phone belong to different existing users. Use matching credentials.",
-      };
-    }
-
-    if (
-      existingUserByEmail &&
-      input.admin.phone &&
-      existingUserByEmail.phone !== input.admin.phone
-    ) {
-      return { error: "This admin email is already linked to a different phone number." };
-    }
-
-    if (
-      existingUserByPhone &&
-      input.admin.phone &&
-      existingUserByPhone.email !== input.admin.email
-    ) {
-      return { error: "This admin phone is already linked to a different email address." };
-    }
-
-    const existingAdmin = existingUserByEmail ?? existingUserByPhone;
+    const existingAdmin = await tenantRepository.findUserByEmail(
+      input.admin.email,
+    );
     if (existingAdmin && existingAdmin.status !== "ACTIVE") {
       return { error: "The selected admin user is not active." };
     }

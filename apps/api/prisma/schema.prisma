@@ -25,7 +25,7 @@ model User {
   id           String   @id @default(cuid())
   name         String
   email        String
-  phone        String?  @unique
+  phone        String?
   passwordHash String
   avatarUrl    String?
   platformRole String   @default("USER")

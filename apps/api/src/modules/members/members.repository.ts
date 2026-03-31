@@ -9,6 +9,25 @@ import { prisma } from "../../lib/prisma";
 import type { Prisma } from "../../generated/prisma/client";
 import type { PlatformRole, TenantRole } from "../../shared/types/enums";
 
+function isMemberIdConflict(error: unknown) {
+  if (
+    error &&
+    typeof error === "object" &&
+    (error as { constructor?: { name?: string } }).constructor?.name ===
+      "PrismaClientKnownRequestError" &&
+    (error as { code?: string }).code === "P2002"
+  ) {
+    const target = (error as { meta?: { target?: unknown } }).meta?.target;
+    const fields = Array.isArray(target)
+      ? target.map(String)
+      : target != null
+        ? [String(target)]
+        : [];
+    return fields.includes("tenantId") && fields.includes("memberId");
+  }
+  return false;
+}
+
 const shiftSelect = {
   id: true,
   tenantId: true,
@@ -63,6 +82,22 @@ export const memberRepository = {
   },
 
   /**
+   * Run the `find membership for user` persistence operation for the members module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
+  findMembershipForUser(userId: string) {
+    return prisma.tenantMembership.findFirst({
+      where: { userId },
+      select: {
+        id: true,
+        tenantId: true,
+        status: true,
+        tenant: { select: { name: true } },
+      },
+    });
+  },
+
+  /**
    * Run the `find membership by id` persistence operation for the members module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
@@ -100,26 +135,39 @@ export const memberRepository = {
     role: TenantRole,
     shiftId?: string,
   ) {
-    // D1 doesn't support interactive transactions.
-    // Count first, then create. The @@unique([tenantId, memberId]) constraint
-    // guards against duplicates if a concurrent insert races.
-    const count = await prisma.tenantMembership.count({ where: { tenantId } });
-    return prisma.tenantMembership.create({
-      data: {
-        tenantId,
-        userId,
-        role,
-        memberId: count + 1,
-        ...(shiftId ? { shiftId } : {}),
-      },
-      select: {
-        id: true,
-        memberId: true,
-        role: true,
-        shift: { select: shiftSelect },
-        user: { select: { id: true, name: true, email: true, phone: true } },
-      },
-    });
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const latestMember = await prisma.tenantMembership.findFirst({
+        where: { tenantId },
+        orderBy: { memberId: "desc" },
+        select: { memberId: true },
+      });
+
+      try {
+        return await prisma.tenantMembership.create({
+          data: {
+            tenantId,
+            userId,
+            role,
+            memberId: (latestMember?.memberId ?? 0) + 1,
+            ...(shiftId ? { shiftId } : {}),
+          },
+          select: {
+            id: true,
+            memberId: true,
+            role: true,
+            shift: { select: shiftSelect },
+            user: { select: { id: true, name: true, email: true, phone: true } },
+          },
+        });
+      } catch (error) {
+        if (isMemberIdConflict(error) && attempt < 2) {
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    throw new Error("Failed to allocate a member ID.");
   },
 
   /**

@@ -216,11 +216,27 @@ export const memberService = {
       });
     }
 
-    // Check if already a member of this tenant
-    const existing = await memberRepository.findMembership(tenantId, user.id);
-    if (existing) {
+    const existingMembership = await memberRepository.findMembershipForUser(
+      user.id,
+    );
+    if (existingMembership) {
+      if (existingMembership.tenantId === tenantId) {
+        if (existingMembership.status === "DELETED") {
+          return {
+            error:
+              "This email is already linked to a deleted member record in this gym. Restore that member or use a different email address.",
+            status: 409 as const,
+          };
+        }
+
+        return {
+          error: "User is already a member of this tenant.",
+          status: 409 as const,
+        };
+      }
+
       return {
-        error: "User is already a member of this tenant.",
+        error: `This email is already linked to ${existingMembership.tenant.name}. Use a different email address for this member.`,
         status: 409 as const,
       };
     }
@@ -289,24 +305,12 @@ export const memberService = {
       return { error: "Shift not found.", status: 404 as const };
     }
 
-    // Get collector membership
-    const collector = await memberRepository.findMembershipByUserId(
-      tenantId,
-      callerRole ? user.id : "",
-    );
-
     const membership = await memberRepository.createMembership(
       tenantId,
       user.id,
       input.role as TenantRole,
       input.shiftId,
     );
-
-    // Find the collector (caller's membership)
-    const callerMembership = await prisma.tenantMembership.findFirst({
-      where: { tenantId, user: { email: { not: input.email } } },
-      select: { id: true },
-    });
 
     // Create payments for charges and subscription in parallel
     const now = new Date();
