@@ -8,6 +8,8 @@
 import app from "./app";
 import { setD1 } from "./lib/prisma";
 
+const DAILY_TENANT_REPORT_CRON = "30 3 * * *";
+
 type WorkerEnv = {
   DB: D1Database;
   FILES?: R2Bucket;
@@ -67,6 +69,19 @@ export default {
 
     try {
       const { memberService } = await import("./modules/members/members.service");
+
+      if (controller.cron === DAILY_TENANT_REPORT_CRON) {
+        const result = await memberService.runScheduledTenantReports((promise) =>
+          ctx.waitUntil(promise),
+        );
+
+        console.info("[scheduled-tenant-reports]", {
+          cron: controller.cron,
+          ...result.data,
+        });
+        return;
+      }
+
       const result = await memberService.runScheduledOverdueEnforcement((promise) =>
         ctx.waitUntil(promise),
       );

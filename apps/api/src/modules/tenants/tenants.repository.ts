@@ -310,4 +310,39 @@ export const tenantRepository = {
       },
     });
   },
+
+  /**
+   * Run the `list active tenants for scheduled reports` persistence operation for the tenants module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
+  listActiveTenantsForScheduledReports() {
+    return prisma.tenant.findMany({
+      where: { status: "ACTIVE" },
+      select: {
+        id: true,
+        name: true,
+        settings: {
+          select: {
+            overdueDays: true,
+          },
+        },
+        memberships: {
+          where: {
+            role: "ADMIN",
+            status: "ACTIVE",
+          },
+          select: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                status: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  },
 };

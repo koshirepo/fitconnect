@@ -6,6 +6,9 @@ main = "src/index.ts"
 compatibility_date = "2026-03-27"
 compatibility_flags = ["nodejs_compat"]
 
+[triggers]
+crons = ["30 3 * * *"] # Daily at 03:30 UTC / 09:00 IST for tenant reports
+
 # Replace these placeholder values after creating your Cloudflare resources:
 #   npx wrangler d1 create fit-db
 #   npx wrangler r2 bucket create fit-bucket
