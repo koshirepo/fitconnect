@@ -12,6 +12,7 @@ import {
   ShoppingBag,
   ScrollText,
   Award,
+  ListTodo,
   Settings,
   LogOut,
   X,
@@ -43,6 +44,7 @@ const platformNav = [
 const tenantNav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/members", label: "Members", icon: Users, roles: ["ADMIN", "COACH"] },
+  { to: "/todos", label: "Todos", icon: ListTodo, roles: ["ADMIN", "COACH"] },
   { to: "/workouts", label: "Workout Plans", icon: Dumbbell },
   { to: "/payments", label: "Payments", icon: CreditCard },
   { to: "/subscriptions", label: "Subscriptions", icon: Package },

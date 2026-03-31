@@ -28,6 +28,7 @@ import AttendancePage from "@/features/attendance/AttendancePage";
 import AttendanceCalendarPage from "@/features/attendance/AttendanceCalendarPage";
 import WorkoutsPage from "@/features/workouts/WorkoutsPage";
 import WorkoutDetailPage from "@/features/workouts/WorkoutDetailPage";
+import TodosPage from "@/features/todos/TodosPage";
 import ProfilePage from "@/features/profile/ProfilePage";
 import SubscriptionsPage from "@/features/payments/subscription";
 import CreateSubscriptionPage from "@/features/payments/subscription/CreateSubscriptionPage";
@@ -141,6 +142,7 @@ export default function App() {
                   path="/workouts/:planId"
                   element={<WorkoutDetailPage />}
                 />
+                <Route path="/todos" element={<TodosPage />} />
                 <Route path="/payments" element={<PaymentsPage />} />
                 <Route
                   path="/payments/record"

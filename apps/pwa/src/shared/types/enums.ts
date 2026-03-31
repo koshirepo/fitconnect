@@ -7,6 +7,7 @@ export type TenantRole = "MEMBER" | "COACH" | "ADMIN";
 export type AccountStatus = "ACTIVE" | "SUSPENDED" | "DELETED";
 export type PaymentStatus = "PENDING" | "COMPLETED" | "FAILED" | "REFUNDED";
 export type OrderStatus = "PENDING" | "SHIPPED" | "DELIVERED";
+export type TodoVisibility = "PRIVATE" | "PROTECTED" | "PUBLIC";
 
 export type AuditAction =
   | "CREATE"

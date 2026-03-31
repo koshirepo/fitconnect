@@ -10,6 +10,7 @@ export type {
   AccountStatus,
   PaymentStatus,
   OrderStatus,
+  TodoVisibility,
   AuditAction,
   // Models
   User,
@@ -60,6 +61,10 @@ export type {
   TenantCharge,
   CreateTenantChargePayload,
   UpdateTenantChargePayload,
+  TodoActor,
+  Todo,
+  CreateTodoPayload,
+  UpdateTodoPayload,
   // Attendance
   AttendanceRecord,
   AttendanceSummary,
