@@ -53,6 +53,8 @@ export type {
   UpdateBadgePayload,
   AssignBadgePayload,
   // Settings
+  WhatsAppTemplateKey,
+  WhatsAppTemplate,
   TenantSettings,
   UpdateTenantSettingsPayload,
   TenantCharge,

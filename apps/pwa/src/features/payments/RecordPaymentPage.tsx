@@ -2,9 +2,15 @@ import * as React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { paymentsApi } from "@/api/payments";
+import { settingsApi } from "@/api/settings";
 import { tenantsApi } from "@/api/tenants";
 import { getApiError } from "@/api/client";
 import { formatCurrency } from "@/lib/utils";
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import {
+  getTenantWhatsAppTemplateBody,
+  renderWhatsAppTemplateBody,
+} from "@/lib/whatsapp-templates";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +20,7 @@ import MemberSelector from "@/components/ui/memberSelector";
 import { PageLoader } from "@/components/ui/spinner";
 import { Select } from "@/components/ui/select";
 import { AlertCircle, Plus } from "lucide-react";
-import type { MemberDetail, TenantMember, Subscription } from "@/types/api";
+import type { MemberDetail, TenantMember, Subscription, TenantSettings } from "@/types/api";
 
 function toTenantMember(member: TenantMember | MemberDetail): TenantMember {
   return {
@@ -58,6 +64,7 @@ export default function RecordPaymentPage() {
 
   const [members, setMembers] = React.useState<TenantMember[]>([]);
   const [subscriptions, setSubscriptions] = React.useState<Subscription[]>([]);
+  const [tenantSettings, setTenantSettings] = React.useState<TenantSettings | null>(null);
   const [selectedMember, setSelectedMember] = React.useState<TenantMember | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [submitting, setSubmitting] = React.useState(false);
@@ -80,6 +87,11 @@ export default function RecordPaymentPage() {
     setSelectedMember(null);
     setFMembershipId(membershipId ?? "");
 
+    const settingsRequest = settingsApi
+      .getSettings(currentTenantId)
+      .then((res) => res.data.data.settings)
+      .catch(() => null);
+
     const selectedMemberRequest = membershipId
       ? tenantsApi
           .getMemberDetail(currentTenantId, membershipId)
@@ -91,8 +103,9 @@ export default function RecordPaymentPage() {
       loadAllMembers(currentTenantId),
       paymentsApi.listSubscriptions(currentTenantId),
       selectedMemberRequest,
+      settingsRequest,
     ])
-      .then(([allMembers, subsRes, routedMember]) => {
+      .then(([allMembers, subsRes, routedMember, settings]) => {
         if (cancelled) return;
 
         const rosterMembers = allMembers;
@@ -103,6 +116,7 @@ export default function RecordPaymentPage() {
 
         setMembers(membersWithSelected);
         setSubscriptions(subsRes.data.data.subscriptions);
+        setTenantSettings(settings);
 
         const initialMember =
           routedMember ?? membersWithSelected.find((m) => m.id === membershipId) ?? null;
@@ -138,6 +152,11 @@ export default function RecordPaymentPage() {
       setFValidUntil(validUntil.toISOString().slice(0, 10));
     }
   };
+
+  const paymentReceiptTemplateBody = React.useMemo(
+    () => getTenantWhatsAppTemplateBody(tenantSettings, "payment_receipt"),
+    [tenantSettings],
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -194,20 +213,19 @@ export default function RecordPaymentPage() {
 
       // Skip WhatsApp when the mutation was queued offline
       if (!res.data._offlineQueued && selectedMember?.phone) {
-        const msg = [
-          `Hi ${selectedMember.name},`,
-          ``,
-          `Your payment of ${formatCurrency(amount)} for *${sub?.title ?? "subscription"}* at *${gymName}* has been recorded.`,
-          fStatus === "COMPLETED" ? `Status: Completed` : `Status: Pending`,
-          fValidUntil ? `Valid until: ${fValidUntil}` : "",
-          fNote ? `Note: ${fNote}` : "",
-          ``,
-          `Thank you!`,
-        ]
-          .filter(Boolean)
-          .join("\n");
-        const phone = selectedMember.phone.replace(/\D/g, "");
-        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
+        const msg = renderWhatsAppTemplateBody(paymentReceiptTemplateBody, {
+          memberName: selectedMember.name,
+          amount: formatCurrency(amount),
+          subscriptionTitle: sub?.title ?? "subscription",
+          gymName,
+          status: fStatus === "COMPLETED" ? "Completed" : "Pending",
+          validUntilLine: fValidUntil ? `Valid until: ${fValidUntil}\n` : "",
+          noteLine: fNote ? `Note: ${fNote}\n` : "",
+        });
+        const whatsappUrl = buildWhatsAppUrl(selectedMember.phone, msg);
+        if (whatsappUrl) {
+          window.open(whatsappUrl, "_blank");
+        }
       }
 
       navigate("/payments");

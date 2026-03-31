@@ -32,6 +32,7 @@ import ProfilePage from "@/features/profile/ProfilePage";
 import SubscriptionsPage from "@/features/payments/subscription";
 import CreateSubscriptionPage from "@/features/payments/subscription/CreateSubscriptionPage";
 import GymSettingsPage from "@/features/settings/GymSettingsPage";
+import MessagesPage from "@/features/settings/MessagesPage";
 import FinanceReportsPage from "@/features/finance/FinanceReportsPage";
 import AuditLogsPage from "@/features/audit/AuditLogsPage";
 import LoginPage from "@/features/auth/LoginPage";
@@ -171,6 +172,10 @@ export default function App() {
                   element={<AttendanceCalendarPage />}
                 />
                 <Route path="/settings" element={<GymSettingsPage />} />
+                <Route
+                  path="/settings/messages"
+                  element={<MessagesPage />}
+                />
                 <Route path="/finance" element={<FinanceReportsPage />} />
                 <Route
                   path="/audit"

@@ -8,6 +8,7 @@ import path from "path";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const apiTarget = env.VITE_API_URL || "http://localhost:4000";
+  const navigationAllowlist = [/^(?!\/(?:api|uploads)(?:\/|$)).*/];
 
   return {
   plugins: [
@@ -53,7 +54,7 @@ export default defineConfig(({ mode }) => {
           },
         ],
         navigateFallback: "/index.html",
-        navigateFallbackAllowlist: [/^(?!\/(api|uploads))/],
+        navigateFallbackAllowlist: navigationAllowlist,
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
@@ -125,6 +126,7 @@ export default defineConfig(({ mode }) => {
       devOptions: {
         enabled: true,
         type: "module",
+        navigateFallbackAllowlist: navigationAllowlist,
       },
     }),
   ],

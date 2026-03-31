@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { tenantsApi } from "@/api/tenants";
 import { badgesApi } from "@/api/badges";
+import { settingsApi } from "@/api/settings";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -11,6 +12,11 @@ import { Select } from "@/components/ui/select";
 import { PageLoader, Spinner } from "@/components/ui/spinner";
 import { downloadCsv } from "@/lib/csv";
 import { formatDate } from "@/lib/utils";
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import {
+  getTenantWhatsAppTemplateBody,
+  renderWhatsAppTemplateBody,
+} from "@/lib/whatsapp-templates";
 import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
 import {
   Plus,
@@ -24,7 +30,7 @@ import {
   AlertTriangle,
   CalendarClock,
 } from "lucide-react";
-import type { TenantMember, Badge } from "@/types/api";
+import type { TenantMember, Badge, TenantSettings } from "@/types/api";
 import AvatarCard from "@/components/ui/avatarCard";
 import { usePendingMutations } from "@/lib/use-pending-mutations";
 import { Clock } from "lucide-react";
@@ -46,6 +52,7 @@ export default function MembersPage() {
   const [hasMore, setHasMore] = React.useState(true);
   const [exporting, setExporting] = React.useState(false);
   const [badges, setBadges] = React.useState<Badge[]>([]);
+  const [tenantSettings, setTenantSettings] = React.useState<TenantSettings | null>(null);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [pendingRemoveId, setPendingRemoveId] = React.useState<string | null>(null);
 
@@ -82,6 +89,14 @@ export default function MembersPage() {
       .list(currentTenantId, 1, 100)
       .then((res) => setBadges(res.data.data))
       .catch(() => {});
+  }, [currentTenantId]);
+
+  React.useEffect(() => {
+    if (!currentTenantId) return;
+    settingsApi
+      .getSettings(currentTenantId)
+      .then((res) => setTenantSettings(res.data.data.settings))
+      .catch(() => setTenantSettings(null));
   }, [currentTenantId]);
 
   const fetchMembers = React.useCallback(
@@ -139,6 +154,23 @@ export default function MembersPage() {
     loading: loading || loadingMore,
     onLoadMore: loadMore,
   });
+
+  const paymentReminderTemplateBody = React.useMemo(
+    () => getTenantWhatsAppTemplateBody(tenantSettings, "payment_reminder"),
+    [tenantSettings],
+  );
+
+  const getPaymentReminderUrl = React.useCallback(
+    (member: TenantMember) => {
+      const text = renderWhatsAppTemplateBody(paymentReminderTemplateBody, {
+        memberName: member.name,
+        gymName,
+        expirySuffix: member.dueDate ? ` on ${formatDate(member.dueDate)}` : "",
+      });
+      return buildWhatsAppUrl(member.phone, text);
+    },
+    [paymentReminderTemplateBody, gymName],
+  );
 
   // Pending offline members
   const pendingMembers = usePendingMutations("/members");
@@ -375,7 +407,7 @@ export default function MembersPage() {
                   <div className="flex gap-2 shrink-0 justify-end items-center">
                     {m.isDue && m.phone && (
                       <a
-                        href={`https://wa.me/91${m.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi ${m.name},\n\nThis is a friendly reminder from *${gymName}* that your subscription has expired.\n\nPlease renew your membership at the earliest to continue enjoying uninterrupted access to the gym.\n\nThank you! 🙏`)}`}
+                        href={getPaymentReminderUrl(m) ?? undefined}
                         target="_blank"
                         rel="noopener noreferrer"
                         title="Send payment reminder via WhatsApp"
@@ -399,7 +431,7 @@ export default function MembersPage() {
                     </Button>
                     {m.phone && (
                       <a
-                        href={`https://wa.me/91${m.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi ${m.name}`)}`}
+                        href={buildWhatsAppUrl(m.phone, `Hi ${m.name}`) ?? undefined}
                         target="_blank"
                         rel="noopener noreferrer"
                         title="Chat on WhatsApp"

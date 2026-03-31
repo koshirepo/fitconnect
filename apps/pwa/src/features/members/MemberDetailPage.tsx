@@ -2,6 +2,7 @@ import * as React from "react";
 import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { tenantsApi } from "@/api/tenants";
+import { settingsApi } from "@/api/settings";
 import { uploadsApi } from "@/api/uploads";
 import { badgesApi } from "@/api/badges";
 import { attendanceApi } from "@/api/attendance";
@@ -10,6 +11,11 @@ import { getApiError } from "@/api/client";
 import { formatDate, getInitials } from "@/shared";
 import { getDueDateState } from "@/lib/member-due";
 import { formatShiftLabel, formatShiftWindow } from "@/lib/shifts";
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import {
+  getTenantWhatsAppTemplateBody,
+  renderWhatsAppTemplateBody,
+} from "@/lib/whatsapp-templates";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -46,7 +52,7 @@ import {
   ChevronRight,
   CalendarDays,
 } from "lucide-react";
-import type { Badge, MemberDetail, Shift } from "@/types/api";
+import type { Badge, MemberDetail, Shift, TenantSettings } from "@/types/api";
 import AvatarCard from "@/components/ui/avatarCard";
 import MemberForm, { type MemberFormData } from "@/components/forms/MemberForm";
 
@@ -92,6 +98,7 @@ export default function MemberDetailPage() {
   const isEditMode = location.pathname.endsWith("/edit");
 
   const [member, setMember] = React.useState<MemberDetail | null>(null);
+  const [tenantSettings, setTenantSettings] = React.useState<TenantSettings | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
 
@@ -146,6 +153,14 @@ export default function MemberDetailPage() {
     if (!canManageBadges) return;
     void loadBadges();
   }, [canManageBadges, loadBadges]);
+
+  React.useEffect(() => {
+    if (!currentTenantId) return;
+    settingsApi
+      .getSettings(currentTenantId)
+      .then((res) => setTenantSettings(res.data.data.settings))
+      .catch(() => setTenantSettings(null));
+  }, [currentTenantId]);
 
   const loadShifts = React.useCallback(async () => {
     if (!currentTenantId) return;
@@ -319,20 +334,20 @@ export default function MemberDetailPage() {
       : null;
   }, [isDue, member]);
 
+  const paymentReminderTemplateBody = React.useMemo(
+    () => getTenantWhatsAppTemplateBody(tenantSettings, "payment_reminder"),
+    [tenantSettings],
+  );
+
   const paymentReminderUrl = React.useMemo(() => {
     if (!isDue || !member?.phone) return null;
-    const phone = member.phone.replace(/\D/g, "");
-    const text = [
-      `Hi ${member.name},`,
-      ``,
-      `This is a friendly reminder from *${gymName}* that your subscription has expired${lastExpiry ? ` on ${lastExpiry}` : ""}.`,
-      ``,
-      `Please renew your membership at the earliest to continue enjoying uninterrupted access to the gym.`,
-      ``,
-      `Thank you! 🙏`,
-    ].join("\n");
-    return `https://wa.me/91${phone}?text=${encodeURIComponent(text)}`;
-  }, [isDue, member, gymName, lastExpiry]);
+    const text = renderWhatsAppTemplateBody(paymentReminderTemplateBody, {
+      memberName: member.name,
+      gymName,
+      expirySuffix: lastExpiry ? ` on ${lastExpiry}` : "",
+    });
+    return buildWhatsAppUrl(member.phone, text);
+  }, [isDue, member, paymentReminderTemplateBody, gymName, lastExpiry]);
 
   if (loading) return <PageLoader />;
 

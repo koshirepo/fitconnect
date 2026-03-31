@@ -1,10 +1,11 @@
 import * as React from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { settingsApi } from "@/api/settings";
 import { shiftsApi } from "@/api/shifts";
 import { getApiError } from "@/api/client";
 import { formatShiftWindow } from "@/lib/shifts";
-import type { TenantSettings, TenantCharge, Shift } from "@/types/api";
+import type { TenantCharge, Shift } from "@/types/api";
 import {
   Card,
   CardContent,
@@ -24,6 +25,7 @@ import {
   IndianRupee,
   Clock,
   Shield,
+  MessageSquare,
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PageLoader } from "@/components/ui/spinner";
@@ -38,8 +40,8 @@ function formatAmount(amount: number) {
 
 export default function GymSettingsPage() {
   const { currentTenantId } = useAuthStore();
+  const navigate = useNavigate();
 
-  const [, setSettings] = React.useState<TenantSettings | null>(null);
   const [charges, setCharges] = React.useState<TenantCharge[]>([]);
   const [shifts, setShifts] = React.useState<Shift[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -88,9 +90,7 @@ export default function GymSettingsPage() {
         settingsApi.listCharges(currentTenantId),
         shiftsApi.list(currentTenantId, 1, 100, true),
       ]);
-      const s = settingsRes.data.data.settings;
-      setSettings(s);
-      setOverdueDays(s.overdueDays);
+      setOverdueDays(settingsRes.data.data.settings.overdueDays);
       setCharges(chargesRes.data.data.charges);
       setShifts(shiftsRes.data.data.shifts);
     } catch (err) {
@@ -114,7 +114,7 @@ export default function GymSettingsPage() {
       const res = await settingsApi.updateSettings(currentTenantId, {
         overdueDays,
       });
-      setSettings(res.data.data.settings);
+      setOverdueDays(res.data.data.settings.overdueDays);
       setSuccessMsg("Settings saved successfully.");
       setTimeout(() => setSuccessMsg(""), 3000);
     } catch (err) {
@@ -351,6 +351,32 @@ export default function GymSettingsPage() {
               {saving ? "Saving..." : "Save Settings"}
             </Button>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            Messages
+          </CardTitle>
+          <CardDescription>
+            Manage tenant-specific WhatsApp templates for welcome messages,
+            reminders, receipts, and future message flows.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            Open the dedicated messages page to edit template bodies and
+            placeholders.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate("/settings/messages")}
+          >
+            Manage Messages
+          </Button>
         </CardContent>
       </Card>
 
