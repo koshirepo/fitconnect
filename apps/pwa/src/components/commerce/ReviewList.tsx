@@ -6,6 +6,7 @@ import type { ProductReview } from "@/api/reviews";
 import { reviewsApi } from "@/api/reviews";
 import { useAuthStore } from "@/stores/auth";
 import { getApiError } from "@/api/client";
+import { resolveAssetUrl } from "@/lib/assets";
 
 interface ReviewListProps {
   reviews: ProductReview[];
@@ -123,7 +124,7 @@ export const ReviewList: React.FC<ReviewListProps> = ({
                     <>
                       {review.user.avatarUrl ? (
                         <img
-                          src={review.user.avatarUrl}
+                          src={resolveAssetUrl(review.user.avatarUrl) ?? review.user.avatarUrl}
                           alt={review.user.name}
                           className="h-6 w-6 rounded-full"
                         />
@@ -187,7 +188,9 @@ export const ReviewList: React.FC<ReviewListProps> = ({
                             <>
                               {comment.user.avatarUrl ? (
                                 <img
-                                  src={comment.user.avatarUrl}
+                                  src={
+                                    resolveAssetUrl(comment.user.avatarUrl) ?? comment.user.avatarUrl
+                                  }
                                   alt={comment.user.name}
                                   className="h-4 w-4 rounded-full"
                                 />

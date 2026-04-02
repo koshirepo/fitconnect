@@ -26,6 +26,7 @@ import {
   Clock,
   Shield,
   MessageSquare,
+  Globe,
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PageLoader } from "@/components/ui/spinner";
@@ -82,7 +83,10 @@ export default function GymSettingsPage() {
   const [shiftSaving, setShiftSaving] = React.useState(false);
 
   const fetchData = React.useCallback(async () => {
-    if (!currentTenantId) return;
+    if (!currentTenantId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const [settingsRes, chargesRes, shiftsRes] = await Promise.all([
@@ -317,6 +321,26 @@ export default function GymSettingsPage() {
           {successMsg}
         </div>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5" />
+            Public Page
+          </CardTitle>
+          <CardDescription>
+            Manage the public-facing profile for your gym on a dedicated page.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            Update your gym name, logo, phone, address, short description, and about content.
+          </p>
+          <Button type="button" variant="outline" onClick={() => navigate("/settings/public-page")}>
+            Edit Public Page
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* General Settings */}
       <Card>

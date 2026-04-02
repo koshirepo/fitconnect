@@ -36,10 +36,11 @@ export default defineConfig(({ mode }) => {
           },
           {
             urlPattern: /^\/api\/public\//,
-            handler: "StaleWhileRevalidate",
+            handler: "NetworkFirst",
             options: {
               cacheName: "api-public",
-              expiration: { maxEntries: 50, maxAgeSeconds: 3600 },
+              expiration: { maxEntries: 50, maxAgeSeconds: 300 },
+              networkTimeoutSeconds: 3,
               cacheableResponse: { statuses: [0, 200] },
             },
           },

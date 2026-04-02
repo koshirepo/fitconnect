@@ -12,6 +12,7 @@ import { formatDate, getInitials } from "@/shared";
 import { getDueDateState } from "@/lib/member-due";
 import { formatShiftLabel, formatShiftWindow } from "@/lib/shifts";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import { resolveAssetUrl } from "@/lib/assets";
 import {
   getTenantWhatsAppTemplateBody,
   renderWhatsAppTemplateBody,
@@ -240,21 +241,23 @@ export default function MemberDetailPage() {
 
   const handleEditSubmit = async (data: MemberFormData) => {
     setEditError("");
-    if (!currentTenantId || !membershipId) return;
+    if (!currentTenantId || !membershipId || !member) return;
 
     setEditSubmitting(true);
     try {
-      let avatarUrl: string | undefined;
+      let avatarUrl: string | null | undefined;
       if (data.photoFile) {
         const uploadRes = await uploadsApi.uploadAvatar(data.photoFile);
         avatarUrl = uploadRes.data.data.url;
+      } else if (data.photoPreview !== member.avatarUrl) {
+        avatarUrl = data.photoPreview ?? null;
       }
 
       await tenantsApi.updateMember(currentTenantId, membershipId, {
         name: data.name,
         phone: data.phone,
         shiftId: data.shiftId || null,
-        ...(avatarUrl ? { avatarUrl } : {}),
+        ...(avatarUrl !== undefined ? { avatarUrl } : {}),
       });
 
       await loadMember(false);
@@ -522,7 +525,11 @@ export default function MemberDetailPage() {
           )}
         >
           {member.avatarUrl ? (
-            <img src={member.avatarUrl} alt={member.name} className="h-full w-full object-cover" />
+            <img
+              src={resolveAssetUrl(member.avatarUrl) ?? member.avatarUrl}
+              alt={member.name}
+              className="h-full w-full object-cover"
+            />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
               <span className="text-7xl font-extrabold text-muted-foreground select-none">

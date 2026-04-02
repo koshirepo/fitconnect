@@ -57,7 +57,6 @@ export async function flushPendingMutations(): Promise<SyncResult> {
             formData.append("file", file);
             const uploadRes = await api.post("/uploads/avatar", formData, {
               headers: {
-                "Content-Type": "multipart/form-data",
                 "X-Offline-Mutation": "true",
               },
             });

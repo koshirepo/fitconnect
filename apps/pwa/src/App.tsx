@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import {
   RequireAuth,
   RequirePlatformStaff,
+  RequireTenantAdmin,
   RedirectIfAuth,
 } from "@/features/auth/route-guards";
 import { AppLayout } from "@/components/layout/app-layout";
@@ -44,6 +45,9 @@ const TenantDetails = React.lazy(() => import("./features/tenants/details"));
 const NewTenant = React.lazy(() => import("./features/tenants/new"));
 const ForgotPasswordPage = React.lazy(
   () => import("@/features/auth/ForgotPasswordPage"),
+);
+const PublicPageSettingsPage = React.lazy(
+  () => import("@/features/settings/PublicPageSettingsPage"),
 );
 const ResetPasswordPage = React.lazy(
   () => import("@/features/auth/ResetPasswordPage"),
@@ -173,11 +177,17 @@ export default function App() {
                   path="/attendance/calendar"
                   element={<AttendanceCalendarPage />}
                 />
-                <Route path="/settings" element={<GymSettingsPage />} />
-                <Route
-                  path="/settings/messages"
-                  element={<MessagesPage />}
-                />
+                <Route element={<RequireTenantAdmin />}>
+                  <Route path="/settings" element={<GymSettingsPage />} />
+                  <Route
+                    path="/settings/public-page"
+                    element={<PublicPageSettingsPage />}
+                  />
+                  <Route
+                    path="/settings/messages"
+                    element={<MessagesPage />}
+                  />
+                </Route>
                 <Route path="/finance" element={<FinanceReportsPage />} />
                 <Route
                   path="/audit"

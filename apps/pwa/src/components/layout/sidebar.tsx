@@ -1,6 +1,9 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
+import * as React from "react";
+import { tenantsApi } from "@/api/tenants";
 import { useAuthStore } from "@/stores/auth";
 import { useUIStore } from "@/stores/ui";
+import { resolveAssetUrl } from "@/lib/assets";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -19,6 +22,7 @@ import {
   CalendarCheck,
 } from "lucide-react";
 import AvatarCard from "../ui/avatarCard";
+import type { Tenant } from "@/types/api";
 
 const platformNav = [
   {
@@ -66,6 +70,7 @@ export function Sidebar() {
   } = useAuthStore();
   const { sidebarOpen, setSidebarOpen, isMobile } = useUIStore();
   const navigate = useNavigate();
+  const [currentTenant, setCurrentTenant] = React.useState<Tenant | null>(null);
 
   const membership = currentMembership();
 
@@ -75,6 +80,47 @@ export function Sidebar() {
   };
 
   const role = tenantRole();
+
+  React.useEffect(() => {
+    if (!currentTenantId) {
+      setCurrentTenant(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    void tenantsApi
+      .get(currentTenantId)
+      .then((res) => {
+        if (!cancelled) {
+          setCurrentTenant(res.data.data.tenant);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCurrentTenant(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentTenantId]);
+
+  React.useEffect(() => {
+    const handleTenantUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{ tenant?: Tenant }>;
+      const updatedTenant = customEvent.detail?.tenant;
+      if (updatedTenant && updatedTenant.id === currentTenantId) {
+        setCurrentTenant(updatedTenant);
+      }
+    };
+
+    window.addEventListener("tenant-updated", handleTenantUpdated as EventListener);
+    return () => {
+      window.removeEventListener("tenant-updated", handleTenantUpdated as EventListener);
+    };
+  }, [currentTenantId]);
 
   return (
     <>
@@ -97,15 +143,16 @@ export function Sidebar() {
         <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-4">
           <div className="flex items-center gap-2 min-w-0">
             <Link to="/">
-            <img
-              src="/icons/whiteLogo.png"
-              alt="FitConnect"
-              className="h-7 w-7 rounded-md shrink-0"
+              <img
+                key={currentTenant?.logoUrl ?? "default-logo"}
+                src={resolveAssetUrl(currentTenant?.logoUrl) ?? "/icons/whiteLogo.png"}
+                alt={currentTenant?.name ?? "FitConnect"}
+                className="h-7 w-7 rounded-md shrink-0 object-cover"
               />
-              </Link>
+            </Link>
             <Link to={`/gym/${membership?.tenantSlug}`}>
               <span className="text-lg font-bold tracking-tight truncate text-gradient-brand">
-                {membership ? membership.tenantName : "FitConnect"}
+                {currentTenant?.name ?? (membership ? membership.tenantName : "FitConnect")}
               </span>
             </Link>
           </div>

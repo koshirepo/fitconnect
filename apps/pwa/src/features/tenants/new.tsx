@@ -191,7 +191,7 @@ export default function NewTenant() {
       // Upload logo if provided
       if (logoFile) {
         try {
-          const uploadLogoRes = await uploadsApi.uploadImage(logoFile);
+          const uploadLogoRes = await uploadsApi.uploadLogo(logoFile);
           const uploadedLogoUrl = uploadLogoRes?.data?.data?.url;
           if (isValidUrl(uploadedLogoUrl)) {
             logoUrl = uploadedLogoUrl;

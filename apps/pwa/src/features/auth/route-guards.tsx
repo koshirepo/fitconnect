@@ -22,6 +22,16 @@ export function RequirePlatformStaff() {
   return <Outlet />;
 }
 
+/** Redirects to /dashboard if the active tenant role is not ADMIN */
+export function RequireTenantAdmin() {
+  const { tenantRole } = useAuthStore();
+
+  if (tenantRole() !== "ADMIN") {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <Outlet />;
+}
+
 /** Redirects home if already authenticated (for login page) */
 export function RedirectIfAuth() {
   const { isAuthenticated } = useAuthStore();

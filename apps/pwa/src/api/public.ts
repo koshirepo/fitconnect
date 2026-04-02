@@ -8,7 +8,9 @@ import type {
 
 export const publicApi = {
   getTenantBySlug: (slug: string) =>
-    api.get<ApiResponse<{ tenant: PublicTenantDetail }>>(`/public/gyms/${slug}`),
+    api.get<ApiResponse<{ tenant: PublicTenantDetail }>>(`/public/gyms/${slug}`, {
+      params: { _: Date.now() },
+    }),
 
   listGyms: (page = 1, limit = 20) =>
     api.get<PaginatedResponse<{ gyms: PublicGymSummary[] }>>("/public/gyms", {

@@ -1,4 +1,4 @@
-import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosHeaders, type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/stores/auth";
 import { cacheResponse, serveCachedOnError, queueFailedMutation } from "@/lib/api-cache";
 
@@ -7,12 +7,19 @@ const API_BASE = (import.meta.env.VITE_API_URL ?? "/api").replace(/\/+$/, "");
 export const api = axios.create({
   baseURL: API_BASE,
   timeout: 30000,
-  headers: { "Content-Type": "application/json" },
 });
 
 // ─── Request Interceptor: Attach access token ────────────────────────────────
 
 api.interceptors.request.use((config) => {
+  if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+    if (config.headers instanceof AxiosHeaders) {
+      config.headers.delete("Content-Type");
+    } else if (config.headers) {
+      delete (config.headers as Record<string, string>)["Content-Type"];
+    }
+  }
+
   const token = useAuthStore.getState().accessToken;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

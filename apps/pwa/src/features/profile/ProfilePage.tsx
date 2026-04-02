@@ -43,6 +43,8 @@ export default function ProfilePage() {
   const [photoPreview, setPhotoPreview] = React.useState<string | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = React.useState(false);
   const [photoError, setPhotoError] = React.useState("");
+  const currentPhoto = profile?.avatarUrl ?? null;
+  const photoChanged = photoFile !== null || photoPreview !== currentPhoto;
 
   React.useEffect(() => {
     if (!currentTenantId) {
@@ -64,13 +66,20 @@ export default function ProfilePage() {
   }, [currentTenantId]);
 
   const handlePhotoSave = async () => {
-    if (!currentTenantId || !photoFile) return;
+    if (!currentTenantId || !profile || !photoChanged) return;
     setPhotoError("");
     setUploadingPhoto(true);
     try {
-      const uploadRes = await uploadsApi.uploadAvatar(photoFile);
-      const avatarUrl = uploadRes.data.data.url;
-      await tenantsApi.updateMyProfile(currentTenantId, { avatarUrl });
+      let avatarUrl = photoPreview;
+
+      if (photoFile) {
+        const uploadRes = await uploadsApi.uploadAvatar(photoFile);
+        avatarUrl = uploadRes.data.data.url;
+      }
+
+      await tenantsApi.updateMyProfile(currentTenantId, {
+        avatarUrl: avatarUrl ?? null,
+      });
 
       // Refresh profile
       const res = await tenantsApi.getMyProfile(currentTenantId);
@@ -146,7 +155,7 @@ export default function ProfilePage() {
               onClick={() => {
                 setPhotoDialogOpen(true);
                 setPhotoFile(null);
-                setPhotoPreview(null);
+                setPhotoPreview(profile.avatarUrl ?? null);
                 setPhotoError("");
               }}
               title="Change profile photo"
@@ -191,7 +200,7 @@ export default function ProfilePage() {
             <DialogHeader>
               <DialogTitle>Change Profile Photo</DialogTitle>
               <DialogDescription>
-                Take a new photo or upload one. Your face must be clearly visible.
+                Take a new photo, upload one, or remove the current photo.
               </DialogDescription>
             </DialogHeader>
             <PhotoCapture
@@ -212,7 +221,7 @@ export default function ProfilePage() {
               >
                 Cancel
               </Button>
-              <Button onClick={handlePhotoSave} disabled={!photoFile || uploadingPhoto}>
+              <Button onClick={handlePhotoSave} disabled={!photoChanged || uploadingPhoto}>
                 {uploadingPhoto ? "Uploading…" : "Save Photo"}
               </Button>
             </div>

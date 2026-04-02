@@ -2,6 +2,7 @@ import * as React from "react";
 import { Camera, Upload, X, RotateCcw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { resolveAssetUrl } from "@/lib/assets";
 import { validateFace, detectFacesLive, type LiveFaceResult } from "@/lib/face-detection";
 import { PhotoCrop } from "@/components/ui/photo-crop";
 
@@ -38,6 +39,7 @@ export function PhotoCapture({
 
   // Crop step – holds raw image URL before cropping
   const [cropSrc, setCropSrc] = React.useState<string | null>(null);
+  const resolvedValue = React.useMemo(() => resolveAssetUrl(value), [value]);
 
   // Cleanup camera on unmount
   React.useEffect(() => {
@@ -461,7 +463,7 @@ export function PhotoCapture({
       {!cameraActive && !validating && value && (
         <div className="relative mx-auto w-fit">
           <img
-            src={value}
+            src={resolvedValue ?? value}
             alt="Member photo"
             className="h-32 w-32 rounded-full border-2 border-border object-cover"
           />

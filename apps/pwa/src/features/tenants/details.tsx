@@ -8,6 +8,7 @@ import { getApiError } from "@/api/client";
 import { useAuthStore } from "@/stores/auth";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { TenantPublicProfileCard } from "@/components/tenants/TenantPublicProfileCard";
 import AvatarCard from "@/components/ui/avatarCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -20,8 +21,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { PageLoader, Spinner } from "@/components/ui/spinner";
+import { resolveAssetUrl } from "@/lib/assets";
 import { cn, formatDate } from "@/lib/utils";
 import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
 import { formatCurrency } from "@/shared";
@@ -34,7 +35,6 @@ import {
   Globe,
   Mail,
   MapPin,
-  Pencil,
   Phone,
   ShieldCheck,
   Users,
@@ -57,15 +57,6 @@ export default function TenantDetails() {
   const [memberSummary, setMemberSummary] = React.useState<MemberSummary | null>(null);
   const [error, setError] = React.useState("");
 
-  // Short description editing state
-  const [editingDesc, setEditingDesc] = React.useState(false);
-  const [descDraft, setDescDraft] = React.useState("");
-  const [savingDesc, setSavingDesc] = React.useState(false);
-
-  // Markdown editing state
-  const [editingMarkdown, setEditingMarkdown] = React.useState(false);
-  const [markdownDraft, setMarkdownDraft] = React.useState("");
-
   // Platform billing state
   const [platformPayments, setPlatformPayments] = React.useState<PlatformPayment[]>([]);
   const [paymentsLoading, setPaymentsLoading] = React.useState(false);
@@ -78,7 +69,6 @@ export default function TenantDetails() {
   const [formExtendsUntil, setFormExtendsUntil] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState("");
-  const [savingMarkdown, setSavingMarkdown] = React.useState(false);
 
   const loadTenant = React.useCallback(async () => {
     if (!tenantId) {
@@ -138,35 +128,6 @@ export default function TenantDetails() {
       setError(getApiError(err));
     } finally {
       setStatusUpdating(false);
-    }
-  };
-
-  const handleSaveDesc = async () => {
-    if (!tenant) return;
-    setSavingDesc(true);
-    try {
-      await tenantsApi.update(tenant.id, { description: descDraft });
-      setTenant((prev) => (prev ? { ...prev, description: descDraft } : prev));
-      setEditingDesc(false);
-    } catch (err) {
-      setError(getApiError(err));
-    } finally {
-      setSavingDesc(false);
-    }
-  };
-
-  const handleSaveMarkdown = async () => {
-    if (!tenant) return;
-    setSavingMarkdown(true);
-    setError("");
-    try {
-      await tenantsApi.update(tenant.id, { markdown: markdownDraft });
-      setTenant((prev) => (prev ? { ...prev, markdown: markdownDraft } : prev));
-      setEditingMarkdown(false);
-    } catch (err) {
-      setError(getApiError(err));
-    } finally {
-      setSavingMarkdown(false);
     }
   };
 
@@ -340,7 +301,7 @@ export default function TenantDetails() {
               <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-xl border bg-muted">
                 {tenant.logoUrl ? (
                   <img
-                    src={tenant.logoUrl}
+                    src={resolveAssetUrl(tenant.logoUrl) ?? tenant.logoUrl}
                     alt={`${tenant.name} logo`}
                     className="h-full w-full object-cover"
                   />
@@ -415,106 +376,33 @@ export default function TenantDetails() {
         </Card>
       </div>
 
-      {/* Short Description */}
+      <TenantPublicProfileCard
+        tenant={tenant}
+        onSaved={setTenant}
+        description="Update the public-facing profile shown on this tenant's gym page."
+      />
+
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Short Description</CardTitle>
-            {!editingDesc && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setDescDraft(tenant.description ?? "");
-                  setEditingDesc(true);
-                }}
-              >
-                <Pencil className="h-4 w-4" />
-                Edit
-              </Button>
-            )}
-          </div>
+          <CardTitle>Short Description</CardTitle>
         </CardHeader>
         <CardContent>
-          {editingDesc ? (
-            <div className="space-y-3">
-              <Input
-                value={descDraft}
-                onChange={(e) => setDescDraft(e.target.value)}
-                maxLength={300}
-                placeholder="A short tagline shown below the gym name on the public page..."
-                disabled={savingDesc}
-              />
-              <p className="text-xs text-muted-foreground">{descDraft.length}/300</p>
-              <div className="flex gap-2">
-                <Button onClick={handleSaveDesc} disabled={savingDesc}>
-                  {savingDesc ? "Saving..." : "Save"}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setEditingDesc(false)}
-                  disabled={savingDesc}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          ) : tenant.description?.trim() ? (
+          {tenant.description?.trim() ? (
             <p className="text-sm">{tenant.description}</p>
           ) : (
             <p className="text-sm text-muted-foreground">
-              No short description added yet. Click "Edit" to add one.
+              No short description added yet.
             </p>
           )}
         </CardContent>
       </Card>
 
-      {/* Markdown Description */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>About / Description</CardTitle>
-            {!editingMarkdown && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setMarkdownDraft(tenant.markdown ?? "");
-                  setEditingMarkdown(true);
-                }}
-              >
-                <Pencil className="h-4 w-4" />
-                Edit
-              </Button>
-            )}
-          </div>
+          <CardTitle>About / Description</CardTitle>
         </CardHeader>
         <CardContent>
-          {editingMarkdown ? (
-            <div className="space-y-3">
-              <MarkdownEditor
-                value={markdownDraft}
-                onChange={setMarkdownDraft}
-                rows={12}
-                placeholder={
-                  "Write a description using Markdown...\n\n## About Our Gym\n\nWelcome to our gym! We offer...\n\n### Facilities\n- Cardio zone\n- Weight room\n- Swimming pool"
-                }
-                disabled={savingMarkdown}
-              />
-              <div className="flex gap-2">
-                <Button onClick={handleSaveMarkdown} disabled={savingMarkdown}>
-                  {savingMarkdown ? "Saving..." : "Save"}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setEditingMarkdown(false)}
-                  disabled={savingMarkdown}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          ) : tenant.markdown?.trim() ? (
+          {tenant.markdown?.trim() ? (
             <div className="prose prose-sm dark:prose-invert max-w-none">
               <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                 {tenant.markdown}
@@ -522,7 +410,7 @@ export default function TenantDetails() {
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              No description added yet. Click "Edit" to add one.
+              No description added yet.
             </p>
           )}
         </CardContent>

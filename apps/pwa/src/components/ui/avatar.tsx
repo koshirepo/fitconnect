@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { resolveAssetUrl } from "@/lib/assets";
 
 export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   src?: string | null;
@@ -15,6 +16,12 @@ const sizeClasses = {
 };
 function Avatar({ src, alt, fallback, size = "md", className, ...props }: AvatarProps) {
   const [hasError, setHasError] = React.useState(false);
+  const resolvedSrc = React.useMemo(() => resolveAssetUrl(src), [src]);
+
+  React.useEffect(() => {
+    setHasError(false);
+  }, [resolvedSrc]);
+
   return (
     <div
       className={cn(
@@ -24,9 +31,9 @@ function Avatar({ src, alt, fallback, size = "md", className, ...props }: Avatar
       )}
       {...props}
     >
-      {src && !hasError ? (
+      {resolvedSrc && !hasError ? (
         <img
-          src={src}
+          src={resolvedSrc}
           alt={alt ?? fallback}
           className="aspect-square h-full w-full object-cover"
           onError={() => setHasError(true)}
