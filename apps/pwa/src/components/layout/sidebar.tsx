@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { useUIStore } from "@/stores/ui";
 import { cn } from "@/lib/utils";
@@ -96,14 +96,18 @@ export function Sidebar() {
         {/* Header */}
         <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-4">
           <div className="flex items-center gap-2 min-w-0">
+            <Link to="/">
             <img
-              src="/icons/icon-96x96.png"
+              src="/icons/whiteLogo.png"
               alt="FitConnect"
               className="h-7 w-7 rounded-md shrink-0"
-            />
-            <span className="text-lg font-bold tracking-tight truncate text-gradient-brand">
-              {membership ? membership.tenantName : "FitConnect"}
-            </span>
+              />
+              </Link>
+            <Link to={`/gym/${membership?.tenantSlug}`}>
+              <span className="text-lg font-bold tracking-tight truncate text-gradient-brand">
+                {membership ? membership.tenantName : "FitConnect"}
+              </span>
+            </Link>
           </div>
           {isMobile && (
             <button onClick={() => setSidebarOpen(false)}>
