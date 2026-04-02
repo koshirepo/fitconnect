@@ -27,24 +27,6 @@ export const authController = {
    * Handle the `bootstrap` HTTP action for the auth module.
    * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
    */
-  async bootstrap(c: AppContext) {
-    const parsed = await parseBody(c, bootstrapSchema);
-    if (!parsed.ok) return parsed.response;
-
-    const result = await authService.bootstrap(parsed.data);
-    if ("error" in result) return conflict(c, result.error!);
-
-    await auditLog({
-      action: "CREATE",
-      entity: "User",
-      entityId: result.data.user.id,
-      actorId: result.data.user.id,
-      metadata: { bootstrapped: true },
-      ip: c.req.header("x-forwarded-for") ?? undefined,
-    });
-
-    return ok(c, result.data, 201);
-  },
 
   /**
    * Handle the `login` HTTP action for the auth module.

@@ -16,7 +16,6 @@ import type { AppBindings } from "../../types/app-context";
 
 export const authRoutes = new Hono<AppBindings>();
 
-authRoutes.post("/bootstrap/super-admin", authController.bootstrap);
 authRoutes.post("/login", authController.login);
 authRoutes.post("/refresh", authController.refresh);
 authRoutes.post("/logout", optionalAuthenticate, authController.logout);

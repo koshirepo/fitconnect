@@ -5,7 +5,7 @@
  * - When a request payload or query contract changes, update this file first and then adjust the controller/service code that consumes the parsed input.
  * - Primary exports: addMemberSchema, updateMemberRoleSchema, updateMyProfileSchema, updateMemberSchema, updateMemberStatusSchema, AddMemberInput, UpdateMemberRoleInput, UpdateMyProfileInput, UpdateMemberInput, UpdateMemberStatusInput.
  */
-import { z } from "zod";
+import { email, z } from "zod";
 import {
   MIN_PASSWORD_LENGTH,
   MAX_PASSWORD_LENGTH,
@@ -13,10 +13,7 @@ import {
 
 export const addMemberSchema = z.object({
   name: z.string().min(2).max(120),
-  email: z
-    .string()
-    .email()
-    .transform((v) => v.toLowerCase()),
+  email: z.string().optional(),
   phone: z.string().min(10).max(15),
   role: z.enum(["MEMBER", "COACH", "ADMIN"]).default("MEMBER"),
   avatarUrl: z.string().optional(),

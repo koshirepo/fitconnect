@@ -203,13 +203,15 @@ export const memberService = {
       return { error: "Coaches can only add members.", status: 403 as const };
     }
 
-    // Upsert user (they may already exist on the platform)
-    let user = await memberRepository.findUserByEmail(input.email);
+    let user;
+    if(input.email){
+      user = await memberRepository.findUserByEmail(input.email);
+    }
     if (!user) {
       user = await memberRepository.createUser({
         name: input.name,
-        email: input.email,
         phone: input.phone,
+        email: input.email || `${input.phone}@${input.name.replaceAll(' ', '')}.com`,
         passwordHash: await hashPassword(input.phone),
         platformRole: PlatformRole.USER,
         ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
