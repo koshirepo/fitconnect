@@ -8,12 +8,15 @@
 import type { AccountStatus } from "../../shared/types/enums";
 import { toSlug } from "../../shared/utils";
 import { hashPassword, generateRandomPassword } from "../../auth/password";
+import { deleteFileByUrl, type StorageOptions } from "../../lib/storage";
 import { tenantRepository } from "./tenants.repository";
 import type {
   CreateTenantInput,
   UpdateTenantInput,
   RecordPlatformPaymentInput,
 } from "./tenants.schema";
+
+type BackgroundTaskScheduler = (promise: Promise<unknown>) => void;
 
 /**
  * Execute the `normalize slug` workflow for the tenants module.
@@ -23,6 +26,40 @@ function normalizeSlug(name: string) {
   const fromName = toSlug(name);
   if (fromName.length >= 2) return fromName;
   return "gym";
+}
+
+function normalizeOptionalText(value: string | null | undefined) {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+async function cleanupPreviousAsset(
+  label: string,
+  previousUrl: string | null | undefined,
+  nextUrl: string | null | undefined,
+  storage: StorageOptions = {},
+  scheduleBackgroundTask?: BackgroundTaskScheduler,
+) {
+  if (!previousUrl || previousUrl === nextUrl) {
+    return;
+  }
+
+  const cleanup = deleteFileByUrl(previousUrl, storage).catch((error) => {
+    console.error(`Failed to delete previous ${label}.`, {
+      previousUrl,
+      nextUrl,
+      error,
+    });
+  });
+
+  if (scheduleBackgroundTask) {
+    scheduleBackgroundTask(cleanup);
+    return;
+  }
+
+  await cleanup;
 }
 
 /**
@@ -130,7 +167,7 @@ export const tenantService = {
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
   async getById(id: string) {
-    const tenant = await tenantRepository.findById(id);
+    const tenant = await tenantRepository.findByLookup(id);
     if (!tenant) return { error: "Tenant not found." };
     return { data: { tenant } };
   },
@@ -139,8 +176,50 @@ export const tenantService = {
    * Execute the `update` workflow for the tenants module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
-  async update(id: string, input: UpdateTenantInput) {
-    const tenant = await tenantRepository.update(id, input);
+  async update(
+    id: string,
+    input: UpdateTenantInput,
+    storage: StorageOptions = {},
+    scheduleBackgroundTask?: BackgroundTaskScheduler,
+  ) {
+    const currentTenant = await tenantRepository.findById(id);
+    if (!currentTenant) {
+      return { error: "Tenant not found.", status: 404 as const };
+    }
+
+    const nextPhone = normalizeOptionalText(input.phone);
+    const nextLogoUrl =
+      input.logoUrl !== undefined ? normalizeOptionalText(input.logoUrl) : undefined;
+    if (nextPhone && nextPhone !== currentTenant.phone) {
+      const existingPhone = await tenantRepository.findByPhone(nextPhone);
+      if (existingPhone && existingPhone.id !== currentTenant.id) {
+        return { error: "A tenant with this phone number already exists.", status: 409 as const };
+      }
+    }
+
+    const tenant = await tenantRepository.update(id, {
+      ...(input.name !== undefined ? { name: input.name.trim() } : {}),
+      ...(input.phone !== undefined ? { phone: nextPhone } : {}),
+      ...(input.address !== undefined ? { address: normalizeOptionalText(input.address) } : {}),
+      ...(input.logoUrl !== undefined ? { logoUrl: nextLogoUrl } : {}),
+      ...(input.description !== undefined
+        ? { description: normalizeOptionalText(input.description) }
+        : {}),
+      ...(input.markdown !== undefined
+        ? { markdown: normalizeOptionalText(input.markdown) }
+        : {}),
+    });
+
+    if (input.logoUrl !== undefined) {
+      await cleanupPreviousAsset(
+        "tenant logo",
+        currentTenant.logoUrl,
+        nextLogoUrl,
+        storage,
+        scheduleBackgroundTask,
+      );
+    }
+
     return { data: { tenant } };
   },
 
@@ -162,7 +241,7 @@ export const tenantService = {
     input: RecordPlatformPaymentInput,
     recordedBy: string,
   ) {
-    const tenant = await tenantRepository.findById(tenantId);
+    const tenant = await tenantRepository.findByLookup(tenantId);
     if (!tenant) return { error: "Tenant not found." };
 
     // Platform payments extend the tenant's platform access window; they do
@@ -183,7 +262,7 @@ export const tenantService = {
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
   async listPlatformPayments(tenantId: string, page: number, limit: number) {
-    const tenant = await tenantRepository.findById(tenantId);
+    const tenant = await tenantRepository.findByLookup(tenantId);
     if (!tenant) return { error: "Tenant not found." };
 
     // Resolve the tenant once up front so pagination only runs for valid

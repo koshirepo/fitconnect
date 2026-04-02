@@ -77,7 +77,15 @@ export const memberRepository = {
   findMembership(tenantId: string, userId: string) {
     return prisma.tenantMembership.findUnique({
       where: { tenantId_userId: { tenantId, userId } },
-      select: { id: true, userId: true },
+      select: {
+        id: true,
+        userId: true,
+        user: {
+          select: {
+            avatarUrl: true,
+          },
+        },
+      },
     });
   },
 
@@ -110,6 +118,11 @@ export const memberRepository = {
         userId: true,
         status: true,
         dueDate: true,
+        user: {
+          select: {
+            avatarUrl: true,
+          },
+        },
       },
     });
   },

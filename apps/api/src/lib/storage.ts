@@ -11,10 +11,11 @@ const FOLDER_PATTERN = /^[A-Za-z0-9_-]+$/u;
 const EXTENSION_PATTERN = /^[A-Za-z0-9]+$/u;
 
 export interface UploadResult {
+  key: string;
   url: string;
 }
 
-type UploadOptions = {
+export type StorageOptions = {
   bucket?: R2Bucket;
   publicUrl?: string;
 };
@@ -38,7 +39,7 @@ export async function uploadFile(
   data: ArrayBuffer,
   contentType: string,
   ext: string,
-  options: UploadOptions = {},
+  options: StorageOptions = {},
 ): Promise<UploadResult> {
   assertSafeSegment(folder, "folder", FOLDER_PATTERN);
 
@@ -59,7 +60,103 @@ export async function uploadFile(
   });
 
   return {
+    key,
     url: `${publicUrl.replace(/\/+$/u, "")}/${key}`,
   };
+}
+
+function isSafeObjectKey(key: string) {
+  if (!key) {
+    return false;
+  }
+
+  const segments = key.split("/");
+  return !segments.some((segment) => !segment || segment === "." || segment === "..");
+}
+
+function resolveObjectKeyFromProxyUrl(file: URL) {
+  const match = file.pathname.match(/\/uploads\/file\/(.+)$/u);
+  if (!match?.[1]) {
+    return null;
+  }
+
+  const key = decodeURIComponent(match[1]);
+  return isSafeObjectKey(key) ? key : null;
+}
+
+function resolveObjectKeyFromPublicUrl(file: URL, publicUrl: string) {
+  let base: URL;
+
+  try {
+    base = new URL(publicUrl);
+  } catch {
+    return null;
+  }
+
+  if (file.origin !== base.origin) {
+    return null;
+  }
+
+  const basePath = base.pathname.replace(/\/+$/u, "");
+  const prefix = basePath ? `${basePath}/` : "/";
+
+  if (!file.pathname.startsWith(prefix)) {
+    return null;
+  }
+
+  const key = decodeURIComponent(file.pathname.slice(prefix.length));
+  if (!isSafeObjectKey(key)) {
+    return null;
+  }
+
+  return key;
+}
+
+function resolveObjectKeyFromUrl(fileUrl: string, publicUrl?: string) {
+  let file: URL;
+
+  try {
+    file = new URL(fileUrl);
+  } catch {
+    return null;
+  }
+
+  const proxyKey = resolveObjectKeyFromProxyUrl(file);
+  if (proxyKey) {
+    return proxyKey;
+  }
+
+  if (!publicUrl) {
+    return null;
+  }
+
+  const key = resolveObjectKeyFromPublicUrl(file, publicUrl);
+  if (!key) {
+    return null;
+  }
+
+  return key;
+}
+
+/**
+ * Utility helper for the storage module that owns the `delete file by public URL` step.
+ * Keeping URL-to-key resolution here ensures upload and cleanup use the same public-base contract.
+ */
+export async function deleteFileByUrl(
+  fileUrl: string,
+  options: StorageOptions = {},
+): Promise<{ deleted: boolean; key?: string }> {
+  const { bucket, publicUrl } = options;
+  if (!bucket) {
+    return { deleted: false };
+  }
+
+  const key = resolveObjectKeyFromUrl(fileUrl, publicUrl);
+  if (!key) {
+    return { deleted: false };
+  }
+
+  await bucket.delete(key);
+  return { deleted: true, key };
 }
 

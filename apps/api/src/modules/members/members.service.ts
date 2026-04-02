@@ -13,6 +13,7 @@ import {
 } from "../../auth/password";
 import { memberRepository } from "./members.repository";
 import { flattenMemberUser, flattenNestedMember } from "../../lib/flatten";
+import { deleteFileByUrl, type StorageOptions } from "../../lib/storage";
 import type {
   AddMemberInput,
   UpdateMemberInput,
@@ -31,6 +32,40 @@ type AddMemberResult = {
   [key: string]: unknown;
 };
 const DEFAULT_OVERDUE_DAYS = 30;
+
+function normalizeOptionalText(value: string | null | undefined) {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+async function cleanupPreviousAsset(
+  label: string,
+  previousUrl: string | null | undefined,
+  nextUrl: string | null | undefined,
+  storage: StorageOptions = {},
+  scheduleBackgroundTask?: BackgroundTaskScheduler,
+) {
+  if (!previousUrl || previousUrl === nextUrl) {
+    return;
+  }
+
+  const cleanup = deleteFileByUrl(previousUrl, storage).catch((error) => {
+    console.error(`Failed to delete previous ${label}.`, {
+      previousUrl,
+      nextUrl,
+      error,
+    });
+  });
+
+  if (scheduleBackgroundTask) {
+    scheduleBackgroundTask(cleanup);
+    return;
+  }
+
+  await cleanup;
+}
 
 /**
  * Execute the `enforce overdue memberships for tenant` workflow for the members module.
@@ -486,6 +521,8 @@ export const memberService = {
     tenantId: string,
     userId: string,
     input: UpdateMyProfileInput,
+    storage: StorageOptions = {},
+    scheduleBackgroundTask?: BackgroundTaskScheduler,
   ) {
     const membership = await memberRepository.findMembership(tenantId, userId);
     if (!membership) {
@@ -509,9 +546,11 @@ export const memberService = {
 
     // Build the User update payload
     const userUpdate: Record<string, unknown> = {};
+    const nextAvatarUrl =
+      input.avatarUrl !== undefined ? normalizeOptionalText(input.avatarUrl) : undefined;
     if (input.name !== undefined) userUpdate.name = input.name;
     if (input.phone !== undefined) userUpdate.phone = input.phone;
-    if (input.avatarUrl !== undefined) userUpdate.avatarUrl = input.avatarUrl;
+    if (input.avatarUrl !== undefined) userUpdate.avatarUrl = nextAvatarUrl;
     if (input.newPassword) {
       userUpdate.passwordHash = await hashPassword(input.newPassword);
     }
@@ -521,6 +560,17 @@ export const memberService = {
     }
 
     const updatedUser = await memberRepository.updateUser(userId, userUpdate);
+
+    if (input.avatarUrl !== undefined) {
+      await cleanupPreviousAsset(
+        "user avatar",
+        membership.user.avatarUrl,
+        nextAvatarUrl,
+        storage,
+        scheduleBackgroundTask,
+      );
+    }
+
     return {
       data: { user: updatedUser },
       passwordChanged: !!input.newPassword,
@@ -536,6 +586,8 @@ export const memberService = {
     tenantId: string,
     membershipId: string,
     input: UpdateMemberInput,
+    storage: StorageOptions = {},
+    scheduleBackgroundTask?: BackgroundTaskScheduler,
   ) {
     const membership = await memberRepository.findMembershipById(
       membershipId,
@@ -546,9 +598,11 @@ export const memberService = {
     }
 
     const userUpdate: Record<string, unknown> = {};
+    const nextAvatarUrl =
+      input.avatarUrl !== undefined ? normalizeOptionalText(input.avatarUrl) : undefined;
     if (input.name !== undefined) userUpdate.name = input.name;
     if (input.phone !== undefined) userUpdate.phone = input.phone;
-    if (input.avatarUrl !== undefined) userUpdate.avatarUrl = input.avatarUrl;
+    if (input.avatarUrl !== undefined) userUpdate.avatarUrl = nextAvatarUrl;
     if (input.newPassword) {
       userUpdate.passwordHash = await hashPassword(input.newPassword);
     }
@@ -579,6 +633,16 @@ export const memberService = {
     // Update user if there are changes
     if (Object.keys(userUpdate).length > 0) {
       await memberRepository.updateUser(membership.userId, userUpdate);
+
+      if (input.avatarUrl !== undefined) {
+        await cleanupPreviousAsset(
+          "user avatar",
+          membership.user.avatarUrl,
+          nextAvatarUrl,
+          storage,
+          scheduleBackgroundTask,
+        );
+      }
     }
 
     // Update membership if there are changes

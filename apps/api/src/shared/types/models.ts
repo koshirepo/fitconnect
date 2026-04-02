@@ -85,12 +85,11 @@ export interface CreateTenantPayload {
 
 export interface UpdateTenantPayload {
   name?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  logoUrl?: string;
-  markdown?: string;
-  description?: string;
+  phone?: string | null;
+  address?: string | null;
+  logoUrl?: string | null;
+  markdown?: string | null;
+  description?: string | null;
 }
 
 // ─── Public Tenant Detail ─────────────────────────────────────────────────────

@@ -76,7 +76,18 @@ export const tenantController = {
     const parsed = await parseBody(c, updateTenantSchema);
     if (!parsed.ok) return parsed.response;
 
-    const result = await tenantService.update(tenantId, parsed.data);
+    const result = await tenantService.update(
+      tenantId,
+      parsed.data,
+      {
+        bucket: c.env?.UPLOADS_BUCKET ?? c.env?.FILES,
+        publicUrl: c.env?.R2_PUBLIC_URL,
+      },
+      (promise) => c.executionCtx.waitUntil(promise),
+    );
+    if ("error" in result) {
+      return result.status === 404 ? notFound(c, result.error!) : conflict(c, result.error!);
+    }
 
     await auditLog({
       action: "UPDATE",

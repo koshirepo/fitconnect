@@ -135,6 +135,11 @@ export const memberController = {
       tenantId,
       userId,
       parsed.data,
+      {
+        bucket: c.env?.UPLOADS_BUCKET ?? c.env?.FILES,
+        publicUrl: c.env?.R2_PUBLIC_URL,
+      },
+      (promise) => c.executionCtx.waitUntil(promise),
     );
 
     if ("error" in result) {
@@ -173,6 +178,11 @@ export const memberController = {
       tenantId,
       membershipId,
       parsed.data,
+      {
+        bucket: c.env?.UPLOADS_BUCKET ?? c.env?.FILES,
+        publicUrl: c.env?.R2_PUBLIC_URL,
+      },
+      (promise) => c.executionCtx.waitUntil(promise),
     );
 
     if ("error" in result) {

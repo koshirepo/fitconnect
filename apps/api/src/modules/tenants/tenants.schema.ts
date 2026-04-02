@@ -8,6 +8,12 @@
 import { z } from "zod";
 import { SLUG_REGEX } from "../../shared/constants";
 
+const optionalNullableString = <T extends z.ZodTypeAny>(schema: T) =>
+  z
+    .union([schema, z.literal(""), z.null()])
+    .transform((value) => (value === "" || value === null ? null : value))
+    .optional();
+
 export const createTenantAdminSchema = z.object({
   name: z
     .string()
@@ -69,26 +75,31 @@ export const createTenantSchema = z.object({
   admin: createTenantAdminSchema,
 });
 
-export const updateTenantSchema = z.object({
-  name: z
-    .string()
-    .min(2, "Gym name must be at least 2 characters")
-    .max(120, "Gym name must be at most 120 characters")
-    .optional(),
-  email: z.string().email("Invalid email format").optional(),
-  phone: z
-    .string()
-    .min(6, "Phone must be at least 6 characters")
-    .max(20, "Phone must be at most 20 characters")
-    .optional(),
-  address: z.string().max(500, "Address must be at most 500 characters").optional(),
-  logoUrl: z.string().url("Logo URL must be a valid URL").optional(),
-  markdown: z
-    .string()
-    .max(20000, "Markdown description must be at most 20000 characters")
-    .optional(),
-  description: z.string().max(300, "Description must be at most 300 characters").optional(),
-});
+export const updateTenantSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(2, "Gym name must be at least 2 characters")
+      .max(120, "Gym name must be at most 120 characters")
+      .optional(),
+    phone: optionalNullableString(
+      z.string().min(6, "Phone must be at least 6 characters").max(20, "Phone must be at most 20 characters"),
+    ),
+    address: optionalNullableString(
+      z.string().max(500, "Address must be at most 500 characters"),
+    ),
+    logoUrl: optionalNullableString(
+      z.string().url("Logo URL must be a valid URL"),
+    ),
+    markdown: optionalNullableString(
+      z.string().max(20000, "Markdown description must be at most 20000 characters"),
+    ),
+    description: optionalNullableString(
+      z.string().max(300, "Description must be at most 300 characters"),
+    ),
+  })
+  .strict();
 
 export const updateTenantStatusSchema = z.object({
   status: z.enum(["ACTIVE", "SUSPENDED"]),

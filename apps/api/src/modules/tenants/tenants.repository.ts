@@ -68,6 +68,19 @@ export const tenantRepository = {
   },
 
   /**
+   * Run the `find by lookup` persistence operation for the tenants module.
+   * Accepts either the public slug or the internal tenant id so platform and tenant-scoped flows can resolve the same entity safely.
+   */
+  findByLookup(tenantIdOrSlug: string) {
+    return prisma.tenant.findFirst({
+      where: {
+        OR: [{ id: tenantIdOrSlug }, { slug: tenantIdOrSlug }],
+      },
+      select: tenantSelect,
+    });
+  },
+
+  /**
    * Run the `find by phone` persistence operation for the tenants module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
@@ -95,7 +108,7 @@ export const tenantRepository = {
    */
   findById(id: string) {
     return prisma.tenant.findUnique({
-      where: { slug: id },
+      where: { id },
       select: tenantSelect,
     });
   },
