@@ -21,7 +21,6 @@ interface AuthState {
 
   // Actions
   login: (email: string, password: string) => Promise<void>;
-  bootstrap: (name: string, email: string, phone: string, password: string) => Promise<void>;
   logout: () => void;
   setTokens: (accessToken: string, refreshToken: string) => void;
   fetchMe: () => Promise<void>;
@@ -65,26 +64,6 @@ export const useAuthStore = create<AuthState>()(
             accessToken,
             refreshToken,
             currentTenantId: user.membership?.tenantId ?? null,
-            isAuthenticated: true,
-            isLoading: false,
-          });
-        } catch (err) {
-          set({ isLoading: false });
-          throw err;
-        }
-      },
-
-      bootstrap: async (name: string, email: string, phone: string, password: string) => {
-        set({ isLoading: true });
-        try {
-          const { data: resp } = await authApi.bootstrapSuperAdmin(name, email, phone, password);
-          const { accessToken, refreshToken, user } = resp.data;
-
-          set({
-            user,
-            accessToken,
-            refreshToken,
-            currentTenantId: null,
             isAuthenticated: true,
             isLoading: false,
           });

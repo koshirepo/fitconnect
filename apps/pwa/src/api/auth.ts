@@ -8,14 +8,6 @@ export const authApi = {
       password,
     }),
 
-  bootstrapSuperAdmin: (name: string, email: string, phone: string, password: string) =>
-    api.post<ApiResponse<AuthResponse>>("/auth/bootstrap/super-admin", {
-      name,
-      email,
-      phone,
-      password,
-    }),
-
   refresh: (refreshToken: string) =>
     api.post<ApiResponse<TokenRefreshResponse>>("/auth/refresh", {
       refreshToken,

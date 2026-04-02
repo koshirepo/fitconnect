@@ -10,13 +10,10 @@ import { Dumbbell } from "lucide-react";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login, bootstrap, isAuthenticated } = useAuthStore();
+  const { login, isAuthenticated } = useAuthStore();
 
-  const [mode, setMode] = React.useState<"login" | "bootstrap">("login");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
-  const [name, setName] = React.useState("");
-  const [phone, setPhone] = React.useState("");
   const [error, setError] = React.useState("");
   const [loading, setLoading] = React.useState(false);
 
@@ -30,11 +27,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      if (mode === "login") {
         await login(email, password);
-      } else {
-        await bootstrap(name, email, phone, password);
-      }
       navigate("/dashboard", { replace: true });
     } catch (err) {
       setError(getApiError(err));
@@ -51,46 +44,15 @@ export default function LoginPage() {
             <Dumbbell className="h-6 w-6 text-primary-foreground" />
           </div>
           <CardTitle className="text-2xl">
-            {mode === "login" ? "Welcome back" : "Setup Super Admin"}
+           Welcome back
           </CardTitle>
           <CardDescription>
-            {mode === "login"
-              ? "Sign in to your gym management account"
-              : "Create the first super admin account"}
+           
+            Sign in to your gym management accountCreate the first super admin account
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {mode === "bootstrap" && (
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="John Doe"
-                  required
-                  minLength={2}
-                />
-              </div>
-            )}
-
-            {mode === "bootstrap" && (
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="9123456789"
-                  required
-                  minLength={10}
-                  maxLength={15}
-                />
-              </div>
-            )}
-
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -112,7 +74,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                minLength={mode === "bootstrap" ? 8 : 1}
+                minLength={ 8 }
               />
             </div>
 
@@ -123,10 +85,9 @@ export default function LoginPage() {
             )}
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Please wait..." : mode === "login" ? "Sign In" : "Create Super Admin"}
+              {loading ? "Please wait..." :  "Sign In" }
             </Button>
 
-            {mode === "login" && (
               <div className="text-right">
                 <Link
                   to="/forgot-password"
@@ -135,21 +96,18 @@ export default function LoginPage() {
                   Forgot password?
                 </Link>
               </div>
-            )}
           </form>
 
           <div className="mt-4 text-center">
             <button
               type="button"
               onClick={() => {
-                setMode(mode === "login" ? "bootstrap" : "login");
                 setError("");
               }}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              {mode === "login"
-                ? "First time? Bootstrap super admin"
-                : "Already have an account? Sign in"}
+              
+                Already have an account? Sign in
             </button>
           </div>
         </CardContent>

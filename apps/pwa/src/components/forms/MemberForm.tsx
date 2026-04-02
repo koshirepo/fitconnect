@@ -158,14 +158,13 @@ export default function MemberForm({
 
       {/* Email */}
       <div className="space-y-2">
-        <Label htmlFor="email">Email Address</Label>
+        <Label htmlFor="email">Email Address (Optional)</Label>
         <Input
           id="email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="john@example.com"
-          required
           disabled={mode === "edit" || isSubmitting || submitting}
         />
         <p className="text-xs text-muted-foreground">
