@@ -304,7 +304,10 @@ export const memberController = {
 
     const result = await memberService.removeMember(tenantId, membershipId);
 
-    if ("error" in result) return notFound(c, result.error!);
+    if ("error" in result) {
+      if (result.status === 400) return badRequest(c, result.error!);
+      return notFound(c, result.error!);
+    }
 
     await auditLog({
       action: "DELETE",
@@ -312,10 +315,11 @@ export const memberController = {
       entityId: membershipId,
       actorId: c.get("authUser").id,
       tenantId,
+      metadata: result.data,
       ip: c.req.header("x-forwarded-for") ?? undefined,
     });
 
-    return okMessage(c, "Member removed.");
+    return okMessage(c, "Member deleted.");
   },
 
   /**

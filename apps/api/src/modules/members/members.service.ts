@@ -734,8 +734,18 @@ export const memberService = {
       return { error: "Membership not found.", status: 404 as const };
     }
 
-    await memberRepository.softDeleteMember(membershipId);
-    return { data: true };
+    if (membership.role === "ADMIN" && membership.status === "ACTIVE") {
+      const adminCount = await memberRepository.countActiveAdmins(tenantId);
+      if (adminCount <= 1) {
+        return {
+          error: "Cannot delete the last active admin of this tenant.",
+          status: 400 as const,
+        };
+      }
+    }
+
+    const deleted = await memberRepository.deleteMemberCascade(membershipId);
+    return { data: { membershipId, deleted } };
   },
 
   /**

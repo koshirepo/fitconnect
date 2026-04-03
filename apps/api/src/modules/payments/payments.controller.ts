@@ -170,6 +170,30 @@ export const paymentController = {
   },
 
   /**
+   * Handle the `delete payment` HTTP action for the payments module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
+  async deletePayment(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    const paymentId = c.req.param("paymentId")!;
+
+    const result = await paymentService.deletePayment(tenantId, paymentId);
+    if ("error" in result) return notFound(c, result.error!);
+
+    await auditLog({
+      action: "DELETE",
+      entity: "Payment",
+      entityId: paymentId,
+      actorId: c.get("authUser").id,
+      tenantId,
+      metadata: result.deletedPayment,
+      ip: c.req.header("x-forwarded-for") ?? undefined,
+    });
+
+    return okMessage(c, "Payment deleted.");
+  },
+
+  /**
    * Handle the `list subscriptions` HTTP action for the payments module.
    * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
    */

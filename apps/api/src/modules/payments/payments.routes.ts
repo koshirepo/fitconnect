@@ -64,6 +64,13 @@ paymentRoutes.put(
   paymentController.updatePayment,
 );
 
+paymentRoutes.delete(
+  "/:tenantId/payments/:paymentId",
+  authenticate,
+  requireTenantRoles([TenantRole.ADMIN]),
+  paymentController.deletePayment,
+);
+
 paymentRoutes.get(
   "/:tenantId/subscriptions",
   authenticate,

@@ -370,14 +370,59 @@ export const memberRepository = {
   },
 
   /**
-   * Run the `soft delete member` persistence operation for the members module.
+   * Run the `delete member with dependencies` persistence operation for the members module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
-  softDeleteMember(membershipId: string) {
-    return prisma.tenantMembership.update({
-      where: { id: membershipId },
-      data: { status: "DELETED" },
+  async deleteMemberCascade(membershipId: string) {
+    const createdPlans = await prisma.workoutPlan.findMany({
+      where: { creatorId: membershipId },
+      select: { id: true },
     });
+    const createdPlanIds = createdPlans.map((plan) => plan.id);
+
+    // D1 is more reliable with batched Prisma transactions than interactive tx callbacks.
+    const [
+      collectorRefsCleared,
+      attendanceMarkersCleared,
+      planAssignmentsDeleted,
+      createdPlanAssignmentsDeleted,
+      createdPlansDeleted,
+      paymentsDeleted,
+      _deletedMembership,
+    ] = await prisma.$transaction([
+      prisma.payment.updateMany({
+        where: { collectorId: membershipId },
+        data: { collectorId: null },
+      }),
+      prisma.attendance.updateMany({
+        where: { markedById: membershipId },
+        data: { markedById: null },
+      }),
+      prisma.workoutPlanAssignment.deleteMany({
+        where: { membershipId },
+      }),
+      prisma.workoutPlanAssignment.deleteMany({
+        where: { planId: { in: createdPlanIds } },
+      }),
+      prisma.workoutPlan.deleteMany({
+        where: { id: { in: createdPlanIds } },
+      }),
+      prisma.payment.deleteMany({
+        where: { membershipId },
+      }),
+      prisma.tenantMembership.delete({
+        where: { id: membershipId },
+      }),
+    ]);
+
+    return {
+      collectorRefsCleared: collectorRefsCleared.count,
+      attendanceMarkersCleared: attendanceMarkersCleared.count,
+      planAssignmentsDeleted: planAssignmentsDeleted.count,
+      createdPlanAssignmentsDeleted: createdPlanAssignmentsDeleted.count,
+      createdPlansDeleted: createdPlansDeleted.count,
+      paymentsDeleted: paymentsDeleted.count,
+    };
   },
 
   /**

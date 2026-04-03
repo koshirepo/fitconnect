@@ -392,6 +392,17 @@ export const paymentRepository = {
     });
   },
 
+  /**
+   * Run the `delete payment` persistence operation for the payments module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
+  deletePayment(paymentId: string) {
+    return prisma.payment.delete({
+      where: { id: paymentId },
+      select: { id: true },
+    });
+  },
+
   /** Recalculate and persist the membership's dueDate from its latest payment validUntil. */
   async refreshDueDate(membershipId: string) {
     const latest = await prisma.payment.findFirst({

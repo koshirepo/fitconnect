@@ -245,6 +245,22 @@ export const paymentService = {
   },
 
   /**
+   * Execute the `delete payment` workflow for the payments module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
+  async deletePayment(tenantId: string, paymentId: string) {
+    const existing = await paymentRepository.findPayment(paymentId, tenantId);
+    if (!existing) {
+      return { error: "Payment not found.", status: 404 as const };
+    }
+
+    await paymentRepository.deletePayment(paymentId);
+    await paymentRepository.refreshDueDate(existing.membershipId);
+
+    return { data: { paymentId }, deletedPayment: existing };
+  },
+
+  /**
    * Execute the `list subscriptions` workflow for the payments module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
