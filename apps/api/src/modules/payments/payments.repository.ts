@@ -58,6 +58,8 @@ export const paymentRepository = {
             select: {
               id: true,
               memberId: true,
+              status: true,
+              dueDate: true,
               user: { select: { id: true, name: true, email: true, phone: true, avatarUrl: true } },
             },
           },
@@ -65,7 +67,7 @@ export const paymentRepository = {
           collectedBy: {
             select: {
               id: true,
-              user: { select: { id: true, name: true, email: true, phone: true } },
+              user: { select: { id: true, name: true, email: true, phone: true, avatarUrl: true } },
             },
           },
         },
@@ -239,13 +241,15 @@ export const paymentRepository = {
           select: {
             id: true,
             memberId: true,
-            user: { select: { id: true, name: true, email: true, phone: true } },
+            status: true,
+            dueDate: true,
+            user: { select: { id: true, name: true, email: true, phone: true, avatarUrl: true } },
           },
         },
         collectedBy: {
           select: {
             id: true,
-            user: { select: { id: true, name: true, email: true, phone: true } },
+            user: { select: { id: true, name: true, email: true, phone: true, avatarUrl: true } },
           },
         },
         subscription: {

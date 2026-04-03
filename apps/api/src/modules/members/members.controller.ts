@@ -100,9 +100,14 @@ export const memberController = {
   async getMemberDetail(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const membershipId = c.req.param("membershipId")!;
+    const userId = c.get("authUser").id;
+    const callerRole = c.get("tenantAccess")?.role ?? null;
 
-    const result = await memberService.getMemberDetail(tenantId, membershipId);
-    if ("error" in result) return notFound(c, result.error!);
+    const result = await memberService.getMemberDetail(tenantId, membershipId, userId, callerRole);
+    if ("error" in result) {
+      if (result.status === 403) return forbidden(c, result.error!);
+      return notFound(c, result.error!);
+    }
 
     return ok(c, result.data);
   },

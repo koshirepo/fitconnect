@@ -32,7 +32,7 @@ memberRoutes.get(
 memberRoutes.get(
   "/:tenantId/members/:membershipId",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH]),
+  requireTenantRoles([TenantRole.MEMBER, TenantRole.COACH, TenantRole.ADMIN]),
   memberController.getMemberDetail,
 );
 

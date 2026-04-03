@@ -492,7 +492,19 @@ export const memberService = {
    * Execute the `get member detail` workflow for the members module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
-  async getMemberDetail(tenantId: string, membershipId: string) {
+  async getMemberDetail(
+    tenantId: string,
+    membershipId: string,
+    userId: string,
+    callerRole: TenantRole | null,
+  ) {
+    if (callerRole === "MEMBER") {
+      const callerMembership = await memberRepository.findMembershipByUserId(tenantId, userId);
+      if (!callerMembership || callerMembership.id !== membershipId) {
+        return { error: "You can only view your own member profile.", status: 403 as const };
+      }
+    }
+
     const member = await memberRepository.getMemberDetail(
       membershipId,
       tenantId,
