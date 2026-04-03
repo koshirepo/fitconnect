@@ -22,7 +22,7 @@ export const authRepository = {
           select: {
             tenantId: true,
             role: true,
-            tenant: { select: { name: true, slug: true } },
+            tenant: { select: { name: true, slug: true, platformExpiresAt: true } },
           },
         },
       },
@@ -144,7 +144,7 @@ export const authRepository = {
       select: {
         tenantId: true,
         role: true,
-        tenant: { select: { name: true, slug: true } },
+        tenant: { select: { name: true, slug: true, platformExpiresAt: true } },
       },
     });
   },

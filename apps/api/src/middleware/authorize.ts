@@ -8,7 +8,12 @@
 import { PlatformRole, type TenantRole } from "../shared/types/enums";
 import { badRequest, forbidden } from "../lib/response";
 import { createMiddleware } from "hono/factory";
+import { prisma } from "../lib/prisma";
 import type { AppBindings } from "../types/app-context";
+
+function isTenantPlatformExpired(platformExpiresAt?: Date | null) {
+  return Boolean(platformExpiresAt) && platformExpiresAt!.getTime() < Date.now();
+}
 
 /**
  * Build or execute the `require platform roles` middleware step for the middleware layer.
@@ -55,6 +60,15 @@ export const requireTenantRoles = (allowedRoles: TenantRole[]) => {
 
     if (!allowedRoles.includes(role)) {
       return forbidden(c, "Insufficient tenant permissions.");
+    }
+
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { platformExpiresAt: true },
+    });
+
+    if (isTenantPlatformExpired(tenant?.platformExpiresAt)) {
+      return forbidden(c, "Platform access is expired. Renew access to continue using the platform.");
     }
 
     c.set("tenantAccess", { tenantId, role });

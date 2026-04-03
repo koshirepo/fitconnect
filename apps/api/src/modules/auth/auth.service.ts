@@ -34,7 +34,11 @@ import type {
  */
 function mapMembership(
   m:
-    | { tenantId: string; role: string; tenant: { name: string; slug: string } }
+    | {
+        tenantId: string;
+        role: string;
+        tenant: { name: string; slug: string; platformExpiresAt: Date | null };
+      }
     | null
     | undefined,
 ) {
@@ -44,6 +48,7 @@ function mapMembership(
     tenantName: m.tenant.name,
     tenantSlug: m.tenant.slug,
     role: m.role,
+    platformExpiresAt: m.tenant.platformExpiresAt?.toISOString() ?? null,
   };
 }
 
