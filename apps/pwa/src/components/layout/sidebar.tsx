@@ -1,4 +1,4 @@
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import * as React from "react";
 import { tenantsApi } from "@/api/tenants";
 import { useAuthStore } from "@/stores/auth";
@@ -36,6 +36,13 @@ const platformNav = [
     label: "Commerce",
     icon: ShoppingBag,
     roles: ["SUPER_ADMIN", "SUPPORT"],
+    excludePrefixes: ["/platform-commerce/orders"],
+  },
+  {
+    to: "/platform-commerce/orders",
+    label: "Orders",
+    icon: Package,
+    roles: ["SUPER_ADMIN"],
   },
   {
     to: "/platform-audit",
@@ -70,6 +77,7 @@ export function Sidebar() {
   } = useAuthStore();
   const { sidebarOpen, setSidebarOpen, isMobile } = useUIStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const [currentTenant, setCurrentTenant] = React.useState<Tenant | null>(null);
 
   const membership = currentMembership();
@@ -186,6 +194,9 @@ export function Sidebar() {
                       cn(
                         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 hover:bg-sidebar-accent",
                         isActive &&
+                          !item.excludePrefixes?.some((prefix) =>
+                            location.pathname.startsWith(prefix),
+                          ) &&
                           "bg-primary/10 text-primary border-l-2 border-primary",
                       )
                     }

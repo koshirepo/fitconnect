@@ -24,7 +24,7 @@ export function UpdatePrompt() {
         <RefreshCw className="h-5 w-5 text-primary animate-spin" />
         <div className="flex-1">
           <p className="text-sm font-medium">Update available</p>
-          <p className="text-xs text-muted-foreground">A new version of GymPro is ready.</p>
+          <p className="text-xs text-muted-foreground">A new version of FitConnect is ready.</p>
         </div>
         <Button size="sm" onClick={() => updateRef.current?.(true)}>
           Update

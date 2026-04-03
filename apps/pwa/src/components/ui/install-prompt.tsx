@@ -49,7 +49,7 @@ export function InstallPrompt() {
       <div className="flex items-center gap-3">
         <Download className="h-6 w-6 text-primary" />
         <div className="flex-1">
-          <p className="text-sm font-medium">Install GymPro</p>
+          <p className="text-sm font-medium">Install FitConnect</p>
           <p className="text-xs text-muted-foreground">
             Add to home screen for the best experience.
           </p>

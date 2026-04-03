@@ -1,8 +1,9 @@
 import * as React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { commerceApi } from "@/api/commerce";
 import { uploadsApi } from "@/api/uploads";
 import { getApiError } from "@/api/client";
+import type { Product } from "@/types/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { PhotoCapture } from "@/components/ui/photo-capture";
-import { ArrowLeft, Plus, CheckCircle2, AlertCircle, X } from "lucide-react";
+import { PageLoader } from "@/components/ui/spinner";
+import { AlertCircle, ArrowLeft, CheckCircle2, Plus, X } from "lucide-react";
 
 type ProductForm = {
   name: string;
@@ -51,15 +53,67 @@ function isYoutubeUrl(value: string) {
   }
 }
 
+function toForm(product: Product): ProductForm {
+  const videos = Array.isArray(product.videos) ? product.videos : [];
+  return {
+    name: product.name,
+    description: product.description ?? "",
+    markdown: product.markdown ?? "",
+    photoUrls: product.photos,
+    videosText: videos.join("\n"),
+    category: product.category,
+    price: String(product.price),
+    stock: String(product.stock),
+    minOrderQty: String(product.minOrderQty),
+    maxOrderQty: String(product.maxOrderQty),
+    isActive: product.isActive,
+  };
+}
+
 export default function CreateProductPage() {
   const navigate = useNavigate();
+  const { productId } = useParams<{ productId: string }>();
+  const isEditMode = Boolean(productId);
+
   const [form, setForm] = React.useState<ProductForm>(emptyForm);
   const [photoPreviews, setPhotoPreviews] = React.useState<string[]>([]);
   const [uploading, setUploading] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
+  const [loadingProduct, setLoadingProduct] = React.useState(false);
   const [error, setError] = React.useState("");
   const [success, setSuccess] = React.useState(false);
-  const [createdProductName, setCreatedProductName] = React.useState("");
+  const [savedProductName, setSavedProductName] = React.useState("");
+
+  React.useEffect(() => {
+    if (!isEditMode || !productId) {
+      setLoadingProduct(false);
+      return;
+    }
+
+    let active = true;
+    setLoadingProduct(true);
+    setError("");
+
+    commerceApi
+      .getAdminProductById(productId)
+      .then((res) => {
+        if (!active) return;
+        const product = res.data.data.product;
+        setForm(toForm(product));
+        setPhotoPreviews(product.photos);
+      })
+      .catch((err: unknown) => {
+        if (!active) return;
+        setError(getApiError(err));
+      })
+      .finally(() => {
+        if (active) setLoadingProduct(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isEditMode, productId]);
 
   const handlePhotoCapture = async (file: File | null, preview: string | null) => {
     if (!file || !preview) return;
@@ -139,8 +193,11 @@ export default function CreateProductPage() {
 
     setSubmitting(true);
     try {
-      await commerceApi.createProduct(payload);
-      setCreatedProductName(payload.name);
+      const res =
+        isEditMode && productId
+          ? await commerceApi.updateProduct(productId, payload)
+          : await commerceApi.createProduct(payload);
+      setSavedProductName(res.data.data.product.name);
       setSuccess(true);
     } catch (err: unknown) {
       setError(getApiError(err));
@@ -149,16 +206,20 @@ export default function CreateProductPage() {
     }
   };
 
-  // ─── Success state ──────────────────────────────────────────────────────────
+  if (loadingProduct) {
+    return <PageLoader />;
+  }
+
   if (success) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
+      <div className="flex min-h-[50vh] items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto mb-2" />
-            <CardTitle>Product Created!</CardTitle>
+            <CheckCircle2 className="mx-auto mb-2 h-12 w-12 text-green-600" />
+            <CardTitle>{isEditMode ? "Product Updated!" : "Product Created!"}</CardTitle>
             <CardDescription>
-              The product &quot;{createdProductName}&quot; has been created successfully.
+              The product &quot;{savedProductName}&quot; has been{" "}
+              {isEditMode ? "updated" : "created"} successfully.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-center gap-3">
@@ -169,14 +230,22 @@ export default function CreateProductPage() {
               variant="outline"
               onClick={() => {
                 setSuccess(false);
-                setForm(emptyForm);
-                setPhotoPreviews([]);
                 setError("");
+                if (!isEditMode) {
+                  setForm(emptyForm);
+                  setPhotoPreviews([]);
+                }
               }}
               className="w-full max-w-xs"
             >
-              <Plus className="h-4 w-4" />
-              Create Another
+              {isEditMode ? (
+                "Continue Editing"
+              ) : (
+                <>
+                  <Plus className="h-4 w-4" />
+                  Create Another
+                </>
+              )}
             </Button>
           </CardContent>
         </Card>
@@ -184,10 +253,8 @@ export default function CreateProductPage() {
     );
   }
 
-  // ─── Form ───────────────────────────────────────────────────────────────────
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      {/* Header */}
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
@@ -198,13 +265,18 @@ export default function CreateProductPage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Create Product</h1>
-          <p className="text-muted-foreground">Add a new product to your e-commerce catalog.</p>
+          <h1 className="text-2xl font-bold tracking-tight">
+            {isEditMode ? "Edit Product" : "Create Product"}
+          </h1>
+          <p className="text-muted-foreground">
+            {isEditMode
+              ? "Update product details in your e-commerce catalog."
+              : "Add a new product to your e-commerce catalog."}
+          </p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Product Details */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Product Details</CardTitle>
@@ -257,7 +329,6 @@ export default function CreateProductPage() {
           </CardContent>
         </Card>
 
-        {/* Media - Photos */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Product Photos *</CardTitle>
@@ -272,7 +343,6 @@ export default function CreateProductPage() {
             />
             {uploading && <p className="text-sm text-muted-foreground">Uploading photo...</p>}
 
-            {/* Photo Gallery */}
             {photoPreviews.length > 0 && (
               <div className="space-y-2">
                 <p className="text-sm font-medium">
@@ -280,7 +350,7 @@ export default function CreateProductPage() {
                 </p>
                 <div className="grid grid-cols-4 gap-2">
                   {photoPreviews.map((preview, index) => (
-                    <div key={index} className="relative group">
+                    <div key={index} className="group relative">
                       <img
                         src={preview}
                         alt={`Product photo ${index + 1}`}
@@ -289,7 +359,7 @@ export default function CreateProductPage() {
                       <button
                         type="button"
                         onClick={() => removePhoto(index)}
-                        className="absolute top-1 right-1 rounded bg-destructive p-1 opacity-0 transition group-hover:opacity-100"
+                        className="absolute right-1 top-1 rounded bg-destructive p-1 opacity-0 transition group-hover:opacity-100"
                         aria-label="Remove photo"
                       >
                         <X className="h-3 w-3 text-white" />
@@ -302,7 +372,6 @@ export default function CreateProductPage() {
           </CardContent>
         </Card>
 
-        {/* Pricing & Inventory */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Pricing & Inventory</CardTitle>
@@ -362,7 +431,6 @@ export default function CreateProductPage() {
           </CardContent>
         </Card>
 
-        {/* Status */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Availability</CardTitle>
@@ -381,32 +449,30 @@ export default function CreateProductPage() {
                 <option value="INACTIVE">Inactive</option>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Inactive products won't be visible to customers.
+                Inactive products won&apos;t be visible to customers.
               </p>
             </div>
           </CardContent>
         </Card>
 
-        {/* Error */}
         {error && (
           <Card className="border-destructive bg-destructive/5">
             <CardContent className="flex items-start gap-3 pt-6">
-              <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
               <p className="text-sm text-destructive">{error}</p>
             </CardContent>
           </Card>
         )}
 
-        {/* Actions */}
         <div className="flex items-center gap-2">
-          <Button type="submit" disabled={submitting || uploading}>
-            {submitting ? "Creating..." : "Create Product"}
+          <Button type="submit" disabled={submitting || uploading || loadingProduct}>
+            {submitting ? (isEditMode ? "Saving..." : "Creating...") : isEditMode ? "Save Changes" : "Create Product"}
           </Button>
           <Button
             type="button"
             variant="outline"
             onClick={() => navigate("/platform-commerce")}
-            disabled={submitting || uploading}
+            disabled={submitting || uploading || loadingProduct}
           >
             Cancel
           </Button>

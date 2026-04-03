@@ -85,6 +85,15 @@ const AdminCommercePage = React.lazy(
 const CreateProductPage = React.lazy(
   () => import("@/features/commerce/CreateProductPage"),
 );
+const AdminProductDetailPage = React.lazy(
+  () => import("@/features/commerce/AdminProductDetailPage"),
+);
+const AdminOrdersPage = React.lazy(
+  () => import("@/features/commerce/AdminOrdersPage"),
+);
+const AdminOrderDetailPage = React.lazy(
+  () => import("@/features/commerce/AdminOrderDetailPage"),
+);
 
 export default function App() {
   return (
@@ -208,6 +217,22 @@ export default function App() {
                   />
                   <Route
                     path="/platform-commerce/create"
+                    element={<CreateProductPage />}
+                  />
+                  <Route
+                    path="/platform-commerce/products/:productId"
+                    element={<AdminProductDetailPage />}
+                  />
+                  <Route
+                    path="/platform-commerce/orders"
+                    element={<AdminOrdersPage />}
+                  />
+                  <Route
+                    path="/platform-commerce/orders/:orderId"
+                    element={<AdminOrderDetailPage />}
+                  />
+                  <Route
+                    path="/platform-commerce/edit/:productId"
                     element={<CreateProductPage />}
                   />
 

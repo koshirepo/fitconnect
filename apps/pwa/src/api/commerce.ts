@@ -53,15 +53,21 @@ export const commerceApi = {
       },
     }),
 
+  getAdminProductById: (productId: string) =>
+    api.get<ApiResponse<{ product: Product }>>(`/admin/products/${productId}`),
+
   createProduct: (data: CreateProductPayload) =>
     api.post<ApiResponse<{ product: Product }>>("/admin/products", data),
 
   updateProduct: (productId: string, data: UpdateProductPayload) =>
     api.patch<ApiResponse<{ product: Product }>>(`/admin/products/${productId}`, data),
 
-  listAdminOrders: (page = 1, limit = 20, status?: OrderStatus) =>
+  deleteProduct: (productId: string) =>
+    api.delete<ApiResponse<{ product: Product }>>(`/admin/products/${productId}`),
+
+  listAdminOrders: (page = 1, limit = 20, status?: OrderStatus, productId?: string) =>
     api.get<PaginatedResponse<{ orders: Order[] }>>("/admin/orders", {
-      params: { page, limit, ...(status ? { status } : {}) },
+      params: { page, limit, ...(status ? { status } : {}), ...(productId ? { productId } : {}) },
     }),
 
   getAdminOrderById: (orderId: string) =>
