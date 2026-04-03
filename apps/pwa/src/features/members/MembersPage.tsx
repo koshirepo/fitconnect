@@ -29,11 +29,20 @@ import {
   MessageSquare,
   AlertTriangle,
   CalendarClock,
+  Clock,
 } from "lucide-react";
 import type { TenantMember, Badge, TenantSettings } from "@/types/api";
 import AvatarCard from "@/components/ui/avatarCard";
 import { usePendingMutations } from "@/lib/use-pending-mutations";
-import { Clock } from "lucide-react";
+
+type PendingMemberMutationBody = {
+  name?: string;
+  email?: string;
+  phone?: string | null;
+  role?: TenantMember["role"];
+};
+
+type DisplayMember = TenantMember & { _pending?: boolean };
 
 // ─── Status & role config ──────────────────────────────────────────────────────
 
@@ -173,23 +182,23 @@ export default function MembersPage() {
   );
 
   // Pending offline members
-  const pendingMembers = usePendingMutations("/members");
-  const pendingMemberItems: (TenantMember & { _pending: true })[] = pendingMembers.map((m) => ({
+  const pendingMembers = usePendingMutations<PendingMemberMutationBody>("/members");
+  const pendingMemberItems: DisplayMember[] = pendingMembers.map((m) => ({
     id: `pending-${m.id}`,
     memberId: 0,
     userId: "",
-    name: (m.body?.name as string) ?? "New Member",
-    email: (m.body?.email as string) ?? "",
-    phone: (m.body?.phone as string) ?? null,
+    name: m.body?.name ?? "New Member",
+    email: m.body?.email ?? "",
+    phone: m.body?.phone ?? null,
     avatarUrl: null,
-    role: (m.body?.role as TenantMember["role"]) ?? "MEMBER",
+    role: m.body?.role ?? "MEMBER",
     status: "ACTIVE" as const,
     joinedAt: new Date(m.createdAt).toISOString(),
     _pending: true as const,
   }));
 
   // Merge and sort latest first
-  const allMembers = [...pendingMemberItems, ...members].sort(
+  const allMembers: DisplayMember[] = [...pendingMemberItems, ...members].sort(
     (a, b) => new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime(),
   );
 
@@ -357,13 +366,13 @@ export default function MembersPage() {
             {allMembers.map((m) => (
               <Card
                 key={m.id}
-                className={`hover:shadow-md transition-shadow${(m as any)._pending ? " opacity-70 border-dashed" : ""}`}
+                className={`hover:shadow-md transition-shadow${m._pending ? " opacity-70 border-dashed" : ""}`}
               >
                 <div className="flex sm:justify-start justify-between sm:items-start p-2 sm:p-4 sm:flex-row flex-col">
                   {/* Member Info */}
                   <div
                     className="flex gap-4 flex-1 min-w-0 cursor-pointer"
-                    onClick={() => !(m as any)._pending && navigate(`/members/${m.id}`)}
+                    onClick={() => !m._pending && navigate(`/members/${m.id}`)}
                   >
                     <AvatarCard
                       name={m.name}
@@ -375,7 +384,7 @@ export default function MembersPage() {
                       isActive={m.status === "ACTIVE"}
                     >
                       {m.phone && <p className="text-sm text-muted-foreground">{m.phone}</p>}
-                      {(m as any)._pending && (
+                      {m._pending && (
                         <span className="inline-flex items-center gap-1 text-xs text-amber-600 font-medium">
                           <Clock className="h-3 w-3" />
                           Pending sync
@@ -405,7 +414,7 @@ export default function MembersPage() {
 
                   {/* Actions */}
                   <div className="flex gap-2 shrink-0 justify-end items-center">
-                    {m.isDue && m.phone && (
+                    {!m._pending && m.isDue && m.phone && (
                       <a
                         href={getPaymentReminderUrl(m) ?? undefined}
                         target="_blank"
@@ -421,15 +430,17 @@ export default function MembersPage() {
                         </Button>
                       </a>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => navigate(`/members/${m.id}/edit`)}
-                      title="Edit member"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    {m.phone && (
+                    {!m._pending && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(`/members/${m.id}/edit`)}
+                        title="Edit member"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {!m._pending && m.phone && (
                       <a
                         href={buildWhatsAppUrl(m.phone, `Hi ${m.name}`) ?? undefined}
                         target="_blank"

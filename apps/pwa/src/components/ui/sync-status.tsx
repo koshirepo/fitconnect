@@ -23,7 +23,10 @@ export function SyncStatus() {
   const [pending, setPending] = React.useState(0);
   const [conflicts, setConflicts] = React.useState(0);
   const stateRef = React.useRef(state);
-  stateRef.current = state;
+
+  React.useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   // Poll pending count every 2s (cheap IDB read)
   React.useEffect(() => {
@@ -58,7 +61,9 @@ export function SyncStatus() {
         setState("has-conflicts");
       } else if (detail.synced > 0) {
         setState("synced");
-        setTimeout(() => setState("idle"), 3000);
+        setTimeout(() => {
+          setState((current) => (current === "synced" ? "idle" : current));
+        }, 3000);
       }
     };
     const onMutationQueued = () => {

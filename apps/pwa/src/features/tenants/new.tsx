@@ -63,7 +63,7 @@ const validators = {
     if (value.length > 15) return "Phone must be at most 15 characters";
     return null;
   },
-  adminPassword: (_value: string): string | null => {
+  adminPassword: (): string | null => {
     return null;
   },
 };
@@ -198,7 +198,7 @@ export default function NewTenant() {
           } else {
             throw new Error("Invalid logo URL returned from server");
           }
-        } catch (err) {
+        } catch {
           setError("Failed to upload logo image. Please ensure it's a valid image file.");
           setSubmitting(false);
           return;
@@ -215,7 +215,7 @@ export default function NewTenant() {
           } else {
             throw new Error("Invalid avatar URL returned from server");
           }
-        } catch (err) {
+        } catch {
           setError("Failed to upload admin avatar. Please ensure it's a valid image file.");
           setSubmitting(false);
           return;

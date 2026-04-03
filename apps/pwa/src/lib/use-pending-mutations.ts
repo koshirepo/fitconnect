@@ -13,8 +13,12 @@ export interface PendingMutationEntry {
  * Returns pending (non-conflicted) mutations from IDB filtered by a URL pattern.
  * Re-reads on mount, sync-complete, mutation-queued, and online events.
  */
-export function usePendingMutations(urlPattern: string): PendingMutationEntry[] {
-  const [entries, setEntries] = React.useState<PendingMutationEntry[]>([]);
+export function usePendingMutations<TBody extends Record<string, unknown> = Record<string, unknown>>(
+  urlPattern: string,
+): Array<Omit<PendingMutationEntry, "body"> & { body: TBody | undefined }> {
+  const [entries, setEntries] = React.useState<
+    Array<Omit<PendingMutationEntry, "body"> & { body: TBody | undefined }>
+  >([]);
 
   const load = React.useCallback(async () => {
     try {
@@ -23,10 +27,10 @@ export function usePendingMutations(urlPattern: string): PendingMutationEntry[] 
       const matching = all
         .filter((m) => m.url.includes(urlPattern) && !m.status)
         .map((m) => {
-          let body: Record<string, unknown> | undefined;
+          let body: TBody | undefined;
           if (m.body) {
             try {
-              body = JSON.parse(m.body);
+              body = JSON.parse(m.body) as TBody;
             } catch {
               /* malformed — skip body */
             }

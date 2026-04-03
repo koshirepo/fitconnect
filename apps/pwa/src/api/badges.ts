@@ -42,7 +42,14 @@ export const badgesApi = {
     >(`/tenants/${tenantId}/badges/${badgeId}/assignments`),
 
   assign: (tenantId: string, badgeId: string, data: AssignBadgePayload) =>
-    api.post<ApiResponse<{ badge: Badge; membership: any }>>(
+    api.post<
+      ApiResponse<{
+        assignment: {
+          badge: Pick<Badge, "id" | "name" | "color" | "icon">;
+          membership?: Pick<TenantMember, "id" | "name" | "email" | "avatarUrl" | "memberId">;
+        };
+      }>
+    >(
       `/tenants/${tenantId}/badges/${badgeId}/assign`,
       data,
     ),

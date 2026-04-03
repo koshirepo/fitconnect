@@ -20,7 +20,20 @@ import MemberSelector from "@/components/ui/memberSelector";
 import { PageLoader } from "@/components/ui/spinner";
 import { Select } from "@/components/ui/select";
 import { AlertCircle, Plus } from "lucide-react";
-import type { MemberDetail, TenantMember, Subscription, TenantSettings } from "@/types/api";
+import type {
+  CreatePaymentPayload,
+  MemberDetail,
+  TenantMember,
+  Subscription,
+  TenantSettings,
+} from "@/types/api";
+
+type CreatePaymentPayloadWithOfflineMeta = CreatePaymentPayload & {
+  _memberName?: string;
+  _memberAvatarUrl?: string | null;
+  _memberMemberId?: number;
+  _subscriptionTitle?: string;
+};
 
 function toTenantMember(member: TenantMember | MemberDetail): TenantMember {
   return {
@@ -197,7 +210,7 @@ export default function RecordPaymentPage() {
     setSubmitting(true);
     try {
       const sub = subscriptions.find((s) => s.id === fSubscriptionId);
-      const res = await paymentsApi.create(currentTenantId, {
+      const payload: CreatePaymentPayloadWithOfflineMeta = {
         membershipId: fMembershipId,
         subscriptionId: fSubscriptionId,
         amount,
@@ -209,7 +222,8 @@ export default function RecordPaymentPage() {
         _memberAvatarUrl: selectedMember?.avatarUrl,
         _memberMemberId: selectedMember?.memberId,
         _subscriptionTitle: sub?.title,
-      } as any);
+      };
+      const res = await paymentsApi.create(currentTenantId, payload);
 
       // Skip WhatsApp when the mutation was queued offline
       if (!res.data._offlineQueued && selectedMember?.phone) {

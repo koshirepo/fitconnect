@@ -26,6 +26,8 @@ import MemberSelector from "@/components/ui/memberSelector";
 import { loadAllTenantMembers } from "@/lib/tenant-members";
 import type { WorkoutPlan, Exercise, TenantMember } from "@/types/api";
 
+type ExerciseField = keyof Exercise;
+
 export default function WorkoutsPage() {
   const navigate = useNavigate();
   const { currentTenantId, tenantRole } = useAuthStore();
@@ -197,10 +199,12 @@ export default function WorkoutsPage() {
     setFormExercises([...formExercises, { name: "", sets: 3, reps: 10 }]);
   };
 
-  const updateExercise = (idx: number, field: keyof Exercise, value: string | number) => {
-    const updated = [...formExercises];
-    (updated[idx] as any)[field] = value;
-    setFormExercises(updated);
+  const updateExercise = <K extends ExerciseField>(idx: number, field: K, value: Exercise[K]) => {
+    setFormExercises((prev) =>
+      prev.map((exercise, index) =>
+        index === idx ? ({ ...exercise, [field]: value } as Exercise) : exercise,
+      ),
+    );
   };
 
   const removeExercise = (idx: number) => {

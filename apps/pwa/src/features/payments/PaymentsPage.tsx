@@ -11,12 +11,32 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { downloadCsv } from "@/lib/csv";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
-import { Plus, CreditCard, CheckCircle2, XCircle, Download, Search, X } from "lucide-react";
+import {
+  Plus,
+  CreditCard,
+  CheckCircle2,
+  XCircle,
+  Download,
+  Search,
+  X,
+  Clock,
+} from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { Payment, PaymentStatus } from "@/types/api";
 import AvatarCard from "@/components/ui/avatarCard";
 import { usePendingMutations } from "@/lib/use-pending-mutations";
-import { Clock } from "lucide-react";
+
+type PendingPaymentMutationBody = {
+  amount?: number;
+  validUntil?: string | null;
+  note?: string | null;
+  _subscriptionTitle?: string;
+  _memberName?: string;
+  _memberMemberId?: number;
+  _memberAvatarUrl?: string | null;
+};
+
+type DisplayPayment = Payment & { _pending?: boolean };
 
 export default function PaymentsPage() {
   const navigate = useNavigate();
@@ -123,35 +143,35 @@ export default function PaymentsPage() {
   });
 
   // Pending offline payments
-  const pendingPayments = usePendingMutations("/payments");
-  const pendingPaymentItems: (Payment & { _pending: true })[] = pendingPayments.map((p) => ({
+  const pendingPayments = usePendingMutations<PendingPaymentMutationBody>("/payments");
+  const pendingPaymentItems: DisplayPayment[] = pendingPayments.map((p) => ({
     id: `pending-${p.id}`,
-    amount: (p.body?.amount as number) ?? 0,
+    amount: p.body?.amount ?? 0,
     status: "PENDING" as const,
     paidAt: null,
     validFrom: null,
-    validUntil: (p.body?.validUntil as string) ?? null,
-    description: (p.body?._subscriptionTitle as string) ?? (p.body?.note as string) ?? null,
-    note: (p.body?.note as string) ?? null,
+    validUntil: p.body?.validUntil ?? null,
+    description: p.body?._subscriptionTitle ?? p.body?.note ?? null,
+    note: p.body?.note ?? null,
     createdAt: new Date(p.createdAt).toISOString(),
     member: p.body?._memberName
       ? {
           id: "pending",
-          memberId: (p.body._memberMemberId as number) ?? 0,
+          memberId: p.body._memberMemberId ?? 0,
           userId: "",
-          name: p.body._memberName as string,
+          name: p.body._memberName,
           email: "",
-          avatarUrl: (p.body._memberAvatarUrl as string) ?? null,
+          avatarUrl: p.body._memberAvatarUrl ?? null,
         }
       : undefined,
     subscription: p.body?._subscriptionTitle
-      ? { id: "pending", title: p.body._subscriptionTitle as string }
+      ? { id: "pending", title: p.body._subscriptionTitle }
       : undefined,
     _pending: true as const,
   }));
 
   // Merge and sort latest first
-  const allPayments = [...pendingPaymentItems, ...payments].sort(
+  const allPayments: DisplayPayment[] = [...pendingPaymentItems, ...payments].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
 
@@ -311,9 +331,9 @@ export default function PaymentsPage() {
           <div className="space-y-3">
             {allPayments.map((p) => (
               <Card
-                onClick={() => !(p as any)._pending && navigate(`/payments/${p.id}`)}
+                onClick={() => !p._pending && navigate(`/payments/${p.id}`)}
                 key={p.id}
-                className={`hover:shadow-md transition-shadow${(p as any)._pending ? " opacity-70 border-dashed" : ""}`}
+                className={`hover:shadow-md transition-shadow${p._pending ? " opacity-70 border-dashed" : ""}`}
               >
                 <div className="flex sm:justify-start justify-between sm:items-start p-2 sm:p-4 sm:flex-row flex-col">
                   {/* Payment Info */}
@@ -361,7 +381,7 @@ export default function PaymentsPage() {
                   </div>
 
                   {/* Pending sync indicator */}
-                  {(p as any)._pending && (
+                  {p._pending && (
                     <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2 sm:mt-0 sm:mr-2">
                       <Clock className="h-3 w-3" />
                       Pending sync
@@ -370,7 +390,7 @@ export default function PaymentsPage() {
 
                   {/* Actions */}
                   <div className="flex gap-2 shrink-0 justify-end mt-3 sm:mt-0 w-full sm:w-auto">
-                    {isAdmin && !(p as any)._pending && (
+                    {isAdmin && !p._pending && (
                       <>
                         {p.status === "PENDING" && (
                           <>

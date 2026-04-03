@@ -5,6 +5,21 @@ import { useAuthStore } from "@/stores/auth";
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 const MAX_CACHE_ENTRIES = 200;
 
+type BackgroundSyncRegistration = ServiceWorkerRegistration & {
+  sync: {
+    register(tag: string): Promise<void>;
+  };
+};
+
+function hasBackgroundSync(
+  registration: ServiceWorkerRegistration,
+): registration is BackgroundSyncRegistration {
+  const candidate = registration as ServiceWorkerRegistration & {
+    sync?: { register?: unknown };
+  };
+  return typeof candidate.sync?.register === "function";
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /** Build a stable, tenant-scoped cache key from the request config. */
@@ -59,8 +74,8 @@ export async function queueMutation(
   // Trigger Background Sync if supported
   try {
     const registration = await navigator.serviceWorker?.ready;
-    if (registration && "sync" in registration) {
-      await (registration as any).sync.register("pending-mutations");
+    if (registration && hasBackgroundSync(registration)) {
+      await registration.sync.register("pending-mutations");
     }
   } catch {
     // Background Sync not available — sync-listener handles it

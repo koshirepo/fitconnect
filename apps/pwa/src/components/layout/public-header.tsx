@@ -21,15 +21,6 @@ export function PublicHeader({ navItems = [], maxWidth = "max-w-7xl" }: PublicHe
   const { isAuthenticated } = useAuthStore();
   const [open, setOpen] = React.useState(false);
 
-  const handleNav = (item: NavItem) => {
-    setOpen(false);
-    if (item.to) {
-      navigate(item.to);
-    } else if (item.href) {
-      window.location.href = item.href;
-    }
-  };
-
   return (
     <>
       <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
@@ -117,15 +108,27 @@ export function PublicHeader({ navItems = [], maxWidth = "max-w-7xl" }: PublicHe
               </button>
             </div>
             <nav className="flex-1 p-4 space-y-1">
-              {navItems.map((item) => (
-                <button
-                  key={item.label}
-                  onClick={() => handleNav(item)}
-                  className="flex w-full items-center rounded-md px-3 py-2.5 text-sm font-medium hover:bg-accent transition-colors"
-                >
-                  {item.label}
-                </button>
-              ))}
+              {navItems.map((item) =>
+                item.to ? (
+                  <Link
+                    key={item.label}
+                    to={item.to}
+                    onClick={() => setOpen(false)}
+                    className="flex w-full items-center rounded-md px-3 py-2.5 text-sm font-medium hover:bg-accent transition-colors"
+                  >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    className="flex w-full items-center rounded-md px-3 py-2.5 text-sm font-medium hover:bg-accent transition-colors"
+                  >
+                    {item.label}
+                  </a>
+                ),
+              )}
             </nav>
             <div className="border-t p-4 space-y-2">
               {isAuthenticated ? (

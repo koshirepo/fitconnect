@@ -28,8 +28,11 @@ export function useCamera(options: UseCameraOptions = {}) {
       }
       setIsActive(true);
       setError(null);
-    } catch (err: any) {
-      setError(err.name === "NotAllowedError" ? "Camera permission denied" : "Camera unavailable");
+    } catch (err: unknown) {
+      const errorName = err instanceof DOMException ? err.name : null;
+      setError(
+        errorName === "NotAllowedError" ? "Camera permission denied" : "Camera unavailable",
+      );
     }
   }, [options.facingMode, options.width, options.height]);
 
