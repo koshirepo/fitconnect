@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import {
   RequireAuth,
   RequirePlatformStaff,
+  RequireTenantPlatformAccess,
   RequireTenantAdmin,
   RedirectIfAuth,
 } from "@/features/auth/route-guards";
@@ -14,6 +15,8 @@ import { OfflineBanner } from "@/components/ui/offline-banner";
 import { InstallPrompt } from "@/components/ui/install-prompt";
 import { SyncStatus } from "@/components/ui/sync-status";
 import { ThemeProvider } from "@/components/theme-provider";
+import { PageLoader } from "@/components/ui/spinner";
+import { useAuthStore } from "@/stores/auth";
 
 // ─── Eagerly-loaded pages (available offline after first load) ─────────────────
 import DashboardPage from "@/features/dashboard/DashboardPage";
@@ -96,6 +99,27 @@ const AdminOrderDetailPage = React.lazy(
 );
 
 export default function App() {
+  const { isAuthenticated, accessToken, fetchMe } = useAuthStore();
+  const [authSyncing, setAuthSyncing] = React.useState(Boolean(isAuthenticated && accessToken));
+
+  React.useEffect(() => {
+    if (!isAuthenticated || !accessToken) {
+      setAuthSyncing(false);
+      return;
+    }
+
+    let active = true;
+    setAuthSyncing(true);
+
+    void fetchMe().finally(() => {
+      if (active) setAuthSyncing(false);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [isAuthenticated, accessToken, fetchMe]);
+
   return (
     <ThemeProvider>
       <ErrorBoundary>
@@ -103,6 +127,9 @@ export default function App() {
         <UpdatePrompt />
         <InstallPrompt />
         <SyncStatus />
+        {authSyncing ? (
+          <PageLoader />
+        ) : (
         <PageSuspense>
           <Routes>
             {/* Public routes (no auth required) */}
@@ -136,6 +163,7 @@ export default function App() {
             {/* Protected routes */}
             <Route element={<RequireAuth />}>
               <Route element={<AppLayout />}>
+                <Route element={<RequireTenantPlatformAccess />}>
                 {/* Dashboard */}
                 <Route path="/dashboard" element={<DashboardPage />} />
 
@@ -202,6 +230,7 @@ export default function App() {
                   path="/audit"
                   element={<AuditLogsPage scope="tenant" />}
                 />
+                </Route>
 
                 {/* Platform admin */}
                 <Route element={<RequirePlatformStaff />}>
@@ -248,6 +277,7 @@ export default function App() {
             <Route path="*" element={<LandingPage />} />
           </Routes>
         </PageSuspense>
+        )}
       </ErrorBoundary>
     </ThemeProvider>
   );

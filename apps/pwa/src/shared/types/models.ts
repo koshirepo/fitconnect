@@ -27,6 +27,7 @@ export interface TenantMembershipSummary {
   tenantName: string;
   tenantSlug: string;
   role: TenantRole;
+  platformExpiresAt?: string | null;
 }
 
 export interface AuthResponse {
