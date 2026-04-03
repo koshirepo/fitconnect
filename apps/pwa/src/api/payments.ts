@@ -52,6 +52,9 @@ export const paymentsApi = {
   update: (tenantId: string, paymentId: string, data: UpdatePaymentPayload) =>
     api.put<ApiResponse<{ payment: Payment }>>(`/tenants/${tenantId}/payments/${paymentId}`, data),
 
+  delete: (tenantId: string, paymentId: string) =>
+    api.delete<ApiResponse<{ message: string }>>(`/tenants/${tenantId}/payments/${paymentId}`),
+
   // ─── Subscriptions ─────────────────────────────────────────────────────────
 
   listSubscriptions: (tenantId: string, includeInactive = false) =>

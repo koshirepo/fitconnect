@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Table,
   TableBody,
@@ -52,6 +53,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CalendarDays,
+  Trash2,
 } from "lucide-react";
 import type { Badge, MemberDetail, Shift, TenantSettings } from "@/types/api";
 import AvatarCard from "@/components/ui/avatarCard";
@@ -115,6 +117,8 @@ export default function MemberDetailPage() {
 
   const [showBadgePicker, setShowBadgePicker] = React.useState(false);
   const [statusLoading, setStatusLoading] = React.useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
+  const [deletingMember, setDeletingMember] = React.useState(false);
   const paymentsSectionRef = React.useRef<HTMLDivElement>(null);
 
   const loadMember = React.useCallback(
@@ -239,6 +243,21 @@ export default function MemberDetailPage() {
     }
   };
 
+  const handleDeleteMember = async () => {
+    if (!currentTenantId || !membershipId) return;
+
+    setDeletingMember(true);
+    setError("");
+    try {
+      await tenantsApi.removeMember(currentTenantId, membershipId);
+      navigate("/members", { replace: true });
+    } catch (err: unknown) {
+      setError(getApiError(err));
+    } finally {
+      setDeletingMember(false);
+    }
+  };
+
   const handleEditSubmit = async (data: MemberFormData) => {
     setEditError("");
     if (!currentTenantId || !membershipId || !member) return;
@@ -354,7 +373,7 @@ export default function MemberDetailPage() {
 
   if (loading) return <PageLoader />;
 
-  if (error || !member) {
+  if (!member) {
     return (
       <div className="space-y-4">
         <EmptyState
@@ -516,6 +535,21 @@ export default function MemberDetailPage() {
 
   return (
     <div className="space-y-6">
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Delete member?"
+        description="This will permanently delete the member along with their payments, assigned workout plans, and plans they created. This action cannot be undone."
+        confirmLabel="Delete"
+        loading={deletingMember}
+        onConfirm={handleDeleteMember}
+      />
+
+      {error && (
+        <div className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </div>
+      )}
       {/* ── Mobile header: full-width photo ──────────────────────────────── */}
       <div className="sm:hidden space-y-4">
         <div
@@ -609,6 +643,19 @@ export default function MemberDetailPage() {
               </span>
             </button>
           )}
+          {role === "ADMIN" && (
+            <button
+              type="button"
+              onClick={() => setDeleteConfirmOpen(true)}
+              disabled={deletingMember}
+              className="flex flex-col items-center gap-1 disabled:opacity-50"
+            >
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10 transition-colors hover:bg-red-500/20">
+                <Trash2 className="h-5 w-5 text-red-600" />
+              </span>
+              <span className="text-[10px] text-muted-foreground">Delete</span>
+            </button>
+          )}
         </div>
         {paymentReminderUrl && (
           <a
@@ -682,6 +729,17 @@ export default function MemberDetailPage() {
                   Activate
                 </>
               )}
+            </Button>
+          )}
+          {role === "ADMIN" && (
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => setDeleteConfirmOpen(true)}
+              disabled={deletingMember}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
             </Button>
           )}
           {paymentReminderUrl && (

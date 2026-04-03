@@ -18,6 +18,7 @@ import {
   Pencil,
   Receipt,
   RefreshCw,
+  Trash2,
   User,
   XCircle,
 } from "lucide-react";
@@ -66,6 +67,8 @@ export default function PaymentDetailPage() {
   const [error, setError] = React.useState("");
   const [updatingStatus, setUpdatingStatus] = React.useState(false);
   const [refundConfirmOpen, setRefundConfirmOpen] = React.useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
 
   // Member's other payments
   const [memberPayments, setMemberPayments] = React.useState<Payment[]>([]);
@@ -172,6 +175,21 @@ export default function PaymentDetailPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!currentTenantId || !paymentId) return;
+
+    setDeleting(true);
+    setError("");
+    try {
+      await paymentsApi.delete(currentTenantId, paymentId);
+      navigate("/payments", { replace: true });
+    } catch (err: unknown) {
+      setError(getApiError(err));
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (loading) return <PageLoader />;
 
   if (!payment) {
@@ -256,6 +274,17 @@ export default function PaymentDetailPage() {
                 Refund
               </Button>
             )}
+            {!editing && (
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => setDeleteConfirmOpen(true)}
+                disabled={deleting}
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -269,6 +298,16 @@ export default function PaymentDetailPage() {
         description={`This will mark the payment of ${formatCurrency(payment.amount)} as refunded. This action cannot be undone.`}
         confirmLabel="Refund"
         onConfirm={() => handleStatusUpdate("REFUNDED")}
+      />
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Delete payment?"
+        description={`This will permanently delete the payment of ${formatCurrency(payment.amount)}. This action cannot be undone.`}
+        confirmLabel="Delete"
+        loading={deleting}
+        onConfirm={handleDelete}
       />
 
       {error && (
