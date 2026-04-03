@@ -6,12 +6,13 @@ import { useAuthStore } from "@/stores/auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Select } from "@/components/ui/select";
 import { PageLoader, Spinner } from "@/components/ui/spinner";
 import { formatDateTime } from "@/lib/utils";
 import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
-import { ArrowLeft, PackageSearch } from "lucide-react";
+import { ArrowLeft, PackageSearch, Trash2 } from "lucide-react";
 import type { Order, OrderStatus } from "@/types/api";
 
 const STATUS_STYLE: Record<string, "warning" | "success" | "secondary"> = {
@@ -39,6 +40,8 @@ export default function AdminOrdersPage() {
   const [hasMore, setHasMore] = React.useState(true);
   const [statusFilter, setStatusFilter] = React.useState("");
   const [error, setError] = React.useState("");
+  const [orderToDelete, setOrderToDelete] = React.useState<Order | null>(null);
+  const [deletingOrder, setDeletingOrder] = React.useState(false);
 
   const fetchOrders = React.useCallback(
     async (nextPage: number, mode: "replace" | "append") => {
@@ -94,6 +97,25 @@ export default function AdminOrdersPage() {
     loading: loading || loadingMore,
     onLoadMore: loadMore,
   });
+
+  const handleDeleteOrder = async () => {
+    if (!orderToDelete) return;
+
+    setDeletingOrder(true);
+    setError("");
+
+    try {
+      await commerceApi.deleteAdminOrder(orderToDelete.id);
+      setOrderToDelete(null);
+      setOrders([]);
+      setHasMore(true);
+      await fetchOrders(1, "replace");
+    } catch (err: unknown) {
+      setError(getApiError(err));
+    } finally {
+      setDeletingOrder(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -174,9 +196,22 @@ export default function AdminOrdersPage() {
                           {fmt(order.totalAmount)}
                         </p>
                       </div>
-                      <Badge variant={STATUS_STYLE[order.status] ?? "secondary"}>
-                        {order.status}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={STATUS_STYLE[order.status] ?? "secondary"}>
+                          {order.status}
+                        </Badge>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setOrderToDelete(order);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -201,6 +236,18 @@ export default function AdminOrdersPage() {
           </CardContent>
         </Card>
       )}
+
+      <ConfirmDialog
+        open={Boolean(orderToDelete)}
+        onOpenChange={(open) => {
+          if (!open) setOrderToDelete(null);
+        }}
+        title="Delete order?"
+        description="This will permanently remove the order and restore its product quantities back to inventory."
+        confirmLabel="Delete Order"
+        loading={deletingOrder}
+        onConfirm={handleDeleteOrder}
+      />
     </div>
   );
 }

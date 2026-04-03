@@ -6,11 +6,12 @@ import { useAuthStore } from "@/stores/auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Select } from "@/components/ui/select";
 import { PageLoader, Spinner } from "@/components/ui/spinner";
 import { formatDateTime } from "@/lib/utils";
-import { ArrowLeft, PackageSearch } from "lucide-react";
+import { ArrowLeft, PackageSearch, Trash2 } from "lucide-react";
 import type { Order, OrderStatus } from "@/types/api";
 
 const STATUS_STYLE: Record<string, "warning" | "success" | "secondary"> = {
@@ -35,6 +36,8 @@ export default function AdminOrderDetailPage() {
   const [order, setOrder] = React.useState<Order | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [updatingStatus, setUpdatingStatus] = React.useState(false);
+  const [deletingOrder, setDeletingOrder] = React.useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [error, setError] = React.useState("");
 
   const loadOrder = React.useCallback(async () => {
@@ -74,6 +77,22 @@ export default function AdminOrderDetailPage() {
       setError(getApiError(err));
     } finally {
       setUpdatingStatus(false);
+    }
+  };
+
+  const handleDeleteOrder = async () => {
+    if (!order) return;
+
+    setDeletingOrder(true);
+    setError("");
+
+    try {
+      await commerceApi.deleteAdminOrder(order.id);
+      navigate("/platform-commerce/orders");
+    } catch (err: unknown) {
+      setError(getApiError(err));
+    } finally {
+      setDeletingOrder(false);
     }
   };
 
@@ -137,7 +156,13 @@ export default function AdminOrderDetailPage() {
           </div>
         </div>
 
-        <Badge variant={STATUS_STYLE[order.status] ?? "secondary"}>{order.status}</Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant={STATUS_STYLE[order.status] ?? "secondary"}>{order.status}</Badge>
+          <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
+            <Trash2 className="h-4 w-4" />
+            Delete Order
+          </Button>
+        </div>
       </div>
 
       {error && (
@@ -234,6 +259,16 @@ export default function AdminOrderDetailPage() {
           </Card>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete order?"
+        description="This will permanently remove the order and restore its product quantities back to inventory."
+        confirmLabel="Delete Order"
+        loading={deletingOrder}
+        onConfirm={handleDeleteOrder}
+      />
     </div>
   );
 }

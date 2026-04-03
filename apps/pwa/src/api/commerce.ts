@@ -75,4 +75,7 @@ export const commerceApi = {
 
   updateOrderStatus: (orderId: string, status: OrderStatus) =>
     api.patch<ApiResponse<{ order: Order }>>(`/admin/orders/${orderId}/status`, { status }),
+
+  deleteAdminOrder: (orderId: string) =>
+    api.delete<ApiResponse<{ order: Order }>>(`/admin/orders/${orderId}`),
 };
