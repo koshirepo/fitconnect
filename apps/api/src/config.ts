@@ -32,5 +32,5 @@ export const config = {
   /** VAPID keys for Web Push (optional – push disabled when absent) */
   get vapidPublicKey() { return process.env.VAPID_PUBLIC_KEY ?? ""; },
   get vapidPrivateKey() { return process.env.VAPID_PRIVATE_KEY ?? ""; },
-  get vapidEmail() { return process.env.VAPID_EMAIL ?? "mailto:admin@gympro.app"; },
+  get vapidEmail() { return process.env.VAPID_EMAIL ?? "mailto:admin@FitConnect.app"; },
 };

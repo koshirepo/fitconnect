@@ -191,6 +191,27 @@ export const commerceRepository = {
   },
 
   /**
+   * Run the `count order items by product` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
+  countOrderItemsByProduct(productId: string) {
+    return prisma.orderItem.count({
+      where: { productId },
+    });
+  },
+
+  /**
+   * Run the `delete product` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
+  deleteProduct(productId: string) {
+    return prisma.product.delete({
+      where: { id: productId },
+      select: productSelect,
+    });
+  },
+
+  /**
    * Run the `create order with items` persistence operation for the commerce module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
@@ -308,10 +329,16 @@ export const commerceRepository = {
    * Run the `list all orders` persistence operation for the commerce module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
-  async listAllOrders(page: number, limit: number, status?: string) {
-    const where: { status?: OrderStatus } = {};
+  async listAllOrders(page: number, limit: number, status?: string, productId?: string) {
+    const where: {
+      status?: OrderStatus;
+      items?: { some: { productId: string } };
+    } = {};
     if (status && ["PENDING", "SHIPPED", "DELIVERED"].includes(status)) {
       where.status = status as OrderStatus;
+    }
+    if (productId) {
+      where.items = { some: { productId } };
     }
 
     const [orders, total] = await Promise.all([

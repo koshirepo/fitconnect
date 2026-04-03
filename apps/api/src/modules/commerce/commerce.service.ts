@@ -41,6 +41,7 @@ function mapProduct(product: {
   return {
     ...product,
     photos: toStringList(product.photos),
+    videos: [],
   };
 }
 
@@ -134,6 +135,16 @@ export const commerceService = {
   },
 
   /**
+   * Execute the `get admin product by id` workflow for the commerce module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
+  async getAdminProductById(productId: string) {
+    const product = await commerceRepository.findProductById(productId);
+    if (!product) return { error: "Product not found.", status: 404 as const };
+    return { data: { product: mapProduct(product) } };
+  },
+
+  /**
    * Execute the `create product` workflow for the commerce module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
@@ -166,6 +177,26 @@ export const commerceService = {
     }
 
     const product = await commerceRepository.updateProduct(productId, input);
+    return { data: { product: mapProduct(product) } };
+  },
+
+  /**
+   * Execute the `delete product` workflow for the commerce module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
+  async deleteProduct(productId: string) {
+    const existing = await commerceRepository.findProductById(productId);
+    if (!existing) return { error: "Product not found.", status: 404 as const };
+
+    const orderItemCount = await commerceRepository.countOrderItemsByProduct(productId);
+    if (orderItemCount > 0) {
+      return {
+        error: "This product already has orders and cannot be deleted. Mark it inactive instead.",
+        status: 409 as const,
+      };
+    }
+
+    const product = await commerceRepository.deleteProduct(productId);
     return { data: { product: mapProduct(product) } };
   },
 
@@ -233,8 +264,13 @@ export const commerceService = {
    * Execute the `list all orders` workflow for the commerce module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
-  async listAllOrders(page: number, limit: number, status?: string) {
-    const { orders, total } = await commerceRepository.listAllOrders(page, limit, status);
+  async listAllOrders(page: number, limit: number, status?: string, productId?: string) {
+    const { orders, total } = await commerceRepository.listAllOrders(
+      page,
+      limit,
+      status,
+      productId,
+    );
     return { data: { orders: orders.map(mapOrder) }, total };
   },
 

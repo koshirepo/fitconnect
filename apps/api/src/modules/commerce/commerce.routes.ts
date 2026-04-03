@@ -3,7 +3,7 @@
  *
  * - Declares the Hono routes and middleware chain for product catalog management, ordering, and admin order operations. This route set is mounted from `/` in the application entrypoint.
  * - Keep routing and authorization wiring here, and delegate request handling to the companion controller instead of placing business logic in route callbacks.
- * - Relative endpoints declared in this file: GET /products, GET /products/:id, POST /orders, GET /orders/me, GET /orders/:id, GET /admin/products, POST /admin/products, PATCH /admin/products/:productId, GET /admin/orders, GET /admin/orders/:orderId, PATCH /admin/orders/:orderId/status.
+ * - Relative endpoints declared in this file: GET /products, GET /products/:id, POST /orders, GET /orders/me, GET /orders/:id, GET /admin/products, GET /admin/products/:productId, POST /admin/products, PATCH /admin/products/:productId, DELETE /admin/products/:productId, GET /admin/orders, GET /admin/orders/:orderId, PATCH /admin/orders/:orderId/status.
  * - Primary exports: commerceRoutes.
  */
 import { Hono } from "hono";
@@ -38,11 +38,23 @@ commerceRoutes.post(
   requirePlatformRoles([PlatformRole.SUPER_ADMIN, PlatformRole.SUPPORT]),
   commerceController.createProduct,
 );
+commerceRoutes.get(
+  "/admin/products/:productId",
+  authenticate,
+  requirePlatformRoles([PlatformRole.SUPER_ADMIN, PlatformRole.SUPPORT]),
+  commerceController.getAdminProductById,
+);
 commerceRoutes.patch(
   "/admin/products/:productId",
   authenticate,
   requirePlatformRoles([PlatformRole.SUPER_ADMIN, PlatformRole.SUPPORT]),
   commerceController.updateProduct,
+);
+commerceRoutes.delete(
+  "/admin/products/:productId",
+  authenticate,
+  requirePlatformRoles([PlatformRole.SUPER_ADMIN, PlatformRole.SUPPORT]),
+  commerceController.deleteProduct,
 );
 
 // Platform order management (super-admin only)

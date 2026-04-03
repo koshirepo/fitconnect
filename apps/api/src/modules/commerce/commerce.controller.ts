@@ -9,7 +9,7 @@ import type { Context } from "hono";
 import { parseBody } from "../../lib/http";
 import { parsePagination } from "../../lib/pagination";
 import { auditLog } from "../../lib/audit";
-import { ok, okPaginated, badRequest, notFound } from "../../lib/response";
+import { ok, okPaginated, badRequest, notFound, conflict } from "../../lib/response";
 import { commerceService } from "./commerce.service";
 import {
   createProductSchema,
@@ -101,6 +101,17 @@ export const commerceController = {
   },
 
   /**
+   * Handle the `get admin product by id` HTTP action for the commerce module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
+  async getAdminProductById(c: AppContext) {
+    const productId = c.req.param("productId")!;
+    const result = await commerceService.getAdminProductById(productId);
+    if ("error" in result) return notFound(c, result.error!);
+    return ok(c, result.data);
+  },
+
+  /**
    * Handle the `create product` HTTP action for the commerce module.
    * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
    */
@@ -150,13 +161,42 @@ export const commerceController = {
   },
 
   /**
+   * Handle the `delete product` HTTP action for the commerce module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
+  async deleteProduct(c: AppContext) {
+    const productId = c.req.param("productId")!;
+    const result = await commerceService.deleteProduct(productId);
+    if ("error" in result) {
+      if (result.status === 404) return notFound(c, result.error!);
+      if (result.status === 409) return conflict(c, result.error!);
+      return badRequest(c, result.error!);
+    }
+
+    await auditLog({
+      action: "DELETE",
+      entity: "Product",
+      entityId: productId,
+      actorId: c.get("authUser").id,
+      metadata: {
+        name: result.data.product.name,
+        category: result.data.product.category,
+      },
+      ip: c.req.header("x-forwarded-for") ?? undefined,
+    });
+
+    return ok(c, result.data);
+  },
+
+  /**
    * Handle the `list admin orders` HTTP action for the commerce module.
    * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
    */
   async listAdminOrders(c: AppContext) {
     const { page, limit } = parsePagination(c);
     const status = c.req.query("status");
-    const { data, total } = await commerceService.listAllOrders(page, limit, status);
+    const productId = c.req.query("productId");
+    const { data, total } = await commerceService.listAllOrders(page, limit, status, productId);
     return okPaginated(c, data, { page, limit, total });
   },
 
