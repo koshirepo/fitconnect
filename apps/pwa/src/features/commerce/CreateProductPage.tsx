@@ -14,6 +14,10 @@ import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { PhotoCapture } from "@/components/ui/photo-capture";
 import { PageLoader } from "@/components/ui/spinner";
 import { AlertCircle, ArrowLeft, CheckCircle2, Plus, X } from "lucide-react";
+import {
+  PRODUCT_IMAGE_ASPECT_CLASS,
+  PRODUCT_IMAGE_ASPECT_RATIO,
+} from "@/features/commerce/product-image";
 
 type ProductForm = {
   name: string;
@@ -340,6 +344,11 @@ export default function CreateProductPage() {
               onChange={handlePhotoCapture}
               disabled={uploading || submitting}
               requireFace={false}
+              cropAspectRatio={PRODUCT_IMAGE_ASPECT_RATIO}
+              cropShape="rect"
+              cropOutputWidth={1200}
+              cropOutputHeight={900}
+              croppedFileName="product.jpg"
             />
             {uploading && <p className="text-sm text-muted-foreground">Uploading photo...</p>}
 
@@ -354,7 +363,7 @@ export default function CreateProductPage() {
                       <img
                         src={preview}
                         alt={`Product photo ${index + 1}`}
-                        className="aspect-square rounded border object-cover"
+                        className={`${PRODUCT_IMAGE_ASPECT_CLASS} w-full rounded border object-cover`}
                       />
                       <button
                         type="button"

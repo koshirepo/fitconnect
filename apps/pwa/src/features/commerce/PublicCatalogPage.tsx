@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ArrowLeft, PackageOpen, ShoppingCart, Search, Plus, Minus, Trash2 } from "lucide-react";
 import type { Product } from "@/types/api";
 import { formatCurrency } from "./pricing";
+import { PRODUCT_IMAGE_ASPECT_CLASS } from "./product-image";
 import {
   getCartItems,
   getCartTotalQuantity,
@@ -163,7 +164,7 @@ export default function PublicCatalogPage() {
                   {/* Image */}
                   <button
                     type="button"
-                    className="relative aspect-square w-full overflow-hidden bg-muted"
+                    className={`relative ${PRODUCT_IMAGE_ASPECT_CLASS} w-full overflow-hidden bg-muted`}
                     onClick={() => navigate(`/shop/products/${product.id}`)}
                   >
                     {firstPhoto ? (

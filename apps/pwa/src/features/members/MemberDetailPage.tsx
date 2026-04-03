@@ -125,11 +125,13 @@ export default function MemberDetailPage() {
     async (showLoading = true) => {
       if (!currentTenantId || !membershipId) return;
       if (showLoading) setLoading(true);
+      setError("");
       try {
         const res = await tenantsApi.getMemberDetail(currentTenantId, membershipId);
         setMember(res.data.data.member);
-      } catch {
-        setError("Failed to load member details.");
+      } catch (err: unknown) {
+        setMember(null);
+        setError(getApiError(err));
       } finally {
         if (showLoading) setLoading(false);
       }
@@ -374,12 +376,18 @@ export default function MemberDetailPage() {
   if (loading) return <PageLoader />;
 
   if (!member) {
+    const isNotFound = error.toLowerCase().includes("not found");
     return (
       <div className="space-y-4">
         <EmptyState
           icon={Shield}
-          title="Member not found"
-          description={error || "Could not find this member."}
+          title={isNotFound ? "Member not found" : "Unable to load member"}
+          description={error || "Could not load this member right now."}
+          action={
+            <Button variant="outline" onClick={() => void loadMember(true)}>
+              Retry
+            </Button>
+          }
         />
       </div>
     );

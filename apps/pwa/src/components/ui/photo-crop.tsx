@@ -10,25 +10,46 @@ interface PhotoCropProps {
   onConfirm: (blob: Blob) => void;
   /** Called when the user cancels cropping */
   onCancel: () => void;
-  /** Output size in px (square). Default 400 */
-  outputSize?: number;
+  /** Crop area width / height ratio. Defaults to 1 */
+  aspectRatio?: number;
+  /** Crop output shape. Defaults to circle for avatar flows */
+  shape?: "circle" | "rect";
+  /** Output width in px. Height is derived when omitted. */
+  outputWidth?: number;
+  /** Output height in px. Defaults to width / aspect ratio. */
+  outputHeight?: number;
 }
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 5;
 const ZOOM_STEP = 0.1;
+const DEFAULT_OUTPUT_WIDTH = 400;
+const CROP_FRAME_SCALE = 0.82;
+const RECT_RADIUS = 24;
 
-export function PhotoCrop({ src, onConfirm, onCancel, outputSize = 400 }: PhotoCropProps) {
+export function PhotoCrop({
+  src,
+  onConfirm,
+  onCancel,
+  aspectRatio = 1,
+  shape = "circle",
+  outputWidth,
+  outputHeight,
+}: PhotoCropProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const imgRef = React.useRef<HTMLImageElement | null>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
+
+  const safeAspectRatio = aspectRatio > 0 ? aspectRatio : 1;
+  const targetWidth = outputWidth ?? DEFAULT_OUTPUT_WIDTH;
+  const targetHeight = outputHeight ?? Math.round(targetWidth / safeAspectRatio);
 
   // Transform state
   const [zoom, setZoom] = React.useState(1);
   const [offset, setOffset] = React.useState({ x: 0, y: 0 });
   const [imgLoaded, setImgLoaded] = React.useState(false);
 
-  // Drag state (not in React state for perf — use refs)
+  // Drag state (not in React state for perf - use refs)
   const dragging = React.useRef(false);
   const lastPos = React.useRef({ x: 0, y: 0 });
   // Pinch state
@@ -44,7 +65,7 @@ export function PhotoCrop({ src, onConfirm, onCancel, outputSize = 400 }: PhotoC
     offsetRef.current = offset;
   }, [offset]);
 
-  // ─── Compute how the image fits the viewport ────────────────────────────
+  // Compute how the image fits the viewport
   const getLayout = React.useCallback(() => {
     const container = containerRef.current;
     const img = imgRef.current;
@@ -52,32 +73,40 @@ export function PhotoCrop({ src, onConfirm, onCancel, outputSize = 400 }: PhotoC
 
     const cw = container.clientWidth;
     const ch = container.clientHeight;
-    const cropSize = Math.min(cw, ch) * 0.82; // circle diameter
+    const maxCropWidth = cw * CROP_FRAME_SCALE;
+    const maxCropHeight = ch * CROP_FRAME_SCALE;
 
-    // Base scale: image covers the crop circle
+    let cropWidth = Math.min(maxCropWidth, maxCropHeight * safeAspectRatio);
+    let cropHeight = cropWidth / safeAspectRatio;
+
+    if (cropHeight > maxCropHeight) {
+      cropHeight = maxCropHeight;
+      cropWidth = cropHeight * safeAspectRatio;
+    }
+
+    // Base scale: image covers the crop frame
     const iw = img.naturalWidth;
     const ih = img.naturalHeight;
-    const baseScale = cropSize / Math.min(iw, ih);
+    const baseScale = Math.max(cropWidth / iw, cropHeight / ih);
 
-    return { cw, ch, cropSize, iw, ih, baseScale };
-  }, []);
+    return { cw, ch, cropWidth, cropHeight, iw, ih, baseScale };
+  }, [safeAspectRatio]);
 
-  // ─── Clamp offset so the image always covers the crop circle ─────────────
+  // Clamp offset so the image always covers the crop frame
   const clampOffset = React.useCallback(
     (ox: number, oy: number, z: number) => {
       const layout = getLayout();
       if (!layout) return { x: ox, y: oy };
 
-      const { cropSize, iw, ih, baseScale } = layout;
+      const { cropWidth, cropHeight, iw, ih, baseScale } = layout;
       const s = baseScale * z;
       const dispW = iw * s;
       const dispH = ih * s;
-      const r = cropSize / 2;
+      const halfCropWidth = cropWidth / 2;
+      const halfCropHeight = cropHeight / 2;
 
-      // The image center is at (cw/2 + ox, ch/2 + oy)
-      // We need the crop circle edges to stay within the image
-      const maxOx = Math.max(0, dispW / 2 - r);
-      const maxOy = Math.max(0, dispH / 2 - r);
+      const maxOx = Math.max(0, dispW / 2 - halfCropWidth);
+      const maxOy = Math.max(0, dispH / 2 - halfCropHeight);
 
       return {
         x: Math.max(-maxOx, Math.min(maxOx, ox)),
@@ -87,9 +116,8 @@ export function PhotoCrop({ src, onConfirm, onCancel, outputSize = 400 }: PhotoC
     [getLayout],
   );
 
-  // ─── Mouse / Touch handlers ─────────────────────────────────────────────
   const handlePointerDown = React.useCallback((e: React.PointerEvent) => {
-    if (e.pointerType === "touch" && e.isPrimary === false) return; // handled by touch events for pinch
+    if (e.pointerType === "touch" && e.isPrimary === false) return;
     dragging.current = true;
     lastPos.current = { x: e.clientX, y: e.clientY };
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -111,7 +139,6 @@ export function PhotoCrop({ src, onConfirm, onCancel, outputSize = 400 }: PhotoC
     dragging.current = false;
   }, []);
 
-  // ─── Pinch-to-zoom (touch events — native listeners for passive: false) ──
   const clampOffsetRef = React.useRef(clampOffset);
   React.useEffect(() => {
     clampOffsetRef.current = clampOffset;
@@ -177,8 +204,6 @@ export function PhotoCrop({ src, onConfirm, onCancel, outputSize = 400 }: PhotoC
     };
   }, []);
 
-  // ─── Scroll-to-zoom ────────────────────────────────────────────────────
-  // ─── Zoom buttons ──────────────────────────────────────────────────────
   const adjustZoom = React.useCallback(
     (delta: number) => {
       setZoom((prev) => {
@@ -195,41 +220,43 @@ export function PhotoCrop({ src, onConfirm, onCancel, outputSize = 400 }: PhotoC
     setOffset({ x: 0, y: 0 });
   }, []);
 
-  // ─── Render the cropped output ──────────────────────────────────────────
   const handleConfirm = React.useCallback(() => {
     const layout = getLayout();
     const img = imgRef.current;
     const canvas = canvasRef.current;
     if (!layout || !img || !canvas) return;
 
-    const { cw, ch, cropSize, iw, ih, baseScale } = layout;
+    const { cw, ch, cropWidth, cropHeight, iw, ih, baseScale } = layout;
     const s = baseScale * zoom;
 
     // Image top-left in container coordinates
     const imgLeft = (cw - iw * s) / 2 + offset.x;
     const imgTop = (ch - ih * s) / 2 + offset.y;
 
-    // Crop circle bounds in container coordinates
-    const cropLeft = (cw - cropSize) / 2;
-    const cropTop = (ch - cropSize) / 2;
+    // Crop frame bounds in container coordinates
+    const cropLeft = (cw - cropWidth) / 2;
+    const cropTop = (ch - cropHeight) / 2;
 
     // Map crop rectangle back to image natural coordinates
     const srcX = (cropLeft - imgLeft) / s;
     const srcY = (cropTop - imgTop) / s;
-    const srcSize = cropSize / s;
+    const srcWidth = cropWidth / s;
+    const srcHeight = cropHeight / s;
 
-    canvas.width = outputSize;
-    canvas.height = outputSize;
-    const ctx = canvas.getContext("2d")!;
-    ctx.clearRect(0, 0, outputSize, outputSize);
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, targetWidth, targetHeight);
 
-    // Clip to circle
-    ctx.beginPath();
-    ctx.arc(outputSize / 2, outputSize / 2, outputSize / 2, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.clip();
+    if (shape === "circle") {
+      ctx.beginPath();
+      ctx.arc(targetWidth / 2, targetHeight / 2, Math.min(targetWidth, targetHeight) / 2, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+    }
 
-    ctx.drawImage(img, srcX, srcY, srcSize, srcSize, 0, 0, outputSize, outputSize);
+    ctx.drawImage(img, srcX, srcY, srcWidth, srcHeight, 0, 0, targetWidth, targetHeight);
 
     canvas.toBlob(
       (blob) => {
@@ -238,12 +265,10 @@ export function PhotoCrop({ src, onConfirm, onCancel, outputSize = 400 }: PhotoC
       "image/jpeg",
       0.9,
     );
-  }, [getLayout, zoom, offset, outputSize, onConfirm]);
+  }, [getLayout, offset, onConfirm, shape, targetHeight, targetWidth, zoom]);
 
-  // ─── Layout state (recomputed when image loads or window resizes) ────────
   const [layout, setLayout] = React.useState<ReturnType<typeof getLayout>>(null);
 
-  // ─── Load image ─────────────────────────────────────────────────────────
   React.useEffect(() => {
     const img = new Image();
     img.onload = () => {
@@ -253,7 +278,6 @@ export function PhotoCrop({ src, onConfirm, onCancel, outputSize = 400 }: PhotoC
     img.src = src;
   }, [src]);
 
-  // Recompute layout when image loads or container resizes
   React.useEffect(() => {
     if (!imgLoaded) return;
     const update = () => setLayout(getLayout());
@@ -266,13 +290,11 @@ export function PhotoCrop({ src, onConfirm, onCancel, outputSize = 400 }: PhotoC
     <div className="fixed inset-0 z-50 flex flex-col bg-black">
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* Header */}
       <div className="flex items-center justify-between bg-zinc-900/90 px-4 py-2 text-sm font-medium text-white">
         <span>Zoom &amp; Crop</span>
         <span className="text-xs text-zinc-400">Pinch, scroll, or drag to adjust</span>
       </div>
 
-      {/* Crop area */}
       <div
         ref={containerRef}
         className="relative flex-1 touch-none select-none overflow-hidden"
@@ -281,7 +303,6 @@ export function PhotoCrop({ src, onConfirm, onCancel, outputSize = 400 }: PhotoC
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
       >
-        {/* The image */}
         {imgLoaded && layout && (
           <img
             src={src}
@@ -297,34 +318,58 @@ export function PhotoCrop({ src, onConfirm, onCancel, outputSize = 400 }: PhotoC
           />
         )}
 
-        {/* Dark overlay with circular cutout */}
         {layout && (
           <svg className="pointer-events-none absolute inset-0 h-full w-full">
             <defs>
               <mask id="crop-mask">
                 <rect width="100%" height="100%" fill="white" />
-                <circle
-                  cx={layout.cw / 2}
-                  cy={layout.ch / 2}
-                  r={layout.cropSize / 2}
-                  fill="black"
-                />
+                {shape === "circle" ? (
+                  <circle
+                    cx={layout.cw / 2}
+                    cy={layout.ch / 2}
+                    r={Math.min(layout.cropWidth, layout.cropHeight) / 2}
+                    fill="black"
+                  />
+                ) : (
+                  <rect
+                    x={(layout.cw - layout.cropWidth) / 2}
+                    y={(layout.ch - layout.cropHeight) / 2}
+                    width={layout.cropWidth}
+                    height={layout.cropHeight}
+                    rx={RECT_RADIUS}
+                    ry={RECT_RADIUS}
+                    fill="black"
+                  />
+                )}
               </mask>
             </defs>
             <rect width="100%" height="100%" fill="rgba(0,0,0,0.6)" mask="url(#crop-mask)" />
-            <circle
-              cx={layout.cw / 2}
-              cy={layout.ch / 2}
-              r={layout.cropSize / 2}
-              fill="none"
-              stroke="rgba(255,255,255,0.5)"
-              strokeWidth="2"
-            />
+            {shape === "circle" ? (
+              <circle
+                cx={layout.cw / 2}
+                cy={layout.ch / 2}
+                r={Math.min(layout.cropWidth, layout.cropHeight) / 2}
+                fill="none"
+                stroke="rgba(255,255,255,0.5)"
+                strokeWidth="2"
+              />
+            ) : (
+              <rect
+                x={(layout.cw - layout.cropWidth) / 2}
+                y={(layout.ch - layout.cropHeight) / 2}
+                width={layout.cropWidth}
+                height={layout.cropHeight}
+                rx={RECT_RADIUS}
+                ry={RECT_RADIUS}
+                fill="none"
+                stroke="rgba(255,255,255,0.5)"
+                strokeWidth="2"
+              />
+            )}
           </svg>
         )}
       </div>
 
-      {/* Zoom slider + controls */}
       <div className="flex flex-col gap-3 bg-zinc-900/90 px-4 pt-3">
         <div className="flex items-center justify-center gap-3">
           <Button
@@ -345,9 +390,9 @@ export function PhotoCrop({ src, onConfirm, onCancel, outputSize = 400 }: PhotoC
             step={0.05}
             value={zoom}
             onChange={(e) => {
-              const z = parseFloat(e.target.value);
-              setZoom(z);
-              setOffset((o) => clampOffset(o.x, o.y, z));
+              const nextZoom = parseFloat(e.target.value);
+              setZoom(nextZoom);
+              setOffset((o) => clampOffset(o.x, o.y, nextZoom));
             }}
             className="h-1.5 w-40 cursor-pointer appearance-none rounded-full bg-zinc-600 accent-white sm:w-56"
           />
@@ -377,7 +422,6 @@ export function PhotoCrop({ src, onConfirm, onCancel, outputSize = 400 }: PhotoC
         <span className="text-center text-xs text-zinc-400">{Math.round(zoom * 100)}%</span>
       </div>
 
-      {/* Bottom actions */}
       <div className="flex items-center justify-center gap-6 bg-zinc-900/90 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <Button
           type="button"
@@ -399,7 +443,6 @@ export function PhotoCrop({ src, onConfirm, onCancel, outputSize = 400 }: PhotoC
           <Check className="h-7 w-7" />
         </button>
 
-        {/* Spacer to center the confirm button */}
         <div className="h-12 w-12" />
       </div>
     </div>

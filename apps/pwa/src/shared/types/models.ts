@@ -302,6 +302,8 @@ export interface Payment {
     email: string;
     phone?: string | null;
     avatarUrl?: string | null;
+    status?: AccountStatus;
+    dueDate?: string | null;
   };
   collectedBy?: {
     id: string;
@@ -309,6 +311,7 @@ export interface Payment {
     name: string;
     email: string;
     phone?: string | null;
+    avatarUrl?: string | null;
   };
   subscription?: {
     id: string;

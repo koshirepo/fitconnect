@@ -29,6 +29,7 @@ import { getCartItems, getCartTotalQuantity, upsertCartItem, removeCartItem } fr
 import { ReviewForm } from "@/components/commerce/ReviewForm";
 import { ReviewList } from "@/components/commerce/ReviewList";
 import { RatingSummary } from "@/components/commerce/RatingSummary";
+import { PRODUCT_IMAGE_ASPECT_CLASS } from "./product-image";
 
 export default function PublicProductDetailPage() {
   const { productId } = useParams<{ productId: string }>();
@@ -196,7 +197,9 @@ export default function PublicProductDetailPage() {
         <div className="grid gap-8 lg:grid-cols-[1fr_420px]">
           {/* ── Gallery ── */}
           <div className="space-y-3">
-            <div className="relative aspect-[4/3] max-h-[70vh] w-full overflow-hidden rounded-2xl border bg-muted">
+            <div
+              className={`relative ${PRODUCT_IMAGE_ASPECT_CLASS} max-h-[70vh] w-full overflow-hidden rounded-2xl border bg-muted`}
+            >
               {activePhoto ? (
                 <img src={activePhoto} alt={product.name} className="h-full w-full object-cover" />
               ) : (

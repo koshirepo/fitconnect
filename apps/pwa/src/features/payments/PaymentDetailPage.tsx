@@ -413,8 +413,15 @@ export default function PaymentDetailPage() {
               >
                 <AvatarCard
                   name={payment.member.name}
+                  avatarUrl={payment.member.avatarUrl}
                   memberId={payment.member.memberId}
                   variant="md"
+                  dueDate={payment.member.dueDate}
+                  isActive={
+                    payment.member.status
+                      ? payment.member.status === "ACTIVE"
+                      : undefined
+                  }
                 >
                   <p className="text-xs text-muted-foreground">
                     {[payment.member.email, payment.member.phone].filter(Boolean).join(" · ")}
@@ -436,7 +443,11 @@ export default function PaymentDetailPage() {
                 Collected by
               </span>
               <div className="mt-1">
-                <AvatarCard name={payment.collectedBy.name} variant="sm">
+                <AvatarCard
+                  name={payment.collectedBy.name}
+                  avatarUrl={payment.collectedBy.avatarUrl}
+                  variant="sm"
+                >
                   <p className="text-xs text-muted-foreground">{payment.collectedBy.email}</p>
                 </AvatarCard>
               </div>

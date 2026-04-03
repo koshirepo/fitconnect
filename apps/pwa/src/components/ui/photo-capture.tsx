@@ -11,6 +11,11 @@ interface PhotoCaptureProps {
   onChange: (file: File | null, previewUrl: string | null) => void;
   /** Set to false to skip face validation (e.g. for logos) */
   requireFace?: boolean;
+  cropAspectRatio?: number;
+  cropShape?: "circle" | "rect";
+  cropOutputWidth?: number;
+  cropOutputHeight?: number;
+  croppedFileName?: string;
   disabled?: boolean;
   className?: string;
 }
@@ -19,6 +24,11 @@ export function PhotoCapture({
   value,
   onChange,
   requireFace = true,
+  cropAspectRatio = 1,
+  cropShape = "circle",
+  cropOutputWidth,
+  cropOutputHeight,
+  croppedFileName = "avatar.jpg",
   disabled,
   className,
 }: PhotoCaptureProps) {
@@ -309,9 +319,9 @@ export function PhotoCapture({
       // Revoke the raw image URL
       if (cropSrc) URL.revokeObjectURL(cropSrc);
       setCropSrc(null);
-      acceptPhoto(blob, "avatar.jpg");
+      acceptPhoto(blob, croppedFileName);
     },
-    [cropSrc, acceptPhoto],
+    [acceptPhoto, cropSrc, croppedFileName],
   );
 
   const handleCropCancel = React.useCallback(() => {
@@ -440,7 +450,15 @@ export function PhotoCapture({
 
       {/* ─── Crop Editor Overlay ──────────────────────────────────────────── */}
       {cropSrc && (
-        <PhotoCrop src={cropSrc} onConfirm={handleCropConfirm} onCancel={handleCropCancel} />
+        <PhotoCrop
+          src={cropSrc}
+          onConfirm={handleCropConfirm}
+          onCancel={handleCropCancel}
+          aspectRatio={cropAspectRatio}
+          shape={cropShape}
+          outputWidth={cropOutputWidth}
+          outputHeight={cropOutputHeight}
+        />
       )}
 
       {/* Validating face overlay */}
