@@ -365,4 +365,29 @@ export const commerceRepository = {
       select: orderSelect,
     });
   },
+
+  /**
+   * Run the `delete order` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
+  deleteOrder(orderId: string) {
+    return prisma.order.delete({
+      where: { id: orderId },
+      select: orderSelect,
+    });
+  },
+
+  /**
+   * Run the `restore stock for order items` persistence operation for the commerce module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
+  async restoreStockForOrderItems(items: Array<{ productId: string; quantity: number }>) {
+    for (const item of items) {
+      await prisma.product.update({
+        where: { id: item.productId },
+        data: { stock: { increment: item.quantity } },
+        select: { id: true },
+      });
+    }
+  },
 };

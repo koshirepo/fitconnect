@@ -234,4 +234,29 @@ export const commerceController = {
 
     return ok(c, result.data);
   },
+
+  /**
+   * Handle the `delete order` HTTP action for the commerce module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
+  async deleteOrder(c: AppContext) {
+    const orderId = c.req.param("orderId")!;
+    const result = await commerceService.deleteOrder(orderId);
+    if ("error" in result) return notFound(c, result.error!);
+
+    await auditLog({
+      action: "DELETE",
+      entity: "Order",
+      entityId: orderId,
+      actorId: c.get("authUser").id,
+      metadata: {
+        status: result.previousStatus,
+        totalAmount: result.data.order.totalAmount,
+        itemCount: result.data.order.items.length,
+      },
+      ip: c.req.header("x-forwarded-for") ?? undefined,
+    });
+
+    return ok(c, result.data);
+  },
 };

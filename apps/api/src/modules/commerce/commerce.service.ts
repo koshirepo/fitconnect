@@ -286,4 +286,27 @@ export const commerceService = {
     const order = await commerceRepository.updateOrderStatus(orderId, status);
     return { data: { order: mapOrder(order) }, previousStatus: existing.status };
   },
+
+  /**
+   * Execute the `delete order` workflow for the commerce module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
+  async deleteOrder(orderId: string) {
+    const existing = await commerceRepository.findOrderById(orderId);
+    if (!existing) return { error: "Order not found.", status: 404 as const };
+
+    // Delete the order first so retries cannot accidentally restore stock twice.
+    const deletedOrder = await commerceRepository.deleteOrder(orderId);
+    await commerceRepository.restoreStockForOrderItems(
+      deletedOrder.items.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      })),
+    );
+
+    return {
+      data: { order: mapOrder(deletedOrder) },
+      previousStatus: existing.status,
+    };
+  },
 };
