@@ -27,17 +27,15 @@ export const workoutService = {
     // Members only see plans assigned to them
     if (role === "MEMBER") {
       const membership = await workoutRepository.findMembership(tenantId, userId);
-      if (membership) {
-        where.assignments = { some: { membershipId: membership.id } };
-      }
+      if (!membership) return { data: { plans: [] }, total: 0 };
+      where.assignments = { some: { membershipId: membership.id } };
     }
 
     // Coaches see only their created plans
     if (role === "COACH") {
       const membership = await workoutRepository.findMembership(tenantId, userId);
-      if (membership) {
-        where.creatorId = membership.id;
-      }
+      if (!membership) return { data: { plans: [] }, total: 0 };
+      where.creatorId = membership.id;
     }
 
     const { plans, total } = await workoutRepository.listPlans(where, page, limit);

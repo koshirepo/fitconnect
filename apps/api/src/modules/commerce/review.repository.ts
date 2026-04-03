@@ -98,6 +98,15 @@ export const reviewRepository = {
       isAnonymous: boolean;
     },
   ) {
+    const verifiedBuyer = userId
+      ? (await prisma.order.count({
+          where: {
+            userId,
+            items: { some: { productId } },
+          },
+        })) > 0
+      : false;
+
     return prisma.productReview.create({
       data: {
         productId,
@@ -106,7 +115,7 @@ export const reviewRepository = {
         title: data.title,
         description: data.description,
         isAnonymous: data.isAnonymous,
-        verifiedBuyer: userId ? true : false, // TODO: Check if user actually purchased
+        verifiedBuyer,
       },
       select: reviewSelect,
     });
@@ -148,25 +157,29 @@ export const reviewRepository = {
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
   async markHelpful(reviewId: string, userId: string) {
-    // Upsert: create if doesn't exist, ignore if already exists
-    await prisma.productReviewHelpful.upsert({
+    const existing = await prisma.productReviewHelpful.findUnique({
       where: {
         reviewId_userId: { reviewId, userId },
       },
-      create: {
+    });
+
+    if (existing) {
+      return { success: true, added: false };
+    }
+
+    await prisma.productReviewHelpful.create({
+      data: {
         reviewId,
         userId,
       },
-      update: {},
     });
 
-    // Increment helpful count
     await prisma.productReview.update({
       where: { id: reviewId },
       data: { helpfulCount: { increment: 1 } },
     });
 
-    return { success: true };
+    return { success: true, added: true };
   },
 
   // Unmark review as helpful

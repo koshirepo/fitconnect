@@ -264,35 +264,53 @@ export const commerceRepository = {
     });
 
     // Optimistic stock decrement — WHERE stock >= quantity guards against races
-    for (const item of orderItems) {
-      const updated = await prisma.product.updateMany({
-        where: { id: item.productId, stock: { gte: item.quantity } },
-        data: { stock: { decrement: item.quantity } },
-      });
-      if (updated.count === 0) {
-        throw new Error(`INSUFFICIENT_STOCK:${item.productName}:0`);
+    const decrementedItems: Array<{ productId: string; quantity: number }> = [];
+
+    try {
+      for (const item of orderItems) {
+        const updated = await prisma.product.updateMany({
+          where: { id: item.productId, stock: { gte: item.quantity } },
+          data: { stock: { decrement: item.quantity } },
+        });
+        if (updated.count === 0) {
+          throw new Error(`INSUFFICIENT_STOCK:${item.productName}:0`);
+        }
+        decrementedItems.push({ productId: item.productId, quantity: item.quantity });
       }
+
+      const subtotalAmount = orderItems.reduce((sum, item) => sum + item.lineTotal, 0);
+      const gstAmount = Math.round((subtotalAmount * data.gstRatePct) / 100);
+      const totalAmount = subtotalAmount + gstAmount;
+
+      return await prisma.order.create({
+        data: {
+          userId: data.userId,
+          buyerName: data.buyerName,
+          buyerEmail: data.buyerEmail,
+          buyerPhone: data.buyerPhone,
+          buyerAddress: data.buyerAddress,
+          subtotalAmount,
+          gstRatePct: data.gstRatePct,
+          gstAmount,
+          totalAmount,
+          items: { create: orderItems },
+        },
+        select: orderSelect,
+      });
+    } catch (error) {
+      if (decrementedItems.length > 0) {
+        await Promise.allSettled(
+          decrementedItems.map((item) =>
+            prisma.product.update({
+              where: { id: item.productId },
+              data: { stock: { increment: item.quantity } },
+              select: { id: true },
+            }),
+          ),
+        );
+      }
+      throw error;
     }
-
-    const subtotalAmount = orderItems.reduce((sum, item) => sum + item.lineTotal, 0);
-    const gstAmount = Math.round((subtotalAmount * data.gstRatePct) / 100);
-    const totalAmount = subtotalAmount + gstAmount;
-
-    return prisma.order.create({
-      data: {
-        userId: data.userId,
-        buyerName: data.buyerName,
-        buyerEmail: data.buyerEmail,
-        buyerPhone: data.buyerPhone,
-        buyerAddress: data.buyerAddress,
-        subtotalAmount,
-        gstRatePct: data.gstRatePct,
-        gstAmount,
-        totalAmount,
-        items: { create: orderItems },
-      },
-      select: orderSelect,
-    });
   },
 
   /**
