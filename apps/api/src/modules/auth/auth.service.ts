@@ -61,6 +61,8 @@ function buildTenantsMap(
   return map;
 }
 
+type ScheduleBackgroundTask = (promise: Promise<unknown>) => void;
+
 export const authService = {
   /**
    * Execute the `bootstrap` workflow for the auth module.
@@ -249,7 +251,10 @@ export const authService = {
    * Execute the `forgot password` workflow for the auth module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
-  async forgotPassword(input: ForgotPasswordInput) {
+  async forgotPassword(
+    input: ForgotPasswordInput,
+    scheduleBackgroundTask?: ScheduleBackgroundTask,
+  ) {
     // Always return success to avoid leaking whether email exists
     const user = await authRepository.findUserByEmail(input.email);
     if (!user || user.status !== "ACTIVE") return { data: true };
@@ -267,11 +272,17 @@ export const authService = {
     // Fire-and-forget — don't await so endpoint responds instantly
     // Fire-and-forget keeps the endpoint latency predictable even if the SMTP
     // provider is slow or temporarily unavailable.
-    emailService
+    const sendResetEmail = emailService
       .sendPasswordResetEmail(user.email, user.name, resetUrl)
       .catch((err) => {
         console.error("Password reset email failed.", err);
       });
+
+    if (scheduleBackgroundTask) {
+      scheduleBackgroundTask(sendResetEmail);
+    } else {
+      await sendResetEmail;
+    }
 
     return { data: true };
   },
