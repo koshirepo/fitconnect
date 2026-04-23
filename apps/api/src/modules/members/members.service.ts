@@ -40,6 +40,65 @@ function normalizeOptionalText(value: string | null | undefined) {
   return trimmed ? trimmed : null;
 }
 
+function flattenReferralMember<
+  T extends {
+    user: { id: string; [key: string]: unknown };
+    [key: string]: unknown;
+  },
+>(membership: T) {
+  return flattenMemberUser(membership);
+}
+
+function flattenMemberDetail<
+  T extends {
+    user: { id: string; [key: string]: unknown };
+    referredBy?: {
+      user: { id: string; [key: string]: unknown };
+      [key: string]: unknown;
+    } | null;
+    referrals: Array<{
+      user: { id: string; [key: string]: unknown };
+      [key: string]: unknown;
+    }>;
+    _count: { referrals: number };
+    [key: string]: unknown;
+  },
+>(membership: T) {
+  const flat = flattenMemberUser(membership);
+  const {
+    _count: _ignoredCount,
+    referredBy: _ignoredReferredBy,
+    referrals: _ignoredReferrals,
+    ...rest
+  } = flat;
+  return {
+    ...rest,
+    referredBy: membership.referredBy ? flattenReferralMember(membership.referredBy) : null,
+    referrals: membership.referrals.map((referral) => flattenReferralMember(referral)),
+    referralCount: membership._count.referrals,
+  };
+}
+
+function flattenReferralLeader<
+  T extends {
+    user: { id: string; [key: string]: unknown };
+    referrals: Array<{
+      user: { id: string; [key: string]: unknown };
+      [key: string]: unknown;
+    }>;
+    _count: { referrals: number };
+    [key: string]: unknown;
+  },
+>(membership: T) {
+  const flat = flattenMemberUser(membership);
+  const { _count: _ignoredCount, referrals: _ignoredReferrals, ...rest } = flat;
+  return {
+    ...rest,
+    referrals: membership.referrals.map((referral) => flattenReferralMember(referral)),
+    referralCount: membership._count.referrals,
+  };
+}
+
 async function cleanupPreviousAsset(
   label: string,
   previousUrl: string | null | undefined,
@@ -297,8 +356,9 @@ export const memberService = {
       createdAt: Date;
       updatedAt: Date;
     } | null = null;
+    let referredByMembership: { id: string } | null = null;
 
-    const [subscriptionResult, chargesResult, shiftResult] = await Promise.all([
+    const [subscriptionResult, chargesResult, shiftResult, referredByResult] = await Promise.all([
       input.subscriptionId
         ? prisma.subscription.findFirst({
             where: { id: input.subscriptionId, tenantId, isActive: true },
@@ -338,11 +398,15 @@ export const memberService = {
             },
           })
         : null,
+      input.referredByMembershipId
+        ? memberRepository.findReferralCandidate(tenantId, input.referredByMembershipId)
+        : null,
     ]);
 
     subscription = subscriptionResult;
     charges = chargesResult;
     shift = shiftResult;
+    referredByMembership = referredByResult;
 
     if (input.subscriptionId && !subscription) {
       return { error: "Subscription plan not found.", status: 404 as const };
@@ -357,12 +421,16 @@ export const memberService = {
     if (input.shiftId && !shift) {
       return { error: "Shift not found.", status: 404 as const };
     }
+    if (input.referredByMembershipId && !referredByMembership) {
+      return { error: "Referring member not found.", status: 404 as const };
+    }
 
     const membership = await memberRepository.createMembership(
       tenantId,
       user.id,
       input.role as TenantRole,
       input.shiftId,
+      input.referredByMembershipId,
     );
 
     // Create payments for charges and subscription in parallel
@@ -505,6 +573,42 @@ export const memberService = {
   },
 
   /**
+   * Execute the `list referral leaders` workflow for the members module.
+   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   */
+  async listReferrals(
+    tenantId: string,
+    page: number,
+    limit: number,
+    search?: string,
+    order: "asc" | "desc" = "desc",
+  ) {
+    const leaders = await memberRepository.listReferralLeaders(tenantId, search);
+    const normalized = leaders.map((leader) => flattenReferralLeader(leader));
+    normalized.sort((a, b) => {
+      const delta =
+        order === "asc"
+          ? a.referralCount - b.referralCount
+          : b.referralCount - a.referralCount;
+      if (delta !== 0) return delta;
+      if (a.memberId !== b.memberId) return a.memberId - b.memberId;
+      const aName = "name" in a && typeof a.name === "string" ? a.name : "";
+      const bName = "name" in b && typeof b.name === "string" ? b.name : "";
+      return aName.localeCompare(bName);
+    });
+
+    const start = (page - 1) * limit;
+    const end = start + limit;
+
+    return {
+      data: {
+        referrals: normalized.slice(start, end),
+      },
+      total: normalized.length,
+    };
+  },
+
+  /**
    * Execute the `get member detail` workflow for the members module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
@@ -526,7 +630,7 @@ export const memberService = {
       tenantId,
     );
     if (!member) return { error: "Member not found.", status: 404 as const };
-    return { data: { member: flattenMemberUser(member) } };
+    return { data: { member: flattenMemberDetail(member) } };
   },
 
   /**
@@ -685,7 +789,7 @@ export const memberService = {
       membershipId,
       tenantId,
     );
-    return { data: { member: flattenMemberUser(updated!) } };
+    return { data: { member: flattenMemberDetail(updated!) } };
   },
 
   /**

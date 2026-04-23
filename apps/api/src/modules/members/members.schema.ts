@@ -20,6 +20,7 @@ export const addMemberSchema = z.object({
   subscriptionId: z.string().optional(),
   chargeIds: z.array(z.string()).optional(),
   shiftId: z.string().optional(),
+  referredByMembershipId: z.string().optional(),
 });
 
 export const updateMemberRoleSchema = z.object({

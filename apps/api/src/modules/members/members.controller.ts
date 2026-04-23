@@ -94,6 +94,26 @@ export const memberController = {
   },
 
   /**
+   * Handle the `list referral leaders` HTTP action for the members module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
+  async listReferrals(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    const { page, limit } = parsePagination(c);
+    const search = c.req.query("search");
+    const order = c.req.query("order") === "asc" ? "asc" : "desc";
+
+    const { data, total } = await memberService.listReferrals(
+      tenantId,
+      page,
+      limit,
+      search,
+      order,
+    );
+    return okPaginated(c, data, { page, limit, total });
+  },
+
+  /**
    * Handle the `get member detail` HTTP action for the members module.
    * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
    */

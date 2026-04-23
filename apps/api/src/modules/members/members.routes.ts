@@ -30,6 +30,13 @@ memberRoutes.get(
 );
 
 memberRoutes.get(
+  "/:tenantId/members/referrals",
+  authenticate,
+  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH]),
+  memberController.listReferrals,
+);
+
+memberRoutes.get(
   "/:tenantId/members/:membershipId",
   authenticate,
   requireTenantRoles([TenantRole.MEMBER, TenantRole.COACH, TenantRole.ADMIN]),

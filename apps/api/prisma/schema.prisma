@@ -150,10 +150,13 @@ model TenantMembership {
   dueDate           DateTime? /// Latest subscription validUntil â€“ auto-updated on payment changes
   shiftId           String?
   shift             Shift?                  @relation(fields: [shiftId], references: [id], onDelete: SetNull)
+  referredByMembershipId String?
+  referredBy        TenantMembership?       @relation("MemberReferrals", fields: [referredByMembershipId], references: [id], onDelete: SetNull)
   joinedAt          DateTime                @default(now())
   createdAt         DateTime                @default(now())
   updatedAt         DateTime                @updatedAt
   badges            Badge[]
+  referrals         TenantMembership[]      @relation("MemberReferrals")
   payments          Payment[]               @relation("PaymentUser")
   collectedPayments Payment[]               @relation("PaymentCollector")
   createdPlans      WorkoutPlan[]           @relation("PlanCreator")
@@ -169,6 +172,7 @@ model TenantMembership {
   @@index([tenantId])
   @@index([userId])
   @@index([shiftId])
+  @@index([referredByMembershipId])
 }
 
 // â”€â”€â”€ Subscription & Payment â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

@@ -40,6 +40,23 @@ const shiftSelect = {
   updatedAt: true,
 } as const;
 
+const referralMemberSelect = {
+  id: true,
+  memberId: true,
+  role: true,
+  status: true,
+  joinedAt: true,
+  user: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      avatarUrl: true,
+    },
+  },
+} as const;
+
 export const memberRepository = {
   /**
    * Run the `find user by email` persistence operation for the members module.
@@ -139,6 +156,17 @@ export const memberRepository = {
   },
 
   /**
+   * Run the `find referral candidate` persistence operation for the members module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
+  findReferralCandidate(tenantId: string, membershipId: string) {
+    return prisma.tenantMembership.findFirst({
+      where: { id: membershipId, tenantId, status: { not: "DELETED" } },
+      select: { id: true },
+    });
+  },
+
+  /**
    * Run the `create membership` persistence operation for the members module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
@@ -147,6 +175,7 @@ export const memberRepository = {
     userId: string,
     role: TenantRole,
     shiftId?: string,
+    referredByMembershipId?: string,
   ) {
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const latestMember = await prisma.tenantMembership.findFirst({
@@ -163,6 +192,7 @@ export const memberRepository = {
             role,
             memberId: (latestMember?.memberId ?? 0) + 1,
             ...(shiftId ? { shiftId } : {}),
+            ...(referredByMembershipId ? { referredByMembershipId } : {}),
           },
           select: {
             id: true,
@@ -588,6 +618,13 @@ export const memberRepository = {
         dueDate: true,
         joinedAt: true,
         shift: { select: shiftSelect },
+        referredBy: {
+          select: referralMemberSelect,
+        },
+        referrals: {
+          orderBy: [{ joinedAt: "desc" }, { memberId: "desc" }],
+          select: referralMemberSelect,
+        },
         user: {
           select: {
             id: true,
@@ -635,6 +672,57 @@ export const memberRepository = {
                 description: true,
               },
             },
+          },
+        },
+        _count: {
+          select: {
+            referrals: true,
+          },
+        },
+      },
+    });
+  },
+
+  /**
+   * Run the `list referral leaders` persistence operation for the members module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
+  listReferralLeaders(tenantId: string, search?: string) {
+    const trimmedSearch = search?.trim();
+    const memberIdSearch = trimmedSearch && /^\d+$/.test(trimmedSearch) ? Number(trimmedSearch) : null;
+
+    const where: Prisma.TenantMembershipWhereInput = {
+      tenantId,
+      referrals: { some: {} },
+      ...(trimmedSearch
+        ? {
+            OR: [
+              { user: { name: { contains: trimmedSearch } } },
+              { user: { email: { contains: trimmedSearch } } },
+              { user: { phone: { contains: trimmedSearch } } },
+              ...(memberIdSearch !== null ? [{ memberId: memberIdSearch }] : []),
+              { referrals: { some: { user: { name: { contains: trimmedSearch } } } } },
+              { referrals: { some: { user: { email: { contains: trimmedSearch } } } } },
+              { referrals: { some: { user: { phone: { contains: trimmedSearch } } } } },
+              ...(memberIdSearch !== null
+                ? [{ referrals: { some: { memberId: memberIdSearch } } }]
+                : []),
+            ],
+          }
+        : {}),
+    };
+
+    return prisma.tenantMembership.findMany({
+      where,
+      select: {
+        ...referralMemberSelect,
+        referrals: {
+          orderBy: [{ joinedAt: "desc" }, { memberId: "desc" }],
+          select: referralMemberSelect,
+        },
+        _count: {
+          select: {
+            referrals: true,
           },
         },
       },
