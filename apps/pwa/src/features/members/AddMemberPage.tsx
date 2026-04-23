@@ -13,6 +13,7 @@ import type {
   Subscription,
   TenantCharge,
   Shift,
+  TenantMember,
   AddMemberPayload,
 } from "@/types/api";
 import {
@@ -42,6 +43,22 @@ function formatAmount(amount: number) {
   }).format(amount);
 }
 
+async function loadAllMembers(tenantId: string): Promise<TenantMember[]> {
+  const firstPage = await tenantsApi.listMembers(tenantId, 1, 100);
+  const firstBatch = firstPage.data.data.members;
+  const totalPages = firstPage.data.meta.totalPages;
+
+  if (totalPages <= 1) return firstBatch;
+
+  const remainingPages = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, index) =>
+      tenantsApi.listMembers(tenantId, index + 2, 100),
+    ),
+  );
+
+  return [...firstBatch, ...remainingPages.flatMap((page) => page.data.data.members)];
+}
+
 export default function AddMemberPage() {
   const navigate = useNavigate();
   const { currentTenantId } = useAuthStore();
@@ -56,6 +73,7 @@ export default function AddMemberPage() {
   const [emailSent, setEmailSent] = React.useState(false);
   const [shifts, setShifts] = React.useState<Shift[]>([]);
   const [loadingShifts, setLoadingShifts] = React.useState(false);
+  const [referralOptions, setReferralOptions] = React.useState<TenantMember[]>([]);
 
   // Step 2 data
   const [subscriptions, setSubscriptions] = React.useState<Subscription[]>([]);
@@ -111,6 +129,28 @@ export default function AddMemberPage() {
     void loadShiftOptions();
   }, [loadShiftOptions]);
 
+  React.useEffect(() => {
+    if (!currentTenantId) return;
+
+    let cancelled = false;
+
+    loadAllMembers(currentTenantId)
+      .then((members) => {
+        if (!cancelled) {
+          setReferralOptions(members);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setReferralOptions([]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentTenantId]);
+
   const handleStep1Submit = async (data: MemberFormData) => {
     setError("");
     if (!currentTenantId) {
@@ -162,6 +202,9 @@ export default function AddMemberPage() {
           ? { chargeIds: selectedChargeIds }
           : {}),
         ...(memberData.shiftId ? { shiftId: memberData.shiftId } : {}),
+        ...(memberData.referredByMembershipId
+          ? { referredByMembershipId: memberData.referredByMembershipId }
+          : {}),
       };
 
       if (navigator.onLine) {
@@ -307,6 +350,7 @@ export default function AddMemberPage() {
               error={error}
               submitting={false}
               shiftOptions={shifts}
+              referralOptions={referralOptions}
               loadingShifts={loadingShifts}
               onSubmit={handleStep1Submit}
               onCancel={() => navigate("/members")}

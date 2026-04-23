@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import MemberSelector from "@/components/ui/memberSelector";
 import { PhotoCapture } from "@/components/ui/photo-capture";
 import { formatShiftLabel } from "@/lib/shifts";
 import { AlertCircle } from "lucide-react";
-import type { Shift, TenantRole } from "@/types/api";
+import type { Shift, TenantMember, TenantRole } from "@/types/api";
 
 // ─── Role options per caller role ─────────────────────────────────────────────
 const ROLE_OPTIONS: Record<
@@ -51,6 +52,7 @@ export interface MemberFormData {
   phone: string;
   role: TenantRole;
   shiftId: string;
+  referredByMembershipId: string;
   photoFile: File | null;
   photoPreview: string | null;
 }
@@ -62,6 +64,7 @@ interface MemberFormProps {
   error?: string;
   tenantId?: string;
   shiftOptions?: Shift[];
+  referralOptions?: TenantMember[];
   loadingShifts?: boolean;
   onSubmit: (data: MemberFormData) => Promise<void> | void;
   onCancel: () => void;
@@ -74,6 +77,7 @@ export default function MemberForm({
   submitting = false,
   error = "",
   shiftOptions,
+  referralOptions,
   loadingShifts = false,
   onSubmit,
   onCancel,
@@ -90,6 +94,9 @@ export default function MemberForm({
     initialData.role ?? ("MEMBER" as TenantRole),
   );
   const [shiftId, setShiftId] = React.useState(initialData.shiftId ?? "");
+  const [referredByMembershipId, setReferredByMembershipId] = React.useState(
+    initialData.referredByMembershipId ?? "",
+  );
   const [photoFile, setPhotoFile] = React.useState<File | null>(
     initialData.photoFile ?? null,
   );
@@ -100,6 +107,8 @@ export default function MemberForm({
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const availableRoles = ROLE_OPTIONS[callerRole] ?? ROLE_OPTIONS.COACH;
+  const selectedReferrer =
+    referralOptions?.find((member) => member.id === referredByMembershipId) ?? null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,6 +122,7 @@ export default function MemberForm({
         phone,
         role,
         shiftId,
+        referredByMembershipId,
         photoFile,
         photoPreview,
       });
@@ -189,6 +199,36 @@ export default function MemberForm({
           disabled={isSubmitting || submitting}
         />
       </div>
+
+      {mode === "create" && referralOptions !== undefined && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="referrer">Referred By</Label>
+            {selectedReferrer && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setReferredByMembershipId("")}
+                disabled={isSubmitting || submitting}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
+          <MemberSelector
+            members={referralOptions}
+            selectedMember={selectedReferrer}
+            onSelect={(member) => setReferredByMembershipId(member.id)}
+            placeholder="Choose referring member (optional)"
+            title="Select Referring Member"
+            description="Pick the member who referred this new joiner."
+          />
+          <p className="text-xs text-muted-foreground">
+            Optional. This is used for referral tracking and influence ranking.
+          </p>
+        </div>
+      )}
 
       {shiftOptions !== undefined && (
         <div className="space-y-2">

@@ -10,6 +10,7 @@ import * as React from "react";
 const SEGMENT_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
   members: "Members",
+  referrals: "Referrals",
   workouts: "Workout Plans",
   payments: "Payments",
   subscriptions: "Subscriptions",

@@ -23,6 +23,7 @@ import DashboardPage from "@/features/dashboard/DashboardPage";
 import MembersPage from "@/features/members/MembersPage";
 import MemberDetailPage from "@/features/members/MemberDetailPage";
 import AddMemberPage from "@/features/members/AddMemberPage";
+import ReferralsPage from "@/features/members/ReferralsPage";
 import PaymentsPage from "@/features/payments/PaymentsPage";
 import PaymentDetailPage from "@/features/payments/PaymentDetailPage";
 import RecordPaymentPage from "@/features/payments/RecordPaymentPage";
@@ -170,6 +171,7 @@ export default function App() {
                 {/* Tenant-scoped */}
                 <Route path="/members" element={<MembersPage />} />
                 <Route path="/members/add" element={<AddMemberPage />} />
+                <Route path="/referrals" element={<ReferralsPage />} />
                 <Route
                   path="/members/:membershipId"
                   element={<MemberDetailPage />}

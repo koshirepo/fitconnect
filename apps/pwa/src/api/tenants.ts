@@ -9,6 +9,7 @@ import type {
   UpdateProfilePayload,
   UpdateMemberPayload,
   MemberDetail,
+  MemberReferralLeader,
   PlatformPayment,
   RecordPlatformPaymentPayload,
   PaginatedResponse,
@@ -57,6 +58,25 @@ export const tenantsApi = {
         ...(badge ? { badge } : {}),
       },
     }),
+
+  listReferrals: (
+    tenantId: string,
+    page = 1,
+    limit = 20,
+    search?: string,
+    order: "asc" | "desc" = "desc",
+  ) =>
+    api.get<PaginatedResponse<{ referrals: MemberReferralLeader[] }>>(
+      `/tenants/${tenantId}/members/referrals`,
+      {
+        params: {
+          page,
+          limit,
+          ...(search ? { search } : {}),
+          order,
+        },
+      },
+    ),
 
   addMember: (tenantId: string, data: AddMemberPayload) =>
     api.post<

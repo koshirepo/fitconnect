@@ -27,6 +27,8 @@ export type {
   UpdateProfilePayload,
   UpdateMemberPayload,
   MemberDetail,
+  MemberReferral,
+  MemberReferralLeader,
   Shift,
   CreateShiftPayload,
   UpdateShiftPayload,

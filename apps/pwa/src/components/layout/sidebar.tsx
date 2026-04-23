@@ -20,6 +20,7 @@ import {
   LogOut,
   X,
   CalendarCheck,
+  UserPlus,
 } from "lucide-react";
 import AvatarCard from "../ui/avatarCard";
 import type { Tenant } from "@/types/api";
@@ -55,6 +56,7 @@ const platformNav = [
 const tenantNav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/members", label: "Members", icon: Users, roles: ["ADMIN", "COACH"] },
+  { to: "/referrals", label: "Referrals", icon: UserPlus, roles: ["ADMIN", "COACH"] },
   { to: "/todos", label: "Todos", icon: ListTodo, roles: ["ADMIN", "COACH"] },
   { to: "/workouts", label: "Workout Plans", icon: Dumbbell },
   { to: "/payments", label: "Payments", icon: CreditCard },

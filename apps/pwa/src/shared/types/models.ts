@@ -137,6 +137,26 @@ export interface TenantMember {
   isDue?: boolean;
   dueDate?: string | null;
   shift?: Shift | null;
+  referralCount?: number;
+  referredBy?: MemberReferral | null;
+}
+
+export interface MemberReferral {
+  id: string;
+  memberId: number;
+  userId: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  avatarUrl?: string | null;
+  role: TenantRole;
+  status: AccountStatus;
+  joinedAt: string;
+}
+
+export interface MemberReferralLeader extends MemberReferral {
+  referralCount: number;
+  referrals: MemberReferral[];
 }
 
 export interface TenantProfile {
@@ -198,6 +218,9 @@ export interface MemberDetail {
   joinedAt: string;
   dueDate?: string | null;
   shift?: Shift | null;
+  referralCount: number;
+  referredBy?: MemberReferral | null;
+  referrals: MemberReferral[];
   payments: {
     id: string;
     amount: number;
