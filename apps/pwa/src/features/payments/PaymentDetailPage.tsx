@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   CreditCard,
   Pencil,
+  Plus,
   Receipt,
   RefreshCw,
   Trash2,
@@ -61,6 +62,7 @@ export default function PaymentDetailPage() {
   const { currentTenantId, tenantRole } = useAuthStore();
   const role = tenantRole();
   const isAdmin = role === "ADMIN";
+  const canRecordPayment = role === "ADMIN" || role === "COACH";
 
   const [payment, setPayment] = React.useState<Payment | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -460,11 +462,23 @@ export default function PaymentDetailPage() {
       {payment.member && (
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-1.5 mb-3">
-              <Receipt className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-semibold">
-                Other Payments by {payment.member.name.split(" ")[0]}
-              </span>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-1.5">
+                <Receipt className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-semibold">
+                  Other Payments by {payment.member.name.split(" ")[0]}
+                </span>
+              </div>
+              {canRecordPayment && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => navigate(`/payments/record/${payment.member!.id}`)}
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Payment
+                </Button>
+              )}
             </div>
 
             {memberPaymentsLoading ? (

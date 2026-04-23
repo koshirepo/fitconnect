@@ -131,9 +131,14 @@ export default function AddMemberPage() {
     );
   };
 
-  const selectedSubscription = subscriptions.find(
+  const selectableSubscriptions = React.useMemo(
+    () => subscriptions.filter((subscription) => subscription.badges.length === 0),
+    [subscriptions],
+  );
+  const selectedSubscription = selectableSubscriptions.find(
     (s) => s.id === selectedSubscriptionId,
   );
+  const hiddenBadgeScopedPlanCount = subscriptions.length - selectableSubscriptions.length;
   const selectedChargesTotal = charges
     .filter((c) => selectedChargeIds.includes(c.id))
     .reduce((sum, c) => sum + c.amount, 0);
@@ -332,55 +337,65 @@ export default function AddMemberPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {subscriptions.length === 0 ? (
+                  {selectableSubscriptions.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
-                      No subscription plans available. You can create plans in
-                      the Subscriptions page.
+                      {subscriptions.length === 0
+                        ? "No subscription plans available. You can create plans in the Subscriptions page."
+                        : "Only badge-restricted plans are available right now. Assign a badge first, then record the subscription payment later."}
                     </p>
                   ) : (
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {/* No plan option */}
-                      <button
-                        type="button"
-                        onClick={() => setSelectedSubscriptionId("")}
-                        className={`rounded-lg border-2 p-4 text-left transition-all ${
-                          selectedSubscriptionId === ""
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-muted-foreground/30"
-                        }`}
-                      >
-                        <p className="font-medium text-sm">No Plan</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Skip subscription for now
+                    <div className="space-y-3">
+                      {hiddenBadgeScopedPlanCount > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          {hiddenBadgeScopedPlanCount} badge-restricted plan
+                          {hiddenBadgeScopedPlanCount === 1 ? "" : "s"} will appear only after
+                          the member has the required badge.
                         </p>
-                      </button>
-                      {subscriptions.map((sub) => (
+                      )}
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {/* No plan option */}
                         <button
-                          key={sub.id}
                           type="button"
-                          onClick={() => setSelectedSubscriptionId(sub.id)}
+                          onClick={() => setSelectedSubscriptionId("")}
                           className={`rounded-lg border-2 p-4 text-left transition-all ${
-                            selectedSubscriptionId === sub.id
+                            selectedSubscriptionId === ""
                               ? "border-primary bg-primary/5"
                               : "border-border hover:border-muted-foreground/30"
                           }`}
                         >
-                          <p className="font-medium text-sm">{sub.title}</p>
-                          {sub.description && (
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                              {sub.description}
-                            </p>
-                          )}
-                          <div className="mt-2 flex items-center gap-2">
-                            <span className="text-lg font-bold">
-                              {formatAmount(sub.amount)}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              / {sub.durationDays} days
-                            </span>
-                          </div>
+                          <p className="font-medium text-sm">No Plan</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Skip subscription for now
+                          </p>
                         </button>
-                      ))}
+                        {selectableSubscriptions.map((sub) => (
+                          <button
+                            key={sub.id}
+                            type="button"
+                            onClick={() => setSelectedSubscriptionId(sub.id)}
+                            className={`rounded-lg border-2 p-4 text-left transition-all ${
+                              selectedSubscriptionId === sub.id
+                                ? "border-primary bg-primary/5"
+                                : "border-border hover:border-muted-foreground/30"
+                            }`}
+                          >
+                            <p className="font-medium text-sm">{sub.title}</p>
+                            {sub.description && (
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                {sub.description}
+                              </p>
+                            )}
+                            <div className="mt-2 flex items-center gap-2">
+                              <span className="text-lg font-bold">
+                                {formatAmount(sub.amount)}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                / {sub.durationDays} days
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </CardContent>

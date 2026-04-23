@@ -1,15 +1,19 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
+import { badgesApi } from "@/api/badges";
 import { paymentsApi } from "@/api/payments";
 import { getApiError } from "@/api/client";
 import { formatCurrency } from "@/lib/utils";
+import { Badge as UiBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Package, AlertCircle, CheckCircle2 } from "lucide-react";
+import type { Badge as BadgeModel } from "@/types/api";
 
 // ─── Preset duration options ──────────────────────────────────────────────────
 const DURATION_PRESETS = [
@@ -31,10 +35,43 @@ export default function CreateSubscriptionPage() {
   const [amount, setAmount] = React.useState("");
   const [durationDays, setDurationDays] = React.useState("30");
   const [customDuration, setCustomDuration] = React.useState(false);
+  const [availableBadges, setAvailableBadges] = React.useState<BadgeModel[]>([]);
+  const [selectedBadgeIds, setSelectedBadgeIds] = React.useState<string[]>([]);
+  const [loadingBadges, setLoadingBadges] = React.useState(false);
+  const [badgeLoadError, setBadgeLoadError] = React.useState("");
 
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState("");
   const [success, setSuccess] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!currentTenantId || role !== "ADMIN") return;
+
+    let cancelled = false;
+    setLoadingBadges(true);
+    setBadgeLoadError("");
+
+    badgesApi
+      .list(currentTenantId, 1, 100, true)
+      .then((res) => {
+        if (!cancelled) {
+          setAvailableBadges(res.data.data);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAvailableBadges([]);
+          setBadgeLoadError("Failed to load badges. You can still create a plan for all members.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingBadges(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentTenantId, role]);
 
   // Only admins can create subscriptions
   if (role !== "ADMIN") {
@@ -82,6 +119,7 @@ export default function CreateSubscriptionPage() {
         description: description.trim() || undefined,
         amount: parsedAmount,
         durationDays: parsedDuration,
+        badgeIds: selectedBadgeIds,
       });
       setSuccess(true);
     } catch (err) {
@@ -116,6 +154,7 @@ export default function CreateSubscriptionPage() {
                 setAmount("");
                 setDurationDays("30");
                 setCustomDuration(false);
+                setSelectedBadgeIds([]);
               }}
               className="w-full max-w-xs"
             >
@@ -130,6 +169,11 @@ export default function CreateSubscriptionPage() {
 
   // ─── Form ───────────────────────────────────────────────────────────────────
   const selectedPreset = DURATION_PRESETS.find((p) => p.value === parseInt(durationDays, 10));
+  const toggleBadgeId = (badgeId: string) => {
+    setSelectedBadgeIds((prev) =>
+      prev.includes(badgeId) ? prev.filter((id) => id !== badgeId) : [...prev, badgeId],
+    );
+  };
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -185,6 +229,69 @@ export default function CreateSubscriptionPage() {
                 rows={3}
               />
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Badge Access</CardTitle>
+            <CardDescription>
+              Limit this plan to specific badges, or leave it open for all members.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {selectedBadgeIds.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Visible to all members.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {availableBadges
+                  .filter((badge) => selectedBadgeIds.includes(badge.id))
+                  .map((badge) => (
+                    <UiBadge key={badge.id} variant="secondary">
+                      {badge.name}
+                    </UiBadge>
+                  ))}
+              </div>
+            )}
+
+            {loadingBadges ? (
+              <p className="text-sm text-muted-foreground">Loading badges...</p>
+            ) : availableBadges.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No badges available yet. Create badges first if you want member-specific plans.
+              </p>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {availableBadges.map((badge) => {
+                  const checked = selectedBadgeIds.includes(badge.id);
+                  return (
+                    <label
+                      key={badge.id}
+                      className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+                        checked ? "border-primary bg-primary/5" : "border-border"
+                      }`}
+                    >
+                      <Checkbox checked={checked} onChange={() => toggleBadgeId(badge.id)} />
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{badge.name}</span>
+                          {!badge.isActive && (
+                            <UiBadge variant="outline" className="text-[10px]">
+                              Inactive
+                            </UiBadge>
+                          )}
+                        </div>
+                        {badge.description && (
+                          <p className="text-xs text-muted-foreground">{badge.description}</p>
+                        )}
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+
+            {badgeLoadError && <p className="text-sm text-destructive">{badgeLoadError}</p>}
           </CardContent>
         </Card>
 

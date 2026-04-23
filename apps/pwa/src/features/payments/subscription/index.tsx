@@ -1,11 +1,13 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
+import { badgesApi } from "@/api/badges";
 import { paymentsApi } from "@/api/payments";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,7 +23,7 @@ import { PageLoader } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatCurrency } from "@/lib/utils";
 import { Pencil, Plus, Power, Trash2, Package } from "lucide-react";
-import type { Subscription } from "@/types/api";
+import type { Badge as BadgeModel, Subscription } from "@/types/api";
 
 export default function SubscriptionsPage() {
   const navigate = useNavigate();
@@ -30,8 +32,10 @@ export default function SubscriptionsPage() {
   const isAdmin = role === "ADMIN";
 
   const [subscriptions, setSubscriptions] = React.useState<Subscription[]>([]);
+  const [availableBadges, setAvailableBadges] = React.useState<BadgeModel[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [pageError, setPageError] = React.useState("");
+  const [badgeLoadError, setBadgeLoadError] = React.useState("");
 
   const [editOpen, setEditOpen] = React.useState(false);
   const [editingSubscription, setEditingSubscription] = React.useState<Subscription | null>(null);
@@ -39,6 +43,7 @@ export default function SubscriptionsPage() {
   const [editDescription, setEditDescription] = React.useState("");
   const [editAmount, setEditAmount] = React.useState("");
   const [editDurationDays, setEditDurationDays] = React.useState("");
+  const [editSelectedBadgeIds, setEditSelectedBadgeIds] = React.useState<string[]>([]);
   const [editError, setEditError] = React.useState("");
   const [editSubmitting, setEditSubmitting] = React.useState(false);
 
@@ -51,9 +56,24 @@ export default function SubscriptionsPage() {
     if (!currentTenantId) return;
     setLoading(true);
     setPageError("");
+    setBadgeLoadError("");
     try {
-      const res = await paymentsApi.listSubscriptions(currentTenantId, isAdmin);
-      setSubscriptions(res.data.data.subscriptions);
+      const subscriptionsRes = await paymentsApi.listSubscriptions(currentTenantId, isAdmin);
+      setSubscriptions(subscriptionsRes.data.data.subscriptions);
+
+      if (isAdmin) {
+        try {
+          const badgesRes = await badgesApi.list(currentTenantId, 1, 100, true);
+          setAvailableBadges(badgesRes.data.data);
+        } catch {
+          setAvailableBadges([]);
+          setBadgeLoadError(
+            "Badges could not be loaded. You can still edit title, price, and duration.",
+          );
+        }
+      } else {
+        setAvailableBadges([]);
+      }
     } catch (err) {
       setPageError(getApiError(err));
     } finally {
@@ -71,6 +91,7 @@ export default function SubscriptionsPage() {
     setEditDescription(subscription.description ?? "");
     setEditAmount(String(subscription.amount));
     setEditDurationDays(String(subscription.durationDays));
+    setEditSelectedBadgeIds(subscription.badges.map((badge) => badge.id));
     setEditError("");
     setEditOpen(true);
   };
@@ -110,6 +131,7 @@ export default function SubscriptionsPage() {
         description: editDescription.trim() || null,
         amount,
         durationDays,
+        badgeIds: editSelectedBadgeIds,
       });
       const updated = res.data.data.subscription;
       setSubscriptions((prev) =>
@@ -122,6 +144,12 @@ export default function SubscriptionsPage() {
     } finally {
       setEditSubmitting(false);
     }
+  };
+
+  const toggleEditBadge = (badgeId: string) => {
+    setEditSelectedBadgeIds((prev) =>
+      prev.includes(badgeId) ? prev.filter((id) => id !== badgeId) : [...prev, badgeId],
+    );
   };
 
   const handleConfirm = async () => {
@@ -187,6 +215,11 @@ export default function SubscriptionsPage() {
           {pageError}
         </div>
       )}
+      {badgeLoadError && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          {badgeLoadError}
+        </div>
+      )}
 
       {loading ? (
         <PageLoader />
@@ -228,6 +261,18 @@ export default function SubscriptionsPage() {
                     <span className="text-3xl font-bold">{formatCurrency(sub.amount)}</span>
                     <span className="text-muted-foreground">/ {sub.durationDays} days</span>
                   </div>
+
+                  {sub.badges.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {sub.badges.map((badge) => (
+                        <Badge key={badge.id} variant="secondary">
+                          {badge.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Available to all members</p>
+                  )}
 
                   {isAdmin && (
                     <div className="flex flex-wrap gap-2">
@@ -313,6 +358,58 @@ export default function SubscriptionsPage() {
                   required
                 />
               </div>
+            </div>
+
+            <div className="space-y-3">
+              <Label>Badge Access</Label>
+              {editSelectedBadgeIds.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Visible to all members.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {availableBadges
+                    .filter((badge) => editSelectedBadgeIds.includes(badge.id))
+                    .map((badge) => (
+                      <Badge key={badge.id} variant="secondary">
+                        {badge.name}
+                      </Badge>
+                    ))}
+                </div>
+              )}
+
+              {availableBadges.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No badges available yet. Leave this plan open to all members.
+                </p>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {availableBadges.map((badge) => {
+                    const checked = editSelectedBadgeIds.includes(badge.id);
+                    return (
+                      <label
+                        key={badge.id}
+                        className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+                          checked ? "border-primary bg-primary/5" : "border-border"
+                        }`}
+                      >
+                        <Checkbox checked={checked} onChange={() => toggleEditBadge(badge.id)} />
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">{badge.name}</span>
+                            {!badge.isActive && (
+                              <Badge variant="outline" className="text-[10px]">
+                                Inactive
+                              </Badge>
+                            )}
+                          </div>
+                          {badge.description && (
+                            <p className="text-xs text-muted-foreground">{badge.description}</p>
+                          )}
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {editError && <p className="text-sm text-destructive">{editError}</p>}

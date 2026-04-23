@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
+import { badgesApi } from "@/api/badges";
 import { paymentsApi } from "@/api/payments";
 import { settingsApi } from "@/api/settings";
 import { tenantsApi } from "@/api/tenants";
@@ -11,6 +12,7 @@ import {
   getTenantWhatsAppTemplateBody,
   renderWhatsAppTemplateBody,
 } from "@/lib/whatsapp-templates";
+import { Badge as UiBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +23,7 @@ import { PageLoader } from "@/components/ui/spinner";
 import { Select } from "@/components/ui/select";
 import { AlertCircle, Plus } from "lucide-react";
 import type {
+  Badge as BadgeModel,
   CreatePaymentPayload,
   MemberDetail,
   TenantMember,
@@ -34,6 +37,17 @@ type CreatePaymentPayloadWithOfflineMeta = CreatePaymentPayload & {
   _memberMemberId?: number;
   _subscriptionTitle?: string;
 };
+
+type MemberBadgeSummary = Pick<BadgeModel, "id" | "name" | "color" | "icon">;
+
+function toMemberBadgeSummary(badge: MemberBadgeSummary): MemberBadgeSummary {
+  return {
+    id: badge.id,
+    name: badge.name,
+    color: badge.color,
+    icon: badge.icon,
+  };
+}
 
 function toTenantMember(member: TenantMember | MemberDetail): TenantMember {
   return {
@@ -79,9 +93,13 @@ export default function RecordPaymentPage() {
   const [subscriptions, setSubscriptions] = React.useState<Subscription[]>([]);
   const [tenantSettings, setTenantSettings] = React.useState<TenantSettings | null>(null);
   const [selectedMember, setSelectedMember] = React.useState<TenantMember | null>(null);
+  const [selectedMemberBadges, setSelectedMemberBadges] = React.useState<MemberBadgeSummary[]>([]);
+  const [loadingMemberBadges, setLoadingMemberBadges] = React.useState(false);
+  const [memberBadgeError, setMemberBadgeError] = React.useState("");
   const [loading, setLoading] = React.useState(true);
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState("");
+  const memberBadgeCacheRef = React.useRef<Record<string, MemberBadgeSummary[]>>({});
 
   // Form state
   const [fMembershipId, setFMembershipId] = React.useState(membershipId ?? "");
@@ -98,6 +116,10 @@ export default function RecordPaymentPage() {
     setLoading(true);
     setError("");
     setSelectedMember(null);
+    setSelectedMemberBadges([]);
+    setLoadingMemberBadges(false);
+    setMemberBadgeError("");
+    memberBadgeCacheRef.current = {};
     setFMembershipId(membershipId ?? "");
 
     const settingsRequest = settingsApi
@@ -108,9 +130,9 @@ export default function RecordPaymentPage() {
     const selectedMemberRequest = membershipId
       ? tenantsApi
           .getMemberDetail(currentTenantId, membershipId)
-          .then((res) => toTenantMember(res.data.data.member))
+          .then((res) => res.data.data.member)
           .catch(() => null)
-      : Promise.resolve<TenantMember | null>(null);
+      : Promise.resolve<MemberDetail | null>(null);
 
     Promise.all([
       loadAllMembers(currentTenantId),
@@ -118,10 +140,11 @@ export default function RecordPaymentPage() {
       selectedMemberRequest,
       settingsRequest,
     ])
-      .then(([allMembers, subsRes, routedMember, settings]) => {
+      .then(([allMembers, subsRes, routedMemberDetail, settings]) => {
         if (cancelled) return;
 
         const rosterMembers = allMembers;
+        const routedMember = routedMemberDetail ? toTenantMember(routedMemberDetail) : null;
         const membersWithSelected =
           routedMember && !rosterMembers.some((m) => m.id === routedMember.id)
             ? [routedMember, ...rosterMembers]
@@ -133,6 +156,12 @@ export default function RecordPaymentPage() {
 
         const initialMember =
           routedMember ?? membersWithSelected.find((m) => m.id === membershipId) ?? null;
+
+        if (routedMemberDetail) {
+          memberBadgeCacheRef.current[routedMemberDetail.id] = routedMemberDetail.badges.map(
+            toMemberBadgeSummary,
+          );
+        }
 
         setSelectedMember(initialMember);
         setFMembershipId(initialMember?.id ?? membershipId ?? "");
@@ -149,15 +178,85 @@ export default function RecordPaymentPage() {
     };
   }, [currentTenantId, membershipId]);
 
+  React.useEffect(() => {
+    if (!currentTenantId || !selectedMember?.id) {
+      setSelectedMemberBadges([]);
+      setLoadingMemberBadges(false);
+      setMemberBadgeError("");
+      return;
+    }
+
+    const cachedBadges = memberBadgeCacheRef.current[selectedMember.id];
+    if (cachedBadges) {
+      setSelectedMemberBadges(cachedBadges);
+      setLoadingMemberBadges(false);
+      setMemberBadgeError("");
+      return;
+    }
+
+    let cancelled = false;
+    setSelectedMemberBadges([]);
+    setLoadingMemberBadges(true);
+    setMemberBadgeError("");
+
+    badgesApi
+      .memberBadges(currentTenantId, selectedMember.id)
+      .then((res) => {
+        if (cancelled) return;
+        const badges = res.data.data.badges.map(toMemberBadgeSummary);
+        memberBadgeCacheRef.current[selectedMember.id] = badges;
+        setSelectedMemberBadges(badges);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSelectedMemberBadges([]);
+          setMemberBadgeError("Failed to load this member's badges.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingMemberBadges(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentTenantId, selectedMember?.id]);
+
+  const selectedMemberBadgeIds = React.useMemo(
+    () => new Set(selectedMemberBadges.map((badge) => badge.id)),
+    [selectedMemberBadges],
+  );
+
+  const availableSubscriptions = React.useMemo(() => {
+    if (!selectedMember) return [];
+
+    return subscriptions.filter(
+      (subscription) =>
+        subscription.badges.length === 0 ||
+        subscription.badges.some((badge) => selectedMemberBadgeIds.has(badge.id)),
+    );
+  }, [subscriptions, selectedMember, selectedMemberBadgeIds]);
+
+  React.useEffect(() => {
+    if (!fSubscriptionId) return;
+    if (availableSubscriptions.some((subscription) => subscription.id === fSubscriptionId)) return;
+    setFSubscriptionId("");
+    setFAmount("");
+    setFValidUntil("");
+  }, [availableSubscriptions, fSubscriptionId]);
+
   const handleMemberChange = (memberId: string) => {
     setFMembershipId(memberId);
+    setFSubscriptionId("");
+    setFAmount("");
+    setFValidUntil("");
     const member = members.find((m) => m.id === memberId);
     setSelectedMember(member || null);
   };
 
   const handleSubChange = (subId: string) => {
     setFSubscriptionId(subId);
-    const sub = subscriptions.find((s) => s.id === subId);
+    const sub = availableSubscriptions.find((s) => s.id === subId);
     if (sub) {
       setFAmount(String(sub.amount));
       const validUntil = new Date(today);
@@ -209,7 +308,7 @@ export default function RecordPaymentPage() {
 
     setSubmitting(true);
     try {
-      const sub = subscriptions.find((s) => s.id === fSubscriptionId);
+      const sub = availableSubscriptions.find((s) => s.id === fSubscriptionId);
       const payload: CreatePaymentPayloadWithOfflineMeta = {
         membershipId: fMembershipId,
         subscriptionId: fSubscriptionId,
@@ -275,6 +374,27 @@ export default function RecordPaymentPage() {
                 onSelect={(member) => handleMemberChange(member.id)}
                 placeholder="Choose a member..."
               />
+              {selectedMember && (
+                <div className="space-y-2">
+                  {loadingMemberBadges ? (
+                    <p className="text-xs text-muted-foreground">Loading member badges...</p>
+                  ) : memberBadgeError ? (
+                    <p className="text-xs text-destructive">{memberBadgeError}</p>
+                  ) : selectedMemberBadges.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedMemberBadges.map((badge) => (
+                        <UiBadge key={badge.id} variant="secondary">
+                          {badge.name}
+                        </UiBadge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      This member has no badges. Only open plans will be shown.
+                    </p>
+                  )}
+                </div>
+              )}
               {!selectedMember && error.includes("member") && (
                 <p className="text-sm text-destructive-foreground">{error}</p>
               )}
@@ -283,18 +403,39 @@ export default function RecordPaymentPage() {
             {/* Subscription Selection */}
             <div className="space-y-2">
               <Label htmlFor="subscription">Subscription Plan *</Label>
+              <p className="text-xs text-muted-foreground">
+                {!selectedMember
+                  ? "Select a member first to load eligible plans."
+                  : loadingMemberBadges
+                    ? "Loading badge-based plan access..."
+                    : "Plans are filtered by this member's badges."}
+              </p>
               <Select
                 id="subscription"
                 value={fSubscriptionId}
                 onChange={(e) => handleSubChange(e.target.value)}
+                disabled={!selectedMember || loadingMemberBadges}
               >
-                <option value="">Choose a plan...</option>
-                {subscriptions.map((s) => (
+                <option value="">
+                  {!selectedMember
+                    ? "Select a member first..."
+                    : loadingMemberBadges
+                      ? "Loading plans..."
+                      : availableSubscriptions.length === 0
+                        ? "No plans available for this member"
+                        : "Choose a plan..."}
+                </option>
+                {availableSubscriptions.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.title} - {formatCurrency(s.amount)}
                   </option>
                 ))}
               </Select>
+              {selectedMember && !loadingMemberBadges && availableSubscriptions.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  No subscription plans match this member&apos;s badges yet.
+                </p>
+              )}
               {!fSubscriptionId && error.includes("subscription") && (
                 <p className="text-sm text-destructive-foreground">{error}</p>
               )}
