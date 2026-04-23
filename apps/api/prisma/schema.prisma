@@ -186,6 +186,7 @@ model Subscription {
   updatedAt    DateTime @updatedAt
 
   payments Payment[]
+  badges   Badge[]
 
   @@index([tenantId])
 }
@@ -422,6 +423,7 @@ model Badge {
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
   users       TenantMembership[]
+  subscriptions Subscription[]
 
   @@unique([tenantId, name])
   @@index([tenantId])

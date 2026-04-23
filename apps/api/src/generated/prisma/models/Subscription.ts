@@ -254,6 +254,7 @@ export type SubscriptionWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Subscription"> | Date | string
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
   payments?: Prisma.PaymentListRelationFilter
+  badges?: Prisma.BadgeListRelationFilter
 }
 
 export type SubscriptionOrderByWithRelationInput = {
@@ -268,6 +269,7 @@ export type SubscriptionOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   tenant?: Prisma.TenantOrderByWithRelationInput
   payments?: Prisma.PaymentOrderByRelationAggregateInput
+  badges?: Prisma.BadgeOrderByRelationAggregateInput
 }
 
 export type SubscriptionWhereUniqueInput = Prisma.AtLeast<{
@@ -285,6 +287,7 @@ export type SubscriptionWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Subscription"> | Date | string
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
   payments?: Prisma.PaymentListRelationFilter
+  badges?: Prisma.BadgeListRelationFilter
 }, "id">
 
 export type SubscriptionOrderByWithAggregationInput = {
@@ -330,6 +333,7 @@ export type SubscriptionCreateInput = {
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutSubscriptionsInput
   payments?: Prisma.PaymentCreateNestedManyWithoutSubscriptionInput
+  badges?: Prisma.BadgeCreateNestedManyWithoutSubscriptionsInput
 }
 
 export type SubscriptionUncheckedCreateInput = {
@@ -343,6 +347,7 @@ export type SubscriptionUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutSubscriptionInput
+  badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutSubscriptionsInput
 }
 
 export type SubscriptionUpdateInput = {
@@ -356,6 +361,7 @@ export type SubscriptionUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutSubscriptionsNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutSubscriptionNestedInput
+  badges?: Prisma.BadgeUpdateManyWithoutSubscriptionsNestedInput
 }
 
 export type SubscriptionUncheckedUpdateInput = {
@@ -369,6 +375,7 @@ export type SubscriptionUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutSubscriptionNestedInput
+  badges?: Prisma.BadgeUncheckedUpdateManyWithoutSubscriptionsNestedInput
 }
 
 export type SubscriptionCreateManyInput = {
@@ -525,6 +532,44 @@ export type SubscriptionUpdateOneWithoutPaymentsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.SubscriptionUpdateToOneWithWhereWithoutPaymentsInput, Prisma.SubscriptionUpdateWithoutPaymentsInput>, Prisma.SubscriptionUncheckedUpdateWithoutPaymentsInput>
 }
 
+export type SubscriptionCreateNestedManyWithoutBadgesInput = {
+  create?: Prisma.XOR<Prisma.SubscriptionCreateWithoutBadgesInput, Prisma.SubscriptionUncheckedCreateWithoutBadgesInput> | Prisma.SubscriptionCreateWithoutBadgesInput[] | Prisma.SubscriptionUncheckedCreateWithoutBadgesInput[]
+  connectOrCreate?: Prisma.SubscriptionCreateOrConnectWithoutBadgesInput | Prisma.SubscriptionCreateOrConnectWithoutBadgesInput[]
+  connect?: Prisma.SubscriptionWhereUniqueInput | Prisma.SubscriptionWhereUniqueInput[]
+}
+
+export type SubscriptionUncheckedCreateNestedManyWithoutBadgesInput = {
+  create?: Prisma.XOR<Prisma.SubscriptionCreateWithoutBadgesInput, Prisma.SubscriptionUncheckedCreateWithoutBadgesInput> | Prisma.SubscriptionCreateWithoutBadgesInput[] | Prisma.SubscriptionUncheckedCreateWithoutBadgesInput[]
+  connectOrCreate?: Prisma.SubscriptionCreateOrConnectWithoutBadgesInput | Prisma.SubscriptionCreateOrConnectWithoutBadgesInput[]
+  connect?: Prisma.SubscriptionWhereUniqueInput | Prisma.SubscriptionWhereUniqueInput[]
+}
+
+export type SubscriptionUpdateManyWithoutBadgesNestedInput = {
+  create?: Prisma.XOR<Prisma.SubscriptionCreateWithoutBadgesInput, Prisma.SubscriptionUncheckedCreateWithoutBadgesInput> | Prisma.SubscriptionCreateWithoutBadgesInput[] | Prisma.SubscriptionUncheckedCreateWithoutBadgesInput[]
+  connectOrCreate?: Prisma.SubscriptionCreateOrConnectWithoutBadgesInput | Prisma.SubscriptionCreateOrConnectWithoutBadgesInput[]
+  upsert?: Prisma.SubscriptionUpsertWithWhereUniqueWithoutBadgesInput | Prisma.SubscriptionUpsertWithWhereUniqueWithoutBadgesInput[]
+  set?: Prisma.SubscriptionWhereUniqueInput | Prisma.SubscriptionWhereUniqueInput[]
+  disconnect?: Prisma.SubscriptionWhereUniqueInput | Prisma.SubscriptionWhereUniqueInput[]
+  delete?: Prisma.SubscriptionWhereUniqueInput | Prisma.SubscriptionWhereUniqueInput[]
+  connect?: Prisma.SubscriptionWhereUniqueInput | Prisma.SubscriptionWhereUniqueInput[]
+  update?: Prisma.SubscriptionUpdateWithWhereUniqueWithoutBadgesInput | Prisma.SubscriptionUpdateWithWhereUniqueWithoutBadgesInput[]
+  updateMany?: Prisma.SubscriptionUpdateManyWithWhereWithoutBadgesInput | Prisma.SubscriptionUpdateManyWithWhereWithoutBadgesInput[]
+  deleteMany?: Prisma.SubscriptionScalarWhereInput | Prisma.SubscriptionScalarWhereInput[]
+}
+
+export type SubscriptionUncheckedUpdateManyWithoutBadgesNestedInput = {
+  create?: Prisma.XOR<Prisma.SubscriptionCreateWithoutBadgesInput, Prisma.SubscriptionUncheckedCreateWithoutBadgesInput> | Prisma.SubscriptionCreateWithoutBadgesInput[] | Prisma.SubscriptionUncheckedCreateWithoutBadgesInput[]
+  connectOrCreate?: Prisma.SubscriptionCreateOrConnectWithoutBadgesInput | Prisma.SubscriptionCreateOrConnectWithoutBadgesInput[]
+  upsert?: Prisma.SubscriptionUpsertWithWhereUniqueWithoutBadgesInput | Prisma.SubscriptionUpsertWithWhereUniqueWithoutBadgesInput[]
+  set?: Prisma.SubscriptionWhereUniqueInput | Prisma.SubscriptionWhereUniqueInput[]
+  disconnect?: Prisma.SubscriptionWhereUniqueInput | Prisma.SubscriptionWhereUniqueInput[]
+  delete?: Prisma.SubscriptionWhereUniqueInput | Prisma.SubscriptionWhereUniqueInput[]
+  connect?: Prisma.SubscriptionWhereUniqueInput | Prisma.SubscriptionWhereUniqueInput[]
+  update?: Prisma.SubscriptionUpdateWithWhereUniqueWithoutBadgesInput | Prisma.SubscriptionUpdateWithWhereUniqueWithoutBadgesInput[]
+  updateMany?: Prisma.SubscriptionUpdateManyWithWhereWithoutBadgesInput | Prisma.SubscriptionUpdateManyWithWhereWithoutBadgesInput[]
+  deleteMany?: Prisma.SubscriptionScalarWhereInput | Prisma.SubscriptionScalarWhereInput[]
+}
+
 export type SubscriptionCreateWithoutTenantInput = {
   id?: string
   title: string
@@ -535,6 +580,7 @@ export type SubscriptionCreateWithoutTenantInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   payments?: Prisma.PaymentCreateNestedManyWithoutSubscriptionInput
+  badges?: Prisma.BadgeCreateNestedManyWithoutSubscriptionsInput
 }
 
 export type SubscriptionUncheckedCreateWithoutTenantInput = {
@@ -547,6 +593,7 @@ export type SubscriptionUncheckedCreateWithoutTenantInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutSubscriptionInput
+  badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutSubscriptionsInput
 }
 
 export type SubscriptionCreateOrConnectWithoutTenantInput = {
@@ -599,6 +646,7 @@ export type SubscriptionCreateWithoutPaymentsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutSubscriptionsInput
+  badges?: Prisma.BadgeCreateNestedManyWithoutSubscriptionsInput
 }
 
 export type SubscriptionUncheckedCreateWithoutPaymentsInput = {
@@ -611,6 +659,7 @@ export type SubscriptionUncheckedCreateWithoutPaymentsInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutSubscriptionsInput
 }
 
 export type SubscriptionCreateOrConnectWithoutPaymentsInput = {
@@ -639,6 +688,7 @@ export type SubscriptionUpdateWithoutPaymentsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutSubscriptionsNestedInput
+  badges?: Prisma.BadgeUpdateManyWithoutSubscriptionsNestedInput
 }
 
 export type SubscriptionUncheckedUpdateWithoutPaymentsInput = {
@@ -651,6 +701,54 @@ export type SubscriptionUncheckedUpdateWithoutPaymentsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  badges?: Prisma.BadgeUncheckedUpdateManyWithoutSubscriptionsNestedInput
+}
+
+export type SubscriptionCreateWithoutBadgesInput = {
+  id?: string
+  title: string
+  description?: string | null
+  amount: number
+  durationDays?: number
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tenant: Prisma.TenantCreateNestedOneWithoutSubscriptionsInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutSubscriptionInput
+}
+
+export type SubscriptionUncheckedCreateWithoutBadgesInput = {
+  id?: string
+  tenantId: string
+  title: string
+  description?: string | null
+  amount: number
+  durationDays?: number
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutSubscriptionInput
+}
+
+export type SubscriptionCreateOrConnectWithoutBadgesInput = {
+  where: Prisma.SubscriptionWhereUniqueInput
+  create: Prisma.XOR<Prisma.SubscriptionCreateWithoutBadgesInput, Prisma.SubscriptionUncheckedCreateWithoutBadgesInput>
+}
+
+export type SubscriptionUpsertWithWhereUniqueWithoutBadgesInput = {
+  where: Prisma.SubscriptionWhereUniqueInput
+  update: Prisma.XOR<Prisma.SubscriptionUpdateWithoutBadgesInput, Prisma.SubscriptionUncheckedUpdateWithoutBadgesInput>
+  create: Prisma.XOR<Prisma.SubscriptionCreateWithoutBadgesInput, Prisma.SubscriptionUncheckedCreateWithoutBadgesInput>
+}
+
+export type SubscriptionUpdateWithWhereUniqueWithoutBadgesInput = {
+  where: Prisma.SubscriptionWhereUniqueInput
+  data: Prisma.XOR<Prisma.SubscriptionUpdateWithoutBadgesInput, Prisma.SubscriptionUncheckedUpdateWithoutBadgesInput>
+}
+
+export type SubscriptionUpdateManyWithWhereWithoutBadgesInput = {
+  where: Prisma.SubscriptionScalarWhereInput
+  data: Prisma.XOR<Prisma.SubscriptionUpdateManyMutationInput, Prisma.SubscriptionUncheckedUpdateManyWithoutBadgesInput>
 }
 
 export type SubscriptionCreateManyTenantInput = {
@@ -674,6 +772,7 @@ export type SubscriptionUpdateWithoutTenantInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   payments?: Prisma.PaymentUpdateManyWithoutSubscriptionNestedInput
+  badges?: Prisma.BadgeUpdateManyWithoutSubscriptionsNestedInput
 }
 
 export type SubscriptionUncheckedUpdateWithoutTenantInput = {
@@ -686,10 +785,49 @@ export type SubscriptionUncheckedUpdateWithoutTenantInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutSubscriptionNestedInput
+  badges?: Prisma.BadgeUncheckedUpdateManyWithoutSubscriptionsNestedInput
 }
 
 export type SubscriptionUncheckedUpdateManyWithoutTenantInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  amount?: Prisma.IntFieldUpdateOperationsInput | number
+  durationDays?: Prisma.IntFieldUpdateOperationsInput | number
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type SubscriptionUpdateWithoutBadgesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  amount?: Prisma.IntFieldUpdateOperationsInput | number
+  durationDays?: Prisma.IntFieldUpdateOperationsInput | number
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tenant?: Prisma.TenantUpdateOneRequiredWithoutSubscriptionsNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutSubscriptionNestedInput
+}
+
+export type SubscriptionUncheckedUpdateWithoutBadgesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  amount?: Prisma.IntFieldUpdateOperationsInput | number
+  durationDays?: Prisma.IntFieldUpdateOperationsInput | number
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutSubscriptionNestedInput
+}
+
+export type SubscriptionUncheckedUpdateManyWithoutBadgesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -706,10 +844,12 @@ export type SubscriptionUncheckedUpdateManyWithoutTenantInput = {
 
 export type SubscriptionCountOutputType = {
   payments: number
+  badges: number
 }
 
 export type SubscriptionCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   payments?: boolean | SubscriptionCountOutputTypeCountPaymentsArgs
+  badges?: boolean | SubscriptionCountOutputTypeCountBadgesArgs
 }
 
 /**
@@ -729,6 +869,13 @@ export type SubscriptionCountOutputTypeCountPaymentsArgs<ExtArgs extends runtime
   where?: Prisma.PaymentWhereInput
 }
 
+/**
+ * SubscriptionCountOutputType without action
+ */
+export type SubscriptionCountOutputTypeCountBadgesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.BadgeWhereInput
+}
+
 
 export type SubscriptionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -742,6 +889,7 @@ export type SubscriptionSelect<ExtArgs extends runtime.Types.Extensions.Internal
   updatedAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
   payments?: boolean | Prisma.Subscription$paymentsArgs<ExtArgs>
+  badges?: boolean | Prisma.Subscription$badgesArgs<ExtArgs>
   _count?: boolean | Prisma.SubscriptionCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["subscription"]>
 
@@ -787,6 +935,7 @@ export type SubscriptionOmit<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type SubscriptionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
   payments?: boolean | Prisma.Subscription$paymentsArgs<ExtArgs>
+  badges?: boolean | Prisma.Subscription$badgesArgs<ExtArgs>
   _count?: boolean | Prisma.SubscriptionCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type SubscriptionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -801,6 +950,7 @@ export type $SubscriptionPayload<ExtArgs extends runtime.Types.Extensions.Intern
   objects: {
     tenant: Prisma.$TenantPayload<ExtArgs>
     payments: Prisma.$PaymentPayload<ExtArgs>[]
+    badges: Prisma.$BadgePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1211,6 +1361,7 @@ export interface Prisma__SubscriptionClient<T, Null = never, ExtArgs extends run
   readonly [Symbol.toStringTag]: "PrismaPromise"
   tenant<T extends Prisma.TenantDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantDefaultArgs<ExtArgs>>): Prisma.Prisma__TenantClient<runtime.Types.Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   payments<T extends Prisma.Subscription$paymentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Subscription$paymentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  badges<T extends Prisma.Subscription$badgesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Subscription$badgesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BadgePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1669,6 +1820,30 @@ export type Subscription$paymentsArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.PaymentScalarFieldEnum | Prisma.PaymentScalarFieldEnum[]
+}
+
+/**
+ * Subscription.badges
+ */
+export type Subscription$badgesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Badge
+   */
+  select?: Prisma.BadgeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Badge
+   */
+  omit?: Prisma.BadgeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BadgeInclude<ExtArgs> | null
+  where?: Prisma.BadgeWhereInput
+  orderBy?: Prisma.BadgeOrderByWithRelationInput | Prisma.BadgeOrderByWithRelationInput[]
+  cursor?: Prisma.BadgeWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.BadgeScalarFieldEnum | Prisma.BadgeScalarFieldEnum[]
 }
 
 /**

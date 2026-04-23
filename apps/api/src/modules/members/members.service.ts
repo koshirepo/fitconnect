@@ -283,6 +283,7 @@ export const memberService = {
       amount: number;
       durationDays: number;
       title: string;
+      badges: { id: string }[];
     } | null = null;
     let charges: { id: string; name: string; amount: number }[] = [];
     let shift: {
@@ -301,7 +302,15 @@ export const memberService = {
       input.subscriptionId
         ? prisma.subscription.findFirst({
             where: { id: input.subscriptionId, tenantId, isActive: true },
-            select: { id: true, amount: true, durationDays: true, title: true },
+            select: {
+              id: true,
+              amount: true,
+              durationDays: true,
+              title: true,
+              badges: {
+                select: { id: true },
+              },
+            },
           })
         : null,
       input.chargeIds && input.chargeIds.length > 0
@@ -337,6 +346,13 @@ export const memberService = {
 
     if (input.subscriptionId && !subscription) {
       return { error: "Subscription plan not found.", status: 404 as const };
+    }
+    if (subscription?.badges.length) {
+      return {
+        error:
+          "Badge-restricted plans cannot be assigned while adding a new member. Assign the badge first, then record the payment.",
+        status: 400 as const,
+      };
     }
     if (input.shiftId && !shift) {
       return { error: "Shift not found.", status: 404 as const };

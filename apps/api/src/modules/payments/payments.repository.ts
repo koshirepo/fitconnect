@@ -8,6 +8,14 @@
 import { prisma } from "../../lib/prisma";
 import type { PaymentStatus } from "../../shared/types/enums";
 
+const subscriptionBadgeSelect = {
+  id: true,
+  name: true,
+  color: true,
+  icon: true,
+  isActive: true,
+} as const;
+
 export const paymentRepository = {
   /**
    * Run the `list payments` persistence operation for the payments module.
@@ -129,7 +137,14 @@ export const paymentRepository = {
   findMembershipById(membershipId: string, tenantId: string) {
     return prisma.tenantMembership.findFirst({
       where: { id: membershipId, tenantId },
-      select: { id: true, status: true, dueDate: true },
+      select: {
+        id: true,
+        status: true,
+        dueDate: true,
+        badges: {
+          select: { id: true },
+        },
+      },
     });
   },
 
@@ -140,7 +155,12 @@ export const paymentRepository = {
   findSubscription(subscriptionId: string, tenantId: string) {
     return prisma.subscription.findFirst({
       where: { id: subscriptionId, tenantId },
-      select: { id: true },
+      select: {
+        id: true,
+        badges: {
+          select: { id: true },
+        },
+      },
     });
   },
 
@@ -158,7 +178,25 @@ export const paymentRepository = {
         amount: true,
         durationDays: true,
         isActive: true,
+        badges: {
+          orderBy: { name: "asc" },
+          select: subscriptionBadgeSelect,
+        },
       },
+    });
+  },
+
+  /**
+   * Run the `find badge ids` persistence operation for the payments module.
+   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   */
+  findBadgeIds(tenantId: string, badgeIds: string[]) {
+    return prisma.badge.findMany({
+      where: {
+        tenantId,
+        id: { in: badgeIds },
+      },
+      select: { id: true },
     });
   },
 
@@ -297,6 +335,10 @@ export const paymentRepository = {
         amount: true,
         durationDays: true,
         isActive: true,
+        badges: {
+          orderBy: { name: "asc" },
+          select: subscriptionBadgeSelect,
+        },
       },
     });
   },
@@ -312,10 +354,22 @@ export const paymentRepository = {
       description?: string;
       amount: number;
       durationDays: number;
+      badgeIds: string[];
     },
   ) {
+    const { badgeIds, ...subscriptionData } = data;
     return prisma.subscription.create({
-      data: { ...data, tenantId },
+      data: {
+        ...subscriptionData,
+        tenantId,
+        ...(badgeIds.length > 0
+          ? {
+              badges: {
+                connect: badgeIds.map((id) => ({ id })),
+              },
+            }
+          : {}),
+      },
       select: {
         id: true,
         title: true,
@@ -323,6 +377,10 @@ export const paymentRepository = {
         amount: true,
         durationDays: true,
         isActive: true,
+        badges: {
+          orderBy: { name: "asc" },
+          select: subscriptionBadgeSelect,
+        },
       },
     });
   },
@@ -339,11 +397,22 @@ export const paymentRepository = {
       amount?: number;
       durationDays?: number;
       isActive?: boolean;
+      badgeIds?: string[];
     },
   ) {
+    const { badgeIds, ...subscriptionData } = data;
     return prisma.subscription.update({
       where: { id: subscriptionId },
-      data,
+      data: {
+        ...subscriptionData,
+        ...(badgeIds !== undefined
+          ? {
+              badges: {
+                set: badgeIds.map((id) => ({ id })),
+              },
+            }
+          : {}),
+      },
       select: {
         id: true,
         title: true,
@@ -351,6 +420,10 @@ export const paymentRepository = {
         amount: true,
         durationDays: true,
         isActive: true,
+        badges: {
+          orderBy: { name: "asc" },
+          select: subscriptionBadgeSelect,
+        },
       },
     });
   },

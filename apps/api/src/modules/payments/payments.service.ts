@@ -16,6 +16,10 @@ import type {
   UpdateSubscriptionInput,
 } from "./payments.schema";
 
+function normalizeBadgeIds(badgeIds?: string[]) {
+  return Array.from(new Set((badgeIds ?? []).map((id) => id.trim()).filter(Boolean)));
+}
+
 export const paymentService = {
   /**
    * Execute the `list payments` workflow for the payments module.
@@ -134,6 +138,18 @@ export const paymentService = {
 
     if (input.subscriptionId && !subscription) {
       return { error: "Subscription not found in this tenant.", status: 404 as const };
+    }
+
+    if (
+      subscription?.badges.length &&
+      !subscription.badges.some((badge) =>
+        targetMembership.badges.some((memberBadge) => memberBadge.id === badge.id),
+      )
+    ) {
+      return {
+        error: "This member is not eligible for the selected subscription plan.",
+        status: 400 as const,
+      };
     }
 
     const payment = await paymentRepository.createPayment({
@@ -274,7 +290,22 @@ export const paymentService = {
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
   async createSubscription(tenantId: string, input: CreateSubscriptionInput) {
-    const subscription = await paymentRepository.createSubscription(tenantId, input);
+    const badgeIds = normalizeBadgeIds(input.badgeIds);
+
+    if (badgeIds.length > 0) {
+      const badges = await paymentRepository.findBadgeIds(tenantId, badgeIds);
+      if (badges.length !== badgeIds.length) {
+        return {
+          error: "One or more selected badges do not belong to this tenant.",
+          status: 400 as const,
+        };
+      }
+    }
+
+    const subscription = await paymentRepository.createSubscription(tenantId, {
+      ...input,
+      badgeIds,
+    });
     return { data: { subscription } };
   },
 
@@ -292,7 +323,23 @@ export const paymentService = {
       return { error: "Subscription not found.", status: 404 as const };
     }
 
-    const subscription = await paymentRepository.updateSubscription(subscriptionId, input);
+    const hasBadgeIds = Object.prototype.hasOwnProperty.call(input, "badgeIds");
+    const badgeIds = hasBadgeIds ? normalizeBadgeIds(input.badgeIds) : undefined;
+
+    if (badgeIds && badgeIds.length > 0) {
+      const badges = await paymentRepository.findBadgeIds(tenantId, badgeIds);
+      if (badges.length !== badgeIds.length) {
+        return {
+          error: "One or more selected badges do not belong to this tenant.",
+          status: 400 as const,
+        };
+      }
+    }
+
+    const subscription = await paymentRepository.updateSubscription(subscriptionId, {
+      ...input,
+      ...(hasBadgeIds ? { badgeIds } : {}),
+    });
     return { data: { subscription }, previous: existing };
   },
 

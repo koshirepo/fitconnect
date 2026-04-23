@@ -84,6 +84,7 @@ export const createSubscriptionSchema = z.object({
   description: z.string().max(1000).optional(),
   amount: z.number().int().min(0),
   durationDays: z.number().int().min(1).default(30),
+  badgeIds: z.array(z.string()).max(100).optional().default([]),
 });
 
 export const updateSubscriptionSchema = z
@@ -93,6 +94,7 @@ export const updateSubscriptionSchema = z
     amount: z.number().int().min(0).optional(),
     durationDays: z.number().int().min(1).optional(),
     isActive: z.boolean().optional(),
+    badgeIds: z.array(z.string()).max(100).optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: "At least one field is required.",

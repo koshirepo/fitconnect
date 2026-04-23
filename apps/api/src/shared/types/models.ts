@@ -270,6 +270,7 @@ export interface Subscription {
   amount: number;
   durationDays: number;
   isActive: boolean;
+  badges: Pick<Badge, "id" | "name" | "color" | "icon" | "isActive">[];
 }
 
 export interface CreateSubscriptionPayload {
@@ -277,6 +278,7 @@ export interface CreateSubscriptionPayload {
   description?: string;
   amount: number;
   durationDays?: number;
+  badgeIds?: string[];
 }
 
 export interface UpdateSubscriptionPayload {
@@ -285,6 +287,7 @@ export interface UpdateSubscriptionPayload {
   amount?: number;
   durationDays?: number;
   isActive?: boolean;
+  badgeIds?: string[];
 }
 
 // ─── Payments ─────────────────────────────────────────────────────────────────

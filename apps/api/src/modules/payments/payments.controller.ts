@@ -10,7 +10,15 @@ import { paymentService } from "./payments.service";
 import { auditLog } from "../../lib/audit";
 import { parseBody } from "../../lib/http";
 import { parsePagination } from "../../lib/pagination";
-import { ok, okPaginated, forbidden, notFound, okMessage, conflict } from "../../lib/response";
+import {
+  ok,
+  okPaginated,
+  forbidden,
+  notFound,
+  okMessage,
+  conflict,
+  badRequest,
+} from "../../lib/response";
 import {
   createPaymentSchema,
   updatePaymentStatusSchema,
@@ -92,7 +100,10 @@ export const paymentController = {
 
     const result = await paymentService.createPayment(tenantId, c.get("authUser").id, parsed.data);
 
-    if ("error" in result) return notFound(c, result.error!);
+    if ("error" in result) {
+      if (result.status === 400) return badRequest(c, result.error!);
+      return notFound(c, result.error!);
+    }
 
     await auditLog({
       action: "CREATE",
@@ -216,6 +227,7 @@ export const paymentController = {
     if (!parsed.ok) return parsed.response;
 
     const result = await paymentService.createSubscription(tenantId, parsed.data);
+    if ("error" in result) return badRequest(c, result.error!);
 
     await auditLog({
       action: "CREATE",
@@ -240,7 +252,10 @@ export const paymentController = {
     if (!parsed.ok) return parsed.response;
 
     const result = await paymentService.updateSubscription(tenantId, subscriptionId, parsed.data);
-    if ("error" in result) return notFound(c, result.error!);
+    if ("error" in result) {
+      if (result.status === 400) return badRequest(c, result.error!);
+      return notFound(c, result.error!);
+    }
 
     await auditLog({
       action: "UPDATE",
