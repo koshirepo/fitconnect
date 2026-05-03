@@ -266,6 +266,19 @@ export default function MemberDetailPage() {
 
     setEditSubmitting(true);
     try {
+      const roleChanged = data.role !== member.role;
+      const nameChanged = data.name !== member.name;
+      const phoneChanged = data.phone !== (member.phone ?? "");
+      const nextShiftId = data.shiftId || null;
+      const currentShiftId = member.shift?.id ?? null;
+      const shiftChanged = nextShiftId !== currentShiftId;
+      const avatarChanged = Boolean(data.photoFile) || data.photoPreview !== member.avatarUrl;
+
+      if (!roleChanged && !nameChanged && !phoneChanged && !shiftChanged && !avatarChanged) {
+        navigate(`/members/${membershipId}`, { replace: true });
+        return;
+      }
+
       let avatarUrl: string | null | undefined;
       if (data.photoFile) {
         const uploadRes = await uploadsApi.uploadAvatar(data.photoFile);
@@ -274,12 +287,18 @@ export default function MemberDetailPage() {
         avatarUrl = data.photoPreview ?? null;
       }
 
-      await tenantsApi.updateMember(currentTenantId, membershipId, {
-        name: data.name,
-        phone: data.phone,
-        shiftId: data.shiftId || null,
-        ...(avatarUrl !== undefined ? { avatarUrl } : {}),
-      });
+      if (roleChanged) {
+        await tenantsApi.updateMemberRole(currentTenantId, membershipId, data.role);
+      }
+
+      if (nameChanged || phoneChanged || shiftChanged || avatarUrl !== undefined) {
+        await tenantsApi.updateMember(currentTenantId, membershipId, {
+          ...(nameChanged ? { name: data.name } : {}),
+          ...(phoneChanged ? { phone: data.phone } : {}),
+          ...(shiftChanged ? { shiftId: nextShiftId } : {}),
+          ...(avatarUrl !== undefined ? { avatarUrl } : {}),
+        });
+      }
 
       await loadMember(false);
       navigate(`/members/${membershipId}`, { replace: true });

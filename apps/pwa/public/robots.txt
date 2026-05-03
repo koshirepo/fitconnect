@@ -1,5 +1,5 @@
 # FitConnect — Gym Management Software
-# https://fitconnect.app
+# https://fitconnect.co.in
 
 User-agent: *
 Allow: /
@@ -19,7 +19,7 @@ Disallow: /commerce/admin
 Disallow: /api/
 
 # Sitemap
-Sitemap: https://fitconnect.app/sitemap.xml
+Sitemap: https://fitconnect.co.in/sitemap.xml
 
 # Crawl-delay
 Crawl-delay: 1
