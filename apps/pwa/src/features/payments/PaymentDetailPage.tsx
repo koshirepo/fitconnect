@@ -59,7 +59,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 export default function PaymentDetailPage() {
   const { paymentId } = useParams<{ paymentId: string }>();
   const navigate = useNavigate();
-  const { currentTenantId, tenantRole } = useAuthStore();
+  const { currentTenantId, tenantRole, user } = useAuthStore();
   const role = tenantRole();
   const isAdmin = role === "ADMIN";
   const canRecordPayment = role === "ADMIN" || role === "COACH";
@@ -210,6 +210,12 @@ export default function PaymentDetailPage() {
   }
 
   const title = payment.subscription?.title ?? payment.description ?? "Payment";
+  const collectedByTarget =
+    payment.collectedBy?.userId === user?.id
+      ? "/profile"
+      : payment.collectedBy
+        ? `/members/${payment.collectedBy.id}`
+        : null;
 
   return (
     <div className="space-y-5">
@@ -444,7 +450,15 @@ export default function PaymentDetailPage() {
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Collected by
               </span>
-              <div className="mt-1">
+              <button
+                type="button"
+                className="mt-1 w-full rounded-lg text-left transition-colors hover:bg-muted/50"
+                onClick={() => {
+                  if (collectedByTarget) {
+                    navigate(collectedByTarget);
+                  }
+                }}
+              >
                 <AvatarCard
                   name={payment.collectedBy.name}
                   avatarUrl={payment.collectedBy.avatarUrl}
@@ -452,7 +466,7 @@ export default function PaymentDetailPage() {
                 >
                   <p className="text-xs text-muted-foreground">{payment.collectedBy.email}</p>
                 </AvatarCard>
-              </div>
+              </button>
             </div>
           )}
         </CardContent>

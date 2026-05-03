@@ -120,6 +120,7 @@ export default function MemberDetailPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
   const [deletingMember, setDeletingMember] = React.useState(false);
   const paymentsSectionRef = React.useRef<HTMLDivElement>(null);
+  const isMemberProfile = member?.role === "MEMBER";
 
   const loadMember = React.useCallback(
     async (showLoading = true) => {
@@ -208,7 +209,12 @@ export default function MemberDetailPage() {
   };
 
   React.useEffect(() => {
-    if (!currentTenantId || !membershipId) return;
+    if (!currentTenantId || !membershipId || !isMemberProfile) {
+      setCalDates(new Set());
+      setCalTotal(0);
+      setCalLoading(false);
+      return;
+    }
     let cancelled = false;
     setCalLoading(true);
     attendanceApi
@@ -227,7 +233,7 @@ export default function MemberDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [currentTenantId, membershipId, calMonth]);
+  }, [currentTenantId, membershipId, calMonth, isMemberProfile]);
 
   const handleToggleStatus = async () => {
     if (!currentTenantId || !membershipId || !member) return;
@@ -362,12 +368,12 @@ export default function MemberDetailPage() {
 
   // ─── Payment due detection ──────────────────────────────────────────────────
   const isDue = React.useMemo(() => {
-    if (!member || member.status !== "ACTIVE") return false;
+    if (!member || member.status !== "ACTIVE" || !isMemberProfile) return false;
     const hasSubscriptionPayment = member.payments.some((p) => p.validUntil);
     if (!hasSubscriptionPayment) return false;
     const now = new Date();
     return !member.payments.some((p) => p.validUntil && new Date(p.validUntil) > now);
-  }, [member]);
+  }, [member, isMemberProfile]);
 
   const lastExpiry = React.useMemo(() => {
     if (!isDue || !member) return null;
@@ -383,14 +389,14 @@ export default function MemberDetailPage() {
   );
 
   const paymentReminderUrl = React.useMemo(() => {
-    if (!isDue || !member?.phone) return null;
+    if (!isMemberProfile || !isDue || !member?.phone) return null;
     const text = renderWhatsAppTemplateBody(paymentReminderTemplateBody, {
       memberName: member.name,
       gymName,
       expirySuffix: lastExpiry ? ` on ${lastExpiry}` : "",
     });
     return buildWhatsAppUrl(member.phone, text);
-  }, [isDue, member, paymentReminderTemplateBody, gymName, lastExpiry]);
+  }, [isDue, isMemberProfile, member, paymentReminderTemplateBody, gymName, lastExpiry]);
 
   if (loading) return <PageLoader />;
 
@@ -552,9 +558,9 @@ export default function MemberDetailPage() {
   );
 
   const mobilePhotoRingClass =
-    getDueDateState(member.dueDate) === "overdue"
+    isMemberProfile && getDueDateState(member.dueDate) === "overdue"
       ? "ring-4 ring-red-500"
-      : getDueDateState(member.dueDate) === "current"
+      : isMemberProfile && getDueDateState(member.dueDate) === "current"
         ? "ring-4 ring-emerald-500"
         : member.status === "ACTIVE"
           ? "ring-4 ring-blue-500"
@@ -566,7 +572,11 @@ export default function MemberDetailPage() {
         open={deleteConfirmOpen}
         onOpenChange={setDeleteConfirmOpen}
         title="Delete member?"
-        description="This will permanently delete the member along with their payments, assigned workout plans, and plans they created. This action cannot be undone."
+        description={
+          isMemberProfile
+            ? "This will permanently delete the member along with their payments, assigned workout plans, and plans they created. This action cannot be undone."
+            : "This will permanently delete this staff profile along with any related gym records. This action cannot be undone."
+        }
         confirmLabel="Delete"
         loading={deletingMember}
         onConfirm={handleDeleteMember}
@@ -684,7 +694,7 @@ export default function MemberDetailPage() {
             </button>
           )}
         </div>
-        {paymentReminderUrl && (
+        {isMemberProfile && paymentReminderUrl && (
           <a
             href={paymentReminderUrl}
             target="_blank"
@@ -706,7 +716,7 @@ export default function MemberDetailPage() {
             memberId={member.memberId}
             className="min-w-0"
             role={member.role}
-            dueDate={member.dueDate}
+            dueDate={isMemberProfile ? member.dueDate : null}
             isActive={member.status === "ACTIVE"}
             avatarClassName="h-20 w-20 text-xl"
           >
@@ -769,7 +779,7 @@ export default function MemberDetailPage() {
               Delete
             </Button>
           )}
-          {paymentReminderUrl && (
+          {isMemberProfile && paymentReminderUrl && (
             <a href={paymentReminderUrl} target="_blank" rel="noopener noreferrer">
               <Button
                 size="sm"
@@ -784,23 +794,30 @@ export default function MemberDetailPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card
-          className="cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() =>
-            paymentsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-          }
-        >
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <CreditCard className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-2xl font-bold">{member.payments.length}</p>
-                <p className="text-xs text-muted-foreground">Payments</p>
+      <div
+        className={cn(
+          "grid gap-4 sm:grid-cols-2",
+          isMemberProfile ? "lg:grid-cols-4" : "lg:grid-cols-2",
+        )}
+      >
+        {isMemberProfile && (
+          <Card
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() =>
+              paymentsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CreditCard className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-2xl font-bold">{member.payments.length}</p>
+                  <p className="text-xs text-muted-foreground">Payments</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardContent className="pt-6">
@@ -814,17 +831,19 @@ export default function MemberDetailPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Dumbbell className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-2xl font-bold">{member.planAssignments.length}</p>
-                <p className="text-xs text-muted-foreground">Workout Plans</p>
+        {isMemberProfile && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <Dumbbell className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-2xl font-bold">{member.planAssignments.length}</p>
+                  <p className="text-xs text-muted-foreground">Workout Plans</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardContent className="pt-6">
@@ -845,170 +864,176 @@ export default function MemberDetailPage() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Dumbbell className="h-5 w-5" />
-            Workout Plans
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {member.planAssignments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No workout plans assigned.</p>
-          ) : (
-            <div className="space-y-2">
-              {member.planAssignments.map((pa) => (
-                <div
-                  key={pa.id}
-                  className="flex items-center justify-between rounded-md border px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => navigate(`/workouts/${pa.plan.id}`)}
-                >
-                  <div>
-                    <p className="font-medium">{pa.plan.title}</p>
-                    {pa.plan.description && (
-                      <p className="text-sm text-muted-foreground">{pa.plan.description}</p>
-                    )}
+      {isMemberProfile && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Dumbbell className="h-5 w-5" />
+              Workout Plans
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {member.planAssignments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No workout plans assigned.</p>
+            ) : (
+              <div className="space-y-2">
+                {member.planAssignments.map((pa) => (
+                  <div
+                    key={pa.id}
+                    className="flex items-center justify-between rounded-md border px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => navigate(`/workouts/${pa.plan.id}`)}
+                  >
+                    <div>
+                      <p className="font-medium">{pa.plan.title}</p>
+                      {pa.plan.description && (
+                        <p className="text-sm text-muted-foreground">{pa.plan.description}</p>
+                      )}
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      Assigned {formatDate(pa.assignedAt)}
+                    </span>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    Assigned {formatDate(pa.assignedAt)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* ── Attendance Calendar ─────────────────────────────────────────── */}
-      <Card id="attendance">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <CalendarDays className="h-5 w-5" />
-              Attendance
-            </CardTitle>
-            <span className="text-sm text-muted-foreground font-medium">
-              {calTotal} day{calTotal !== 1 ? "s" : ""}
-            </span>
-          </div>
-          <div className="flex items-center justify-between pt-1">
-            <Button variant="ghost" size="sm" onClick={() => navigateMonth(-1)}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="text-sm font-medium">{formatMonthLabel(calMonth)}</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigateMonth(1)}
-              disabled={calMonth >= getMonthStr(today)}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="p-3">
-          {calLoading ? (
-            <div className="flex justify-center py-6">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      {isMemberProfile && (
+        <Card id="attendance">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CalendarDays className="h-5 w-5" />
+                Attendance
+              </CardTitle>
+              <span className="text-sm text-muted-foreground font-medium">
+                {calTotal} day{calTotal !== 1 ? "s" : ""}
+              </span>
             </div>
-          ) : (
-            (() => {
-              const first = parseMonth(calMonth);
-              const daysInMonth = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
-              const startDay = (first.getDay() + 6) % 7; // 0=Mon
-              const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-              const cells: React.ReactNode[] = [];
-              for (let i = 0; i < startDay; i++) cells.push(<div key={`e-${i}`} />);
-              for (let d = 1; d <= daysInMonth; d++) {
-                const dateStr = `${calMonth}-${String(d).padStart(2, "0")}`;
-                const present = calDates.has(dateStr);
-                const isToday = dateStr === todayStr;
-                cells.push(
-                  <div
-                    key={d}
-                    className={cn(
-                      "flex flex-col items-center justify-center rounded-md p-1 min-h-10 text-sm",
-                      present ? "bg-green-500 text-white font-medium" : "text-muted-foreground",
-                      isToday && "ring-2 ring-primary",
-                    )}
-                  >
-                    {d}
-                  </div>,
-                );
-              }
-              return (
-                <div className="grid grid-cols-7 gap-1">
-                  {WEEKDAYS.map((w) => (
+            <div className="flex items-center justify-between pt-1">
+              <Button variant="ghost" size="sm" onClick={() => navigateMonth(-1)}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm font-medium">{formatMonthLabel(calMonth)}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigateMonth(1)}
+                disabled={calMonth >= getMonthStr(today)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="p-3">
+            {calLoading ? (
+              <div className="flex justify-center py-6">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              </div>
+            ) : (
+              (() => {
+                const first = parseMonth(calMonth);
+                const daysInMonth = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+                const startDay = (first.getDay() + 6) % 7; // 0=Mon
+                const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+                const cells: React.ReactNode[] = [];
+                for (let i = 0; i < startDay; i++) cells.push(<div key={`e-${i}`} />);
+                for (let d = 1; d <= daysInMonth; d++) {
+                  const dateStr = `${calMonth}-${String(d).padStart(2, "0")}`;
+                  const present = calDates.has(dateStr);
+                  const isToday = dateStr === todayStr;
+                  cells.push(
                     <div
-                      key={w}
-                      className="text-center text-xs font-medium text-muted-foreground py-1"
+                      key={d}
+                      className={cn(
+                        "flex flex-col items-center justify-center rounded-md p-1 min-h-10 text-sm",
+                        present ? "bg-green-500 text-white font-medium" : "text-muted-foreground",
+                        isToday && "ring-2 ring-primary",
+                      )}
                     >
-                      {w}
-                    </div>
-                  ))}
-                  {cells}
-                </div>
-              );
-            })()
-          )}
-        </CardContent>
-      </Card>
+                      {d}
+                    </div>,
+                  );
+                }
+                return (
+                  <div className="grid grid-cols-7 gap-1">
+                    {WEEKDAYS.map((w) => (
+                      <div
+                        key={w}
+                        className="text-center text-xs font-medium text-muted-foreground py-1"
+                      >
+                        {w}
+                      </div>
+                    ))}
+                    {cells}
+                  </div>
+                );
+              })()
+            )}
+          </CardContent>
+        </Card>
+      )}
 
-      <Card ref={paymentsSectionRef}>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center justify-between gap-2">
-            <span className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              Payments
-            </span>
-            <Link
-              to={`/payments/record/${membershipId}`}
-              className="ml-2 inline-flex items-center gap-1 text-sm text-secondary bg-primary rounded-sm px-2 py-1 hover:underline"
-            >
-              Add <PlusCircle className="h-4 w-4" />
-            </Link>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {member.payments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No payments recorded.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Subscription</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Valid</TableHead>
-                  <TableHead>Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {member.payments.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-medium">
-                      <Link to={`/payments/${p.id}`} className="hover:underline">
-                        {p.subscription?.title ?? p.description ?? "-"}
-                      </Link>
-                    </TableCell>
-                    <TableCell
-                      className={cn("font-semibold", PAYMENT_AMOUNT_COLOR[p.status] ?? "")}
-                    >
-                      {fmt(p.amount)}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-xs">
-                      {p.validFrom ? formatDate(p.validFrom) : "-"}
-                      {p.validUntil ? ` -> ${formatDate(p.validUntil)}` : ""}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-xs">
-                      {formatDate(p.createdAt)}
-                    </TableCell>
+      {isMemberProfile && (
+        <Card ref={paymentsSectionRef}>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Payments
+              </span>
+              <Link
+                to={`/payments/record/${membershipId}`}
+                className="ml-2 inline-flex items-center gap-1 text-sm text-secondary bg-primary rounded-sm px-2 py-1 hover:underline"
+              >
+                Add <PlusCircle className="h-4 w-4" />
+              </Link>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {member.payments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No payments recorded.</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Subscription</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Valid</TableHead>
+                    <TableHead>Date</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {member.payments.map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-medium">
+                        <Link to={`/payments/${p.id}`} className="hover:underline">
+                          {p.subscription?.title ?? p.description ?? "-"}
+                        </Link>
+                      </TableCell>
+                      <TableCell
+                        className={cn("font-semibold", PAYMENT_AMOUNT_COLOR[p.status] ?? "")}
+                      >
+                        {fmt(p.amount)}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-xs">
+                        {p.validFrom ? formatDate(p.validFrom) : "-"}
+                        {p.validUntil ? ` -> ${formatDate(p.validUntil)}` : ""}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-xs">
+                        {formatDate(p.createdAt)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
