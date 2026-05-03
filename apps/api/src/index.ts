@@ -14,6 +14,7 @@ type WorkerEnv = {
   DB: D1Database;
   FILES?: R2Bucket;
   UPLOADS_BUCKET?: R2Bucket;
+  APP_URL?: string;
   R2_PUBLIC_URL?: string;
   [key: string]: unknown;
 };

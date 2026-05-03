@@ -137,6 +137,7 @@ export const authController = {
 
     await authService.forgotPassword(
       parsed.data,
+      c.env?.APP_URL,
       (promise) => c.executionCtx.waitUntil(promise),
     );
     return okMessage(c, "If that email is registered, a reset link has been sent.");

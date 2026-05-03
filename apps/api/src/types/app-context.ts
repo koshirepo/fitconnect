@@ -33,6 +33,7 @@ export type AppBindings = {
     DB: D1Database;
     FILES?: R2Bucket;
     UPLOADS_BUCKET?: R2Bucket;
+    APP_URL?: string;
     R2_PUBLIC_URL?: string;
   };
   Variables: AppVariables;

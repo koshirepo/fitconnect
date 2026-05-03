@@ -63,6 +63,13 @@ function buildTenantsMap(
 
 type ScheduleBackgroundTask = (promise: Promise<unknown>) => void;
 
+function buildResetPasswordUrl(token: string, appUrl?: string) {
+  const baseUrl = (appUrl ?? process.env.APP_URL ?? "http://localhost:5173").trim();
+  const url = new URL("/reset-password", baseUrl);
+  url.searchParams.set("token", token);
+  return url.toString();
+}
+
 export const authService = {
   /**
    * Execute the `bootstrap` workflow for the auth module.
@@ -253,6 +260,7 @@ export const authService = {
    */
   async forgotPassword(
     input: ForgotPasswordInput,
+    appUrl?: string,
     scheduleBackgroundTask?: ScheduleBackgroundTask,
   ) {
     // Always return success to avoid leaking whether email exists
@@ -266,8 +274,7 @@ export const authService = {
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
     await authRepository.createPasswordResetToken(user.id, token, expiresAt);
 
-    const appUrl = process.env.APP_URL ?? "http://localhost:5173";
-    const resetUrl = `${appUrl}/reset-password?token=${token}`;
+    const resetUrl = buildResetPasswordUrl(token, appUrl);
 
     // Fire-and-forget — don't await so endpoint responds instantly
     // Fire-and-forget keeps the endpoint latency predictable even if the SMTP

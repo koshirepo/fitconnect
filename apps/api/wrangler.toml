@@ -23,6 +23,7 @@ binding = "FILES"
 bucket_name = "fit-bucket"
 
 [vars]
+APP_URL = "https://fitconnect.co.in"
 R2_PUBLIC_URL = "https://pub-f9794d5233bf467ca886bdf6c65a7cbe.r2.dev"
 EMAIL_HOST="smtp.gmail.com"
 EMAIL_PORT=587
