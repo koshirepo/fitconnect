@@ -3172,7 +3172,7 @@ export type $TenantMembershipPayload<ExtArgs extends runtime.Types.Extensions.In
     role: string
     status: string
     /**
-     * Latest subscription validUntil â€“ auto-updated on payment changes
+     * Latest subscription validUntil - auto-updated on payment changes
      */
     dueDate: Date | null
     shiftId: string | null

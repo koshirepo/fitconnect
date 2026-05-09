@@ -11,12 +11,57 @@ import { auditLog } from "../../lib/audit";
 import { parseBody } from "../../lib/http";
 import { parsePagination } from "../../lib/pagination";
 import { ok, okMessage, okPaginated, notFound, badRequest } from "../../lib/response";
-import { markAttendanceSchema, markAllAttendanceSchema } from "./attendance.schema";
+import {
+  markAttendanceSchema,
+  markAllAttendanceSchema,
+  qrAttendanceSchema,
+} from "./attendance.schema";
 import type { AppBindings } from "../../types/app-context";
 
 type AppContext = Context<AppBindings>;
 
 export const attendanceController = {
+  /** GET /:tenantId/attendance/qr/members - public QR member picker */
+  async qrMembers(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    const result = await attendanceService.listQrMembers(tenantId, c.req.query("search"));
+    if ("error" in result) return notFound(c, result.error!);
+
+    c.header("Cache-Control", "private, max-age=30");
+    return ok(c, result.data);
+  },
+
+  /** POST /:tenantId/attendance/qr - QR check-in with optional auth */
+  async qrCheckIn(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    const user = c.get("authUser");
+    const parsed = await parseBody(c, qrAttendanceSchema);
+    if (!parsed.ok) return parsed.response;
+
+    const result = await attendanceService.markQrAttendance(tenantId, user.id, parsed.data);
+    if ("error" in result) {
+      if (result.status === 404) return notFound(c, result.error!);
+      return badRequest(c, result.error!);
+    }
+
+    await auditLog({
+      action: "CREATE",
+      entity: "Attendance",
+      entityId: result.data.attendance.id,
+      actorId: user.id,
+      tenantId: result.data.tenant.id,
+      metadata: {
+        qr: true,
+        mode: result.data.mode,
+        membershipId: result.data.attendance.membershipId,
+        date: result.data.attendance.date,
+      },
+      ip: c.req.header("x-forwarded-for") ?? undefined,
+    });
+
+    return ok(c, result.data, 201);
+  },
+
   /** POST /:tenantId/attendance — self check-in */
   async checkIn(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
@@ -141,13 +186,19 @@ export const attendanceController = {
     const tenantId = c.req.param("tenantId")!;
     const membershipId = c.req.param("membershipId")!;
     const { page, limit } = parsePagination(c);
+    const user = c.get("authUser");
+    const role = c.get("tenantAccess")?.role ?? null;
 
-    const { data, total } = await attendanceService.listByMember(
+    const result = await attendanceService.listByMember(
       tenantId,
       membershipId,
       page,
       limit,
+      user.id,
+      role,
     );
+    if ("error" in result) return badRequest(c, result.error!);
+    const { data, total } = result;
     return okPaginated(c, data, { page, limit, total });
   },
 
@@ -155,8 +206,11 @@ export const attendanceController = {
   async summary(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const membershipId = c.req.param("membershipId")!;
+    const user = c.get("authUser");
+    const role = c.get("tenantAccess")?.role ?? null;
 
-    const result = await attendanceService.summary(tenantId, membershipId);
+    const result = await attendanceService.summary(tenantId, membershipId, user.id, role);
+    if ("error" in result) return badRequest(c, result.error!);
     return ok(c, result.data);
   },
 
@@ -179,8 +233,17 @@ export const attendanceController = {
     const now = new Date();
     const month =
       c.req.query("month") ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const user = c.get("authUser");
+    const role = c.get("tenantAccess")?.role ?? null;
 
-    const result = await attendanceService.memberCalendar(tenantId, membershipId, month);
+    const result = await attendanceService.memberCalendar(
+      tenantId,
+      membershipId,
+      month,
+      user.id,
+      role,
+    );
+    if ("error" in result) return badRequest(c, result.error!);
     c.header("Cache-Control", "private, max-age=60");
     return ok(c, result.data);
   },

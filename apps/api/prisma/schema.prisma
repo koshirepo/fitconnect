@@ -11,7 +11,7 @@ datasource db {
   provider = "sqlite"
 }
 
-// â”€â”€â”€ Enum values are stored as plain strings in SQLite â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Enum values are stored as plain strings in SQLite.
 // PlatformRole: "USER" | "SUPER_ADMIN" | "SUPPORT"
 // TenantRole:   "MEMBER" | "COACH" | "ADMIN"
 // AccountStatus: "ACTIVE" | "SUSPENDED" | "DELETED"
@@ -20,7 +20,7 @@ datasource db {
 // AuditAction:   "CREATE" | "UPDATE" | "DELETE" | "LOGIN" | "LOGOUT" | "ROLE_CHANGE" | "SETTINGS_CHANGE"
 // TodoVisibility: "PRIVATE" | "PROTECTED" | "PUBLIC"
 
-// â”€â”€â”€ Platform Models â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Platform models
 
 model User {
   id           String   @id @default(cuid())
@@ -74,7 +74,7 @@ model RefreshToken {
   @@index([token])
 }
 
-// â”€â”€â”€ Tenant Models â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Tenant models
 
 model Tenant {
   id          String    @id @default(cuid())
@@ -147,7 +147,7 @@ model TenantMembership {
   memberId          Int /// Sequential member number, unique per tenant (starts at 1)
   role              String                  @default("MEMBER")
   status            String                  @default("ACTIVE")
-  dueDate           DateTime? /// Latest subscription validUntil â€“ auto-updated on payment changes
+  dueDate           DateTime? /// Latest subscription validUntil - auto-updated on payment changes
   shiftId           String?
   shift             Shift?                  @relation(fields: [shiftId], references: [id], onDelete: SetNull)
   referredByMembershipId String?
@@ -175,7 +175,7 @@ model TenantMembership {
   @@index([referredByMembershipId])
 }
 
-// â”€â”€â”€ Subscription & Payment â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Subscription and payment
 
 model Subscription {
   id           String   @id @default(cuid())
@@ -265,7 +265,7 @@ model Payment {
   @@index([createdAt])
 }
 
-// â”€â”€â”€ Workout Plans â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Commerce
 
 model Product {
   id          String   @id @default(cuid())
@@ -383,6 +383,8 @@ model OrderItem {
   @@index([productId])
 }
 
+// Workout plans
+
 model WorkoutPlan {
   id          String           @id @default(cuid())
   tenantId    String
@@ -413,7 +415,7 @@ model WorkoutPlanAssignment {
   @@index([membershipId])
 }
 
-// â”€â”€â”€ Badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Badges
 
 model Badge {
   id          String             @id @default(cuid())
@@ -433,7 +435,7 @@ model Badge {
   @@index([tenantId])
 }
 
-// â”€â”€â”€ Platform Billing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Platform billing
 
 model PlatformPayment {
   id             String   @id @default(cuid())
@@ -449,7 +451,7 @@ model PlatformPayment {
   @@index([tenantId])
 }
 
-// â”€â”€â”€ Audit Log â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Attendance and audit log
 
 model Attendance {
   id           String            @id @default(cuid())
@@ -489,7 +491,7 @@ model AuditLog {
   @@index([createdAt])
 }
 
-// â”€â”€â”€ Push Subscriptions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Push subscriptions
 
 model PushSubscription {
   id        String   @id @default(cuid())

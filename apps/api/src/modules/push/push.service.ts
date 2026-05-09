@@ -24,7 +24,7 @@ function isConfigured(): boolean {
  */
 function ensureVapid() {
   if (!isConfigured()) {
-    throw new Error("VAPID keys not configured â€“ push notifications are disabled.");
+    throw new Error("VAPID keys not configured - push notifications are disabled.");
   }
   // VAPID settings are process-wide configuration for the `web-push` client,
   // so they are applied before each send flow begins.

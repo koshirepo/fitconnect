@@ -24,5 +24,10 @@ export const markAllAttendanceSchema = z.object({
     .optional(),
 });
 
+export const qrAttendanceSchema = z.object({
+  membershipId: z.string().min(1, "membershipId is required").optional(),
+});
+
 export type MarkAttendanceInput = z.infer<typeof markAttendanceSchema>;
 export type MarkAllAttendanceInput = z.infer<typeof markAllAttendanceSchema>;
+export type QrAttendanceInput = z.infer<typeof qrAttendanceSchema>;

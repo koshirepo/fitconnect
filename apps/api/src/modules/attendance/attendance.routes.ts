@@ -15,6 +15,21 @@ import type { AppBindings } from "../../types/app-context";
 
 export const attendanceRoutes = new Hono<AppBindings>();
 
+// QR check-in flow: authentication is mandatory.
+attendanceRoutes.get(
+  "/:tenantId/attendance/qr/members",
+  authenticate,
+  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH]),
+  attendanceController.qrMembers,
+);
+
+attendanceRoutes.post(
+  "/:tenantId/attendance/qr",
+  authenticate,
+  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH, TenantRole.MEMBER]),
+  attendanceController.qrCheckIn,
+);
+
 // Self check-in (any authenticated member)
 attendanceRoutes.post(
   "/:tenantId/attendance",

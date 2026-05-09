@@ -17,6 +17,16 @@ function dayRange(date: Date) {
 }
 
 export const attendanceRepository = {
+  findTenantByLookup(tenantIdOrSlug: string) {
+    return prisma.tenant.findFirst({
+      where: {
+        OR: [{ id: tenantIdOrSlug }, { slug: tenantIdOrSlug }],
+        status: "ACTIVE",
+      },
+      select: { id: true, name: true, slug: true, logoUrl: true, platformExpiresAt: true },
+    });
+  },
+
   /**
    * Run the `mark attendance` persistence operation for the attendance module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
@@ -176,6 +186,35 @@ export const attendanceRepository = {
       where: { tenantId, userId, status: "ACTIVE" },
       select: { id: true },
     });
+  },
+
+  async listQrMembers(tenantId: string, search?: string) {
+    const trimmed = search?.trim();
+    const members = await prisma.tenantMembership.findMany({
+      where: {
+        tenantId,
+        status: "ACTIVE",
+        role: "MEMBER",
+        ...(trimmed
+          ? {
+              OR: [
+                { user: { name: { contains: trimmed } } },
+                { user: { phone: { contains: trimmed } } },
+                ...(Number.isFinite(Number(trimmed)) ? [{ memberId: Number(trimmed) }] : []),
+              ],
+            }
+          : {}),
+      },
+      take: 100,
+      orderBy: [{ memberId: "asc" }],
+      select: {
+        id: true,
+        memberId: true,
+        user: { select: { name: true, avatarUrl: true } },
+      },
+    });
+
+    return members;
   },
 
   /** Daily attendance counts + member lists for a month */

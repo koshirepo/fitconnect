@@ -6,7 +6,11 @@
  * - Primary exports: attendanceService.
  */
 import { attendanceRepository } from "./attendance.repository";
-import type { MarkAttendanceInput, MarkAllAttendanceInput } from "./attendance.schema";
+import type {
+  MarkAttendanceInput,
+  MarkAllAttendanceInput,
+  QrAttendanceInput,
+} from "./attendance.schema";
 
 /**
  * Execute the `to date only` workflow for the attendance module.
@@ -19,6 +23,56 @@ function toDateOnly(dateStr?: string): Date {
 }
 
 export const attendanceService = {
+  async listQrMembers(tenantIdOrSlug: string, search?: string) {
+    const tenant = await attendanceRepository.findTenantByLookup(tenantIdOrSlug);
+    if (!tenant) return { error: "Gym not found.", status: 404 as const };
+
+    const members = await attendanceRepository.listQrMembers(tenant.id, search);
+    return {
+      data: {
+        tenant,
+        members: members.map((member) => ({
+          id: member.id,
+          memberId: member.memberId,
+          name: member.user.name,
+          avatarUrl: member.user.avatarUrl,
+        })),
+      },
+    };
+  },
+
+  async markQrAttendance(
+    tenantIdOrSlug: string,
+    actorUserId: string,
+    input: QrAttendanceInput,
+  ) {
+    const tenant = await attendanceRepository.findTenantByLookup(tenantIdOrSlug);
+    if (!tenant) return { error: "Gym not found.", status: 404 as const };
+    if (tenant.platformExpiresAt && tenant.platformExpiresAt.getTime() < Date.now()) {
+      return { error: "Platform access is expired for this gym.", status: 403 as const };
+    }
+
+    const result = await this.markAttendance(
+      tenant.id,
+      actorUserId,
+      null,
+      { membershipId: input.membershipId },
+      true,
+    );
+
+    if ("error" in result) {
+      return { error: result.error, status: result.status };
+    }
+    const attendance = result.data.attendance;
+    return {
+      data: {
+        attendance,
+        tenant,
+        mode: "self" as const,
+      },
+    };
+  },
+
   /** Self check-in or admin/coach marks for a specific member */
   async markAttendance(
     tenantId: string,
@@ -112,7 +166,21 @@ export const attendanceService = {
   },
 
   /** List attendance history for a specific member */
-  async listByMember(tenantId: string, membershipId: string, page: number, limit: number) {
+  async listByMember(
+    tenantId: string,
+    membershipId: string,
+    page: number,
+    limit: number,
+    callerUserId?: string,
+    callerRole?: string | null,
+  ) {
+    if (callerRole === "MEMBER") {
+      const membership = await attendanceRepository.findMembership(tenantId, membershipId);
+      if (!membership || membership.userId !== callerUserId) {
+        return { error: "You can only view your own attendance.", status: 403 as const };
+      }
+    }
+
     const { records, total } = await attendanceRepository.listByMember(
       tenantId,
       membershipId,
@@ -134,7 +202,19 @@ export const attendanceService = {
   },
 
   /** Summary: count of days attended in current month + this week */
-  async summary(tenantId: string, membershipId: string) {
+  async summary(
+    tenantId: string,
+    membershipId: string,
+    callerUserId?: string,
+    callerRole?: string | null,
+  ) {
+    if (callerRole === "MEMBER") {
+      const membership = await attendanceRepository.findMembership(tenantId, membershipId);
+      if (!membership || membership.userId !== callerUserId) {
+        return { error: "You can only view your own attendance summary.", status: 403 as const };
+      }
+    }
+
     const now = new Date();
     const monthStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1));
     const monthEnd = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 0));
@@ -155,7 +235,20 @@ export const attendanceService = {
   },
 
   /** Calendar dates for a single member in a month */
-  async memberCalendar(tenantId: string, membershipId: string, month: string) {
+  async memberCalendar(
+    tenantId: string,
+    membershipId: string,
+    month: string,
+    callerUserId?: string,
+    callerRole?: string | null,
+  ) {
+    if (callerRole === "MEMBER") {
+      const membership = await attendanceRepository.findMembership(tenantId, membershipId);
+      if (!membership || membership.userId !== callerUserId) {
+        return { error: "You can only view your own attendance calendar.", status: 403 as const };
+      }
+    }
+
     const [year, mon] = month.split("-").map(Number);
     const from = new Date(Date.UTC(year, mon - 1, 1));
     const to = new Date(Date.UTC(year, mon, 0));

@@ -20,6 +20,7 @@ export const authRepository = {
         memberships: {
           where: { status: "ACTIVE" },
           select: {
+            id: true,
             tenantId: true,
             role: true,
             tenant: { select: { name: true, slug: true, platformExpiresAt: true } },
@@ -142,6 +143,7 @@ export const authRepository = {
     return prisma.tenantMembership.findFirst({
       where: { userId, status: "ACTIVE" },
       select: {
+        id: true,
         tenantId: true,
         role: true,
         tenant: { select: { name: true, slug: true, platformExpiresAt: true } },

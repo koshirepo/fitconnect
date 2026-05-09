@@ -80,7 +80,7 @@ export const emailService = {
     return getTransporter().sendMail({
       from: getFrom(),
       to,
-      subject: "Reset your password – Fit Connect",
+      subject: "Reset your password - Fit Connect",
       html: `
         <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;">
           <h2 style="margin-bottom:8px;">Password Reset</h2>
@@ -97,7 +97,7 @@ export const emailService = {
             If you did not request a password reset, you can safely ignore this email.
           </p>
           <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;"/>
-          <p style="color:#9ca3af;font-size:12px;">Fit Connect · Gym Management Platform</p>
+          <p style="color:#9ca3af;font-size:12px;">Fit Connect - Gym Management Platform</p>
         </div>
       `,
     });
@@ -123,10 +123,10 @@ export const emailService = {
     return getTransporter().sendMail({
       from: getFrom(),
       to: payload.to,
-      subject: `Welcome to ${payload.gymName} – Fit Connect`,
+      subject: `Welcome to ${payload.gymName} - Fit Connect`,
       html: `
         <div style="font-family:sans-serif;max-width:520px;margin:auto;padding:32px;">
-          <h2 style="margin-bottom:8px;">Welcome to ${payload.gymName}! 🎉</h2>
+          <h2 style="margin-bottom:8px;">Welcome to ${payload.gymName}!</h2>
           <p>Hi ${payload.memberName},</p>
           <p>Your membership has been created successfully. Here are your login credentials:</p>
 
@@ -166,7 +166,7 @@ export const emailService = {
           }
 
           <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;"/>
-          <p style="color:#9ca3af;font-size:12px;">${payload.gymName} · Powered by Fit Connect</p>
+          <p style="color:#9ca3af;font-size:12px;">${payload.gymName} - Powered by Fit Connect</p>
         </div>
       `,
     });
@@ -179,7 +179,7 @@ export const emailService = {
     return getTransporter().sendMail({
       from: getFrom(),
       to,
-      subject: `Membership Suspended – ${gymName}`,
+      subject: `Membership Suspended - ${gymName}`,
       html: `
         <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;">
           <h2 style="margin-bottom:8px;color:#dc2626;">Membership Suspended</h2>
@@ -235,20 +235,19 @@ export const emailService = {
                 `<tr><td style="padding:6px 12px;border-bottom:1px solid #e5e7eb;">#${m.memberId}</td><td style="padding:6px 12px;border-bottom:1px solid #e5e7eb;">${m.name}</td></tr>`,
             )
             .join("")
-        : `<tr><td colspan="2" style="padding:8px 12px;color:#16a34a;">No overdue suspensions today ✓</td></tr>`;
+        : `<tr><td colspan="2" style="padding:8px 12px;color:#16a34a;">No overdue suspensions today.</td></tr>`;
 
     return getTransporter().sendMail({
       from: getFrom(),
       to,
-      subject: `Gym Report – ${gymName} – ${now}`,
+      subject: `Gym Report - ${gymName} - ${now}`,
       html: `
         <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:32px;">
-          <h2 style="margin-bottom:4px;">📊 Gym Report</h2>
+          <h2 style="margin-bottom:4px;">Gym Report</h2>
           <p style="color:#6b7280;margin-top:0;">${gymName} &middot; ${now}</p>
           <p>Hi ${adminName},</p>
           <p>Here's your gym's latest summary:</p>
-
-          <h3 style="margin-top:28px;margin-bottom:12px;color:#0f172a;">👥 Members</h3>
+          <h3 style="margin-top:28px;margin-bottom:12px;color:#0f172a;">Members</h3>
           <table style="width:100%;border-collapse:collapse;font-size:14px;">
             <tbody>
               <tr style="background:#f1f5f9;"><td style="padding:8px 12px;font-weight:600;">Total</td><td style="padding:8px 12px;text-align:right;font-weight:700;">${members.total}</td></tr>
@@ -259,8 +258,7 @@ export const emailService = {
               <tr><td style="padding:8px 12px;">Joined This Month</td><td style="padding:8px 12px;text-align:right;">${members.joinedMonth}</td></tr>
             </tbody>
           </table>
-
-          <h3 style="margin-top:28px;margin-bottom:12px;color:#0f172a;">💰 Finances</h3>
+          <h3 style="margin-top:28px;margin-bottom:12px;color:#0f172a;">Finances</h3>
           <table style="width:100%;border-collapse:collapse;font-size:14px;">
             <tbody>
               <tr style="background:#f1f5f9;"><td style="padding:8px 12px;font-weight:600;">Revenue This Month</td><td style="padding:8px 12px;text-align:right;color:#16a34a;font-weight:700;">${formatAmountInr(finances.revenueMonth)}</td></tr>
@@ -271,8 +269,7 @@ export const emailService = {
               <tr><td style="padding:8px 12px;">Pending (Today)</td><td style="padding:8px 12px;text-align:right;color:#ca8a04;">${finances.pendingToday}</td></tr>
             </tbody>
           </table>
-
-          <h3 style="margin-top:28px;margin-bottom:12px;color:#0f172a;">⚠️ Overdue Enforcement</h3>
+          <h3 style="margin-top:28px;margin-bottom:12px;color:#0f172a;">Overdue Enforcement</h3>
           <p style="font-size:14px;color:#6b7280;">Grace period: <strong>${overdue.allowedDays} days</strong> &middot; Found overdue: <strong>${overdue.found}</strong></p>
           <table style="width:100%;border-collapse:collapse;font-size:14px;">
             <thead><tr style="background:#fef2f2;"><th style="padding:8px 12px;text-align:left;">Member ID</th><th style="padding:8px 12px;text-align:left;">Name</th></tr></thead>

@@ -30,6 +30,7 @@ export interface User {
 }
 
 export interface TenantMembershipSummary {
+  id: string;
   tenantId: string;
   tenantName: string;
   tenantSlug: string;

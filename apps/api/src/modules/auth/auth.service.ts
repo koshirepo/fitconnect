@@ -35,6 +35,7 @@ import type {
 function mapMembership(
   m:
     | {
+        id: string;
         tenantId: string;
         role: string;
         tenant: { name: string; slug: string; platformExpiresAt: Date | null };
@@ -44,6 +45,7 @@ function mapMembership(
 ) {
   if (!m) return undefined;
   return {
+    id: m.id,
     tenantId: m.tenantId,
     tenantName: m.tenant.name,
     tenantSlug: m.tenant.slug,
