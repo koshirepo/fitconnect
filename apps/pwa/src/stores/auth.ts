@@ -11,15 +11,13 @@ interface AuthState {
   currentTenantId: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-
-  // Derived getters as functions
+      // Derived helpers
   currentMembership: () => TenantMembershipSummary | undefined;
   isSuperAdmin: () => boolean;
   isSupport: () => boolean;
   isPlatformStaff: () => boolean;
   tenantRole: () => string | undefined;
-
-  // Actions
+      // Actions
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   setTokens: (accessToken: string, refreshToken: string) => void;
@@ -29,15 +27,14 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
-      // ─── Initial State ────────────────────────────────────────────────────────
+      // Initial state
       user: null,
       accessToken: null,
       refreshToken: null,
       currentTenantId: null,
       isAuthenticated: false,
       isLoading: false,
-
-      // ─── Derived ──────────────────────────────────────────────────────────────
+      // Derived helpers
 
       currentMembership: () => {
         return get().user?.membership;
@@ -50,8 +47,7 @@ export const useAuthStore = create<AuthState>()(
         return role === "SUPER_ADMIN" || role === "SUPPORT";
       },
       tenantRole: () => get().currentMembership()?.role,
-
-      // ─── Actions ──────────────────────────────────────────────────────────────
+      // Actions
 
       login: async (email: string, password: string) => {
         set({ isLoading: true });

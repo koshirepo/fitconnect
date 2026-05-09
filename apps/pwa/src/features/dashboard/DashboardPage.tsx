@@ -14,6 +14,10 @@ import { PageLoader } from "@/components/ui/spinner";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import {
   Building2,
+  AlertTriangle,
+  CalendarClock,
+  CheckCircle2,
+  Clock3,
   CreditCard,
   Dumbbell,
   PackageOpen,
@@ -22,6 +26,45 @@ import {
   Users,
 } from "lucide-react";
 import type { AuditLog, Order, Payment, Tenant, TenantProfile, WorkoutPlan } from "@/types/api";
+
+function toDateOnly(value: Date) {
+  return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+}
+
+function getSubscriptionStatus(profile: TenantProfile | null) {
+  if (!profile?.dueDate) {
+    return {
+      state: "none" as const,
+      label: "No active subscription",
+      detail: "No subscription expiry date is available.",
+      days: null as number | null,
+      dueDate: null as string | null,
+    };
+  }
+
+  const today = toDateOnly(new Date());
+  const due = toDateOnly(new Date(profile.dueDate));
+  const diffDays = Math.ceil((due.getTime() - today.getTime()) / 86_400_000);
+
+  if (diffDays >= 0) {
+    return {
+      state: "current" as const,
+      label: "Subscription active",
+      detail: diffDays === 0 ? "Expires today" : `${diffDays} day${diffDays !== 1 ? "s" : ""} left`,
+      days: diffDays,
+      dueDate: profile.dueDate,
+    };
+  }
+
+  const overdueDays = Math.abs(diffDays);
+  return {
+    state: "overdue" as const,
+    label: "Subscription overdue",
+    detail: `${overdueDays} overdue day${overdueDays !== 1 ? "s" : ""}`,
+    days: overdueDays,
+    dueDate: profile.dueDate,
+  };
+}
 
 export default function DashboardPage() {
   const {
@@ -53,6 +96,8 @@ export default function DashboardPage() {
   const role = membership?.role;
   const showPlatformDashboard = isPlatformStaff() && !currentTenantId;
   const canManagePlatformOrders = isSuperAdmin();
+  const subscriptionStatus = getSubscriptionStatus(profile);
+  const latestSubscriptionPayment = profile?.payments?.find((payment) => payment.validUntil);
 
   React.useEffect(() => {
     if (showPlatformDashboard) {
@@ -366,6 +411,35 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {role === "MEMBER" && (
+          <Card className="cursor-pointer" onClick={() => navigate("/profile")}>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Subscription Status</CardTitle>
+              {subscriptionStatus.state === "current" ? (
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+              ) : subscriptionStatus.state === "overdue" ? (
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+              ) : (
+                <CalendarClock className="h-4 w-4 text-muted-foreground" />
+              )}
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {subscriptionStatus.state === "current"
+                  ? subscriptionStatus.days === 0
+                    ? "Today"
+                    : `${subscriptionStatus.days}d`
+                  : subscriptionStatus.state === "overdue"
+                    ? `${subscriptionStatus.days}d`
+                    : "-"}
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {subscriptionStatus.detail}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
         {(role === "ADMIN" || role === "COACH") && (
           <Card className="cursor-pointer" onClick={() => navigate("/members")}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -409,6 +483,55 @@ export default function DashboardPage() {
           </Card>
         )}
       </div>
+
+      {role === "MEMBER" && profile && (
+        <Card
+          className={
+            subscriptionStatus.state === "overdue"
+              ? "border-destructive/40 bg-destructive/5"
+              : subscriptionStatus.state === "current"
+                ? "border-green-500/30 bg-green-500/5"
+                : ""
+          }
+        >
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              {subscriptionStatus.state === "current" ? (
+                <CheckCircle2 className="h-5 w-5 text-green-500" />
+              ) : subscriptionStatus.state === "overdue" ? (
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+              ) : (
+                <CalendarClock className="h-5 w-5 text-muted-foreground" />
+              )}
+              My Subscription
+            </CardTitle>
+            <CardDescription>{subscriptionStatus.label}</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <p className="text-xs text-muted-foreground">Plan</p>
+              <p className="text-sm font-medium">
+                {latestSubscriptionPayment?.subscription?.title ?? "No plan recorded"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Valid Until</p>
+              <p className="text-sm font-medium">
+                {subscriptionStatus.dueDate ? formatDate(subscriptionStatus.dueDate) : "-"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">
+                {subscriptionStatus.state === "overdue" ? "Overdue" : "Remaining"}
+              </p>
+              <p className="flex items-center gap-2 text-sm font-medium">
+                <Clock3 className="h-4 w-4 text-muted-foreground" />
+                {subscriptionStatus.detail}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>

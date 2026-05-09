@@ -30,6 +30,8 @@ import {
   Clock3,
   CircleDollarSign,
   MessageCircle,
+  Copy,
+  QrCode,
 } from "lucide-react";
 import type { PublicTenantDetail } from "@/types/api";
 
@@ -48,6 +50,7 @@ export default function TenantPublicPage() {
   const [tenant, setTenant] = React.useState<PublicTenantDetail | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
+  const [copiedQrLink, setCopiedQrLink] = React.useState(false);
 
   React.useEffect(() => {
     if (!slug) return;
@@ -88,6 +91,17 @@ export default function TenantPublicPage() {
     tenant.phone,
     `Hi ${tenant.name}, I would like to know more about your gym memberships.`,
   );
+  const attendanceQrUrl =
+    typeof window === "undefined"
+      ? `/attendance/qr/${tenant.id}`
+      : `${window.location.origin}/attendance/qr/${tenant.id}`;
+  const attendanceQrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=12&data=${encodeURIComponent(attendanceQrUrl)}`;
+
+  const handleCopyAttendanceQr = async () => {
+    await navigator.clipboard.writeText(attendanceQrUrl);
+    setCopiedQrLink(true);
+    window.setTimeout(() => setCopiedQrLink(false), 2000);
+  };
 
   return (
     <div className="min-h-screen bg-[radial-gradient(1200px_500px_at_15%_-20%,rgba(59,130,246,0.12),transparent),radial-gradient(900px_500px_at_100%_0%,rgba(16,185,129,0.1),transparent)] bg-background text-foreground">
@@ -270,6 +284,35 @@ export default function TenantPublicPage() {
         </div>
 
         <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <QrCode className="h-5 w-5" />
+                Attendance QR
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <img
+                src={attendanceQrImageUrl}
+                alt={`${tenant.name} attendance QR`}
+                className="mx-auto h-48 w-48 rounded-lg border bg-white p-2"
+              />
+              <p className="break-all rounded-md bg-muted p-3 text-xs text-muted-foreground">
+                {attendanceQrUrl}
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <Button type="button" variant="outline" onClick={handleCopyAttendanceQr}>
+                  <Copy className="h-4 w-4" />
+                  {copiedQrLink ? "Copied" : "Copy"}
+                </Button>
+                <Button type="button" onClick={() => navigate(`/attendance/qr/${tenant.id}`)}>
+                  Mark
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">

@@ -565,18 +565,24 @@ export default function MemberDetailPage() {
         : member.status === "ACTIVE"
           ? "ring-4 ring-blue-500"
           : "ring-4 ring-yellow-500";
+  const viewedRoleLabel =
+    member.role === "ADMIN"
+      ? "admin"
+      : member.role === "COACH"
+        ? "trainer / coach"
+        : "member";
+  const deleteDialogTitle = isMemberProfile ? "Delete member?" : `Delete ${viewedRoleLabel}?`;
+  const deleteDialogDescription = isMemberProfile
+    ? "This will permanently delete the member along with their payments, assigned workout plans, and plans they created. This action cannot be undone."
+    : `This will permanently delete this ${viewedRoleLabel} profile. Workout plans assigned to them and workout plans created by them will be deleted. Payments they collected and attendance entries they marked will be kept, but the collected-by and marked-by references will be cleared. This action cannot be undone.`;
 
   return (
     <div className="space-y-6">
       <ConfirmDialog
         open={deleteConfirmOpen}
         onOpenChange={setDeleteConfirmOpen}
-        title="Delete member?"
-        description={
-          isMemberProfile
-            ? "This will permanently delete the member along with their payments, assigned workout plans, and plans they created. This action cannot be undone."
-            : "This will permanently delete this staff profile along with any related gym records. This action cannot be undone."
-        }
+        title={deleteDialogTitle}
+        description={deleteDialogDescription}
         confirmLabel="Delete"
         loading={deletingMember}
         onConfirm={handleDeleteMember}

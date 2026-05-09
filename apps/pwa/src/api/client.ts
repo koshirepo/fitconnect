@@ -9,7 +9,7 @@ export const api = axios.create({
   timeout: 30000,
 });
 
-// ─── Request Interceptor: Attach access token ────────────────────────────────
+// Request interceptor: attach access token
 
 api.interceptors.request.use((config) => {
   if (typeof FormData !== "undefined" && config.data instanceof FormData) {
@@ -32,7 +32,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// ─── Response Interceptor: Auto-refresh on 401 ──────────────────────────────
+// Response interceptor: auto-refresh on 401
 // Note: interceptors run in order added. Cache runs first so online responses
 // are saved before the refresh interceptor runs. For errors, the offline
 // fallback is added after the refresh interceptor so it catches network errors
@@ -108,15 +108,15 @@ api.interceptors.response.use(
   },
 );
 
-// ─── Response Interceptor: Serve from offline cache on network failure ───────
+// Response interceptor: serve from offline cache on network failure
 
 api.interceptors.response.use(undefined, serveCachedOnError);
 
-// ─── Response Interceptor: Queue mutations when offline ──────────────────────
+// Response interceptor: queue mutations when offline
 
 api.interceptors.response.use(undefined, queueFailedMutation);
 
-// ─── Helper to extract error message ─────────────────────────────────────────
+// Helper to extract error messages
 
 export function getApiError(error: unknown): string {
   if (axios.isAxiosError(error)) {

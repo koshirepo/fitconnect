@@ -61,7 +61,7 @@ export default defineConfig(({ mode }) => {
         clientsClaim: true,
       },
       manifest: {
-        name: "FitConnect — Gym Management Software & Accessories Shop",
+        name: "FitConnect - Gym Management Software & Accessories Shop",
         short_name: "FitConnect",
         description:
           "All-in-one gym management software for fitness centers and health clubs. Manage members, payments, attendance, subscriptions, workout plans and shop premium gym accessories online.",

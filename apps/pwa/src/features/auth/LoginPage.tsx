@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,10 @@ import { Dumbbell } from "lucide-react";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, isAuthenticated } = useAuthStore();
+  const from = (location.state as { from?: { pathname?: string; search?: string } } | null)?.from;
+  const redirectTo = from?.pathname ? `${from.pathname}${from.search ?? ""}` : "/dashboard";
 
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -18,8 +21,8 @@ export default function LoginPage() {
   const [loading, setLoading] = React.useState(false);
 
   React.useEffect(() => {
-    if (isAuthenticated) navigate("/dashboard", { replace: true });
-  }, [isAuthenticated, navigate]);
+    if (isAuthenticated) navigate(redirectTo, { replace: true });
+  }, [isAuthenticated, navigate, redirectTo]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,8 +30,8 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-        await login(email, password);
-      navigate("/dashboard", { replace: true });
+      await login(email, password);
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(getApiError(err));
     } finally {

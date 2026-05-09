@@ -18,7 +18,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { PageLoader } from "@/components/ui/spinner";
 import { useAuthStore } from "@/stores/auth";
 
-// ─── Eagerly-loaded pages (available offline after first load) ─────────────────
+// Eagerly loaded pages that are available offline after first load
 import DashboardPage from "@/features/dashboard/DashboardPage";
 import MembersPage from "@/features/members/MembersPage";
 import MemberDetailPage from "@/features/members/MemberDetailPage";
@@ -31,6 +31,7 @@ import BadgesPage from "@/features/badges/BadgesPage";
 import CreateBadgePage from "@/features/badges/CreateBadgePage";
 import AttendancePage from "@/features/attendance/AttendancePage";
 import AttendanceCalendarPage from "@/features/attendance/AttendanceCalendarPage";
+import AttendanceQrPage from "@/features/attendance/AttendanceQrPage";
 import WorkoutsPage from "@/features/workouts/WorkoutsPage";
 import WorkoutDetailPage from "@/features/workouts/WorkoutDetailPage";
 import TodosPage from "@/features/todos/TodosPage";
@@ -44,7 +45,7 @@ import AuditLogsPage from "@/features/audit/AuditLogsPage";
 import LoginPage from "@/features/auth/LoginPage";
 import UserOrderHistoryPage from "@/features/commerce/UserOrderHistoryPage";
 
-// ─── Lazy-loaded pages (public/admin — not critical for offline) ──────────────
+// Lazy loaded pages for public and admin flows that are not critical offline
 const TenantDetails = React.lazy(() => import("./features/tenants/details"));
 const NewTenant = React.lazy(() => import("./features/tenants/new"));
 const ForgotPasswordPage = React.lazy(
@@ -133,6 +134,8 @@ export default function App() {
         ) : (
         <PageSuspense>
           <Routes>
+            <Route path="/attendance/qr/:tenantId" element={<AttendanceQrPage />} />
+
             {/* Public routes (no auth required) */}
             <Route element={<PublicLayout />}>
               <Route path="/" element={<LandingPage />} />

@@ -8,6 +8,13 @@ import type {
   ApiResponse,
 } from "@/types/api";
 
+export type QrAttendanceMember = {
+  id: string;
+  memberId: number;
+  name: string;
+  avatarUrl?: string | null;
+};
+
 export const attendanceApi = {
   /** Self check-in */
   checkIn: (tenantId: string, data: MarkAttendancePayload = {}) =>
@@ -15,6 +22,25 @@ export const attendanceApi = {
       `/tenants/${tenantId}/attendance`,
       data,
     ),
+
+  qrMembers: (tenantId: string, search?: string) =>
+    api.get<
+      ApiResponse<{
+        tenant: { id: string; name: string; slug: string; logoUrl?: string | null };
+        members: QrAttendanceMember[];
+      }>
+    >(`/tenants/${tenantId}/attendance/qr/members`, {
+      params: search ? { search } : undefined,
+    }),
+
+  qrCheckIn: (tenantId: string, membershipId?: string) =>
+    api.post<
+      ApiResponse<{
+        tenant: { id: string; name: string; slug: string; logoUrl?: string | null };
+        attendance: AttendanceRecord;
+        mode: "self" | "selected";
+      }>
+    >(`/tenants/${tenantId}/attendance/qr`, membershipId ? { membershipId } : {}),
 
   /** Admin/coach marks attendance for a specific member */
   markForMember: (tenantId: string, data: MarkAttendancePayload) =>
