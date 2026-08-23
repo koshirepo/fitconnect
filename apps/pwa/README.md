@@ -68,7 +68,7 @@ pnpm install
 
 Common variables:
 
-- `VITE_API_URL`: backend base URL, for example `http://localhost:4000`
+- `VITE_API_URL`: backend base URL, for example `http://localhost:8787`
 - `VITE_VAPID_PUBLIC_KEY`: public VAPID key for browser push notifications
 
 3. Start the development server.

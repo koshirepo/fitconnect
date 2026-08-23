@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { PageLoader, Spinner } from "@/components/ui/spinner";
 import { downloadCsv } from "@/lib/csv";
-import { formatDate } from "@/lib/utils";
+import { formatDate, cn } from "@/lib/utils";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import {
   getTenantWhatsAppTemplateBody,
@@ -36,9 +36,13 @@ import {
   AlertTriangle,
   CalendarClock,
   Clock,
+  Ban,
+  CheckCircle2,
+  Shield,
+  Dumbbell,
 } from "lucide-react";
 import type { TenantMember, Badge, TenantSettings } from "@/types/api";
-import AvatarCard from "@/components/ui/avatarCard";
+import { getInitials } from "@/shared";
 import { usePendingMutations } from "@/lib/use-pending-mutations";
 
 type PendingMemberMutationBody = {
@@ -51,6 +55,71 @@ type PendingMemberMutationBody = {
 type DisplayMember = TenantMember & { _pending?: boolean };
 
 // ─── Status & role config ──────────────────────────────────────────────────────
+
+const STATUS_TABS = [
+  { value: "", label: "All", icon: Users, iconClass: "text-blue-600" },
+  { value: "ACTIVE", label: "Active", icon: CheckCircle2, iconClass: "text-emerald-600" },
+  { value: "INACTIVE", label: "Inactive", icon: Ban, iconClass: "text-muted-foreground" },
+  { value: "DUE", label: "Due", icon: AlertCircle, iconClass: "text-red-600" },
+];
+
+/** Small pill above the member name — status, due date, sync state. */
+function MemberChip({
+  icon: Icon,
+  children,
+  className,
+}: {
+  icon: React.ElementType;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium whitespace-nowrap text-muted-foreground sm:gap-1.5 sm:px-2 sm:py-1 sm:text-xs",
+        className,
+      )}
+    >
+      <Icon className="size-2.5 sm:size-3.5" />
+      {children}
+    </span>
+  );
+}
+
+/** Large square avatar tile with a status-coloured border. */
+function MemberAvatar({ member }: { member: DisplayMember }) {
+  const accent = member.isDue
+    ? "border-red-500"
+    : member.status === "ACTIVE"
+      ? "border-emerald-500"
+      : "border-amber-500";
+
+  const RoleIcon = member.role === "ADMIN" ? Shield : member.role === "COACH" ? Dumbbell : null;
+
+  return (
+    <div
+      className={cn(
+        // Height comes from the card row; aspect-square derives the width from it,
+        // so the tile is always a perfect square filling the full card height.
+        "relative aspect-square h-full min-w-16 shrink-0 self-stretch overflow-hidden border-r-2 sm:min-w-24",
+        accent,
+      )}
+    >
+      {member.avatarUrl ? (
+        <img src={member.avatarUrl} alt={member.name} className="size-full object-cover" />
+      ) : (
+        <div className="flex size-full items-center justify-center bg-muted text-xl font-semibold tracking-wide text-muted-foreground sm:text-3xl">
+          {getInitials(member.name)}
+        </div>
+      )}
+      {RoleIcon && (
+        <div className="absolute right-1 bottom-1 flex size-5 items-center justify-center rounded-full bg-linear-to-br from-slate-700 to-slate-900 shadow-lg sm:size-6">
+          <RoleIcon className="h-3 w-3 text-white sm:h-3.5 sm:w-3.5" />
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function MembersPage() {
   const navigate = useNavigate();
@@ -208,6 +277,54 @@ export default function MembersPage() {
     (a, b) => new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime(),
   );
 
+  const renderMemberActions = (m: DisplayMember) => (
+    <>
+      {!m._pending && m.isDue && m.phone && (
+        <a
+          href={getPaymentReminderUrl(m) ?? undefined}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Send payment reminder via WhatsApp"
+        >
+          <Button
+            variant="ghost"
+            size="icon-lg"
+            className="size-8 rounded-full text-yellow-600 hover:bg-yellow-50 hover:text-yellow-700 sm:size-9"
+          >
+            <AlertTriangle className="size-4 sm:size-5" />
+          </Button>
+        </a>
+      )}
+      {!m._pending && (
+        <Button
+          variant="ghost"
+          size="icon-lg"
+          className="size-8 rounded-full text-muted-foreground hover:text-foreground sm:size-9"
+          onClick={() => navigate(`/members/${m.id}/edit`)}
+          title="Edit member"
+        >
+          <Edit2 className="size-4 sm:size-5" />
+        </Button>
+      )}
+      {!m._pending && m.phone && (
+        <a
+          href={buildWhatsAppUrl(m.phone, `Hi ${m.name}`) ?? undefined}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Chat on WhatsApp"
+        >
+          <Button
+            variant="ghost"
+            size="icon-lg"
+            className="size-8 rounded-full text-muted-foreground hover:text-foreground sm:size-9"
+          >
+            <MessageSquare className="size-4 sm:size-5" />
+          </Button>
+        </a>
+      )}
+    </>
+  );
+
   const handleRemoveConfirmed = async () => {
     if (!currentTenantId || !pendingRemoveId) return;
     try {
@@ -280,81 +397,86 @@ export default function MembersPage() {
       </div>
 
       {/* Status Filter Tabs */}
-      <div className="flex gap-1 rounded-lg bg-muted p-1">
-        {[
-          { value: "", label: "All" },
-          { value: "ACTIVE", label: "Active" },
-          { value: "INACTIVE", label: "Inactive" },
-          { value: "DUE", label: "Due" },
-        ].map((tab) => (
-          <button
-            key={tab.value}
-            onClick={() => updateParams({ status: tab.value })}
-            className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-              statusFilter === tab.value
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {tab.value === "DUE" && <AlertCircle className="inline h-3.5 w-3.5 mr-1" />}
-            {tab.label}
-          </button>
-        ))}
+      <div className="overflow-x-auto overflow-y-hidden border-b border-border">
+        <div className="flex min-w-max gap-6 sm:gap-8">
+          {STATUS_TABS.map((tab) => {
+            const active = statusFilter === tab.value;
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.value}
+                onClick={() => updateParams({ status: tab.value })}
+                className={cn(
+                  "flex items-center gap-2 border-b-2 pt-1 pb-3 text-sm transition-colors",
+                  active
+                    ? "border-foreground font-semibold text-foreground"
+                    : "border-transparent font-medium text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Icon className={cn("h-4 w-4", active ? tab.iconClass : "text-muted-foreground")} />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row">
         {/* Search Input */}
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="relative min-w-0 flex-1">
+          <Search className="pointer-events-none absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search by name, phone, email, or admission no..."
             value={search}
             onChange={(e) => updateParams({ search: e.target.value })}
-            className="w-full pl-10 pr-10 py-2 border border-input rounded-md bg-background text-sm"
+            className="h-12 w-full rounded-lg border border-input bg-background pr-10 pl-12 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50"
           />
           {search && (
             <button
               onClick={() => updateParams({ search: "" })}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute top-1/2 right-4 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               <X className="h-4 w-4" />
             </button>
           )}
         </div>
 
-        {/* Role Filter */}
-        <Select value={roleFilter} onValueChange={(value) => updateParams({ role: value ?? "" })}>
-          <SelectTrigger className="w-full sm:w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">All Roles</SelectItem>
-            <SelectItem value="MEMBER">Members</SelectItem>
-            {isAdmin && <SelectItem value="COACH">Trainers</SelectItem>}
-          </SelectContent>
-        </Select>
-
-        {/* Badge Filter */}
-        {badges.length > 0 && (
-          <Select
-            value={badgeFilter}
-            onValueChange={(value) => updateParams({ badge: value ?? "" })}
-          >
-            <SelectTrigger className="w-full sm:w-44">
+        {/* Role + badge filters — side by side on mobile, inline with search from sm up */}
+        <div className="flex min-w-0 gap-3 sm:contents">
+          {/* Role Filter */}
+          <Select value={roleFilter} onValueChange={(value) => updateParams({ role: value ?? "" })}>
+            <SelectTrigger className="h-12 w-full min-w-0 flex-1 rounded-lg sm:w-48 sm:flex-none sm:shrink-0">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Badges</SelectItem>
-              {badges.map((b) => (
-                <SelectItem key={b.id} value={b.id}>
-                  {b.name}
-                </SelectItem>
-              ))}
+              <SelectItem value="">All Roles</SelectItem>
+              <SelectItem value="MEMBER">Members</SelectItem>
+              {isAdmin && <SelectItem value="COACH">Trainers</SelectItem>}
             </SelectContent>
           </Select>
-        )}
+
+          {/* Badge Filter */}
+          {badges.length > 0 && (
+            <Select
+              value={badgeFilter}
+              onValueChange={(value) => updateParams({ badge: value ?? "" })}
+            >
+              <SelectTrigger className="h-12 w-full min-w-0 flex-1 rounded-lg sm:w-44 sm:flex-none sm:shrink-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Badges</SelectItem>
+                {badges.map((b) => (
+                  <SelectItem key={b.id} value={b.id}>
+                    {b.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -373,96 +495,78 @@ export default function MembersPage() {
         />
       ) : (
         <div className="space-y-4">
-          <div className="space-y-3">
+          <div className="space-y-4">
             {allMembers.map((m) => (
               <Card
                 key={m.id}
-                className={`hover:shadow-md transition-shadow${m._pending ? " opacity-70 border-dashed" : ""}`}
+                className={cn(
+                  "rounded-lg py-0 ring-1 ring-border transition-shadow hover:shadow-md",
+                  m._pending && "border-dashed opacity-70",
+                )}
               >
-                <div className="flex sm:justify-start justify-between sm:items-start p-2 sm:p-4 sm:flex-row flex-col">
+                <div className="flex min-h-20 items-stretch sm:min-h-32">
                   {/* Member Info */}
                   <div
-                    className="flex gap-4 flex-1 min-w-0 cursor-pointer"
+                    className="flex min-w-0 flex-1 cursor-pointer items-stretch"
                     onClick={() => !m._pending && navigate(`/members/${m.id}`)}
                   >
-                    <AvatarCard
-                      name={m.name}
-                      avatarUrl={m.avatarUrl}
-                      memberId={m.memberId}
-                      dueDate={m.dueDate}
-                      variant="lg"
-                      role={m.role}
-                      isActive={m.status === "ACTIVE"}
-                    >
-                      {m.phone && <p className="text-sm text-muted-foreground">{m.phone}</p>}
-                      {m._pending && (
-                        <span className="inline-flex items-center gap-1 text-xs text-amber-600 font-medium">
-                          <Clock className="h-3 w-3" />
-                          Pending sync
-                        </span>
-                      )}
-                      {/* Due date – mobile */}
-                      {m.dueDate && (
-                        <p
-                          className={`sm:hidden text-xs flex items-center gap-1 mt-0.5 ${m.isDue ? "text-red-600 font-medium" : "text-muted-foreground"}`}
+                    <MemberAvatar member={m} />
+
+                    <div className="min-w-0 flex-1 self-center px-3 py-2 sm:px-5 sm:py-4">
+                      {/* Status / due chips — kept on one line */}
+                      <div className="flex min-w-0 flex-nowrap items-center gap-1.5 overflow-hidden sm:gap-2">
+                        {m.status === "ACTIVE" ? (
+                          <MemberChip icon={CheckCircle2}>Active</MemberChip>
+                        ) : (
+                          <MemberChip icon={Ban}>Inactive</MemberChip>
+                        )}
+                        {m.dueDate && (
+                          <MemberChip
+                            icon={CalendarClock}
+                            className={m.isDue ? "bg-red-50 text-red-600" : undefined}
+                          >
+                            <span className="hidden sm:inline">Until </span>
+                            {formatDate(m.dueDate)}
+                          </MemberChip>
+                        )}
+                        {m._pending && (
+                          <MemberChip icon={Clock} className="bg-amber-50 text-amber-600">
+                            Pending sync
+                          </MemberChip>
+                        )}
+                      </div>
+
+                      <p className="mt-2 truncate text-base font-bold tracking-tight sm:text-xl">
+                        {m.memberId !== undefined && (
+                          <span className="font-semibold text-muted-foreground">
+                            #{m.memberId} -{" "}
+                          </span>
+                        )}
+                        {m.name}
+                      </p>
+
+                      {/* Phone — shares its row with the actions on mobile */}
+                      <div className="mt-1 flex items-center justify-between gap-2">
+                        {m.phone ? (
+                          <p className="truncate text-sm text-muted-foreground sm:text-base">
+                            {m.phone}
+                          </p>
+                        ) : (
+                          <span />
+                        )}
+                        <div
+                          className="-mr-1 flex shrink-0 items-center gap-0.5 sm:hidden"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <CalendarClock className="h-3 w-3" />
-                          {formatDate(m.dueDate)}
-                        </p>
-                      )}
-                    </AvatarCard>
+                          {renderMemberActions(m)}
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Due date – desktop */}
-                  {m.dueDate && (
-                    <span
-                      className={`hidden sm:flex items-center gap-1 text-xs mr-2 mt-1 ${m.isDue ? "text-red-600 font-medium" : "text-muted-foreground"}`}
-                    >
-                      <CalendarClock className="h-3 w-3" />
-                      {formatDate(m.dueDate)}
-                    </span>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex gap-2 shrink-0 justify-end items-center">
-                    {!m._pending && m.isDue && m.phone && (
-                      <a
-                        href={getPaymentReminderUrl(m) ?? undefined}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Send payment reminder via WhatsApp"
-                      >
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
-                        >
-                          <AlertTriangle className="h-4 w-4" />
-                        </Button>
-                      </a>
-                    )}
-                    {!m._pending && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate(`/members/${m.id}/edit`)}
-                        title="Edit member"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {!m._pending && m.phone && (
-                      <a
-                        href={buildWhatsAppUrl(m.phone, `Hi ${m.name}`) ?? undefined}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Chat on WhatsApp"
-                      >
-                        <Button variant="ghost" size="sm">
-                          <MessageSquare className="h-4 w-4" />
-                        </Button>
-                      </a>
-                    )}
+                  {/* Actions — own column from sm up */}
+                  <div className="hidden shrink-0 items-center justify-end gap-2 pr-4 sm:flex">
+                    {renderMemberActions(m)}
                   </div>
                 </div>
               </Card>
