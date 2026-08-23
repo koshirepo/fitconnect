@@ -105,10 +105,15 @@ function MemberAvatar({ member }: { member: DisplayMember }) {
         accent,
       )}
     >
+      {/* Taken out of flow so the photo's intrinsic size can't drive the tile's width */}
       {member.avatarUrl ? (
-        <img src={member.avatarUrl} alt={member.name} className="size-full object-cover" />
+        <img
+          src={member.avatarUrl}
+          alt={member.name}
+          className="absolute inset-0 size-full object-cover"
+        />
       ) : (
-        <div className="flex size-full items-center justify-center bg-muted text-xl font-semibold tracking-wide text-muted-foreground sm:text-3xl">
+        <div className="absolute inset-0 flex items-center justify-center bg-muted text-xl font-semibold tracking-wide text-muted-foreground sm:text-3xl">
           {getInitials(member.name)}
         </div>
       )}
@@ -516,21 +521,36 @@ export default function MembersPage() {
                       {/* Status / due chips — kept on one line */}
                       <div className="flex min-w-0 flex-nowrap items-center gap-1.5 overflow-hidden sm:gap-2">
                         {m.status === "ACTIVE" ? (
-                          <MemberChip icon={CheckCircle2}>Active</MemberChip>
+                          <MemberChip
+                            icon={CheckCircle2}
+                            className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                          >
+                            Active
+                          </MemberChip>
                         ) : (
-                          <MemberChip icon={Ban}>Inactive</MemberChip>
+                          <MemberChip
+                            icon={Ban}
+                            className="bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                          >
+                            Inactive
+                          </MemberChip>
                         )}
                         {m.dueDate && (
                           <MemberChip
                             icon={CalendarClock}
-                            className={m.isDue ? "bg-red-50 text-red-600" : undefined}
+                            className={
+                              m.isDue ? "bg-red-500/10 text-red-600 dark:text-red-400" : undefined
+                            }
                           >
                             <span className="hidden sm:inline">Until </span>
                             {formatDate(m.dueDate)}
                           </MemberChip>
                         )}
                         {m._pending && (
-                          <MemberChip icon={Clock} className="bg-amber-50 text-amber-600">
+                          <MemberChip
+                            icon={Clock}
+                            className="bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                          >
                             Pending sync
                           </MemberChip>
                         )}
