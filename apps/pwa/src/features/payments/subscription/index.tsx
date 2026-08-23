@@ -308,7 +308,7 @@ export default function SubscriptionsPage() {
       )}
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent onClose={() => setEditOpen(false)} className="max-w-md">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Subscription Plan</DialogTitle>
           </DialogHeader>
@@ -391,7 +391,10 @@ export default function SubscriptionsPage() {
                           checked ? "border-primary bg-primary/5" : "border-border"
                         }`}
                       >
-                        <Checkbox checked={checked} onChange={() => toggleEditBadge(badge.id)} />
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={() => toggleEditBadge(badge.id)}
+                        />
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium">{badge.name}</span>
@@ -431,7 +434,13 @@ export default function SubscriptionsPage() {
         onOpenChange={setConfirmOpen}
         title={confirmTitle}
         description={confirmDescription}
-        confirmLabel={confirmMode === "delete" ? "Delete" : selectedSubscription?.isActive ? "Inactivate" : "Activate"}
+        confirmLabel={
+          confirmMode === "delete"
+            ? "Delete"
+            : selectedSubscription?.isActive
+              ? "Inactivate"
+              : "Activate"
+        }
         variant={confirmMode === "delete" ? "destructive" : "default"}
         loading={!!actionLoading}
         onConfirm={handleConfirm}

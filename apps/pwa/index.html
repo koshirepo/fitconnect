@@ -154,10 +154,18 @@
       (function () {
         try {
           var stored = JSON.parse(localStorage.getItem("gms-ui") || "{}");
-          var theme = stored.state && stored.state.theme === "light" ? "light" : "dark";
+          var pref = (stored.state && stored.state.theme) || "system";
+          var theme =
+            pref === "light" || pref === "dark"
+              ? pref
+              : window.matchMedia("(prefers-color-scheme: light)").matches
+                ? "light"
+                : "dark";
           document.documentElement.classList.add(theme);
+          document.documentElement.style.colorScheme = theme;
         } catch (_) {
           document.documentElement.classList.add("dark");
+          document.documentElement.style.colorScheme = "dark";
         }
       })();
     </script>

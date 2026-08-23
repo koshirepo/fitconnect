@@ -173,7 +173,9 @@ export default function WorkoutsPage() {
     setSelectedMember(null);
     setSelectedMemberId("");
     try {
-      const allMembers = await loadAllTenantMembers(currentTenantId, { status: "ACTIVE" });
+      const allMembers = await loadAllTenantMembers(currentTenantId, {
+        status: "ACTIVE",
+      });
       setMembers(allMembers);
     } catch {
       //
@@ -314,10 +316,7 @@ export default function WorkoutsPage() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent
-          onClose={() => setDialogOpen(false)}
-          className="max-w-2xl max-h-[90vh] overflow-y-auto"
-        >
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingPlan ? "Edit Workout Plan" : "Create Workout Plan"}</DialogTitle>
           </DialogHeader>
@@ -417,7 +416,7 @@ export default function WorkoutsPage() {
 
       {/* Assign Dialog */}
       <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
-        <DialogContent onClose={() => setAssignDialogOpen(false)}>
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Assign Plan to Member</DialogTitle>
           </DialogHeader>

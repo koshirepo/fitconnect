@@ -84,8 +84,11 @@ export default function TenantPublicPage() {
 
   const estdYear = tenant.estd ? new Date(tenant.estd).getFullYear() : null;
   const aboutText = tenant.markdown?.trim();
-  const lowestPlanAmount = tenant.subscriptions.length
-    ? Math.min(...tenant.subscriptions.map((sub) => sub.amount))
+  const subscriptions = tenant.subscriptions ?? [];
+  const shifts = tenant.shifts ?? [];
+  const memberCount = tenant._count?.memberships ?? 0;
+  const lowestPlanAmount = subscriptions.length
+    ? Math.min(...subscriptions.map((sub) => sub.amount))
     : null;
   const whatsappUrl = buildWhatsAppUrl(
     tenant.phone,
@@ -143,15 +146,15 @@ export default function TenantPublicPage() {
             <div className="flex flex-wrap gap-2">
               <BadgeUI variant="secondary" className="gap-1">
                 <Users className="h-3 w-3" />
-                {tenant._count.memberships} active members
+                {memberCount} active members
               </BadgeUI>
               <BadgeUI variant="secondary" className="gap-1">
                 <CreditCard className="h-3 w-3" />
-                {tenant.subscriptions.length} active plans
+                {subscriptions.length} active plans
               </BadgeUI>
               <BadgeUI variant="secondary" className="gap-1">
                 <Clock3 className="h-3 w-3" />
-                {tenant.shifts.length} active shifts
+                {shifts.length} active shifts
               </BadgeUI>
               {estdYear && (
                 <BadgeUI variant="secondary" className="gap-1">
@@ -252,14 +255,14 @@ export default function TenantPublicPage() {
               <div className="rounded-lg border p-4">
                 <p className="text-xs text-muted-foreground">Community</p>
                 <p className="mt-1 text-sm font-medium">
-                  {tenant._count.memberships} members already enrolled.
+                  {memberCount} members already enrolled.
                 </p>
               </div>
               <div className="rounded-lg border p-4">
                 <p className="text-xs text-muted-foreground">Plan Flexibility</p>
                 <p className="mt-1 text-sm font-medium">
-                  {tenant.subscriptions.length > 0
-                    ? `${tenant.subscriptions.length} active subscription options.`
+                  {subscriptions.length > 0
+                    ? `${subscriptions.length} active subscription options.`
                     : "Plans can be configured by gym admins."}
                 </p>
               </div>
@@ -274,8 +277,8 @@ export default function TenantPublicPage() {
               <div className="rounded-lg border p-4">
                 <p className="text-xs text-muted-foreground">Shift Options</p>
                 <p className="mt-1 text-sm font-medium">
-                  {tenant.shifts.length > 0
-                    ? `${tenant.shifts.length} active shift windows published.`
+                  {shifts.length > 0
+                    ? `${shifts.length} active shift windows published.`
                     : "Shift timings can be shared by the gym."}
                 </p>
               </div>
@@ -321,12 +324,12 @@ export default function TenantPublicPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {tenant.subscriptions.length === 0 ? (
+              {subscriptions.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   No public plans available right now.
                 </p>
               ) : (
-                tenant.subscriptions.map((sub, index) => (
+                subscriptions.map((sub, index) => (
                   <div
                     key={sub.id}
                     className="rounded-lg border p-4 transition-colors hover:border-primary/40"
@@ -356,12 +359,12 @@ export default function TenantPublicPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {tenant.shifts.length === 0 ? (
+              {shifts.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   No public shift timings available right now.
                 </p>
               ) : (
-                tenant.shifts.map((shift) => (
+                shifts.map((shift) => (
                   <div
                     key={shift.id}
                     className="rounded-lg border p-4 transition-colors hover:border-primary/40"

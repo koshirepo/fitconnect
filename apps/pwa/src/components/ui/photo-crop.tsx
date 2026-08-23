@@ -251,7 +251,13 @@ export function PhotoCrop({
 
     if (shape === "circle") {
       ctx.beginPath();
-      ctx.arc(targetWidth / 2, targetHeight / 2, Math.min(targetWidth, targetHeight) / 2, 0, Math.PI * 2);
+      ctx.arc(
+        targetWidth / 2,
+        targetHeight / 2,
+        Math.min(targetWidth, targetHeight) / 2,
+        0,
+        Math.PI * 2,
+      );
       ctx.closePath();
       ctx.clip();
     }

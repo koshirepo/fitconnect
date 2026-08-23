@@ -8,7 +8,13 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Card } from "@/components/ui/card";
-import { Select } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PageLoader, Spinner } from "@/components/ui/spinner";
 import { downloadCsv } from "@/lib/csv";
 import { formatDate } from "@/lib/utils";
@@ -319,29 +325,34 @@ export default function MembersPage() {
         </div>
 
         {/* Role Filter */}
-        <Select
-          value={roleFilter}
-          onChange={(e) => updateParams({ role: e.target.value })}
-          className="w-full sm:w-40"
-        >
-          <option value="">All Roles</option>
-          <option value="MEMBER">Members</option>
-          {isAdmin && <option value="COACH">Trainers</option>}
+        <Select value={roleFilter} onValueChange={(value) => updateParams({ role: value ?? "" })}>
+          <SelectTrigger className="w-full sm:w-40">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All Roles</SelectItem>
+            <SelectItem value="MEMBER">Members</SelectItem>
+            {isAdmin && <SelectItem value="COACH">Trainers</SelectItem>}
+          </SelectContent>
         </Select>
 
         {/* Badge Filter */}
         {badges.length > 0 && (
           <Select
             value={badgeFilter}
-            onChange={(e) => updateParams({ badge: e.target.value })}
-            className="w-full sm:w-44"
+            onValueChange={(value) => updateParams({ badge: value ?? "" })}
           >
-            <option value="">All Badges</option>
-            {badges.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
+            <SelectTrigger className="w-full sm:w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Badges</SelectItem>
+              {badges.map((b) => (
+                <SelectItem key={b.id} value={b.id}>
+                  {b.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         )}
       </div>

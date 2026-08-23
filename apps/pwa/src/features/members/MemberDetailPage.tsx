@@ -19,7 +19,13 @@ import {
 } from "@/lib/whatsapp-templates";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
@@ -520,16 +526,20 @@ export default function MemberDetailPage() {
           <div className="flex items-center gap-2 flex-wrap">
             <Select
               value={selectedBadgeId}
-              onChange={(e) => setSelectedBadgeId(e.target.value)}
+              onValueChange={(value) => setSelectedBadgeId(value ?? "")}
               disabled={loadingBadges}
-              className="h-7 text-xs py-0 w-36 sm:w-44"
             >
-              <option value="">{loadingBadges ? "Loading…" : "Choose badge…"}</option>
-              {assignableBadges.map((badge) => (
-                <option key={badge.id} value={badge.id}>
-                  {badge.name}
-                </option>
-              ))}
+              <SelectTrigger className="h-7 text-xs py-0 w-36 sm:w-44">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">{loadingBadges ? "Loading…" : "Choose badge…"}</SelectItem>
+                {assignableBadges.map((badge) => (
+                  <SelectItem key={badge.id} value={badge.id}>
+                    {badge.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
             <Button
               size="sm"
@@ -566,11 +576,7 @@ export default function MemberDetailPage() {
           ? "ring-4 ring-blue-500"
           : "ring-4 ring-yellow-500";
   const viewedRoleLabel =
-    member.role === "ADMIN"
-      ? "admin"
-      : member.role === "COACH"
-        ? "trainer / coach"
-        : "member";
+    member.role === "ADMIN" ? "admin" : member.role === "COACH" ? "trainer / coach" : "member";
   const deleteDialogTitle = isMemberProfile ? "Delete member?" : `Delete ${viewedRoleLabel}?`;
   const deleteDialogDescription = isMemberProfile
     ? "This will permanently delete the member along with their payments, assigned workout plans, and plans they created. This action cannot be undone."
@@ -810,7 +816,10 @@ export default function MemberDetailPage() {
           <Card
             className="cursor-pointer hover:shadow-md transition-shadow"
             onClick={() =>
-              paymentsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+              paymentsSectionRef.current?.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+              })
             }
           >
             <CardContent className="pt-6">
@@ -942,7 +951,11 @@ export default function MemberDetailPage() {
             ) : (
               (() => {
                 const first = parseMonth(calMonth);
-                const daysInMonth = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+                const daysInMonth = new Date(
+                  first.getFullYear(),
+                  first.getMonth() + 1,
+                  0,
+                ).getDate();
                 const startDay = (first.getDay() + 6) % 7; // 0=Mon
                 const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
                 const cells: React.ReactNode[] = [];

@@ -35,8 +35,16 @@ export function MarkdownEditor({
 
   const toolbar: { mode: ViewMode; icon: React.ReactNode; title: string }[] = [
     { mode: "write", icon: <Pencil className="h-3.5 w-3.5" />, title: "Write" },
-    { mode: "preview", icon: <Eye className="h-3.5 w-3.5" />, title: "Preview" },
-    { mode: "split", icon: <Columns2 className="h-3.5 w-3.5" />, title: "Split" },
+    {
+      mode: "preview",
+      icon: <Eye className="h-3.5 w-3.5" />,
+      title: "Preview",
+    },
+    {
+      mode: "split",
+      icon: <Columns2 className="h-3.5 w-3.5" />,
+      title: "Split",
+    },
   ];
 
   const showEditor = mode === "write" || mode === "split";

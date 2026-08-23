@@ -1,10 +1,24 @@
 import { useUIStore } from "@/stores/ui";
 import { useAuthStore } from "@/stores/auth";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import Breadcrumb, { type BreadcrumbItem } from "@/components/ui/breadcrumb";
+import { ModeToggle } from "@/components/ui/mode-toggle";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+
+interface Crumb {
+  label: string;
+  href?: string;
+  active?: boolean;
+}
 import * as React from "react";
 
 const SEGMENT_LABELS: Record<string, string> = {
@@ -64,7 +78,7 @@ export function Header() {
   const { currentMembership, isPlatformStaff } = useAuthStore();
   const location = useLocation();
   const membership = currentMembership();
-  const breadcrumbItems = React.useMemo<BreadcrumbItem[]>(() => {
+  const breadcrumbItems = React.useMemo<Crumb[]>(() => {
     const segments = location.pathname.split("/").filter(Boolean);
     if (segments.length === 0) return [];
 
@@ -87,14 +101,27 @@ export function Header() {
       </Button>
       <div className="min-w-0 flex-1 overflow-hidden">
         {breadcrumbItems.length > 0 && (
-          <Breadcrumb
-            items={breadcrumbItems}
-            className="overflow-x-auto whitespace-nowrap pb-1 pr-2 [&::-webkit-scrollbar]:hidden"
-          />
+          <Breadcrumb className="overflow-x-auto whitespace-nowrap pb-1 pr-2 [&::-webkit-scrollbar]:hidden">
+            <BreadcrumbList>
+              {breadcrumbItems.map((item, index) => (
+                <React.Fragment key={index}>
+                  {index > 0 && <BreadcrumbSeparator />}
+                  <BreadcrumbItem>
+                    {item.href && !item.active ? (
+                      <BreadcrumbLink render={<Link to={item.href} />}>{item.label}</BreadcrumbLink>
+                    ) : (
+                      <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                    )}
+                  </BreadcrumbItem>
+                </React.Fragment>
+              ))}
+            </BreadcrumbList>
+          </Breadcrumb>
         )}
       </div>
 
       <div className="flex items-center gap-2">
+        <ModeToggle />
         {membership && <Badge variant="secondary">{membership.role}</Badge>}
         {isPlatformStaff() && (
           <Badge variant="accent" className="text-accent">

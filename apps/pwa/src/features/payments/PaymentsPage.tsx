@@ -3,7 +3,13 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { paymentsApi } from "@/api/payments";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { PageLoader, Spinner } from "@/components/ui/spinner";
@@ -11,16 +17,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { downloadCsv } from "@/lib/csv";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
-import {
-  Plus,
-  CreditCard,
-  CheckCircle2,
-  XCircle,
-  Download,
-  Search,
-  X,
-  Clock,
-} from "lucide-react";
+import { Plus, CreditCard, CheckCircle2, XCircle, Download, Search, X, Clock } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { Payment, PaymentStatus } from "@/types/api";
 import AvatarCard from "@/components/ui/avatarCard";
@@ -304,16 +301,20 @@ export default function PaymentsPage() {
           </div>
           <Select
             value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
+            onValueChange={(value) => {
+              setStatusFilter(value ?? "");
             }}
-            className="w-full sm:w-40"
           >
-            <option value="">All Status</option>
-            <option value="PENDING">Pending</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="FAILED">Failed</option>
-            <option value="REFUNDED">Refunded</option>
+            <SelectTrigger className="w-full sm:w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Status</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="COMPLETED">Completed</SelectItem>
+              <SelectItem value="FAILED">Failed</SelectItem>
+              <SelectItem value="REFUNDED">Refunded</SelectItem>
+            </SelectContent>
           </Select>
         </div>
       )}

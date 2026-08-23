@@ -1,29 +1,34 @@
 import { cn } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
-
-interface SpinnerProps {
-  className?: string;
-  size?: "sm" | "md" | "lg";
-}
+import { Loader2Icon } from "lucide-react";
 
 const sizeClasses = {
-  sm: "h-4 w-4",
-  md: "h-6 w-6",
-  lg: "h-8 w-8",
+  sm: "size-4",
+  md: "size-6",
+  lg: "size-8",
+} as const;
+
+type SpinnerProps = Omit<React.ComponentProps<"svg">, "size"> & {
+  size?: keyof typeof sizeClasses;
 };
 
-export function Spinner({ className, size = "md" }: SpinnerProps) {
+function Spinner({ className, size = "md", ...props }: SpinnerProps) {
   return (
-    <Loader2
+    <Loader2Icon
+      data-slot="spinner"
+      role="status"
+      aria-label="Loading"
       className={cn("animate-spin text-muted-foreground", sizeClasses[size], className)}
+      {...props}
     />
   );
 }
 
-export function PageLoader() {
+function PageLoader() {
   return (
     <div className="flex h-[50vh] items-center justify-center">
       <Spinner size="lg" />
     </div>
   );
 }
+
+export { Spinner, PageLoader };

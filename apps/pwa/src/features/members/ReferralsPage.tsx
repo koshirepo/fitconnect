@@ -4,18 +4,17 @@ import { tenantsApi } from "@/api/tenants";
 import { useAuthStore } from "@/stores/auth";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Select } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PageLoader, Spinner } from "@/components/ui/spinner";
 import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
 import { formatDate } from "@/lib/utils";
-import {
-  ArrowUpDown,
-  Search,
-  Sparkles,
-  UserPlus,
-  Users,
-  X,
-} from "lucide-react";
+import { ArrowUpDown, Search, Sparkles, UserPlus, Users, X } from "lucide-react";
 import type { MemberReferralLeader } from "@/types/api";
 import AvatarCard from "@/components/ui/avatarCard";
 
@@ -176,13 +175,14 @@ export default function ReferralsPage() {
           )}
         </div>
 
-        <Select
-          value={order}
-          onChange={(e) => updateParams({ order: e.target.value })}
-          className="w-full"
-        >
-          <option value="desc">Most referrals first</option>
-          <option value="asc">Least referrals first</option>
+        <Select value={order} onValueChange={(value) => updateParams({ order: value ?? "" })}>
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="desc">Most referrals first</SelectItem>
+            <SelectItem value="asc">Least referrals first</SelectItem>
+          </SelectContent>
         </Select>
       </div>
 
@@ -193,9 +193,7 @@ export default function ReferralsPage() {
           icon={UserPlus}
           title={search ? "No matching referrers" : "No referrals yet"}
           description={
-            search
-              ? "Try a different search term."
-              : "Members who refer friends will appear here."
+            search ? "Try a different search term." : "Members who refer friends will appear here."
           }
         />
       ) : (

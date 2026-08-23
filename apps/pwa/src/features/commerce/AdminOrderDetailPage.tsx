@@ -8,7 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Select } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PageLoader, Spinner } from "@/components/ui/spinner";
 import { formatDateTime } from "@/lib/utils";
 import { ArrowLeft, PackageSearch, Trash2 } from "lucide-react";
@@ -229,12 +235,17 @@ export default function AdminOrderDetailPage() {
                 <span className="text-sm text-muted-foreground">Update Status</span>
                 <Select
                   value={order.status}
-                  onChange={(e) => void handleStatusChange(e.target.value as OrderStatus)}
+                  onValueChange={(value) => void handleStatusChange((value ?? "") as OrderStatus)}
                   disabled={updatingStatus}
                 >
-                  <option value="PENDING">PENDING</option>
-                  <option value="SHIPPED">SHIPPED</option>
-                  <option value="DELIVERED">DELIVERED</option>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PENDING">PENDING</SelectItem>
+                    <SelectItem value="SHIPPED">SHIPPED</SelectItem>
+                    <SelectItem value="DELIVERED">DELIVERED</SelectItem>
+                  </SelectContent>
                 </Select>
                 {updatingStatus && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">

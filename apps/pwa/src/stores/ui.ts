@@ -1,7 +1,11 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type Theme = "dark" | "light";
+/** User preference. "system" follows the OS setting. */
+export type Theme = "dark" | "light" | "system";
+
+/** The theme actually applied to <html> — "system" is resolved to one of these. */
+export type ResolvedTheme = "dark" | "light";
 
 interface UIState {
   sidebarOpen: boolean;
@@ -14,6 +18,12 @@ interface UIState {
   toggleTheme: () => void;
 }
 
+/** Reads the OS colour-scheme preference. Falls back to dark when unavailable. */
+export function getSystemTheme(): ResolvedTheme {
+  if (typeof window === "undefined" || !window.matchMedia) return "dark";
+  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
+
 export const useUIStore = create<UIState>()(
   persist(
     (set) => ({
@@ -22,9 +32,15 @@ export const useUIStore = create<UIState>()(
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
       isMobile: false,
       setIsMobile: (mobile) => set({ isMobile: mobile, sidebarOpen: !mobile }),
-      theme: "dark",
+      theme: "system",
       setTheme: (theme) => set({ theme }),
-      toggleTheme: () => set((s) => ({ theme: s.theme === "dark" ? "light" : "dark" })),
+      // Flips to the opposite of what is currently *shown*, so toggling out of
+      // "system" does the visually obvious thing.
+      toggleTheme: () =>
+        set((s) => {
+          const shown = s.theme === "system" ? getSystemTheme() : s.theme;
+          return { theme: shown === "dark" ? "light" : "dark" };
+        }),
     }),
     {
       name: "gms-ui",

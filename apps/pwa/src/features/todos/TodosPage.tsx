@@ -8,7 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,8 +68,7 @@ export default function TodosPage() {
   const [page, setPage] = React.useState(1);
   const [hasMore, setHasMore] = React.useState(true);
   const [loadingMore, setLoadingMore] = React.useState(false);
-  const [statusFilter, setStatusFilter] =
-    React.useState<TodoStatusFilter>("ALL");
+  const [statusFilter, setStatusFilter] = React.useState<TodoStatusFilter>("ALL");
   const [searchText, setSearchText] = React.useState("");
   const deferredSearch = React.useDeferredValue(searchText);
   const [error, setError] = React.useState("");
@@ -72,8 +77,7 @@ export default function TodosPage() {
   const [editingTodo, setEditingTodo] = React.useState<Todo | null>(null);
   const [formTitle, setFormTitle] = React.useState("");
   const [formDescription, setFormDescription] = React.useState("");
-  const [formVisibility, setFormVisibility] =
-    React.useState<TodoVisibility>("PUBLIC");
+  const [formVisibility, setFormVisibility] = React.useState<TodoVisibility>("PUBLIC");
   const [formError, setFormError] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
 
@@ -99,9 +103,7 @@ export default function TodosPage() {
           deferredSearch.trim() || undefined,
         );
         const nextTodos = res.data.data.todos;
-        setTodos((prev) =>
-          mode === "replace" ? nextTodos : appendUniqueById(prev, nextTodos),
-        );
+        setTodos((prev) => (mode === "replace" ? nextTodos : appendUniqueById(prev, nextTodos)));
         setHasMore(nextPage < res.data.meta.totalPages);
         setPage(nextPage);
         setError("");
@@ -241,8 +243,8 @@ export default function TodosPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Todos</h1>
           <p className="text-muted-foreground">
-            Admins can manage all todos. Coaches can create and manage public
-            todos and view protected ones.
+            Admins can manage all todos. Coaches can create and manage public todos and view
+            protected ones.
           </p>
         </div>
         <Button onClick={openCreate}>
@@ -263,13 +265,16 @@ export default function TodosPage() {
         </div>
         <Select
           value={statusFilter}
-          onChange={(e) =>
-            setStatusFilter(e.target.value as TodoStatusFilter)
-          }
+          onValueChange={(value) => setStatusFilter((value ?? "") as TodoStatusFilter)}
         >
-          <option value="ALL">All todos</option>
-          <option value="OPEN">Open only</option>
-          <option value="COMPLETED">Completed only</option>
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All todos</SelectItem>
+            <SelectItem value="OPEN">Open only</SelectItem>
+            <SelectItem value="COMPLETED">Completed only</SelectItem>
+          </SelectContent>
         </Select>
       </div>
 
@@ -312,8 +317,8 @@ export default function TodosPage() {
                         <Checkbox
                           checked={todo.isCompleted}
                           disabled={readOnly}
-                          onChange={(e) =>
-                            handleToggleCompleted(todo, e.target.checked)
+                          onCheckedChange={(checked) =>
+                            handleToggleCompleted(todo, checked === true)
                           }
                           className="mt-1"
                         />
@@ -330,12 +335,8 @@ export default function TodosPage() {
                               <meta.Icon className="mr-1 h-3 w-3" />
                               {meta.label}
                             </Badge>
-                            {todo.isCompleted && (
-                              <Badge variant="outline">Completed</Badge>
-                            )}
-                            {readOnly && (
-                              <Badge variant="secondary">Read only for coaches</Badge>
-                            )}
+                            {todo.isCompleted && <Badge variant="outline">Completed</Badge>}
+                            {readOnly && <Badge variant="secondary">Read only for coaches</Badge>}
                           </div>
                           {todo.description && (
                             <p className="whitespace-pre-wrap text-sm text-muted-foreground">
@@ -407,7 +408,7 @@ export default function TodosPage() {
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent onClose={() => setDialogOpen(false)} className="max-w-xl">
+        <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle>{editingTodo ? "Edit Todo" : "Create Todo"}</DialogTitle>
           </DialogHeader>
@@ -440,16 +441,18 @@ export default function TodosPage() {
             <div className="space-y-2">
               <Label htmlFor="todo-visibility">Visibility</Label>
               <Select
-                id="todo-visibility"
                 value={isAdmin ? formVisibility : "PUBLIC"}
                 disabled={!isAdmin}
-                onChange={(e) =>
-                  setFormVisibility(e.target.value as TodoVisibility)
-                }
+                onValueChange={(value) => setFormVisibility((value ?? "") as TodoVisibility)}
               >
-                <option value="PUBLIC">Public</option>
-                <option value="PROTECTED">Protected</option>
-                <option value="PRIVATE">Private</option>
+                <SelectTrigger id="todo-visibility" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PUBLIC">Public</SelectItem>
+                  <SelectItem value="PROTECTED">Protected</SelectItem>
+                  <SelectItem value="PRIVATE">Private</SelectItem>
+                </SelectContent>
               </Select>
               {!isAdmin && (
                 <p className="text-xs text-muted-foreground">
@@ -458,24 +461,14 @@ export default function TodosPage() {
               )}
             </div>
 
-            {formError && (
-              <p className="text-sm text-destructive">{formError}</p>
-            )}
+            {formError && <p className="text-sm text-destructive">{formError}</p>}
 
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setDialogOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={submitting}>
-                {submitting
-                  ? "Saving..."
-                  : editingTodo
-                    ? "Update Todo"
-                    : "Create Todo"}
+                {submitting ? "Saving..." : editingTodo ? "Update Todo" : "Create Todo"}
               </Button>
             </DialogFooter>
           </form>

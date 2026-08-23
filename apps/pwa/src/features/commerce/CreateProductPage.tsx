@@ -9,7 +9,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { PhotoCapture } from "@/components/ui/photo-capture";
 import { PageLoader } from "@/components/ui/spinner";
@@ -177,8 +183,8 @@ export default function CreateProductPage() {
     }
 
     if (
-      [payload.price, payload.stock, payload.minOrderQty, payload.maxOrderQty].some((value) =>
-        Number.isNaN(value) || !Number.isInteger(value),
+      [payload.price, payload.stock, payload.minOrderQty, payload.maxOrderQty].some(
+        (value) => Number.isNaN(value) || !Number.isInteger(value),
       )
     ) {
       setError("Price, stock, min qty, and max qty must be whole numbers.");
@@ -312,7 +318,12 @@ export default function CreateProductPage() {
                   id="description"
                   placeholder="Describe your product features and benefits..."
                   value={form.description}
-                  onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
                   rows={3}
                 />
               </div>
@@ -355,7 +366,8 @@ export default function CreateProductPage() {
             {photoPreviews.length > 0 && (
               <div className="space-y-2">
                 <p className="text-sm font-medium">
-                  {photoPreviews.length} photo{photoPreviews.length !== 1 ? "s" : ""} added
+                  {photoPreviews.length} photo
+                  {photoPreviews.length !== 1 ? "s" : ""} added
                 </p>
                 <div className="grid grid-cols-4 gap-2">
                   {photoPreviews.map((preview, index) => (
@@ -399,9 +411,7 @@ export default function CreateProductPage() {
                   value={form.price}
                   onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Enter the product price in rupees.
-                </p>
+                <p className="text-xs text-muted-foreground">Enter the product price in rupees.</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="stock">Stock Quantity *</Label>
@@ -422,7 +432,12 @@ export default function CreateProductPage() {
                   min={1}
                   placeholder="e.g., 1"
                   value={form.minOrderQty}
-                  onChange={(e) => setForm((prev) => ({ ...prev, minOrderQty: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      minOrderQty: e.target.value,
+                    }))
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -433,7 +448,12 @@ export default function CreateProductPage() {
                   min={1}
                   placeholder="e.g., 100"
                   value={form.maxOrderQty}
-                  onChange={(e) => setForm((prev) => ({ ...prev, maxOrderQty: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      maxOrderQty: e.target.value,
+                    }))
+                  }
                 />
               </div>
             </div>
@@ -448,14 +468,21 @@ export default function CreateProductPage() {
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               <Select
-                id="status"
                 value={form.isActive ? "ACTIVE" : "INACTIVE"}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, isActive: e.target.value === "ACTIVE" }))
+                onValueChange={(value) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    isActive: (value ?? "") === "ACTIVE",
+                  }))
                 }
               >
-                <option value="ACTIVE">Active</option>
-                <option value="INACTIVE">Inactive</option>
+                <SelectTrigger id="status" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="INACTIVE">Inactive</SelectItem>
+                </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
                 Inactive products won&apos;t be visible to customers.
@@ -475,7 +502,13 @@ export default function CreateProductPage() {
 
         <div className="flex items-center gap-2">
           <Button type="submit" disabled={submitting || uploading || loadingProduct}>
-            {submitting ? (isEditMode ? "Saving..." : "Creating...") : isEditMode ? "Save Changes" : "Create Product"}
+            {submitting
+              ? isEditMode
+                ? "Saving..."
+                : "Creating..."
+              : isEditMode
+                ? "Save Changes"
+                : "Create Product"}
           </Button>
           <Button
             type="button"

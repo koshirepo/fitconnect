@@ -2,6 +2,7 @@ import * as React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { Button } from "@/components/ui/button";
+import { ModeToggle } from "@/components/ui/mode-toggle";
 import { cn } from "@/lib/utils";
 import { ArrowRight, Menu, X } from "lucide-react";
 
@@ -69,6 +70,7 @@ export function PublicHeader({ navItems = [], maxWidth = "max-w-7xl" }: PublicHe
           )}
 
           <div className="flex items-center gap-3">
+            <ModeToggle />
             {isAuthenticated ? (
               <Button onClick={() => navigate("/dashboard")}>
                 Dashboard

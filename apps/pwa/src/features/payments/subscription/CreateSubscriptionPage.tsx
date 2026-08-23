@@ -271,7 +271,7 @@ export default function CreateSubscriptionPage() {
                         checked ? "border-primary bg-primary/5" : "border-border"
                       }`}
                     >
-                      <Checkbox checked={checked} onChange={() => toggleBadgeId(badge.id)} />
+                      <Checkbox checked={checked} onCheckedChange={() => toggleBadgeId(badge.id)} />
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium">{badge.name}</span>

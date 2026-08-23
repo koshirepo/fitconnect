@@ -12,7 +12,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Select } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { PageLoader, Spinner } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -139,25 +145,30 @@ export default function AuditLogsPage({ scope = "tenant" }: Props) {
               <label className="text-sm text-muted-foreground">Action</label>
               <Select
                 value={actionFilter}
-                onChange={(e) => {
-                  setActionFilter(e.target.value);
+                onValueChange={(value) => {
+                  setActionFilter(value ?? "");
                 }}
               >
-                <option value="">All actions</option>
-                <option value="LOGIN">LOGIN</option>
-                <option value="LOGOUT">LOGOUT</option>
-                <option value="CREATE_TENANT">CREATE_TENANT</option>
-                <option value="UPDATE_TENANT">UPDATE_TENANT</option>
-                <option value="ADD_MEMBER">ADD_MEMBER</option>
-                <option value="REMOVE_MEMBER">REMOVE_MEMBER</option>
-                <option value="CHANGE_ROLE">CHANGE_ROLE</option>
-                <option value="CREATE_PAYMENT">CREATE_PAYMENT</option>
-                <option value="UPDATE_PAYMENT">UPDATE_PAYMENT</option>
-                <option value="CREATE_SUBSCRIPTION">CREATE_SUBSCRIPTION</option>
-                <option value="CREATE_WORKOUT_PLAN">CREATE_WORKOUT_PLAN</option>
-                <option value="UPDATE_WORKOUT_PLAN">UPDATE_WORKOUT_PLAN</option>
-                <option value="DELETE_WORKOUT_PLAN">DELETE_WORKOUT_PLAN</option>
-                <option value="ASSIGN_WORKOUT_PLAN">ASSIGN_WORKOUT_PLAN</option>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All actions</SelectItem>
+                  <SelectItem value="LOGIN">LOGIN</SelectItem>
+                  <SelectItem value="LOGOUT">LOGOUT</SelectItem>
+                  <SelectItem value="CREATE_TENANT">CREATE_TENANT</SelectItem>
+                  <SelectItem value="UPDATE_TENANT">UPDATE_TENANT</SelectItem>
+                  <SelectItem value="ADD_MEMBER">ADD_MEMBER</SelectItem>
+                  <SelectItem value="REMOVE_MEMBER">REMOVE_MEMBER</SelectItem>
+                  <SelectItem value="CHANGE_ROLE">CHANGE_ROLE</SelectItem>
+                  <SelectItem value="CREATE_PAYMENT">CREATE_PAYMENT</SelectItem>
+                  <SelectItem value="UPDATE_PAYMENT">UPDATE_PAYMENT</SelectItem>
+                  <SelectItem value="CREATE_SUBSCRIPTION">CREATE_SUBSCRIPTION</SelectItem>
+                  <SelectItem value="CREATE_WORKOUT_PLAN">CREATE_WORKOUT_PLAN</SelectItem>
+                  <SelectItem value="UPDATE_WORKOUT_PLAN">UPDATE_WORKOUT_PLAN</SelectItem>
+                  <SelectItem value="DELETE_WORKOUT_PLAN">DELETE_WORKOUT_PLAN</SelectItem>
+                  <SelectItem value="ASSIGN_WORKOUT_PLAN">ASSIGN_WORKOUT_PLAN</SelectItem>
+                </SelectContent>
               </Select>
             </div>
             <Button

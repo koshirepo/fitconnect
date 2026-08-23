@@ -8,7 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Select } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PageLoader, Spinner } from "@/components/ui/spinner";
 import { formatDateTime } from "@/lib/utils";
 import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
@@ -143,15 +149,16 @@ export default function AdminOrdersPage() {
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <CardTitle>All Orders</CardTitle>
-              <Select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-44"
-              >
-                <option value="">All Status</option>
-                <option value="PENDING">Pending</option>
-                <option value="SHIPPED">Shipped</option>
-                <option value="DELIVERED">Delivered</option>
+              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value ?? "")}>
+                <SelectTrigger className="w-44">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Status</SelectItem>
+                  <SelectItem value="PENDING">Pending</SelectItem>
+                  <SelectItem value="SHIPPED">Shipped</SelectItem>
+                  <SelectItem value="DELIVERED">Delivered</SelectItem>
+                </SelectContent>
               </Select>
             </div>
           </CardHeader>
@@ -192,8 +199,8 @@ export default function AdminOrdersPage() {
                           Placed {formatDateTime(order.createdAt)}
                         </p>
                         <p className="text-sm">
-                          {order.items.length} item{order.items.length !== 1 ? "s" : ""} | Total{" "}
-                          {fmt(order.totalAmount)}
+                          {order.items.length} item
+                          {order.items.length !== 1 ? "s" : ""} | Total {fmt(order.totalAmount)}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">

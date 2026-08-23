@@ -45,7 +45,10 @@ export function PhotoCapture({
   const [facingMode, setFacingMode] = React.useState<"user" | "environment">("environment");
   const [validating, setValidating] = React.useState(false);
   const [faceError, setFaceError] = React.useState("");
-  const [liveFace, setLiveFace] = React.useState<LiveFaceResult>({ count: 0, boxes: [] });
+  const [liveFace, setLiveFace] = React.useState<LiveFaceResult>({
+    count: 0,
+    boxes: [],
+  });
 
   // Crop step – holds raw image URL before cropping
   const [cropSrc, setCropSrc] = React.useState<string | null>(null);
@@ -195,13 +198,23 @@ export function PhotoCapture({
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 1280 } },
+          video: {
+            facingMode: facing,
+            width: { ideal: 1280 },
+            height: { ideal: 1280 },
+          },
           audio: false,
         });
       } catch (innerErr) {
         // If facingMode constraint fails, retry with just video: true
-        if (innerErr instanceof OverconstrainedError || (innerErr instanceof DOMException && innerErr.name === "OverconstrainedError")) {
-          stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        if (
+          innerErr instanceof OverconstrainedError ||
+          (innerErr instanceof DOMException && innerErr.name === "OverconstrainedError")
+        ) {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false,
+          });
         } else {
           throw innerErr;
         }
@@ -226,7 +239,9 @@ export function PhotoCapture({
     } catch (err) {
       const name = err instanceof DOMException ? err.name : "";
       if (name === "NotAllowedError") {
-        setCameraError("Camera permission was denied. Please allow camera access in your browser settings.");
+        setCameraError(
+          "Camera permission was denied. Please allow camera access in your browser settings.",
+        );
       } else if (name === "NotFoundError") {
         setCameraError("No camera found on this device. Try uploading a photo instead.");
       } else if (name === "NotReadableError") {
@@ -258,7 +273,9 @@ export function PhotoCapture({
         setValidating(false);
       }
 
-      const file = new File([blob], fileName, { type: blob.type || "image/jpeg" });
+      const file = new File([blob], fileName, {
+        type: blob.type || "image/jpeg",
+      });
       const previewUrl = URL.createObjectURL(blob);
       onChange(file, previewUrl);
     },

@@ -4,7 +4,13 @@ import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import MemberSelector from "@/components/ui/memberSelector";
 import { PhotoCapture } from "@/components/ui/photo-capture";
 import { formatShiftLabel } from "@/lib/shifts";
@@ -12,36 +18,29 @@ import { AlertCircle } from "lucide-react";
 import type { Shift, TenantMember, TenantRole } from "@/types/api";
 
 // ─── Role options per caller role ─────────────────────────────────────────────
-const ROLE_OPTIONS: Record<
-  string,
-  { value: TenantRole; label: string; description: string }[]
-> = {
+const ROLE_OPTIONS: Record<string, { value: TenantRole; label: string; description: string }[]> = {
   ADMIN: [
     {
       value: "MEMBER",
       label: "Member",
-      description:
-        "Can view schedules, enroll in classes, and manage their own profile",
+      description: "Can view schedules, enroll in classes, and manage their own profile",
     },
     {
       value: "COACH",
       label: "Trainer / Coach",
-      description:
-        "Can manage workout plans, view members, and add new members",
+      description: "Can manage workout plans, view members, and add new members",
     },
     {
       value: "ADMIN",
       label: "Admin",
-      description:
-        "Full management access including members, billing, and settings",
+      description: "Full management access including members, billing, and settings",
     },
   ],
   COACH: [
     {
       value: "MEMBER",
       label: "Member",
-      description:
-        "Can view schedules, enroll in classes, and manage their own profile",
+      description: "Can view schedules, enroll in classes, and manage their own profile",
     },
   ],
 };
@@ -83,23 +82,19 @@ export default function MemberForm({
   onCancel,
   submitLabel,
 }: MemberFormProps) {
-  const { tenantRole} = useAuthStore();
+  const { tenantRole } = useAuthStore();
   const callerRole = tenantRole() ?? "";
 
   // Form state
   const [name, setName] = React.useState(initialData.name ?? "");
   const [email, setEmail] = React.useState(initialData.email ?? "");
   const [phone, setPhone] = React.useState(initialData.phone ?? "");
-  const [role, setRole] = React.useState<TenantRole>(
-    initialData.role ?? ("MEMBER" as TenantRole),
-  );
+  const [role, setRole] = React.useState<TenantRole>(initialData.role ?? ("MEMBER" as TenantRole));
   const [shiftId, setShiftId] = React.useState(initialData.shiftId ?? "");
   const [referredByMembershipId, setReferredByMembershipId] = React.useState(
     initialData.referredByMembershipId ?? "",
   );
-  const [photoFile, setPhotoFile] = React.useState<File | null>(
-    initialData.photoFile ?? null,
-  );
+  const [photoFile, setPhotoFile] = React.useState<File | null>(initialData.photoFile ?? null);
   const [photoPreview, setPhotoPreview] = React.useState<string | null>(
     initialData.photoPreview ?? null,
   );
@@ -234,29 +229,28 @@ export default function MemberForm({
         <div className="space-y-2">
           <Label htmlFor="shiftId">Shift</Label>
           <Select
-            id="shiftId"
             value={shiftId}
-            onChange={(e) => setShiftId(e.target.value)}
-            disabled={
-              isSubmitting ||
-              submitting ||
-              loadingShifts ||
-              shiftOptions.length === 0
-            }
+            onValueChange={(value) => setShiftId(value ?? "")}
+            disabled={isSubmitting || submitting || loadingShifts || shiftOptions.length === 0}
           >
-            <option value="">
-              {loadingShifts
-                ? "Loading shifts..."
-                : shiftOptions.length === 0
-                  ? "No shifts configured"
-                  : "Choose a shift (optional)"}
-            </option>
-            {shiftOptions.map((shift) => (
-              <option key={shift.id} value={shift.id}>
-                {formatShiftLabel(shift)}
-                {!shift.isActive ? " - Inactive" : ""}
-              </option>
-            ))}
+            <SelectTrigger id="shiftId" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">
+                {loadingShifts
+                  ? "Loading shifts..."
+                  : shiftOptions.length === 0
+                    ? "No shifts configured"
+                    : "Choose a shift (optional)"}
+              </SelectItem>
+              {shiftOptions.map((shift) => (
+                <SelectItem key={shift.id} value={shift.id}>
+                  {formatShiftLabel(shift)}
+                  {!shift.isActive ? " - Inactive" : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground">
             Assign the member to a gym shift or batch.
@@ -289,9 +283,7 @@ export default function MemberForm({
                 />
                 <div>
                   <p className="text-sm font-medium">{opt.label}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {opt.description}
-                  </p>
+                  <p className="text-xs text-muted-foreground">{opt.description}</p>
                 </div>
               </label>
             ))}
@@ -322,8 +314,7 @@ export default function MemberForm({
             ? mode === "create"
               ? "Adding..."
               : "Saving..."
-            : submitLabel ||
-              (mode === "create" ? "Add Member" : "Save Changes")}
+            : submitLabel || (mode === "create" ? "Add Member" : "Save Changes")}
         </Button>
       </div>
     </form>

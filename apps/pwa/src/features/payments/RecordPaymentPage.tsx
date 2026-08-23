@@ -20,7 +20,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import MemberSelector from "@/components/ui/memberSelector";
 import { PageLoader } from "@/components/ui/spinner";
-import { Select } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { AlertCircle, Plus } from "lucide-react";
 import type {
   Badge as BadgeModel,
@@ -158,9 +164,8 @@ export default function RecordPaymentPage() {
           routedMember ?? membersWithSelected.find((m) => m.id === membershipId) ?? null;
 
         if (routedMemberDetail) {
-          memberBadgeCacheRef.current[routedMemberDetail.id] = routedMemberDetail.badges.map(
-            toMemberBadgeSummary,
-          );
+          memberBadgeCacheRef.current[routedMemberDetail.id] =
+            routedMemberDetail.badges.map(toMemberBadgeSummary);
         }
 
         setSelectedMember(initialMember);
@@ -411,25 +416,29 @@ export default function RecordPaymentPage() {
                     : "Plans are filtered by this member's badges."}
               </p>
               <Select
-                id="subscription"
                 value={fSubscriptionId}
-                onChange={(e) => handleSubChange(e.target.value)}
+                onValueChange={(value) => handleSubChange(value ?? "")}
                 disabled={!selectedMember || loadingMemberBadges}
               >
-                <option value="">
-                  {!selectedMember
-                    ? "Select a member first..."
-                    : loadingMemberBadges
-                      ? "Loading plans..."
-                      : availableSubscriptions.length === 0
-                        ? "No plans available for this member"
-                        : "Choose a plan..."}
-                </option>
-                {availableSubscriptions.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.title} - {formatCurrency(s.amount)}
-                  </option>
-                ))}
+                <SelectTrigger id="subscription" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">
+                    {!selectedMember
+                      ? "Select a member first..."
+                      : loadingMemberBadges
+                        ? "Loading plans..."
+                        : availableSubscriptions.length === 0
+                          ? "No plans available for this member"
+                          : "Choose a plan..."}
+                  </SelectItem>
+                  {availableSubscriptions.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.title} - {formatCurrency(s.amount)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
               {selectedMember && !loadingMemberBadges && availableSubscriptions.length === 0 && (
                 <p className="text-xs text-muted-foreground">
@@ -480,12 +489,16 @@ export default function RecordPaymentPage() {
             <div className="space-y-2">
               <Label htmlFor="status">Payment Status</Label>
               <Select
-                id="status"
                 value={fStatus}
-                onChange={(e) => setFStatus(e.target.value as "PENDING" | "COMPLETED")}
+                onValueChange={(value) => setFStatus((value ?? "") as "PENDING" | "COMPLETED")}
               >
-                <option value="COMPLETED">Completed</option>
-                <option value="PENDING">Pending</option>
+                <SelectTrigger id="status" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="COMPLETED">Completed</SelectItem>
+                  <SelectItem value="PENDING">Pending</SelectItem>
+                </SelectContent>
               </Select>
             </div>
 

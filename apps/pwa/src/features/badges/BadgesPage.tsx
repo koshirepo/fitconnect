@@ -189,7 +189,9 @@ export default function BadgesPage() {
     setAssignNote("");
     setAssignError("");
     try {
-      const allMembers = await loadAllTenantMembers(currentTenantId, { status: "ACTIVE" });
+      const allMembers = await loadAllTenantMembers(currentTenantId, {
+        status: "ACTIVE",
+      });
       setMembers(allMembers);
     } catch {
       //
@@ -364,7 +366,7 @@ export default function BadgesPage() {
 
       {/* ─── Edit Dialog ─────────────────────────────────────────────────────── */}
       <Dialog open={editDialog} onOpenChange={setEditDialog}>
-        <DialogContent onClose={() => setEditDialog(false)} className="max-w-md">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Badge</DialogTitle>
           </DialogHeader>
@@ -443,7 +445,7 @@ export default function BadgesPage() {
 
       {/* ─── Assign Dialog ───────────────────────────────────────────────────── */}
       <Dialog open={assignDialog} onOpenChange={setAssignDialog}>
-        <DialogContent onClose={() => setAssignDialog(false)}>
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Assign &ldquo;{assignBadgeName}&rdquo;</DialogTitle>
           </DialogHeader>
@@ -486,7 +488,7 @@ export default function BadgesPage() {
 
       {/* ─── View Assignments Dialog ─────────────────────────────────────────── */}
       <Dialog open={viewDialog} onOpenChange={setViewDialog}>
-        <DialogContent onClose={() => setViewDialog(false)} className="max-w-md">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Members with &ldquo;{viewBadgeName}&rdquo;</DialogTitle>
           </DialogHeader>
@@ -508,9 +510,7 @@ export default function BadgesPage() {
                       memberId={a.membership.memberId}
                       variant="sm"
                     >
-                      <p className="text-xs text-muted-foreground truncate">
-                        {a.membership.email}
-                      </p>
+                      <p className="text-xs text-muted-foreground truncate">{a.membership.email}</p>
                     </AvatarCard>
                   ) : (
                     <p className="text-sm text-muted-foreground">Member details unavailable</p>

@@ -103,9 +103,7 @@ export default function MemberSelector({
             {/* Member List */}
             <div className="max-h-96 overflow-y-auto space-y-2">
               {filteredMembers.length === 0 ? (
-                <p className="text-center text-sm text-muted-foreground py-8">
-                  No members found
-                </p>
+                <p className="text-center text-sm text-muted-foreground py-8">No members found</p>
               ) : (
                 filteredMembers.map((m) => (
                   <Card

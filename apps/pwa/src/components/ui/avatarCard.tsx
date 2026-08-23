@@ -1,5 +1,5 @@
 import { getInitials } from "@/shared";
-import { Avatar } from "./avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
 import { cn } from "@/lib/utils";
 import { getDueDateState } from "@/lib/member-due";
 import { Shield, Dumbbell } from "lucide-react";
@@ -14,7 +14,7 @@ const variantConfig = {
   },
   /** Default — cards, sidebar items */
   md: {
-    avatarSize: "md" as const,
+    avatarSize: "default" as const,
     avatarClass: "",
     gap: "gap-3",
     nameClass: "text-base font-semibold",
@@ -119,12 +119,10 @@ export default function AvatarCard({
       )}
     >
       <div className={cn("relative", ringClass)} style={{ borderRadius: "9999px" }}>
-        <Avatar
-          src={avatarUrl}
-          fallback={getInitials(name)}
-          size={config.avatarSize}
-          className={cn(config.avatarClass, avatarClassName)}
-        />
+        <Avatar size={config.avatarSize} className={cn(config.avatarClass, avatarClassName)}>
+          {avatarUrl && <AvatarImage src={avatarUrl} alt={name} />}
+          <AvatarFallback>{getInitials(name)}</AvatarFallback>
+        </Avatar>
         {roleIcon && (
           <div className="absolute bottom-0 right-0 flex h-1/3 w-1/3 items-center justify-center rounded-full bg-linear-to-br from-slate-700 to-slate-900 shadow-lg">
             {roleIcon}
