@@ -1,7 +1,6 @@
 import * as React from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { useAuthStore } from "@/stores/auth";
-import { attendanceApi } from "@/api/attendance";
+import { useAttendanceCalendar } from "@/api/queries/attendance";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,34 +34,19 @@ function formatMonthLabel(s: string) {
 export default function AttendanceCalendarPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { currentTenantId } = useAuthStore();
 
   const today = new Date();
   const currentMonth = searchParams.get("month") || getMonthStr(today);
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-  const [days, setDays] = React.useState<Record<string, DayData>>({});
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState("");
   const [selectedDate, setSelectedDate] = React.useState<string | null>(null);
 
-  const fetchCalendar = React.useCallback(async () => {
-    if (!currentTenantId) return;
-    setLoading(true);
-    setError("");
-    try {
-      const res = await attendanceApi.calendarMonth(currentTenantId, currentMonth);
-      setDays(res.data.data.days);
-    } catch (err: unknown) {
-      setError(getApiError(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [currentTenantId, currentMonth]);
-
-  React.useEffect(() => {
-    void fetchCalendar();
-  }, [fetchCalendar]);
+  // The month is part of the cache key, so paging back and forth reuses months
+  // already fetched instead of refetching each time.
+  const calendarQuery = useAttendanceCalendar(currentMonth);
+  const days = (calendarQuery.data?.days ?? {}) as Record<string, DayData>;
+  const loading = calendarQuery.isLoading;
+  const error = calendarQuery.isError ? getApiError(calendarQuery.error) : "";
 
   React.useEffect(() => {
     setSelectedDate(null);

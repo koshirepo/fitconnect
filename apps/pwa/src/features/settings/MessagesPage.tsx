@@ -1,8 +1,7 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
-import { settingsApi } from "@/api/settings";
+import { useTenantSettings, useUpdateTenantSettings } from "@/api/queries/catalog";
 import { getApiError } from "@/api/client";
-import { useAuthStore } from "@/stores/auth";
 import type { WhatsAppTemplate, WhatsAppTemplateKey } from "@/types/api";
 import {
   Card,
@@ -31,50 +30,35 @@ function toTemplateBodyMap(
 
 export default function MessagesPage() {
   const navigate = useNavigate();
-  const { currentTenantId } = useAuthStore();
 
   const [templates, setTemplates] = React.useState<WhatsAppTemplate[]>([]);
   const [templateBodies, setTemplateBodies] = React.useState<
     Partial<Record<WhatsAppTemplateKey, string>>
   >({});
-  const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState("");
   const [successMsg, setSuccessMsg] = React.useState("");
 
-  const fetchTemplates = React.useCallback(async () => {
-    if (!currentTenantId) {
-      setLoading(false);
-      return;
-    }
+  const settingsQuery = useTenantSettings();
+  const updateSettings = useUpdateTenantSettings();
+  const loading = settingsQuery.isLoading;
 
-    setLoading(true);
-    setError("");
-    try {
-      const res = await settingsApi.getSettings(currentTenantId);
-      const nextTemplates = res.data.data.settings.whatsappTemplates;
-      setTemplates(nextTemplates);
-      setTemplateBodies(toTemplateBodyMap(nextTemplates));
-    } catch (err) {
-      setError(getApiError(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [currentTenantId]);
-
+  // Seed the editable copies once the saved templates arrive.
   React.useEffect(() => {
-    fetchTemplates();
-  }, [fetchTemplates]);
+    const nextTemplates = settingsQuery.data?.whatsappTemplates;
+    if (!nextTemplates) return;
+    setTemplates(nextTemplates);
+    setTemplateBodies(toTemplateBodyMap(nextTemplates));
+  }, [settingsQuery.data]);
 
   const handleSaveTemplates = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentTenantId) return;
 
     setSaving(true);
     setError("");
     setSuccessMsg("");
     try {
-      const res = await settingsApi.updateSettings(currentTenantId, {
+      const settings = await updateSettings.mutateAsync({
         whatsappTemplates: templates.reduce<
           Partial<Record<WhatsAppTemplateKey, string>>
         >((acc, template) => {
@@ -82,7 +66,7 @@ export default function MessagesPage() {
           return acc;
         }, {}),
       });
-      const nextTemplates = res.data.data.settings.whatsappTemplates;
+      const nextTemplates = settings.whatsappTemplates;
       setTemplates(nextTemplates);
       setTemplateBodies(toTemplateBodyMap(nextTemplates));
       setSuccessMsg("WhatsApp templates saved successfully.");

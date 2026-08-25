@@ -9,7 +9,14 @@ import { keepPreviousData } from "@tanstack/react-query";
 import { attendanceApi } from "@/api/attendance";
 import { queryKeys } from "@/lib/query-keys";
 import type { MarkAllAttendancePayload, MarkAttendancePayload } from "@/types/api";
-import { unwrap, unwrapPaginated, useCurrentTenantId, useTenantMutation, useTenantQuery } from "./shared";
+import {
+  unwrap,
+  unwrapPaginated,
+  useCurrentTenantId,
+  useTenantInfiniteQuery,
+  useTenantMutation,
+  useTenantQuery,
+} from "./shared";
 
 function attendanceScope(tenantId: string | null) {
   return ["attendance", tenantId ?? "none"];
@@ -24,6 +31,46 @@ export function useAttendanceByDate(
     (tenantId) => [...queryKeys.attendance.byDate(tenantId, date), page, limit],
     async (tenantId) => unwrapPaginated(await attendanceApi.listByDate(tenantId, date, page, limit)),
     { enabled, placeholderData: keepPreviousData },
+  );
+}
+
+/** A day's check-ins, paged for infinite scroll. */
+export function useAttendanceByDateInfinite(
+  date: string,
+  options: { enabled?: boolean; limit?: number } = {},
+) {
+  const { limit = 50 } = options;
+  return useTenantInfiniteQuery(
+    (tenantId) => [...queryKeys.attendance.byDate(tenantId, date), "infinite", limit],
+    async (tenantId, page) => {
+      const { data, meta } = unwrapPaginated(
+        await attendanceApi.listByDate(tenantId, date, page, limit),
+      );
+      return { data: data.attendance, meta };
+    },
+    options,
+  );
+}
+
+/** One member's history, paged for infinite scroll. */
+export function useMemberAttendanceInfinite(
+  membershipId: string | undefined,
+  options: { enabled?: boolean; limit?: number } = {},
+) {
+  const { limit = 20, enabled = true } = options;
+  return useTenantInfiniteQuery(
+    (tenantId) => [
+      ...queryKeys.attendance.member(tenantId, membershipId ?? "none"),
+      "infinite",
+      limit,
+    ],
+    async (tenantId, page) => {
+      const { data, meta } = unwrapPaginated(
+        await attendanceApi.listByMember(tenantId, membershipId!, page, limit),
+      );
+      return { data: data.attendance, meta };
+    },
+    { enabled: enabled && Boolean(membershipId) },
   );
 }
 

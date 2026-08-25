@@ -3,7 +3,15 @@ import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
-import { attendanceApi } from "@/api/attendance";
+import {
+  useAttendanceByDateInfinite,
+  useMarkAllAttendance,
+  useMemberAttendanceCalendar,
+  useMemberAttendanceInfinite,
+  useRemoveAttendance,
+  useSelfCheckIn,
+} from "@/api/queries/attendance";
+import { flattenPages } from "@/api/queries/shared";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -14,7 +22,7 @@ import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { getTenantDashboardPath } from "@/lib/subdomain";
 import { loadAllTenantMembers } from "@/lib/tenant-members";
-import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
+import { useInfiniteScroll } from "@/lib/use-infinite-scroll";
 import {
   CalendarCheck,
   CheckCircle2,
@@ -62,14 +70,10 @@ export default function AttendancePage() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   });
-  const [records, setRecords] = React.useState<AttendanceRecord[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [loadingMore, setLoadingMore] = React.useState(false);
-  const [page, setPage] = React.useState(1);
-  const [hasMore, setHasMore] = React.useState(true);
   const [checkingIn, setCheckingIn] = React.useState(false);
-  const [checkedIn, setCheckedIn] = React.useState(false);
-  const [error, setError] = React.useState("");
+  // Set optimistically after a successful check-in, before the list refetches.
+  const [justCheckedIn, setJustCheckedIn] = React.useState(false);
+  const [actionError, setActionError] = React.useState("");
   const [copiedQrLink, setCopiedQrLink] = React.useState(false);
 
   // Bulk marking state
@@ -78,13 +82,9 @@ export default function AttendancePage() {
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = React.useState(false);
   const [memberSearch, setMemberSearch] = React.useState("");
-  const [presentIds, setPresentIds] = React.useState<Set<string>>(new Set());
 
   const today = React.useMemo(() => new Date(), []);
   const [calMonth, setCalMonth] = React.useState(getMonthStr(today));
-  const [calDates, setCalDates] = React.useState<Set<string>>(new Set());
-  const [calTotal, setCalTotal] = React.useState(0);
-  const [calLoading, setCalLoading] = React.useState(false);
 
   const navigateMemberMonth = (dir: -1 | 1) => {
     const d = parseMonth(calMonth);
@@ -92,110 +92,62 @@ export default function AttendancePage() {
     setCalMonth(getMonthStr(d));
   };
 
-  const fetchAttendance = React.useCallback(
-    async (nextPage: number, mode: "replace" | "append") => {
-      if (!currentTenantId) return;
-      if (mode === "replace") {
-        setLoading(true);
-      } else {
-        setLoadingMore(true);
-      }
-      setError("");
-      try {
-        if (isStaff) {
-          const res = await attendanceApi.listByDate(currentTenantId, date, nextPage, 50);
-          const attendance = res.data.data.attendance;
-          setRecords((prev) =>
-            mode === "replace" ? attendance : appendUniqueById(prev, attendance),
-          );
-          const totalPages = res.data.meta?.totalPages ?? 1;
-          setHasMore(nextPage < totalPages);
-          setPage(nextPage);
-          setPresentIds((prev) => {
-            const nextSet = mode === "replace" ? new Set<string>() : new Set(prev);
-            for (const record of attendance) {
-              if (record.membershipId) nextSet.add(record.membershipId);
-            }
-            return nextSet;
-          });
-        } else if (membershipId) {
-          const res = await attendanceApi.listByMember(currentTenantId, membershipId, nextPage, 20);
-          const attendance = res.data.data.attendance;
-          setRecords((prev) =>
-            mode === "replace" ? attendance : appendUniqueById(prev, attendance),
-          );
-          const totalPages = res.data.meta?.totalPages ?? 1;
-          setHasMore(nextPage < totalPages);
-          setPage(nextPage);
-          if (attendance.some((record) => String(record.date).slice(0, 10) === date)) {
-            setCheckedIn(true);
-          }
-        } else {
-          setRecords([]);
-          setHasMore(false);
-        }
-      } catch (err) {
-        setError(getApiError(err));
-      } finally {
-        if (mode === "replace") {
-          setLoading(false);
-        } else {
-          setLoadingMore(false);
-        }
-      }
-    },
-    [currentTenantId, date, isStaff, membershipId],
+  // Staff see the whole gym for a date; a member sees only their own history.
+  // Exactly one of these runs, and the date is part of the cache key so moving
+  // between days reuses what has already been fetched.
+  const dayQuery = useAttendanceByDateInfinite(date, { enabled: isStaff });
+  const mineQuery = useMemberAttendanceInfinite(membershipId, { enabled: !isStaff });
+  const activeQuery = isStaff ? dayQuery : mineQuery;
+
+  const records = React.useMemo(
+    () => flattenPages<AttendanceRecord>(activeQuery.data?.pages),
+    [activeQuery.data],
   );
+  const loading = activeQuery.isLoading;
+  const loadingMore = activeQuery.isFetchingNextPage;
+  const hasMore = Boolean(activeQuery.hasNextPage);
+  const error = actionError || (activeQuery.isError ? getApiError(activeQuery.error) : "");
 
-  React.useEffect(() => {
-    if (!currentTenantId) return;
-    setRecords([]);
-    setHasMore(true);
-    setPresentIds(new Set());
-    void fetchAttendance(1, "replace");
-  }, [currentTenantId, date, isStaff, fetchAttendance]);
-
-  React.useEffect(() => {
-    if (isStaff || !currentTenantId || !membershipId) {
-      setCalDates(new Set());
-      setCalTotal(0);
-      setCalLoading(false);
-      return;
+  // Which members already have a check-in today, for the bulk-marking picker.
+  const presentIds = React.useMemo(() => {
+    const ids = new Set<string>();
+    for (const record of records) {
+      if (record.membershipId) ids.add(record.membershipId);
     }
+    return ids;
+  }, [records]);
 
-    let cancelled = false;
-    setCalLoading(true);
-    attendanceApi
-      .memberCalendar(currentTenantId, membershipId, calMonth)
-      .then((res) => {
-        if (cancelled) return;
-        setCalDates(new Set(res.data.data.dates));
-        setCalTotal(res.data.data.total);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setCalDates(new Set());
-          setCalTotal(0);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setCalLoading(false);
-      });
+  // A member's own month calendar, alongside their history.
+  const calendarQuery = useMemberAttendanceCalendar(membershipId, calMonth, {
+    enabled: !isStaff,
+  });
+  const calDates = React.useMemo(
+    () => new Set(calendarQuery.data?.dates ?? []),
+    [calendarQuery.data],
+  );
+  const calTotal = calendarQuery.data?.total ?? 0;
+  const calLoading = calendarQuery.isLoading;
 
-    return () => {
-      cancelled = true;
-    };
-  }, [isStaff, currentTenantId, membershipId, calMonth]);
+  const selfCheckIn = useSelfCheckIn();
+  const markAll = useMarkAllAttendance();
+  const removeAttendance = useRemoveAttendance();
 
-  const loadMore = React.useCallback(() => {
-    if (loading || loadingMore || !hasMore) return;
-    void fetchAttendance(page + 1, "append");
-  }, [loading, loadingMore, hasMore, page, fetchAttendance]);
+  // The member's own list tells us whether today is already recorded.
+  const checkedIn = React.useMemo(
+    () =>
+      justCheckedIn ||
+      (!isStaff && records.some((record) => String(record.date).slice(0, 10) === date)),
+    [justCheckedIn, isStaff, records, date],
+  );
 
   const loadMoreRef = useInfiniteScroll({
     hasMore,
     loading: loading || loadingMore,
-    onLoadMore: loadMore,
+    onLoadMore: () => {
+      if (activeQuery.hasNextPage && !activeQuery.isFetchingNextPage) {
+        void activeQuery.fetchNextPage();
+      }
+    },
   });
 
   // Load members for bulk marking
@@ -209,19 +161,18 @@ export default function AttendancePage() {
   }, [showBulk, currentTenantId]);
 
   const handleSelfCheckIn = async () => {
-    if (!currentTenantId) return;
     setCheckingIn(true);
-    setError("");
+    setActionError("");
     try {
-      await attendanceApi.checkIn(currentTenantId, { date });
-      setCheckedIn(true);
-      void fetchAttendance(1, "replace");
+      await selfCheckIn.mutateAsync({ date });
+      setJustCheckedIn(true);
     } catch (err) {
       const msg = getApiError(err);
+      // A duplicate check-in means the goal is already met, not a failure.
       if (msg.toLowerCase().includes("unique") || msg.toLowerCase().includes("already")) {
-        setCheckedIn(true);
+        setJustCheckedIn(true);
       } else {
-        setError(msg);
+        setActionError(msg);
       }
     } finally {
       setCheckingIn(false);
@@ -229,31 +180,25 @@ export default function AttendancePage() {
   };
 
   const handleBulkMark = async () => {
-    if (!currentTenantId || selected.size === 0) return;
+    if (selected.size === 0) return;
     setBulkLoading(true);
-    setError("");
+    setActionError("");
     try {
-      await attendanceApi.markAll(currentTenantId, {
-        membershipIds: Array.from(selected),
-        date,
-      });
+      await markAll.mutateAsync({ membershipIds: Array.from(selected), date });
       setShowBulk(false);
       setSelected(new Set());
-      fetchAttendance(1, "replace");
     } catch (err) {
-      setError(getApiError(err));
+      setActionError(getApiError(err));
     } finally {
       setBulkLoading(false);
     }
   };
 
   const handleRemove = async (membershipId: string) => {
-    if (!currentTenantId) return;
     try {
-      await attendanceApi.remove(currentTenantId, membershipId, date);
-      fetchAttendance(1, "replace");
+      await removeAttendance.mutateAsync({ membershipId, date });
     } catch (err) {
-      setError(getApiError(err));
+      setActionError(getApiError(err));
     }
   };
 
@@ -263,7 +208,7 @@ export default function AttendancePage() {
     setDate(
       `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
     );
-    setPage(1);
+
   };
 
   const toggleSelect = (id: string) => {
@@ -368,10 +313,7 @@ export default function AttendancePage() {
           <input
             type="date"
             value={date}
-            onChange={(e) => {
-              setDate(e.target.value);
-              setPage(1);
-            }}
+            onChange={(e) => setDate(e.target.value)}
             className="border border-input rounded-md px-3 py-1.5 text-sm bg-background"
           />
           <Button variant="ghost" size="sm" onClick={() => shiftDate(1)} disabled={isToday}>

@@ -1,8 +1,18 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
-import { settingsApi } from "@/api/settings";
-import { shiftsApi } from "@/api/shifts";
+import {
+  useCharges,
+  useCreateCharge,
+  useCreateShift,
+  useDeleteCharge,
+  useDeleteShift,
+  useShifts,
+  useTenantSettings,
+  useUpdateCharge,
+  useUpdateShift,
+  useUpdateTenantSettings,
+} from "@/api/queries/catalog";
 import { getApiError } from "@/api/client";
 import { formatShiftWindow } from "@/lib/shifts";
 import type { TenantCharge, Shift } from "@/types/api";
@@ -43,9 +53,27 @@ export default function GymSettingsPage() {
   const { currentTenantId } = useAuthStore();
   const navigate = useNavigate();
 
-  const [charges, setCharges] = React.useState<TenantCharge[]>([]);
-  const [shifts, setShifts] = React.useState<Shift[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  // Three parallel reads; each write below invalidates the settings or shifts
+  // key, so the lists refresh themselves rather than being patched in place.
+  const settingsQuery = useTenantSettings();
+  const chargesQuery = useCharges();
+  const shiftsQuery = useShifts(true);
+
+  const charges = React.useMemo<TenantCharge[]>(
+    () => chargesQuery.data ?? [],
+    [chargesQuery.data],
+  );
+  const shifts = React.useMemo<Shift[]>(() => shiftsQuery.data ?? [], [shiftsQuery.data]);
+  const loading = settingsQuery.isLoading || chargesQuery.isLoading || shiftsQuery.isLoading;
+
+  const updateSettings = useUpdateTenantSettings();
+  const createCharge = useCreateCharge();
+  const updateCharge = useUpdateCharge();
+  const deleteCharge = useDeleteCharge();
+  const createShift = useCreateShift();
+  const updateShift = useUpdateShift();
+  const deleteShift = useDeleteShift();
+
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState("");
   const [successMsg, setSuccessMsg] = React.useState("");
@@ -82,43 +110,19 @@ export default function GymSettingsPage() {
   const [shiftEndTime, setShiftEndTime] = React.useState("");
   const [shiftSaving, setShiftSaving] = React.useState(false);
 
-  const fetchData = React.useCallback(async () => {
-    if (!currentTenantId) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    try {
-      const [settingsRes, chargesRes, shiftsRes] = await Promise.all([
-        settingsApi.getSettings(currentTenantId),
-        settingsApi.listCharges(currentTenantId),
-        shiftsApi.list(currentTenantId, 1, 100, true),
-      ]);
-      setOverdueDays(settingsRes.data.data.settings.overdueDays);
-      setCharges(chargesRes.data.data.charges);
-      setShifts(shiftsRes.data.data.shifts);
-    } catch (err) {
-      setError(getApiError(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [currentTenantId]);
-
+  // Seed the form from the loaded settings once they arrive.
   React.useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (settingsQuery.data) setOverdueDays(settingsQuery.data.overdueDays);
+  }, [settingsQuery.data]);
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentTenantId) return;
     setSaving(true);
     setError("");
     setSuccessMsg("");
     try {
-      const res = await settingsApi.updateSettings(currentTenantId, {
-        overdueDays,
-      });
-      setOverdueDays(res.data.data.settings.overdueDays);
+      const settings = await updateSettings.mutateAsync({ overdueDays });
+      setOverdueDays(settings.overdueDays);
       setSuccessMsg("Settings saved successfully.");
       setTimeout(() => setSuccessMsg(""), 3000);
     } catch (err) {
@@ -156,21 +160,22 @@ export default function GymSettingsPage() {
         return;
       }
       if (editingCharge) {
-        await settingsApi.updateCharge(currentTenantId, editingCharge.id, {
-          name: chargeName,
-          amount: parsedChargeAmount,
-          isMandatory: chargeMandatory,
+        await updateCharge.mutateAsync({
+          chargeId: editingCharge.id,
+          data: {
+            name: chargeName,
+            amount: parsedChargeAmount,
+            isMandatory: chargeMandatory,
+          },
         });
       } else {
-        await settingsApi.createCharge(currentTenantId, {
+        await createCharge.mutateAsync({
           name: chargeName,
           amount: parsedChargeAmount,
           isMandatory: chargeMandatory,
         });
       }
       resetChargeForm();
-      const res = await settingsApi.listCharges(currentTenantId);
-      setCharges(res.data.data.charges);
     } catch (err) {
       setError(getApiError(err));
     } finally {
@@ -185,10 +190,9 @@ export default function GymSettingsPage() {
   };
 
   const handleDeleteChargeConfirmed = async () => {
-    if (!currentTenantId || !pendingChargeId) return;
+    if (!pendingChargeId) return;
     try {
-      await settingsApi.deleteCharge(currentTenantId, pendingChargeId);
-      setCharges((prev) => prev.filter((c) => c.id !== pendingChargeId));
+      await deleteCharge.mutateAsync(pendingChargeId);
     } catch (err) {
       setError(getApiError(err));
     } finally {
@@ -197,16 +201,11 @@ export default function GymSettingsPage() {
   };
 
   const handleToggleActive = async (charge: TenantCharge) => {
-    if (!currentTenantId) return;
     try {
-      await settingsApi.updateCharge(currentTenantId, charge.id, {
-        isActive: !charge.isActive,
+      await updateCharge.mutateAsync({
+        chargeId: charge.id,
+        data: { isActive: !charge.isActive },
       });
-      setCharges((prev) =>
-        prev.map((c) =>
-          c.id === charge.id ? { ...c, isActive: !c.isActive } : c,
-        ),
-      );
     } catch (err) {
       setError(getApiError(err));
     }
@@ -236,24 +235,19 @@ export default function GymSettingsPage() {
     setShiftSaving(true);
     setError("");
     try {
+      const shiftPayload = {
+        name: shiftName,
+        description: shiftDescription || undefined,
+        startTime: shiftStartTime,
+        endTime: shiftEndTime,
+      };
+
       if (editingShift) {
-        await shiftsApi.update(currentTenantId, editingShift.id, {
-          name: shiftName,
-          description: shiftDescription || undefined,
-          startTime: shiftStartTime,
-          endTime: shiftEndTime,
-        });
+        await updateShift.mutateAsync({ shiftId: editingShift.id, data: shiftPayload });
       } else {
-        await shiftsApi.create(currentTenantId, {
-          name: shiftName,
-          description: shiftDescription || undefined,
-          startTime: shiftStartTime,
-          endTime: shiftEndTime,
-        });
+        await createShift.mutateAsync(shiftPayload);
       }
       resetShiftForm();
-      const res = await shiftsApi.list(currentTenantId, 1, 100, true);
-      setShifts(res.data.data.shifts);
     } catch (err) {
       setError(getApiError(err));
     } finally {
@@ -268,10 +262,9 @@ export default function GymSettingsPage() {
   };
 
   const handleDeleteShiftConfirmed = async () => {
-    if (!currentTenantId || !pendingShiftId) return;
+    if (!pendingShiftId) return;
     try {
-      await shiftsApi.remove(currentTenantId, pendingShiftId);
-      setShifts((prev) => prev.filter((shift) => shift.id !== pendingShiftId));
+      await deleteShift.mutateAsync(pendingShiftId);
     } catch (err) {
       setError(getApiError(err));
     } finally {
@@ -280,16 +273,11 @@ export default function GymSettingsPage() {
   };
 
   const handleToggleShiftActive = async (shift: Shift) => {
-    if (!currentTenantId) return;
     try {
-      await shiftsApi.update(currentTenantId, shift.id, {
-        isActive: !shift.isActive,
+      await updateShift.mutateAsync({
+        shiftId: shift.id,
+        data: { isActive: !shift.isActive },
       });
-      setShifts((prev) =>
-        prev.map((item) =>
-          item.id === shift.id ? { ...item, isActive: !item.isActive } : item,
-        ),
-      );
     } catch (err) {
       setError(getApiError(err));
     }
