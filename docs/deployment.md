@@ -189,14 +189,45 @@ certificate covering it. Without the wildcard, gym subdomains resolve but fail T
 that `fitconnect.co.in` is the app itself while `rudra.fitconnect.co.in` is a gym —
 label counting cannot distinguish them, since both have three labels.
 
-## CI outline
+## CI
 
-Two workflows, path-filtered:
+Deployment runs from GitHub Actions (`.github/workflows/deploy.yml`) using a
+Cloudflare API token as auth — no local login required. The environment is chosen
+by the branch:
 
-- `apps/api/**` or `packages/**` changes → `npm ci`, `npm run typecheck`,
-  `npm run deploy:test --workspace @fitconnect/api`
-- `apps/pwa/**` or `packages/**` changes → `npm ci`, `npm run typecheck`,
-  `npm run deploy:test --workspace @fitconnect/pwa`
+| Branch | Deploys |
+|---|---|
+| `main` | production Worker `fitconnect-api` + Pages `fitconnect-pwa` |
+| `test` | test Worker `fitconnect-api-test` + Pages `fitconnect-pwa-test` |
+| anything else | build, type-check, and lint only — nothing deployed |
 
-`packages/**` triggers both, since a contract change affects both sides.
-Production deploys should run from a tag or a protected branch, never on every push.
+Every push runs a `test` job (`npm ci`, `npm run typecheck`, `npm run lint`,
+`npm run build`) for fast feedback, then the `deploy` job only when the branch is
+`main` or `test`.
+
+### Required GitHub secrets
+
+Set these in the repository: **Settings → Secrets and variables → Actions**.
+
+- `CLOUDFLARE_API_TOKEN` — Cloudflare API token with **Edit** on Account →
+  Workers Scripts, Account → Pages, and the D1/R2 resources. Create it at
+  Cloudflare dashboard → My Profile → API Tokens (custom token). The token lives
+  in GitHub, never in the repo.
+
+`CLOUDFLARE_ACCOUNT_ID` is not needed: wrangler infers the account from the
+token (the workflow references only `CLOUDFLARE_API_TOKEN`). Set it only if a
+single token spans multiple accounts, in which case add it to the workflow's
+`env` blocks too.
+
+### One-time setup (cannot run from CI)
+
+CI only *deploys*; it cannot create resources or set secrets. Do these once with
+a locally-logged-in wrangler (`npx wrangler login`):
+
+1. Create the test D1 database and R2 bucket (see "First-time test environment
+   setup" below) and paste the returned id into `apps/api/wrangler.toml`.
+2. Set the Worker secrets for both environments (`npm run secrets:*`).
+3. Apply migrations (`npm run db:migrate:*`).
+4. Create the Pages projects once, or let the first deploy create them.
+
+After that, the GitHub token deploys both apps on the matching branch.
