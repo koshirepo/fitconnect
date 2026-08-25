@@ -28,3 +28,7 @@ worker-configuration.d.ts
 # Local editor/agent tool state
 .commandcode/settings.json
 .commandcode/taste/
+
+# Wrangler dev logs
+wrangler-*.log
+wrangler-*.err.log
