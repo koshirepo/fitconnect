@@ -30,6 +30,7 @@ export const queryKeys = {
     mine: (tenantId: string) => ["payments", tenantId, "mine"] as const,
     analytics: (tenantId: string, params?: unknown) =>
       ["payments", tenantId, "analytics", params ?? null] as const,
+    gateway: (tenantId: string) => ["payments", tenantId, "gateway"] as const,
   },
   subscriptions: {
     list: (tenantId: string, includeInactive: boolean) =>

@@ -11,9 +11,50 @@ import { Permission } from "@fitconnect/shared/types/permissions";
 import { authenticate } from "../../middleware/authenticate";
 import { requireAnyTenantPermission, requireTenantPermissions } from "../../middleware/authorize";
 import { paymentController } from "./payments.controller";
+import { gatewayController } from "./gateway.controller";
 import type { AppBindings } from "../../types/app-context";
 
 export const paymentRoutes = new Hono<AppBindings>();
+
+// ─── Payment gateway ──────────────────────────────────────────────────────────
+//
+// Declared before `/:tenantId/payments/:paymentId` so "gateway" and "checkout"
+// are matched as literal segments rather than swallowed as a payment id.
+
+paymentRoutes.get(
+  "/:tenantId/payments/gateway",
+  authenticate,
+  requireTenantPermissions(Permission.PAYMENTS_GATEWAY_READ),
+  gatewayController.getConfig,
+);
+
+paymentRoutes.put(
+  "/:tenantId/payments/gateway",
+  authenticate,
+  requireTenantPermissions(Permission.PAYMENTS_GATEWAY_UPDATE),
+  gatewayController.updateConfig,
+);
+
+paymentRoutes.post(
+  "/:tenantId/payments/gateway/test",
+  authenticate,
+  requireTenantPermissions(Permission.PAYMENTS_GATEWAY_UPDATE),
+  gatewayController.testConnection,
+);
+
+paymentRoutes.post(
+  "/:tenantId/payments/checkout",
+  authenticate,
+  requireTenantPermissions(Permission.PAYMENTS_CHECKOUT_SELF),
+  gatewayController.createCheckout,
+);
+
+paymentRoutes.post(
+  "/:tenantId/payments/checkout/verify",
+  authenticate,
+  requireTenantPermissions(Permission.PAYMENTS_CHECKOUT_SELF),
+  gatewayController.verifyCheckout,
+);
 
 paymentRoutes.get(
   "/:tenantId/payments",
@@ -100,3 +141,14 @@ paymentRoutes.delete(
   requireTenantPermissions(Permission.SUBSCRIPTIONS_DELETE),
   paymentController.deleteSubscription,
 );
+
+/**
+ * Gateway webhooks, mounted separately because they carry no session.
+ *
+ * Razorpay authenticates itself with an HMAC over the request body, which the
+ * service verifies against the gym's webhook secret. There is deliberately no
+ * `authenticate` here — adding it would reject every real delivery.
+ */
+export const gatewayWebhookRoutes = new Hono<AppBindings>();
+
+gatewayWebhookRoutes.post("/razorpay/:tenantId", gatewayController.webhook);

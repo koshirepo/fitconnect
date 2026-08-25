@@ -16,6 +16,10 @@
 #   npx wrangler secret put EMAIL_USER --env test
 #   npx wrangler secret put EMAIL_PASSWORD --env test
 #   npx wrangler secret put VAPID_PRIVATE_KEY --env test
+#   npx wrangler secret put RAZORPAY_KEY_ID --env test
+#   npx wrangler secret put RAZORPAY_KEY_SECRET --env test
+#   npx wrangler secret put RAZORPAY_WEBHOOK_SECRET --env test
+#   npx wrangler secret put CREDENTIALS_KEY --env test
 # and again with `--env production`. For local development put the same keys in
 # `.dev.vars` (gitignored) — see `.dev.vars.example`.
 

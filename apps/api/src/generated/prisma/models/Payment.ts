@@ -48,6 +48,10 @@ export type PaymentMinAggregateOutputType = {
   paidAt: Date | null
   validFrom: Date | null
   validUntil: Date | null
+  gateway: string | null
+  gatewayOrderId: string | null
+  gatewayPaymentId: string | null
+  gatewayAccount: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -66,6 +70,10 @@ export type PaymentMaxAggregateOutputType = {
   paidAt: Date | null
   validFrom: Date | null
   validUntil: Date | null
+  gateway: string | null
+  gatewayOrderId: string | null
+  gatewayPaymentId: string | null
+  gatewayAccount: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -84,6 +92,10 @@ export type PaymentCountAggregateOutputType = {
   paidAt: number
   validFrom: number
   validUntil: number
+  gateway: number
+  gatewayOrderId: number
+  gatewayPaymentId: number
+  gatewayAccount: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -112,6 +124,10 @@ export type PaymentMinAggregateInputType = {
   paidAt?: true
   validFrom?: true
   validUntil?: true
+  gateway?: true
+  gatewayOrderId?: true
+  gatewayPaymentId?: true
+  gatewayAccount?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -130,6 +146,10 @@ export type PaymentMaxAggregateInputType = {
   paidAt?: true
   validFrom?: true
   validUntil?: true
+  gateway?: true
+  gatewayOrderId?: true
+  gatewayPaymentId?: true
+  gatewayAccount?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -148,6 +168,10 @@ export type PaymentCountAggregateInputType = {
   paidAt?: true
   validFrom?: true
   validUntil?: true
+  gateway?: true
+  gatewayOrderId?: true
+  gatewayPaymentId?: true
+  gatewayAccount?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -253,6 +277,10 @@ export type PaymentGroupByOutputType = {
   paidAt: Date | null
   validFrom: Date | null
   validUntil: Date | null
+  gateway: string | null
+  gatewayOrderId: string | null
+  gatewayPaymentId: string | null
+  gatewayAccount: string | null
   createdAt: Date
   updatedAt: Date
   _count: PaymentCountAggregateOutputType | null
@@ -262,7 +290,7 @@ export type PaymentGroupByOutputType = {
   _max: PaymentMaxAggregateOutputType | null
 }
 
-type GetPaymentGroupByPayload<T extends PaymentGroupByArgs> = Prisma.PrismaPromise<
+export type GetPaymentGroupByPayload<T extends PaymentGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<PaymentGroupByOutputType, T['by']> &
       {
@@ -294,6 +322,10 @@ export type PaymentWhereInput = {
   paidAt?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
   validFrom?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
   validUntil?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
+  gateway?: Prisma.StringNullableFilter<"Payment"> | string | null
+  gatewayOrderId?: Prisma.StringNullableFilter<"Payment"> | string | null
+  gatewayPaymentId?: Prisma.StringNullableFilter<"Payment"> | string | null
+  gatewayAccount?: Prisma.StringNullableFilter<"Payment"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
@@ -317,6 +349,10 @@ export type PaymentOrderByWithRelationInput = {
   paidAt?: Prisma.SortOrderInput | Prisma.SortOrder
   validFrom?: Prisma.SortOrderInput | Prisma.SortOrder
   validUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  gateway?: Prisma.SortOrderInput | Prisma.SortOrder
+  gatewayOrderId?: Prisma.SortOrderInput | Prisma.SortOrder
+  gatewayPaymentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  gatewayAccount?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   tenant?: Prisma.TenantOrderByWithRelationInput
@@ -328,6 +364,7 @@ export type PaymentOrderByWithRelationInput = {
 
 export type PaymentWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  gatewayOrderId?: string
   AND?: Prisma.PaymentWhereInput | Prisma.PaymentWhereInput[]
   OR?: Prisma.PaymentWhereInput[]
   NOT?: Prisma.PaymentWhereInput | Prisma.PaymentWhereInput[]
@@ -343,6 +380,9 @@ export type PaymentWhereUniqueInput = Prisma.AtLeast<{
   paidAt?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
   validFrom?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
   validUntil?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
+  gateway?: Prisma.StringNullableFilter<"Payment"> | string | null
+  gatewayPaymentId?: Prisma.StringNullableFilter<"Payment"> | string | null
+  gatewayAccount?: Prisma.StringNullableFilter<"Payment"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
@@ -350,7 +390,7 @@ export type PaymentWhereUniqueInput = Prisma.AtLeast<{
   collectedBy?: Prisma.XOR<Prisma.TenantMembershipNullableScalarRelationFilter, Prisma.TenantMembershipWhereInput> | null
   subscription?: Prisma.XOR<Prisma.SubscriptionNullableScalarRelationFilter, Prisma.SubscriptionWhereInput> | null
   charge?: Prisma.XOR<Prisma.TenantChargeNullableScalarRelationFilter, Prisma.TenantChargeWhereInput> | null
-}, "id">
+}, "id" | "gatewayOrderId">
 
 export type PaymentOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -366,6 +406,10 @@ export type PaymentOrderByWithAggregationInput = {
   paidAt?: Prisma.SortOrderInput | Prisma.SortOrder
   validFrom?: Prisma.SortOrderInput | Prisma.SortOrder
   validUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  gateway?: Prisma.SortOrderInput | Prisma.SortOrder
+  gatewayOrderId?: Prisma.SortOrderInput | Prisma.SortOrder
+  gatewayPaymentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  gatewayAccount?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.PaymentCountOrderByAggregateInput
@@ -392,6 +436,10 @@ export type PaymentScalarWhereWithAggregatesInput = {
   paidAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Payment"> | Date | string | null
   validFrom?: Prisma.DateTimeNullableWithAggregatesFilter<"Payment"> | Date | string | null
   validUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"Payment"> | Date | string | null
+  gateway?: Prisma.StringNullableWithAggregatesFilter<"Payment"> | string | null
+  gatewayOrderId?: Prisma.StringNullableWithAggregatesFilter<"Payment"> | string | null
+  gatewayPaymentId?: Prisma.StringNullableWithAggregatesFilter<"Payment"> | string | null
+  gatewayAccount?: Prisma.StringNullableWithAggregatesFilter<"Payment"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Payment"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Payment"> | Date | string
 }
@@ -405,6 +453,10 @@ export type PaymentCreateInput = {
   paidAt?: Date | string | null
   validFrom?: Date | string | null
   validUntil?: Date | string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  gatewayAccount?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutPaymentsInput
@@ -428,6 +480,10 @@ export type PaymentUncheckedCreateInput = {
   paidAt?: Date | string | null
   validFrom?: Date | string | null
   validUntil?: Date | string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  gatewayAccount?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -441,6 +497,10 @@ export type PaymentUpdateInput = {
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutPaymentsNestedInput
@@ -464,6 +524,10 @@ export type PaymentUncheckedUpdateInput = {
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -482,6 +546,10 @@ export type PaymentCreateManyInput = {
   paidAt?: Date | string | null
   validFrom?: Date | string | null
   validUntil?: Date | string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  gatewayAccount?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -495,6 +563,10 @@ export type PaymentUpdateManyMutationInput = {
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -513,6 +585,10 @@ export type PaymentUncheckedUpdateManyInput = {
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -541,6 +617,10 @@ export type PaymentCountOrderByAggregateInput = {
   paidAt?: Prisma.SortOrder
   validFrom?: Prisma.SortOrder
   validUntil?: Prisma.SortOrder
+  gateway?: Prisma.SortOrder
+  gatewayOrderId?: Prisma.SortOrder
+  gatewayPaymentId?: Prisma.SortOrder
+  gatewayAccount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -563,6 +643,10 @@ export type PaymentMaxOrderByAggregateInput = {
   paidAt?: Prisma.SortOrder
   validFrom?: Prisma.SortOrder
   validUntil?: Prisma.SortOrder
+  gateway?: Prisma.SortOrder
+  gatewayOrderId?: Prisma.SortOrder
+  gatewayPaymentId?: Prisma.SortOrder
+  gatewayAccount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -581,6 +665,10 @@ export type PaymentMinOrderByAggregateInput = {
   paidAt?: Prisma.SortOrder
   validFrom?: Prisma.SortOrder
   validUntil?: Prisma.SortOrder
+  gateway?: Prisma.SortOrder
+  gatewayOrderId?: Prisma.SortOrder
+  gatewayPaymentId?: Prisma.SortOrder
+  gatewayAccount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -808,6 +896,10 @@ export type PaymentCreateWithoutTenantInput = {
   paidAt?: Date | string | null
   validFrom?: Date | string | null
   validUntil?: Date | string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  gatewayAccount?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   member: Prisma.TenantMembershipCreateNestedOneWithoutPaymentsInput
@@ -829,6 +921,10 @@ export type PaymentUncheckedCreateWithoutTenantInput = {
   paidAt?: Date | string | null
   validFrom?: Date | string | null
   validUntil?: Date | string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  gatewayAccount?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -875,6 +971,10 @@ export type PaymentScalarWhereInput = {
   paidAt?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
   validFrom?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
   validUntil?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
+  gateway?: Prisma.StringNullableFilter<"Payment"> | string | null
+  gatewayOrderId?: Prisma.StringNullableFilter<"Payment"> | string | null
+  gatewayPaymentId?: Prisma.StringNullableFilter<"Payment"> | string | null
+  gatewayAccount?: Prisma.StringNullableFilter<"Payment"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
 }
@@ -888,6 +988,10 @@ export type PaymentCreateWithoutChargeInput = {
   paidAt?: Date | string | null
   validFrom?: Date | string | null
   validUntil?: Date | string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  gatewayAccount?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutPaymentsInput
@@ -909,6 +1013,10 @@ export type PaymentUncheckedCreateWithoutChargeInput = {
   paidAt?: Date | string | null
   validFrom?: Date | string | null
   validUntil?: Date | string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  gatewayAccount?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -947,6 +1055,10 @@ export type PaymentCreateWithoutMemberInput = {
   paidAt?: Date | string | null
   validFrom?: Date | string | null
   validUntil?: Date | string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  gatewayAccount?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutPaymentsInput
@@ -968,6 +1080,10 @@ export type PaymentUncheckedCreateWithoutMemberInput = {
   paidAt?: Date | string | null
   validFrom?: Date | string | null
   validUntil?: Date | string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  gatewayAccount?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -990,6 +1106,10 @@ export type PaymentCreateWithoutCollectedByInput = {
   paidAt?: Date | string | null
   validFrom?: Date | string | null
   validUntil?: Date | string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  gatewayAccount?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutPaymentsInput
@@ -1011,6 +1131,10 @@ export type PaymentUncheckedCreateWithoutCollectedByInput = {
   paidAt?: Date | string | null
   validFrom?: Date | string | null
   validUntil?: Date | string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  gatewayAccount?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1065,6 +1189,10 @@ export type PaymentCreateWithoutSubscriptionInput = {
   paidAt?: Date | string | null
   validFrom?: Date | string | null
   validUntil?: Date | string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  gatewayAccount?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutPaymentsInput
@@ -1086,6 +1214,10 @@ export type PaymentUncheckedCreateWithoutSubscriptionInput = {
   paidAt?: Date | string | null
   validFrom?: Date | string | null
   validUntil?: Date | string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  gatewayAccount?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1128,6 +1260,10 @@ export type PaymentCreateManyTenantInput = {
   paidAt?: Date | string | null
   validFrom?: Date | string | null
   validUntil?: Date | string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  gatewayAccount?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1141,6 +1277,10 @@ export type PaymentUpdateWithoutTenantInput = {
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   member?: Prisma.TenantMembershipUpdateOneRequiredWithoutPaymentsNestedInput
@@ -1162,6 +1302,10 @@ export type PaymentUncheckedUpdateWithoutTenantInput = {
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1179,6 +1323,10 @@ export type PaymentUncheckedUpdateManyWithoutTenantInput = {
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1196,6 +1344,10 @@ export type PaymentCreateManyChargeInput = {
   paidAt?: Date | string | null
   validFrom?: Date | string | null
   validUntil?: Date | string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  gatewayAccount?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1209,6 +1361,10 @@ export type PaymentUpdateWithoutChargeInput = {
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutPaymentsNestedInput
@@ -1230,6 +1386,10 @@ export type PaymentUncheckedUpdateWithoutChargeInput = {
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1247,6 +1407,10 @@ export type PaymentUncheckedUpdateManyWithoutChargeInput = {
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1264,6 +1428,10 @@ export type PaymentCreateManyMemberInput = {
   paidAt?: Date | string | null
   validFrom?: Date | string | null
   validUntil?: Date | string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  gatewayAccount?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1281,6 +1449,10 @@ export type PaymentCreateManyCollectedByInput = {
   paidAt?: Date | string | null
   validFrom?: Date | string | null
   validUntil?: Date | string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  gatewayAccount?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1294,6 +1466,10 @@ export type PaymentUpdateWithoutMemberInput = {
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutPaymentsNestedInput
@@ -1315,6 +1491,10 @@ export type PaymentUncheckedUpdateWithoutMemberInput = {
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1332,6 +1512,10 @@ export type PaymentUncheckedUpdateManyWithoutMemberInput = {
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1345,6 +1529,10 @@ export type PaymentUpdateWithoutCollectedByInput = {
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutPaymentsNestedInput
@@ -1366,6 +1554,10 @@ export type PaymentUncheckedUpdateWithoutCollectedByInput = {
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1383,6 +1575,10 @@ export type PaymentUncheckedUpdateManyWithoutCollectedByInput = {
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1400,6 +1596,10 @@ export type PaymentCreateManySubscriptionInput = {
   paidAt?: Date | string | null
   validFrom?: Date | string | null
   validUntil?: Date | string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  gatewayAccount?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1413,6 +1613,10 @@ export type PaymentUpdateWithoutSubscriptionInput = {
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutPaymentsNestedInput
@@ -1434,6 +1638,10 @@ export type PaymentUncheckedUpdateWithoutSubscriptionInput = {
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1451,6 +1659,10 @@ export type PaymentUncheckedUpdateManyWithoutSubscriptionInput = {
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   validUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1471,6 +1683,10 @@ export type PaymentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   paidAt?: boolean
   validFrom?: boolean
   validUntil?: boolean
+  gateway?: boolean
+  gatewayOrderId?: boolean
+  gatewayPaymentId?: boolean
+  gatewayAccount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
@@ -1494,6 +1710,10 @@ export type PaymentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   paidAt?: boolean
   validFrom?: boolean
   validUntil?: boolean
+  gateway?: boolean
+  gatewayOrderId?: boolean
+  gatewayPaymentId?: boolean
+  gatewayAccount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
@@ -1517,6 +1737,10 @@ export type PaymentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   paidAt?: boolean
   validFrom?: boolean
   validUntil?: boolean
+  gateway?: boolean
+  gatewayOrderId?: boolean
+  gatewayPaymentId?: boolean
+  gatewayAccount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
@@ -1540,11 +1764,15 @@ export type PaymentSelectScalar = {
   paidAt?: boolean
   validFrom?: boolean
   validUntil?: boolean
+  gateway?: boolean
+  gatewayOrderId?: boolean
+  gatewayPaymentId?: boolean
+  gatewayAccount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type PaymentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "amount" | "status" | "tenantId" | "membershipId" | "collectorId" | "subscriptionId" | "chargeId" | "description" | "note" | "paidAt" | "validFrom" | "validUntil" | "createdAt" | "updatedAt", ExtArgs["result"]["payment"]>
+export type PaymentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "amount" | "status" | "tenantId" | "membershipId" | "collectorId" | "subscriptionId" | "chargeId" | "description" | "note" | "paidAt" | "validFrom" | "validUntil" | "gateway" | "gatewayOrderId" | "gatewayPaymentId" | "gatewayAccount" | "createdAt" | "updatedAt", ExtArgs["result"]["payment"]>
 export type PaymentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
   member?: boolean | Prisma.TenantMembershipDefaultArgs<ExtArgs>
@@ -1593,6 +1821,22 @@ export type $PaymentPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     paidAt: Date | null
     validFrom: Date | null
     validUntil: Date | null
+    /**
+     * "RAZORPAY" for online payments; null for cash and other manual entries.
+     */
+    gateway: string | null
+    /**
+     * Gateway order id. Unique so a replayed verify cannot settle twice.
+     */
+    gatewayOrderId: string | null
+    /**
+     * Gateway payment id, set once the charge is authorized or captured.
+     */
+    gatewayPaymentId: string | null
+    /**
+     * Whether this gym's own gateway account collected it, or the platform's.
+     */
+    gatewayAccount: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["payment"]>
@@ -2036,6 +2280,10 @@ export interface PaymentFieldRefs {
   readonly paidAt: Prisma.FieldRef<"Payment", 'DateTime'>
   readonly validFrom: Prisma.FieldRef<"Payment", 'DateTime'>
   readonly validUntil: Prisma.FieldRef<"Payment", 'DateTime'>
+  readonly gateway: Prisma.FieldRef<"Payment", 'String'>
+  readonly gatewayOrderId: Prisma.FieldRef<"Payment", 'String'>
+  readonly gatewayPaymentId: Prisma.FieldRef<"Payment", 'String'>
+  readonly gatewayAccount: Prisma.FieldRef<"Payment", 'String'>
   readonly createdAt: Prisma.FieldRef<"Payment", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Payment", 'DateTime'>
 }

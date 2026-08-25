@@ -179,7 +179,7 @@ export type AttendanceGroupByOutputType = {
   _max: AttendanceMaxAggregateOutputType | null
 }
 
-type GetAttendanceGroupByPayload<T extends AttendanceGroupByArgs> = Prisma.PrismaPromise<
+export type GetAttendanceGroupByPayload<T extends AttendanceGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<AttendanceGroupByOutputType, T['by']> &
       {

@@ -151,7 +151,7 @@ export type WorkoutPlanAssignmentGroupByOutputType = {
   _max: WorkoutPlanAssignmentMaxAggregateOutputType | null
 }
 
-type GetWorkoutPlanAssignmentGroupByPayload<T extends WorkoutPlanAssignmentGroupByArgs> = Prisma.PrismaPromise<
+export type GetWorkoutPlanAssignmentGroupByPayload<T extends WorkoutPlanAssignmentGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<WorkoutPlanAssignmentGroupByOutputType, T['by']> &
       {

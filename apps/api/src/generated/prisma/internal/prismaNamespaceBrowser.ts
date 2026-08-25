@@ -171,6 +171,9 @@ export const TenantSettingsScalarFieldEnum = {
   tenantId: 'tenantId',
   overdueDays: 'overdueDays',
   whatsappTemplates: 'whatsappTemplates',
+  razorpayKeyId: 'razorpayKeyId',
+  razorpayKeySecret: 'razorpayKeySecret',
+  razorpayWebhookSecret: 'razorpayWebhookSecret',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -272,6 +275,10 @@ export const PaymentScalarFieldEnum = {
   paidAt: 'paidAt',
   validFrom: 'validFrom',
   validUntil: 'validUntil',
+  gateway: 'gateway',
+  gatewayOrderId: 'gatewayOrderId',
+  gatewayPaymentId: 'gatewayPaymentId',
+  gatewayAccount: 'gatewayAccount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

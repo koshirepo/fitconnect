@@ -355,6 +355,61 @@ export interface Payment {
     amount?: number;
     durationDays?: number;
   };
+  /** "RAZORPAY" for online payments; absent for cash and other manual entries. */
+  gateway?: string | null;
+  gatewayOrderId?: string | null;
+  gatewayPaymentId?: string | null;
+}
+
+// ─── Payment gateway ──────────────────────────────────────────────────────────
+
+/**
+ * What the settings screen knows about a gym's gateway setup.
+ *
+ * Deliberately contains no secret. `keyId` is public — the checkout widget needs
+ * it in the browser — and the two `has*` flags say only whether a secret is on
+ * file, never what it is.
+ */
+export interface PaymentGatewayConfig {
+  provider: "RAZORPAY";
+  /** Whether an online payment can be taken right now, from either account. */
+  enabled: boolean;
+  /** TENANT when the gym collects into its own account, PLATFORM when it falls back. */
+  source: "TENANT" | "PLATFORM" | null;
+  /** The gym's own key id, if saved. */
+  keyId: string | null;
+  hasKeySecret: boolean;
+  hasWebhookSecret: boolean;
+  /** The key id money falls back to when the gym has not set up its own. */
+  platformKeyId: string | null;
+  platformConfigured: boolean;
+  /** False when the API has no CREDENTIALS_KEY and so cannot store gym secrets. */
+  canStoreOwnKeys: boolean;
+  /** LIVE moves real money; TEST does not. Null when nothing is configured. */
+  mode: "LIVE" | "TEST" | null;
+}
+
+export interface UpdateGatewayPayload {
+  /** An empty string clears the gym's keys and returns it to the platform account. */
+  keyId?: string;
+  keySecret?: string;
+  webhookSecret?: string;
+}
+
+/** Everything the browser needs to open Razorpay checkout for one payment. */
+export interface CheckoutSession {
+  paymentId: string;
+  orderId: string;
+  keyId: string;
+  amount: number;
+  currency: string;
+  planTitle: string;
+}
+
+export interface VerifyCheckoutPayload {
+  orderId: string;
+  paymentId: string;
+  signature: string;
 }
 
 export interface PaymentSummary {
@@ -600,6 +655,12 @@ export interface WhatsAppTemplate {
 export interface TenantSettings {
   overdueDays: number;
   whatsappTemplates: WhatsAppTemplate[];
+  /**
+   * Whether members can pay online, from either the gym's own gateway account
+   * or the platform's. Readable by every member — it says nothing about which
+   * account collects or what keys are behind it.
+   */
+  onlinePaymentsEnabled?: boolean;
 }
 
 export interface UpdateTenantSettingsPayload {

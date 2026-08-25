@@ -8,6 +8,10 @@ import type {
   UpdateSubscriptionPayload,
   PaginatedResponse,
   ApiResponse,
+  PaymentGatewayConfig,
+  UpdateGatewayPayload,
+  CheckoutSession,
+  VerifyCheckoutPayload,
 } from "@/types/api";
 
 export const paymentsApi = {
@@ -81,6 +85,38 @@ export const paymentsApi = {
   deleteSubscription: (tenantId: string, subscriptionId: string) =>
     api.delete<ApiResponse<{ message: string }>>(
       `/tenants/${tenantId}/subscriptions/${subscriptionId}`,
+    ),
+
+  // ─── Payment gateway ────────────────────────────────────────────────────────
+
+  getGateway: (tenantId: string) =>
+    api.get<ApiResponse<{ gateway: PaymentGatewayConfig }>>(
+      `/tenants/${tenantId}/payments/gateway`,
+    ),
+
+  updateGateway: (tenantId: string, data: UpdateGatewayPayload) =>
+    api.put<ApiResponse<{ gateway: PaymentGatewayConfig }>>(
+      `/tenants/${tenantId}/payments/gateway`,
+      data,
+    ),
+
+  testGateway: (tenantId: string) =>
+    api.post<ApiResponse<{ ok: boolean; source: string; keyId: string }>>(
+      `/tenants/${tenantId}/payments/gateway/test`,
+    ),
+
+  /** Open a Razorpay order for the signed-in member. */
+  createCheckout: (tenantId: string, subscriptionId: string) =>
+    api.post<ApiResponse<{ checkout: CheckoutSession }>>(
+      `/tenants/${tenantId}/payments/checkout`,
+      { subscriptionId },
+    ),
+
+  /** Settle a payment with the signature the checkout widget returned. */
+  verifyCheckout: (tenantId: string, data: VerifyCheckoutPayload) =>
+    api.post<ApiResponse<{ payment: Payment; alreadySettled: boolean }>>(
+      `/tenants/${tenantId}/payments/checkout/verify`,
+      data,
     ),
 
   analytics: (tenantId: string) =>

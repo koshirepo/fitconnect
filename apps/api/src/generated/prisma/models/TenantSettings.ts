@@ -38,6 +38,9 @@ export type TenantSettingsMinAggregateOutputType = {
   id: string | null
   tenantId: string | null
   overdueDays: number | null
+  razorpayKeyId: string | null
+  razorpayKeySecret: string | null
+  razorpayWebhookSecret: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -46,6 +49,9 @@ export type TenantSettingsMaxAggregateOutputType = {
   id: string | null
   tenantId: string | null
   overdueDays: number | null
+  razorpayKeyId: string | null
+  razorpayKeySecret: string | null
+  razorpayWebhookSecret: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -55,6 +61,9 @@ export type TenantSettingsCountAggregateOutputType = {
   tenantId: number
   overdueDays: number
   whatsappTemplates: number
+  razorpayKeyId: number
+  razorpayKeySecret: number
+  razorpayWebhookSecret: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -73,6 +82,9 @@ export type TenantSettingsMinAggregateInputType = {
   id?: true
   tenantId?: true
   overdueDays?: true
+  razorpayKeyId?: true
+  razorpayKeySecret?: true
+  razorpayWebhookSecret?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -81,6 +93,9 @@ export type TenantSettingsMaxAggregateInputType = {
   id?: true
   tenantId?: true
   overdueDays?: true
+  razorpayKeyId?: true
+  razorpayKeySecret?: true
+  razorpayWebhookSecret?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -90,6 +105,9 @@ export type TenantSettingsCountAggregateInputType = {
   tenantId?: true
   overdueDays?: true
   whatsappTemplates?: true
+  razorpayKeyId?: true
+  razorpayKeySecret?: true
+  razorpayWebhookSecret?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -186,6 +204,9 @@ export type TenantSettingsGroupByOutputType = {
   tenantId: string
   overdueDays: number
   whatsappTemplates: runtime.JsonValue
+  razorpayKeyId: string | null
+  razorpayKeySecret: string | null
+  razorpayWebhookSecret: string | null
   createdAt: Date
   updatedAt: Date
   _count: TenantSettingsCountAggregateOutputType | null
@@ -195,7 +216,7 @@ export type TenantSettingsGroupByOutputType = {
   _max: TenantSettingsMaxAggregateOutputType | null
 }
 
-type GetTenantSettingsGroupByPayload<T extends TenantSettingsGroupByArgs> = Prisma.PrismaPromise<
+export type GetTenantSettingsGroupByPayload<T extends TenantSettingsGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<TenantSettingsGroupByOutputType, T['by']> &
       {
@@ -218,6 +239,9 @@ export type TenantSettingsWhereInput = {
   tenantId?: Prisma.StringFilter<"TenantSettings"> | string
   overdueDays?: Prisma.IntFilter<"TenantSettings"> | number
   whatsappTemplates?: Prisma.JsonFilter<"TenantSettings">
+  razorpayKeyId?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
+  razorpayKeySecret?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
+  razorpayWebhookSecret?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
   createdAt?: Prisma.DateTimeFilter<"TenantSettings"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TenantSettings"> | Date | string
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
@@ -228,6 +252,9 @@ export type TenantSettingsOrderByWithRelationInput = {
   tenantId?: Prisma.SortOrder
   overdueDays?: Prisma.SortOrder
   whatsappTemplates?: Prisma.SortOrder
+  razorpayKeyId?: Prisma.SortOrderInput | Prisma.SortOrder
+  razorpayKeySecret?: Prisma.SortOrderInput | Prisma.SortOrder
+  razorpayWebhookSecret?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   tenant?: Prisma.TenantOrderByWithRelationInput
@@ -241,6 +268,9 @@ export type TenantSettingsWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.TenantSettingsWhereInput | Prisma.TenantSettingsWhereInput[]
   overdueDays?: Prisma.IntFilter<"TenantSettings"> | number
   whatsappTemplates?: Prisma.JsonFilter<"TenantSettings">
+  razorpayKeyId?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
+  razorpayKeySecret?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
+  razorpayWebhookSecret?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
   createdAt?: Prisma.DateTimeFilter<"TenantSettings"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TenantSettings"> | Date | string
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
@@ -251,6 +281,9 @@ export type TenantSettingsOrderByWithAggregationInput = {
   tenantId?: Prisma.SortOrder
   overdueDays?: Prisma.SortOrder
   whatsappTemplates?: Prisma.SortOrder
+  razorpayKeyId?: Prisma.SortOrderInput | Prisma.SortOrder
+  razorpayKeySecret?: Prisma.SortOrderInput | Prisma.SortOrder
+  razorpayWebhookSecret?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.TenantSettingsCountOrderByAggregateInput
@@ -268,6 +301,9 @@ export type TenantSettingsScalarWhereWithAggregatesInput = {
   tenantId?: Prisma.StringWithAggregatesFilter<"TenantSettings"> | string
   overdueDays?: Prisma.IntWithAggregatesFilter<"TenantSettings"> | number
   whatsappTemplates?: Prisma.JsonWithAggregatesFilter<"TenantSettings">
+  razorpayKeyId?: Prisma.StringNullableWithAggregatesFilter<"TenantSettings"> | string | null
+  razorpayKeySecret?: Prisma.StringNullableWithAggregatesFilter<"TenantSettings"> | string | null
+  razorpayWebhookSecret?: Prisma.StringNullableWithAggregatesFilter<"TenantSettings"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"TenantSettings"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"TenantSettings"> | Date | string
 }
@@ -276,6 +312,9 @@ export type TenantSettingsCreateInput = {
   id?: string
   overdueDays?: number
   whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  razorpayKeyId?: string | null
+  razorpayKeySecret?: string | null
+  razorpayWebhookSecret?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutSettingsInput
@@ -286,6 +325,9 @@ export type TenantSettingsUncheckedCreateInput = {
   tenantId: string
   overdueDays?: number
   whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  razorpayKeyId?: string | null
+  razorpayKeySecret?: string | null
+  razorpayWebhookSecret?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -294,6 +336,9 @@ export type TenantSettingsUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   overdueDays?: Prisma.IntFieldUpdateOperationsInput | number
   whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  razorpayKeyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razorpayKeySecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razorpayWebhookSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutSettingsNestedInput
@@ -304,6 +349,9 @@ export type TenantSettingsUncheckedUpdateInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   overdueDays?: Prisma.IntFieldUpdateOperationsInput | number
   whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  razorpayKeyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razorpayKeySecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razorpayWebhookSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -313,6 +361,9 @@ export type TenantSettingsCreateManyInput = {
   tenantId: string
   overdueDays?: number
   whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  razorpayKeyId?: string | null
+  razorpayKeySecret?: string | null
+  razorpayWebhookSecret?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -321,6 +372,9 @@ export type TenantSettingsUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   overdueDays?: Prisma.IntFieldUpdateOperationsInput | number
   whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  razorpayKeyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razorpayKeySecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razorpayWebhookSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -330,6 +384,9 @@ export type TenantSettingsUncheckedUpdateManyInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   overdueDays?: Prisma.IntFieldUpdateOperationsInput | number
   whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  razorpayKeyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razorpayKeySecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razorpayWebhookSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -344,6 +401,9 @@ export type TenantSettingsCountOrderByAggregateInput = {
   tenantId?: Prisma.SortOrder
   overdueDays?: Prisma.SortOrder
   whatsappTemplates?: Prisma.SortOrder
+  razorpayKeyId?: Prisma.SortOrder
+  razorpayKeySecret?: Prisma.SortOrder
+  razorpayWebhookSecret?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -356,6 +416,9 @@ export type TenantSettingsMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   tenantId?: Prisma.SortOrder
   overdueDays?: Prisma.SortOrder
+  razorpayKeyId?: Prisma.SortOrder
+  razorpayKeySecret?: Prisma.SortOrder
+  razorpayWebhookSecret?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -364,6 +427,9 @@ export type TenantSettingsMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   tenantId?: Prisma.SortOrder
   overdueDays?: Prisma.SortOrder
+  razorpayKeyId?: Prisma.SortOrder
+  razorpayKeySecret?: Prisma.SortOrder
+  razorpayWebhookSecret?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -416,6 +482,9 @@ export type TenantSettingsCreateWithoutTenantInput = {
   id?: string
   overdueDays?: number
   whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  razorpayKeyId?: string | null
+  razorpayKeySecret?: string | null
+  razorpayWebhookSecret?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -424,6 +493,9 @@ export type TenantSettingsUncheckedCreateWithoutTenantInput = {
   id?: string
   overdueDays?: number
   whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  razorpayKeyId?: string | null
+  razorpayKeySecret?: string | null
+  razorpayWebhookSecret?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -448,6 +520,9 @@ export type TenantSettingsUpdateWithoutTenantInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   overdueDays?: Prisma.IntFieldUpdateOperationsInput | number
   whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  razorpayKeyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razorpayKeySecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razorpayWebhookSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -456,6 +531,9 @@ export type TenantSettingsUncheckedUpdateWithoutTenantInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   overdueDays?: Prisma.IntFieldUpdateOperationsInput | number
   whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  razorpayKeyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razorpayKeySecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razorpayWebhookSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -467,6 +545,9 @@ export type TenantSettingsSelect<ExtArgs extends runtime.Types.Extensions.Intern
   tenantId?: boolean
   overdueDays?: boolean
   whatsappTemplates?: boolean
+  razorpayKeyId?: boolean
+  razorpayKeySecret?: boolean
+  razorpayWebhookSecret?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
@@ -477,6 +558,9 @@ export type TenantSettingsSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   tenantId?: boolean
   overdueDays?: boolean
   whatsappTemplates?: boolean
+  razorpayKeyId?: boolean
+  razorpayKeySecret?: boolean
+  razorpayWebhookSecret?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
@@ -487,6 +571,9 @@ export type TenantSettingsSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   tenantId?: boolean
   overdueDays?: boolean
   whatsappTemplates?: boolean
+  razorpayKeyId?: boolean
+  razorpayKeySecret?: boolean
+  razorpayWebhookSecret?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
@@ -497,11 +584,14 @@ export type TenantSettingsSelectScalar = {
   tenantId?: boolean
   overdueDays?: boolean
   whatsappTemplates?: boolean
+  razorpayKeyId?: boolean
+  razorpayKeySecret?: boolean
+  razorpayWebhookSecret?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type TenantSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "overdueDays" | "whatsappTemplates" | "createdAt" | "updatedAt", ExtArgs["result"]["tenantSettings"]>
+export type TenantSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "overdueDays" | "whatsappTemplates" | "razorpayKeyId" | "razorpayKeySecret" | "razorpayWebhookSecret" | "createdAt" | "updatedAt", ExtArgs["result"]["tenantSettings"]>
 export type TenantSettingsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
 }
@@ -528,6 +618,19 @@ export type $TenantSettingsPayload<ExtArgs extends runtime.Types.Extensions.Inte
      * Tenant-level WhatsApp template overrides keyed by message purpose
      */
     whatsappTemplates: runtime.JsonValue
+    /**
+     * Razorpay key id for this gym's own account. Null means online payments
+     * fall back to the platform account configured in the Worker environment.
+     */
+    razorpayKeyId: string | null
+    /**
+     * Key secret, sealed with AES-GCM by `lib/secret-box`. Never leaves the API.
+     */
+    razorpayKeySecret: string | null
+    /**
+     * Webhook signing secret, sealed the same way.
+     */
+    razorpayWebhookSecret: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["tenantSettings"]>
@@ -958,6 +1061,9 @@ export interface TenantSettingsFieldRefs {
   readonly tenantId: Prisma.FieldRef<"TenantSettings", 'String'>
   readonly overdueDays: Prisma.FieldRef<"TenantSettings", 'Int'>
   readonly whatsappTemplates: Prisma.FieldRef<"TenantSettings", 'Json'>
+  readonly razorpayKeyId: Prisma.FieldRef<"TenantSettings", 'String'>
+  readonly razorpayKeySecret: Prisma.FieldRef<"TenantSettings", 'String'>
+  readonly razorpayWebhookSecret: Prisma.FieldRef<"TenantSettings", 'String'>
   readonly createdAt: Prisma.FieldRef<"TenantSettings", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"TenantSettings", 'DateTime'>
 }

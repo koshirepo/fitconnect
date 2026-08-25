@@ -50,6 +50,12 @@ export const Permission = {
   PAYMENTS_UPDATE: "payments:update",
   PAYMENTS_DELETE: "payments:delete",
   PAYMENTS_ANALYTICS_READ: "payments:analytics:read",
+  /** Start an online payment for oneself through the gym's payment gateway. */
+  PAYMENTS_CHECKOUT_SELF: "payments:checkout:self",
+  /** See which gateway account the gym collects into, and its public key id. */
+  PAYMENTS_GATEWAY_READ: "payments:gateway:read",
+  /** Replace the gym's own gateway credentials. Never reveals the secret. */
+  PAYMENTS_GATEWAY_UPDATE: "payments:gateway:update",
 
   // Subscriptions (tenant plans)
   SUBSCRIPTIONS_READ: "subscriptions:read",
@@ -143,6 +149,7 @@ const MEMBER_PERMISSIONS: Permission[] = [
   Permission.ATTENDANCE_READ_SELF,
   Permission.ATTENDANCE_CHECKIN_SELF,
   Permission.PAYMENTS_READ_SELF,
+  Permission.PAYMENTS_CHECKOUT_SELF,
   Permission.SUBSCRIPTIONS_READ,
   Permission.WORKOUTS_READ,
   Permission.BADGES_READ,
@@ -188,6 +195,8 @@ const ADMIN_PERMISSIONS: Permission[] = [
   Permission.PAYMENTS_UPDATE,
   Permission.PAYMENTS_DELETE,
   Permission.PAYMENTS_ANALYTICS_READ,
+  Permission.PAYMENTS_GATEWAY_READ,
+  Permission.PAYMENTS_GATEWAY_UPDATE,
   Permission.SUBSCRIPTIONS_CREATE,
   Permission.SUBSCRIPTIONS_UPDATE,
   Permission.SUBSCRIPTIONS_DELETE,
@@ -463,6 +472,9 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [Permission.PAYMENTS_UPDATE]: "Edit payments",
   [Permission.PAYMENTS_DELETE]: "Delete payments",
   [Permission.PAYMENTS_ANALYTICS_READ]: "View finance reports",
+  [Permission.PAYMENTS_CHECKOUT_SELF]: "Pay online for own membership",
+  [Permission.PAYMENTS_GATEWAY_READ]: "View payment gateway setup",
+  [Permission.PAYMENTS_GATEWAY_UPDATE]: "Change payment gateway keys",
   [Permission.SUBSCRIPTIONS_READ]: "View plans",
   [Permission.SUBSCRIPTIONS_CREATE]: "Create plans",
   [Permission.SUBSCRIPTIONS_UPDATE]: "Edit plans",

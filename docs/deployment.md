@@ -54,7 +54,7 @@ and `localhost` as the root domain.
 
 ## Secrets
 
-Never in `wrangler.toml`. Four secrets per environment:
+Never in `wrangler.toml`. Eight secrets per environment:
 
 | Key | Purpose |
 |---|---|
@@ -62,6 +62,15 @@ Never in `wrangler.toml`. Four secrets per environment:
 | `EMAIL_USER` | SMTP username |
 | `EMAIL_PASSWORD` | SMTP app password |
 | `VAPID_PRIVATE_KEY` | Web Push signing key |
+| `RAZORPAY_KEY_ID` | Platform default gateway account |
+| `RAZORPAY_KEY_SECRET` | Platform default gateway secret |
+| `RAZORPAY_WEBHOOK_SECRET` | Verifies webhooks for the platform account |
+| `CREDENTIALS_KEY` | Encrypts gym-owned gateway secrets at rest |
+
+`CREDENTIALS_KEY` is required before any gym can save its own Razorpay keys —
+without it the settings screen says so and the save is refused rather than
+writing a secret in the clear. Generate one with `openssl rand -base64 32`.
+Losing it does not lose money: gyms simply re-enter their keys.
 
 Set them all interactively:
 
@@ -127,6 +136,39 @@ Migrations are not run by a deploy. Apply them first:
 ```bash
 npm run db:migrate:production --workspace @fitconnect/api
 ```
+
+## Payment gateway (Razorpay)
+
+Two accounts can collect a member's payment, and the API picks between them per
+gym, per request:
+
+1. **The gym's own account** — a gym admin saves a key id and secret under
+   Settings → Online Payments. Money goes straight to that gym.
+2. **The platform account** — every gym that has not done so falls back to
+   `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET`.
+
+Gym-owned secrets are AES-GCM sealed with `CREDENTIALS_KEY` before they touch
+D1, and are unsealed only inside the request that calls Razorpay. They are never
+returned to a browser; the settings screen shows only whether a secret is on
+file. The key id is not a secret — the checkout widget needs it client-side.
+
+### Webhooks
+
+Register one webhook per account, pointing at the gym it belongs to:
+
+```
+https://<api-host>/webhooks/razorpay/<tenantId>
+```
+
+Subscribe it to `payment.captured`, `order.paid`, and `payment.failed`, then
+paste its signing secret into the gym's settings (or set
+`RAZORPAY_WEBHOOK_SECRET` for the platform account). The webhook is what records
+a payment when a member closes the app between paying and returning; without it,
+those payments sit PENDING until someone reconciles them by hand.
+
+Deliveries are rejected unless the HMAC over the raw body matches, and a
+`payment.captured` is confirmed against Razorpay before anything is marked paid —
+a valid signature proves who sent the message, not that its contents are true.
 
 ## DNS and routing
 

@@ -206,7 +206,7 @@ export type PlatformPaymentGroupByOutputType = {
   _max: PlatformPaymentMaxAggregateOutputType | null
 }
 
-type GetPlatformPaymentGroupByPayload<T extends PlatformPaymentGroupByArgs> = Prisma.PrismaPromise<
+export type GetPlatformPaymentGroupByPayload<T extends PlatformPaymentGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<PlatformPaymentGroupByOutputType, T['by']> &
       {

@@ -242,7 +242,7 @@ export type TenantMembershipGroupByOutputType = {
   _max: TenantMembershipMaxAggregateOutputType | null
 }
 
-type GetTenantMembershipGroupByPayload<T extends TenantMembershipGroupByArgs> = Prisma.PrismaPromise<
+export type GetTenantMembershipGroupByPayload<T extends TenantMembershipGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<TenantMembershipGroupByOutputType, T['by']> &
       {

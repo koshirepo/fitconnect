@@ -3,9 +3,16 @@ import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
-import { useBadges } from "@/api/queries/catalog";
-import { useDeleteSubscription, useSubscriptions, useUpdateSubscription } from "@/api/queries/payments";
+import { useBadges, useTenantSettings } from "@/api/queries/catalog";
+import {
+  useCreateCheckout,
+  useDeleteSubscription,
+  useSubscriptions,
+  useUpdateSubscription,
+  useVerifyCheckout,
+} from "@/api/queries/payments";
 import { getApiError } from "@/api/client";
+import { openRazorpayCheckout } from "@/lib/razorpay-checkout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,17 +28,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { PageLoader } from "@/components/ui/spinner";
+import { PageLoader, Spinner } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatCurrency } from "@/lib/utils";
-import { Pencil, Plus, Power, Trash2, Package } from "lucide-react";
+import { CreditCard, Pencil, Plus, Power, Trash2, Package } from "lucide-react";
 import type { Badge as BadgeModel, Subscription } from "@/types/api";
 
 export default function SubscriptionsPage() {
   const navigate = useAppNavigate();
-  const { currentTenantId } = useAuthStore();
+  const { currentTenantId, currentMembership, user } = useAuthStore();
   const { can } = usePermissions();
   const isAdmin = can(Permission.SUBSCRIPTIONS_UPDATE);
+  const gymName = currentMembership()?.tenantName ?? "the gym";
 
   const [pageError, setPageError] = React.useState("");
 
@@ -50,8 +58,19 @@ export default function SubscriptionsPage() {
   const [selectedSubscription, setSelectedSubscription] = React.useState<Subscription | null>(null);
   const [actionLoading, setActionLoading] = React.useState<string | null>(null);
 
+  const [payingPlanId, setPayingPlanId] = React.useState<string | null>(null);
+
   // Admins see inactive plans too, so the flag is part of the cache key.
   const subscriptionsQuery = useSubscriptions(isAdmin);
+  // Members cannot read the gateway configuration, so whether online payment is
+  // possible arrives as a single boolean on the gym's settings.
+  const settingsQuery = useTenantSettings();
+  const createCheckout = useCreateCheckout();
+  const verifyCheckout = useVerifyCheckout();
+
+  const canPayOnline =
+    can(Permission.PAYMENTS_CHECKOUT_SELF) && Boolean(settingsQuery.data?.onlinePaymentsEnabled);
+
   // Badges are only needed for the edit dialog's eligibility picker.
   const badgesQuery = useBadges({ includeInactive: true, enabled: isAdmin });
 
@@ -84,6 +103,55 @@ export default function SubscriptionsPage() {
     setEditSelectedBadgeIds(subscription.badges.map((badge) => badge.id));
     setEditError("");
     setEditOpen(true);
+  };
+
+  /**
+   * Buy a plan: the API opens the order, Razorpay collects the money, and the
+   * API verifies the signature before anything is treated as paid. The browser
+   * never decides that a payment succeeded.
+   */
+  const handlePayNow = async (subscription: Subscription) => {
+    setPageError("");
+    setPayingPlanId(subscription.id);
+
+    try {
+      const session = await createCheckout.mutateAsync(subscription.id);
+
+      const result = await openRazorpayCheckout({
+        keyId: session.keyId,
+        orderId: session.orderId,
+        amount: session.amount,
+        currency: session.currency,
+        name: gymName,
+        description: session.planTitle,
+        prefill: {
+          name: user?.name,
+          email: user?.email,
+          contact: user?.phone ?? undefined,
+        },
+      });
+
+      // Closing the window charges nothing and leaves the pending row pending,
+      // so there is nothing to undo and nothing worth alarming anyone about.
+      if (result.status === "dismissed") return;
+
+      if (result.status === "failed") {
+        setPageError(result.message);
+        return;
+      }
+
+      await verifyCheckout.mutateAsync({
+        orderId: result.orderId,
+        paymentId: result.paymentId,
+        signature: result.signature,
+      });
+
+      navigate("/payments");
+    } catch (caught) {
+      setPageError(getApiError(caught));
+    } finally {
+      setPayingPlanId(null);
+    }
   };
 
   const openConfirm = (mode: "delete" | "toggle", subscription: Subscription) => {
@@ -257,6 +325,29 @@ export default function SubscriptionsPage() {
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground">Available to all members</p>
+                  )}
+
+                  {/* Members buy the plan; admins manage it. An admin who wants
+                      to pay for their own membership does it from the same
+                      place any member would. */}
+                  {!isAdmin && canPayOnline && sub.isActive && (
+                    <Button
+                      className="w-full"
+                      onClick={() => handlePayNow(sub)}
+                      disabled={payingPlanId !== null}
+                    >
+                      {payingPlanId === sub.id ? (
+                        <>
+                          <Spinner size="sm" />
+                          Opening payment…
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="h-4 w-4" />
+                          Pay {formatCurrency(sub.amount)}
+                        </>
+                      )}
+                    </Button>
                   )}
 
                   {isAdmin && (

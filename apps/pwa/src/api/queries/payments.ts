@@ -13,6 +13,8 @@ import type {
   CreateSubscriptionPayload,
   UpdateSubscriptionPayload,
   UpdatePaymentPayload,
+  UpdateGatewayPayload,
+  VerifyCheckoutPayload,
 } from "@/types/api";
 import {
   unwrap,
@@ -121,6 +123,53 @@ export function useSubscriptions(includeInactive = false, options: { enabled?: b
     async (tenantId) =>
       unwrap(await paymentsApi.listSubscriptions(tenantId, includeInactive)).subscriptions,
     options,
+  );
+}
+
+// ─── Payment gateway ──────────────────────────────────────────────────────────
+
+/** The gym's Razorpay setup: which account collects, and what is on file. */
+export function usePaymentGateway(options: { enabled?: boolean } = {}) {
+  return useTenantQuery(
+    (tenantId) => queryKeys.payments.gateway(tenantId),
+    async (tenantId) => unwrap(await paymentsApi.getGateway(tenantId)).gateway,
+    options,
+  );
+}
+
+export function useUpdatePaymentGateway() {
+  const tenantId = useCurrentTenantId();
+  return useTenantMutation(
+    async (id, payload: UpdateGatewayPayload) =>
+      unwrap(await paymentsApi.updateGateway(id, payload)).gateway,
+    { invalidates: [["payments", tenantId ?? "none"]] },
+  );
+}
+
+/** Ask Razorpay to accept the saved credentials, without moving any money. */
+export function useTestPaymentGateway() {
+  return useTenantMutation(async (id) => unwrap(await paymentsApi.testGateway(id)));
+}
+
+export function useCreateCheckout() {
+  return useTenantMutation(
+    async (id, subscriptionId: string) =>
+      unwrap(await paymentsApi.createCheckout(id, subscriptionId)).checkout,
+  );
+}
+
+/**
+ * Settle a payment against the checkout signature.
+ *
+ * Invalidates the whole payment scope because a settled payment moves the
+ * member's due date and can flip them back to ACTIVE.
+ */
+export function useVerifyCheckout() {
+  const tenantId = useCurrentTenantId();
+  return useTenantMutation(
+    async (id, payload: VerifyCheckoutPayload) =>
+      unwrap(await paymentsApi.verifyCheckout(id, payload)),
+    { invalidates: paymentWriteScope(tenantId) },
   );
 }
 

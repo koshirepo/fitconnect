@@ -1,0 +1,189 @@
+/**
+ * Documentation: Razorpay REST client for the Workers runtime.
+ *
+ * - Razorpay's official Node SDK depends on `https` and `crypto`, neither of which is available here, so this module talks to the REST API with `fetch` and does its signing with WebCrypto.
+ * - Every call takes the credentials explicitly rather than reading env: which account a payment lands in depends on the gym, and that decision belongs to `gateway.service`, not here.
+ * - Signature checks compare in constant time. A leaky comparison on a payment signature is a forgery oracle.
+ * - Primary exports: createOrder, fetchPayment, verifyCheckoutSignature, verifyWebhookSignature, RazorpayCredentials, RazorpayError.
+ */
+
+const API_BASE = "https://api.razorpay.com/v1";
+
+export type RazorpayCredentials = {
+  keyId: string;
+  keySecret: string;
+};
+
+export class RazorpayError extends Error {
+  readonly status: number;
+  readonly code: string | undefined;
+
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = "RazorpayError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
+export type RazorpayOrder = {
+  id: string;
+  amount: number;
+  currency: string;
+  receipt: string | null;
+  status: string;
+};
+
+export type RazorpayPayment = {
+  id: string;
+  order_id: string | null;
+  amount: number;
+  currency: string;
+  /** created | authorized | captured | refunded | failed */
+  status: string;
+  method: string | null;
+  captured: boolean;
+  error_description: string | null;
+  notes: Record<string, string> | null;
+};
+
+function authHeader({ keyId, keySecret }: RazorpayCredentials) {
+  return `Basic ${btoa(`${keyId}:${keySecret}`)}`;
+}
+
+async function request<T>(
+  credentials: RazorpayCredentials,
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_BASE}${path}`, {
+      ...init,
+      headers: {
+        Authorization: authHeader(credentials),
+        "Content-Type": "application/json",
+        ...init.headers,
+      },
+    });
+  } catch (cause) {
+    // A network failure here is not the caller's fault and must not read as a
+    // declined payment.
+    throw new RazorpayError(
+      `Could not reach Razorpay: ${(cause as Error)?.message ?? "network error"}`,
+      502,
+    );
+  }
+
+  const body = (await response.json().catch(() => null)) as {
+    error?: { description?: string; code?: string };
+  } | null;
+
+  if (!response.ok) {
+    throw new RazorpayError(
+      body?.error?.description ?? `Razorpay returned ${response.status}.`,
+      response.status,
+      body?.error?.code,
+    );
+  }
+
+  return body as T;
+}
+
+/**
+ * Create an order — the object the checkout widget is opened against.
+ *
+ * `amount` is in the smallest currency unit (paise), matching how amounts are
+ * stored throughout this codebase, so no conversion happens on the way in.
+ */
+export async function createOrder(
+  credentials: RazorpayCredentials,
+  input: {
+    amount: number;
+    currency?: string;
+    receipt?: string;
+    notes?: Record<string, string>;
+  },
+) {
+  return request<RazorpayOrder>(credentials, "/orders", {
+    method: "POST",
+    body: JSON.stringify({
+      amount: input.amount,
+      currency: input.currency ?? "INR",
+      receipt: input.receipt,
+      notes: input.notes,
+    }),
+  });
+}
+
+export async function fetchPayment(
+  credentials: RazorpayCredentials,
+  paymentId: string,
+) {
+  return request<RazorpayPayment>(
+    credentials,
+    `/payments/${encodeURIComponent(paymentId)}`,
+  );
+}
+
+async function hmacSha256Hex(secret: string, message: string) {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(message),
+  );
+
+  return Array.from(new Uint8Array(signature))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+/** Length-independent, value-independent comparison. */
+function timingSafeEqual(a: string, b: string) {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i += 1) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
+/**
+ * Verify the signature the checkout widget hands back to the browser.
+ *
+ * This is what proves the browser is not simply claiming a payment succeeded:
+ * only someone holding the key secret can produce it.
+ */
+export async function verifyCheckoutSignature(
+  keySecret: string,
+  input: { orderId: string; paymentId: string; signature: string },
+) {
+  const expected = await hmacSha256Hex(
+    keySecret,
+    `${input.orderId}|${input.paymentId}`,
+  );
+  return timingSafeEqual(expected, input.signature.toLowerCase());
+}
+
+/**
+ * Verify a webhook delivery against the raw request body.
+ *
+ * The body must be the exact bytes Razorpay sent — re-serializing parsed JSON
+ * changes key order and whitespace and will never match.
+ */
+export async function verifyWebhookSignature(
+  webhookSecret: string,
+  rawBody: string,
+  signature: string,
+) {
+  const expected = await hmacSha256Hex(webhookSecret, rawBody);
+  return timingSafeEqual(expected, signature.toLowerCase());
+}

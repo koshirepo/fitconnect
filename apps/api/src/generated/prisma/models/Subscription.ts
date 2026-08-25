@@ -224,7 +224,7 @@ export type SubscriptionGroupByOutputType = {
   _max: SubscriptionMaxAggregateOutputType | null
 }
 
-type GetSubscriptionGroupByPayload<T extends SubscriptionGroupByArgs> = Prisma.PrismaPromise<
+export type GetSubscriptionGroupByPayload<T extends SubscriptionGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<SubscriptionGroupByOutputType, T['by']> &
       {

@@ -72,6 +72,11 @@ export type {
   AttendanceSummary,
   MarkAttendancePayload,
   MarkAllAttendancePayload,
+  // Payment gateway
+  PaymentGatewayConfig,
+  UpdateGatewayPayload,
+  CheckoutSession,
+  VerifyCheckoutPayload,
   // Platform Billing
   PlatformPayment,
   RecordPlatformPaymentPayload,

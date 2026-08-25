@@ -165,7 +165,7 @@ export type PasswordResetTokenGroupByOutputType = {
   _max: PasswordResetTokenMaxAggregateOutputType | null
 }
 
-type GetPasswordResetTokenGroupByPayload<T extends PasswordResetTokenGroupByArgs> = Prisma.PrismaPromise<
+export type GetPasswordResetTokenGroupByPayload<T extends PasswordResetTokenGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<PasswordResetTokenGroupByOutputType, T['by']> &
       {

@@ -12,6 +12,7 @@ import type {
   UpdateChargeInput,
 } from "./settings.schema";
 import { getWhatsAppTemplates } from "@fitconnect/shared/whatsapp-templates";
+import { gatewayService } from "../payments/gateway.service";
 
 const DEFAULT_SETTINGS = {
   overdueDays: 30,
@@ -26,15 +27,25 @@ export const settingsService = {
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
   async getSettings(tenantId: string) {
-    const settings = await settingsRepository.getSettings(tenantId);
+    const [settings, credentials] = await Promise.all([
+      settingsRepository.getSettings(tenantId),
+      gatewayService.resolveCredentials(tenantId),
+    ]);
+
     return {
       data: {
-        settings: settings
-          ? {
-              overdueDays: settings.overdueDays,
-              whatsappTemplates: getWhatsAppTemplates(settings.whatsappTemplates),
-            }
-          : DEFAULT_SETTINGS,
+        settings: {
+          ...(settings
+            ? {
+                overdueDays: settings.overdueDays,
+                whatsappTemplates: getWhatsAppTemplates(settings.whatsappTemplates),
+              }
+            : DEFAULT_SETTINGS),
+          // A single boolean, readable by every member, so the app can decide
+          // whether to offer "Pay now" without exposing which account collects
+          // or anything about the keys behind it.
+          onlinePaymentsEnabled: Boolean(credentials),
+        },
       },
     };
   },
@@ -67,6 +78,7 @@ export const settingsService = {
         settings: {
           overdueDays: settings.overdueDays,
           whatsappTemplates: getWhatsAppTemplates(settings.whatsappTemplates),
+          onlinePaymentsEnabled: Boolean(await gatewayService.resolveCredentials(tenantId)),
         },
       },
     };

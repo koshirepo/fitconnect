@@ -13,7 +13,7 @@ import { authRoutes } from "./modules/auth/auth.routes";
 import { tenantRoutes } from "./modules/tenants/tenants.routes";
 import { memberRoutes } from "./modules/members/members.routes";
 import { workoutRoutes } from "./modules/workouts/workouts.routes";
-import { paymentRoutes } from "./modules/payments/payments.routes";
+import { paymentRoutes, gatewayWebhookRoutes } from "./modules/payments/payments.routes";
 import { badgeRoutes } from "./modules/badges/badges.routes";
 import { auditRoutes } from "./modules/audit/audit.routes";
 import { publicRoutes } from "./modules/public/public.routes";
@@ -107,6 +107,9 @@ app.route("/", commerceRoutes);
 app.route("/", reviewRoutes);
 app.route("/push", pushRoutes);
 app.route("/uploads", uploadRoutes);
+// Payment gateway callbacks. No session — each delivery carries its own HMAC
+// signature, verified against the gym's webhook secret.
+app.route("/webhooks", gatewayWebhookRoutes);
 
 app.onError((err, c) => {
   if (

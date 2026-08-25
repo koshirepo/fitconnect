@@ -12,6 +12,16 @@ const REQUIRED_SECRETS = [
   { key: "EMAIL_USER", hint: "SMTP username for outgoing mail." },
   { key: "EMAIL_PASSWORD", hint: "SMTP app password." },
   { key: "VAPID_PRIVATE_KEY", hint: "Web Push private key; pairs with VAPID_PUBLIC_KEY in wrangler.toml." },
+  { key: "RAZORPAY_KEY_ID", hint: "Platform default Razorpay key id (rzp_live_… in production)." },
+  { key: "RAZORPAY_KEY_SECRET", hint: "Platform default Razorpay key secret." },
+  {
+    key: "RAZORPAY_WEBHOOK_SECRET",
+    hint: "Signing secret for the platform account's Razorpay webhook.",
+  },
+  {
+    key: "CREDENTIALS_KEY",
+    hint: "Encrypts gym-owned gateway secrets at rest. Generate with: openssl rand -base64 32",
+  },
 ];
 
 const env = process.argv[2];

@@ -15,6 +15,8 @@ export type ErrorCode =
   | "NOT_FOUND"
   | "CONFLICT"
   | "BAD_REQUEST"
+  /** An upstream provider (e.g. the payment gateway) failed or refused. */
+  | "GATEWAY_ERROR"
   | "INTERNAL_ERROR";
 
 export interface ApiResponse<T> {

@@ -100,7 +100,52 @@ export const updateSubscriptionSchema = z
     message: "At least one field is required.",
   });
 
+// ─── Payment gateway ──────────────────────────────────────────────────────────
+
+/**
+ * Saving a gym's own Razorpay credentials.
+ *
+ * Every field is optional so an admin can correct one without re-entering the
+ * others. An empty `keyId` is the documented way to clear the configuration and
+ * fall back to the platform account, which is why it is not `min(1)`.
+ */
+export const updateGatewaySchema = z
+  .object({
+    keyId: z
+      .string()
+      .trim()
+      .max(120)
+      .refine((value) => value === "" || /^rzp_(test|live)_[A-Za-z0-9]+$/.test(value), {
+        message: "Enter a Razorpay key id, which looks like rzp_test_xxxxxxxx.",
+      })
+      .optional(),
+    keySecret: z.string().trim().min(8).max(200).optional(),
+    // Nullable: an empty webhook secret clears it without touching the keys.
+    webhookSecret: z.string().trim().max(200).optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field is required.",
+  });
+
+/**
+ * Opening a checkout names only the plan. The price comes from the plan record,
+ * never from the request, so a tampered body cannot change what is charged.
+ */
+export const checkoutSchema = z.object({
+  subscriptionId: z.string().min(1),
+});
+
+/** The three values Razorpay's checkout widget hands back to the browser. */
+export const verifyCheckoutSchema = z.object({
+  orderId: z.string().min(1),
+  paymentId: z.string().min(1),
+  signature: z.string().min(1).max(200),
+});
+
 export type CreatePaymentInput = z.infer<typeof createPaymentSchema>;
 export type UpdatePaymentInput = z.infer<typeof updatePaymentSchema>;
 export type CreateSubscriptionInput = z.infer<typeof createSubscriptionSchema>;
 export type UpdateSubscriptionInput = z.infer<typeof updateSubscriptionSchema>;
+export type UpdateGatewayInput = z.infer<typeof updateGatewaySchema>;
+export type CheckoutInput = z.infer<typeof checkoutSchema>;
+export type VerifyCheckoutInput = z.infer<typeof verifyCheckoutSchema>;

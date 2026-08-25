@@ -16,3 +16,19 @@ EMAIL_PASSWORD=""
 # Web Push private key. Must pair with VAPID_PUBLIC_KEY in wrangler.toml.
 # Generate a fresh pair with: npx web-push generate-vapid-keys
 VAPID_PRIVATE_KEY=""
+
+# Platform default Razorpay account. Gyms that save their own key id and secret
+# in Settings collect into their own account; these are the fallback for the
+# rest. Test keys start rzp_test_, live keys rzp_live_.
+RAZORPAY_KEY_ID=""
+RAZORPAY_KEY_SECRET=""
+
+# Signing secret for the platform account's webhook endpoint, taken from the
+# Razorpay dashboard when the webhook is registered. Without it, webhook
+# deliveries for gyms on the platform account are rejected.
+RAZORPAY_WEBHOOK_SECRET=""
+
+# Encrypts gym-owned gateway secrets before they are written to D1. Required
+# before a gym can save its own keys. Any long random string:
+#   openssl rand -base64 32
+CREDENTIALS_KEY=""

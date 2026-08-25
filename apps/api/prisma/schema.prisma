@@ -140,6 +140,15 @@ model TenantSettings {
   tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   overdueDays  Int      @default(30) /// Days after subscription expiry to auto-inactivate member
   whatsappTemplates Json @default("{}") /// Tenant-level WhatsApp template overrides keyed by message purpose
+
+  /// Razorpay key id for this gym's own account. Null means online payments
+  /// fall back to the platform account configured in the Worker environment.
+  razorpayKeyId        String?
+  /// Key secret, sealed with AES-GCM by `lib/secret-box`. Never leaves the API.
+  razorpayKeySecret    String?
+  /// Webhook signing secret, sealed the same way.
+  razorpayWebhookSecret String?
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -281,6 +290,16 @@ model Payment {
   paidAt         DateTime?
   validFrom      DateTime?
   validUntil     DateTime?
+
+  /// "RAZORPAY" for online payments; null for cash and other manual entries.
+  gateway          String?
+  /// Gateway order id. Unique so a replayed verify cannot settle twice.
+  gatewayOrderId   String?  @unique
+  /// Gateway payment id, set once the charge is authorized or captured.
+  gatewayPaymentId String?
+  /// Whether this gym's own gateway account collected it, or the platform's.
+  gatewayAccount   String?
+
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 
@@ -288,6 +307,7 @@ model Payment {
   @@index([membershipId])
   @@index([status])
   @@index([createdAt])
+  @@index([gatewayOrderId])
 }
 
 // Commerce

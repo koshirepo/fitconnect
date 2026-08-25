@@ -1,0 +1,530 @@
+/**
+ * Documentation: Payment gateway credential resolution and online checkout.
+ *
+ * - Answers the one question every online payment starts with: whose Razorpay account does this gym's money land in? A gym that has saved its own key id and secret collects into its own account; a gym that has not falls back to the platform account in the Worker environment.
+ * - The fallback is deliberate and silent at the point of payment but visible in the settings screen, so an admin can tell at a glance whether they are collecting into their own account or the platform's.
+ * - Secrets are sealed at rest (`lib/secret-box`) and only unsealed inside the request that calls Razorpay. Nothing here ever returns a secret to a caller.
+ * - Primary exports: gatewayService.
+ */
+import { prisma } from "../../lib/prisma";
+import { credentialsKeyConfigured, open, seal } from "../../lib/secret-box";
+import {
+  createOrder,
+  fetchPayment,
+  verifyCheckoutSignature,
+  verifyWebhookSignature,
+  RazorpayError,
+  type RazorpayCredentials,
+} from "../../lib/razorpay";
+import { paymentRepository } from "./payments.repository";
+import type {
+  UpdateGatewayInput,
+  CheckoutInput,
+  VerifyCheckoutInput,
+} from "./payments.schema";
+
+export type CredentialSource = "TENANT" | "PLATFORM";
+
+type ResolvedCredentials = RazorpayCredentials & {
+  source: CredentialSource;
+  webhookSecret: string | null;
+};
+
+/** The platform-wide account, used by every gym that has not set up its own. */
+function platformCredentials(): RazorpayCredentials | null {
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  if (!keyId || !keySecret) return null;
+  return { keyId, keySecret };
+}
+
+/**
+ * A gym's own credentials count only when the key id and a secret that actually
+ * unseals are both present. A half-configured row falls back rather than
+ * failing the payment, because a payment that cannot be taken is worse than one
+ * taken into the platform account and settled later.
+ */
+async function tenantCredentials(tenantId: string) {
+  const settings = await prisma.tenantSettings.findUnique({
+    where: { tenantId },
+    select: {
+      razorpayKeyId: true,
+      razorpayKeySecret: true,
+      razorpayWebhookSecret: true,
+    },
+  });
+
+  if (!settings?.razorpayKeyId || !settings.razorpayKeySecret) return null;
+
+  const keySecret = await open(settings.razorpayKeySecret);
+  if (!keySecret) return null;
+
+  return {
+    keyId: settings.razorpayKeyId,
+    keySecret,
+    webhookSecret: await open(settings.razorpayWebhookSecret),
+  };
+}
+
+export const gatewayService = {
+  /**
+   * The credentials this gym collects with, and which account they belong to.
+   * Returns null when neither the gym nor the platform has a gateway set up.
+   */
+  async resolveCredentials(
+    tenantId: string,
+  ): Promise<ResolvedCredentials | null> {
+    const own = await tenantCredentials(tenantId);
+    if (own) return { ...own, source: "TENANT" };
+
+    const platform = platformCredentials();
+    if (!platform) return null;
+
+    return {
+      ...platform,
+      source: "PLATFORM",
+      webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET ?? null,
+    };
+  },
+
+  // ─── Configuration ──────────────────────────────────────────────────────────
+
+  /**
+   * What the settings screen shows: which account is in use, the public key id,
+   * and whether a secret is on file — never the secret itself.
+   */
+  async getConfig(tenantId: string) {
+    const settings = await prisma.tenantSettings.findUnique({
+      where: { tenantId },
+      select: {
+        razorpayKeyId: true,
+        razorpayKeySecret: true,
+        razorpayWebhookSecret: true,
+      },
+    });
+
+    const resolved = await gatewayService.resolveCredentials(tenantId);
+    const platform = platformCredentials();
+
+    return {
+      data: {
+        gateway: {
+          provider: "RAZORPAY" as const,
+          /** Whether online payments can be taken at all right now. */
+          enabled: Boolean(resolved),
+          /** TENANT when this gym collects into its own account. */
+          source: resolved?.source ?? null,
+          /** This gym's own key id, if saved. Public — safe to show. */
+          keyId: settings?.razorpayKeyId ?? null,
+          hasKeySecret: Boolean(settings?.razorpayKeySecret),
+          hasWebhookSecret: Boolean(settings?.razorpayWebhookSecret),
+          /** The key id money falls back to. Public, and useful for support. */
+          platformKeyId: platform?.keyId ?? null,
+          platformConfigured: Boolean(platform),
+          /** Without this the API cannot store gym-owned secrets at all. */
+          canStoreOwnKeys: credentialsKeyConfigured(),
+          /** Test keys are safe to try; live keys move real money. */
+          mode: (resolved?.keyId ?? "").startsWith("rzp_live_")
+            ? ("LIVE" as const)
+            : resolved
+              ? ("TEST" as const)
+              : null,
+        },
+      },
+    };
+  },
+
+  /**
+   * Save or clear this gym's own credentials.
+   *
+   * Passing an empty key id clears the whole configuration and returns the gym
+   * to the platform account. Omitting a secret leaves the stored one alone, so
+   * an admin can correct a key id without re-entering the secret.
+   */
+  async updateConfig(tenantId: string, input: UpdateGatewayInput) {
+    const clearing = input.keyId !== undefined && input.keyId === "";
+
+    if (!clearing && !credentialsKeyConfigured()) {
+      return {
+        error:
+          "This deployment cannot store gym-owned gateway secrets yet: CREDENTIALS_KEY is not set on the API. Set it and try again.",
+        status: 503 as const,
+      };
+    }
+
+    if (clearing) {
+      await prisma.tenantSettings.upsert({
+        where: { tenantId },
+        update: {
+          razorpayKeyId: null,
+          razorpayKeySecret: null,
+          razorpayWebhookSecret: null,
+        },
+        create: { tenantId, razorpayKeyId: null },
+      });
+
+      return gatewayService.getConfig(tenantId);
+    }
+
+    const existing = await prisma.tenantSettings.findUnique({
+      where: { tenantId },
+      select: { razorpayKeyId: true, razorpayKeySecret: true },
+    });
+
+    const keyId = input.keyId ?? existing?.razorpayKeyId ?? null;
+    if (!keyId) {
+      return { error: "A Razorpay key id is required.", status: 400 as const };
+    }
+
+    // A new key id with no secret and none on file would save a configuration
+    // that can never take a payment.
+    if (input.keySecret === undefined && !existing?.razorpayKeySecret) {
+      return {
+        error: "A Razorpay key secret is required.",
+        status: 400 as const,
+      };
+    }
+
+    const data: Record<string, unknown> = { razorpayKeyId: keyId };
+    if (input.keySecret !== undefined) {
+      data.razorpayKeySecret = await seal(input.keySecret);
+    }
+    if (input.webhookSecret !== undefined) {
+      data.razorpayWebhookSecret = input.webhookSecret
+        ? await seal(input.webhookSecret)
+        : null;
+    }
+
+    await prisma.tenantSettings.upsert({
+      where: { tenantId },
+      update: data,
+      create: { tenantId, ...data },
+    });
+
+    return gatewayService.getConfig(tenantId);
+  },
+
+  /**
+   * Confirm the saved credentials actually work, by asking Razorpay to create a
+   * ₹1 order and then forgetting about it. An order that is never paid costs
+   * nothing and expires on its own.
+   */
+  async testConnection(tenantId: string) {
+    const credentials = await gatewayService.resolveCredentials(tenantId);
+    if (!credentials) {
+      return {
+        error: "No payment gateway is configured.",
+        status: 409 as const,
+      };
+    }
+
+    try {
+      await createOrder(credentials, {
+        amount: 100,
+        receipt: `test_${Date.now()}`,
+        notes: { purpose: "credential check" },
+      });
+    } catch (error) {
+      if (error instanceof RazorpayError) {
+        return {
+          error: `Razorpay rejected these credentials: ${error.message}`,
+          status: 400 as const,
+        };
+      }
+      throw error;
+    }
+
+    return {
+      data: { ok: true, source: credentials.source, keyId: credentials.keyId },
+    };
+  },
+
+  // ─── Checkout ───────────────────────────────────────────────────────────────
+
+  /**
+   * Open an online payment: create the Razorpay order, and record a PENDING
+   * payment row against it.
+   *
+   * The row is written before the member sees the checkout widget so that a
+   * payment can never exist at Razorpay without a local record — the webhook
+   * has something to find even if the browser is closed mid-payment.
+   */
+  async createCheckout(tenantId: string, userId: string, input: CheckoutInput) {
+    const credentials = await gatewayService.resolveCredentials(tenantId);
+    if (!credentials) {
+      return {
+        error: "This gym has not set up online payments yet.",
+        status: 409 as const,
+      };
+    }
+
+    const [membership, subscription] = await Promise.all([
+      paymentRepository.findCheckoutMembership(tenantId, userId),
+      paymentRepository.findCheckoutSubscription(
+        input.subscriptionId,
+        tenantId,
+      ),
+    ]);
+
+    if (!membership) {
+      return {
+        error: "You are not a member of this gym.",
+        status: 403 as const,
+      };
+    }
+
+    if (!subscription || !subscription.isActive) {
+      return {
+        error: "Subscription not found in this tenant.",
+        status: 404 as const,
+      };
+    }
+
+    if (
+      subscription.badges.length &&
+      !subscription.badges.some((badge) =>
+        membership.badges.some((memberBadge) => memberBadge.id === badge.id),
+      )
+    ) {
+      return {
+        error: "You are not eligible for this plan.",
+        status: 400 as const,
+      };
+    }
+
+    // The amount comes from the plan, never from the request body: a client
+    // that could name its own price could buy a year for a rupee.
+    const amount = subscription.amount;
+
+    let order;
+    try {
+      order = await createOrder(credentials, {
+        amount,
+        receipt: `sub_${subscription.id.slice(-12)}_${Date.now().toString(36)}`,
+        notes: {
+          tenantId,
+          membershipId: membership.id,
+          subscriptionId: subscription.id,
+        },
+      });
+    } catch (error) {
+      if (error instanceof RazorpayError) {
+        return {
+          error: `Could not start the payment: ${error.message}`,
+          status: 502 as const,
+        };
+      }
+      throw error;
+    }
+
+    // No validity window yet. It is written when the money actually arrives, so
+    // an abandoned checkout leaves nothing for `refreshDueDate` to pick up.
+    const payment = await paymentRepository.createPayment({
+      tenantId,
+      membershipId: membership.id,
+      subscriptionId: subscription.id,
+      description: subscription.title,
+      status: "PENDING",
+      amount,
+      gateway: "RAZORPAY",
+      gatewayOrderId: order.id,
+      gatewayAccount: credentials.source,
+    });
+
+    return {
+      data: {
+        checkout: {
+          paymentId: payment.id,
+          orderId: order.id,
+          // The key id is public by design — the checkout widget needs it in
+          // the browser. The secret never leaves the API.
+          keyId: credentials.keyId,
+          amount,
+          currency: order.currency,
+          planTitle: subscription.title,
+        },
+      },
+    };
+  },
+
+  /**
+   * Settle a payment from the signature the browser hands back.
+   *
+   * The signature is the proof: only a holder of the key secret can produce it
+   * for a given order and payment id, so a browser cannot claim success on its
+   * own. A payment already settled by the webhook is accepted as-is rather than
+   * treated as an error, because both paths racing is the normal case.
+   */
+  async verifyCheckout(
+    tenantId: string,
+    userId: string,
+    input: VerifyCheckoutInput,
+  ) {
+    const credentials = await gatewayService.resolveCredentials(tenantId);
+    if (!credentials) {
+      return {
+        error: "This gym has not set up online payments yet.",
+        status: 409 as const,
+      };
+    }
+
+    const payment = await paymentRepository.findPaymentByOrderId(
+      input.orderId,
+      tenantId,
+    );
+    if (!payment) {
+      return { error: "Payment not found.", status: 404 as const };
+    }
+
+    // Scope the settle to the member who opened the order, so one member cannot
+    // settle (or fail) another's payment by guessing an order id.
+    const membership = await paymentRepository.findMembershipByUser(
+      tenantId,
+      userId,
+    );
+    if (!membership || payment.membershipId !== membership.id) {
+      return { error: "Payment not found.", status: 404 as const };
+    }
+
+    if (payment.status === "COMPLETED") {
+      return { data: { payment, alreadySettled: true } };
+    }
+
+    const signatureValid = await verifyCheckoutSignature(
+      credentials.keySecret,
+      {
+        orderId: input.orderId,
+        paymentId: input.paymentId,
+        signature: input.signature,
+      },
+    );
+
+    if (!signatureValid) {
+      await paymentRepository.markGatewayFailure(payment.id, input.paymentId);
+      return {
+        error: "This payment could not be verified.",
+        status: 400 as const,
+      };
+    }
+
+    const settled = await gatewayService.settlePayment(
+      payment.id,
+      input.paymentId,
+    );
+    return { data: { payment: settled, alreadySettled: false } };
+  },
+
+  /**
+   * Mark a gateway payment complete and bring the membership with it.
+   *
+   * Shared by the browser-verified path and the webhook so the two can race
+   * without disagreeing about the outcome.
+   */
+  async settlePayment(paymentId: string, gatewayPaymentId: string) {
+    const payment = await paymentRepository.settleGatewayPayment(
+      paymentId,
+      gatewayPaymentId,
+    );
+
+    if (payment.validUntil) {
+      await paymentRepository.refreshDueDate(payment.membershipId);
+    }
+    await paymentRepository.reactivateIfPaidUp(payment.membershipId);
+
+    return payment;
+  },
+
+  // ─── Webhooks ───────────────────────────────────────────────────────────────
+
+  /**
+   * Handle a Razorpay webhook for one gym.
+   *
+   * This is the path that saves a payment when the member's browser dies
+   * between paying and returning. It trusts nothing but the signature, and it
+   * looks the order up locally rather than believing the amounts in the body.
+   */
+  async handleWebhook(
+    tenantId: string,
+    rawBody: string,
+    signature: string | null,
+  ) {
+    if (!signature) {
+      return { error: "Missing webhook signature.", status: 400 as const };
+    }
+
+    const credentials = await gatewayService.resolveCredentials(tenantId);
+    if (!credentials?.webhookSecret) {
+      return {
+        error: "No webhook secret is configured for this gym.",
+        status: 409 as const,
+      };
+    }
+
+    const valid = await verifyWebhookSignature(
+      credentials.webhookSecret,
+      rawBody,
+      signature,
+    );
+    if (!valid) {
+      return { error: "Invalid webhook signature.", status: 400 as const };
+    }
+
+    const event = JSON.parse(rawBody) as {
+      event?: string;
+      payload?: {
+        payment?: {
+          entity?: { id?: string; order_id?: string; status?: string };
+        };
+      };
+    };
+
+    const entity = event.payload?.payment?.entity;
+    if (!entity?.order_id || !entity.id) {
+      // Events we do not act on (refunds, settlements, subscription lifecycle)
+      // are acknowledged so Razorpay stops retrying them.
+      return { data: { handled: false, event: event.event ?? null } };
+    }
+
+    const payment = await paymentRepository.findPaymentByOrderId(
+      entity.order_id,
+      tenantId,
+    );
+    if (!payment) {
+      return { data: { handled: false, event: event.event ?? null } };
+    }
+
+    if (event.event === "payment.failed") {
+      if (payment.status !== "COMPLETED") {
+        await paymentRepository.markGatewayFailure(payment.id, entity.id);
+      }
+      return { data: { handled: true, event: event.event } };
+    }
+
+    if (event.event === "payment.captured" || event.event === "order.paid") {
+      if (payment.status !== "COMPLETED") {
+        // Confirm against Razorpay rather than the body alone: the signature
+        // proves the message came from Razorpay, not that it says what we think.
+        let remote;
+        try {
+          remote = await fetchPayment(credentials, entity.id);
+        } catch (error) {
+          // A 4xx means Razorpay does not recognise this payment, and retrying
+          // will never change that — acknowledge and stop the retry loop.
+          // Anything else (5xx, network) is transient, so let the delivery fail
+          // and be retried.
+          if (error instanceof RazorpayError && error.status < 500) {
+            return { data: { handled: false, event: event.event } };
+          }
+          throw error;
+        }
+
+        if (remote.status === "captured" || remote.status === "authorized") {
+          await gatewayService.settlePayment(payment.id, entity.id);
+        }
+      }
+      return { data: { handled: true, event: event.event } };
+    }
+
+    return { data: { handled: false, event: event.event ?? null } };
+  },
+};

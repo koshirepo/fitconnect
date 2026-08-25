@@ -217,6 +217,9 @@ export const paymentRepository = {
     paidAt?: Date;
     validFrom?: Date;
     validUntil?: Date;
+    gateway?: string;
+    gatewayOrderId?: string;
+    gatewayAccount?: string;
   }) {
     return prisma.payment.create({
       data,
@@ -481,6 +484,133 @@ export const paymentRepository = {
   },
 
   /** Recalculate and persist the membership's dueDate from its latest payment validUntil. */
+  // ─── Gateway payments ───────────────────────────────────────────────────────
+
+  /**
+   * The member and badges behind an online checkout.
+   *
+   * Badges are loaded because plan eligibility is badge-gated, and the check has
+   * to happen server-side: the browser picks the plan, but it does not get to
+   * decide whether the member qualifies for it.
+   */
+  findCheckoutMembership(tenantId: string, userId: string) {
+    return prisma.tenantMembership.findUnique({
+      where: { tenantId_userId: { tenantId, userId } },
+      select: { id: true, status: true, badges: { select: { id: true } } },
+    });
+  },
+
+  /** A plan with the fields checkout prices and dates a membership from. */
+  findCheckoutSubscription(subscriptionId: string, tenantId: string) {
+    return prisma.subscription.findFirst({
+      where: { id: subscriptionId, tenantId },
+      select: {
+        id: true,
+        title: true,
+        amount: true,
+        durationDays: true,
+        isActive: true,
+        badges: { select: { id: true } },
+      },
+    });
+  },
+
+  /**
+   * Find a payment by the gateway order it was opened against.
+   *
+   * `gatewayOrderId` is unique, and the tenant is part of the filter, so a
+   * webhook aimed at one gym cannot settle another gym's payment.
+   */
+  findPaymentByOrderId(gatewayOrderId: string, tenantId: string) {
+    return prisma.payment.findFirst({
+      where: { gatewayOrderId, tenantId },
+      select: {
+        id: true,
+        status: true,
+        amount: true,
+        membershipId: true,
+        gatewayOrderId: true,
+        gatewayPaymentId: true,
+        subscription: { select: { id: true, title: true, durationDays: true } },
+      },
+    });
+  },
+
+  /**
+   * Mark a gateway payment paid and give it its validity window.
+   *
+   * The window is set here rather than when the order was opened, so an
+   * abandoned checkout never extends a membership: an unpaid PENDING row
+   * carries no dates for `refreshDueDate` to pick up.
+   */
+  async settleGatewayPayment(paymentId: string, gatewayPaymentId: string) {
+    const existing = await prisma.payment.findUniqueOrThrow({
+      where: { id: paymentId },
+      select: { subscription: { select: { durationDays: true } } },
+    });
+
+    const paidAt = new Date();
+    const validUntil = existing.subscription
+      ? new Date(paidAt.getTime() + existing.subscription.durationDays * 24 * 60 * 60 * 1000)
+      : null;
+
+    return prisma.payment.update({
+      where: { id: paymentId },
+      data: {
+        status: "COMPLETED",
+        gatewayPaymentId,
+        paidAt,
+        validFrom: paidAt,
+        validUntil,
+      },
+      select: {
+        id: true,
+        amount: true,
+        status: true,
+        paidAt: true,
+        membershipId: true,
+        validFrom: true,
+        validUntil: true,
+        description: true,
+      },
+    });
+  },
+
+  markGatewayFailure(paymentId: string, gatewayPaymentId: string) {
+    return prisma.payment.update({
+      where: { id: paymentId },
+      data: { status: "FAILED", gatewayPaymentId },
+      select: { id: true, status: true },
+    });
+  },
+
+  /**
+   * Bring a lapsed member back once a payment carries them to today or beyond.
+   *
+   * Compared at UTC day granularity, matching how `createPayment` reactivates
+   * after a manually recorded payment.
+   */
+  async reactivateIfPaidUp(membershipId: string) {
+    const membership = await prisma.tenantMembership.findUnique({
+      where: { id: membershipId },
+      select: { status: true, dueDate: true },
+    });
+
+    if (!membership || membership.status === "ACTIVE" || !membership.dueDate) return;
+
+    const due = membership.dueDate;
+    const now = new Date();
+    const dueUtc = Date.UTC(due.getUTCFullYear(), due.getUTCMonth(), due.getUTCDate());
+    const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+
+    if (dueUtc >= todayUtc) {
+      await prisma.tenantMembership.update({
+        where: { id: membershipId },
+        data: { status: "ACTIVE" },
+      });
+    }
+  },
+
   async refreshDueDate(membershipId: string) {
     const latest = await prisma.payment.findFirst({
       where: { membershipId, validUntil: { not: null } },

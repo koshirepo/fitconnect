@@ -40,6 +40,7 @@ import {
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PageLoader } from "@/components/ui/spinner";
+import PaymentGatewayCard from "./PaymentGatewayCard";
 
 function formatAmount(amount: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -329,6 +330,8 @@ export default function GymSettingsPage() {
           </Button>
         </CardContent>
       </Card>
+
+      <PaymentGatewayCard />
 
       {/* General Settings */}
       <Card>
