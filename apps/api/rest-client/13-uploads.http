@@ -1,0 +1,45 @@
+# Documentation: 13-uploads.http REST client collection.
+# - Covers avatar and product image uploads against the R2-backed upload endpoints.
+# - These requests require a working bucket binding, `R2_PUBLIC_URL`, and the sample fixture path declared in the multipart body.
+# - These requests are written for the VS Code REST Client extension and use its response-variable syntax extensively.
+@baseUrl = http://127.0.0.1:8787
+@seedPassword = Test@1234
+@adminEmail = admin.seed-gym-1@seed.gym.test
+
+### These requests require:
+### - a working R2 bucket binding
+### - R2_PUBLIC_URL configured for local dev
+### - the bundled 1x1 PNG fixture below
+
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin.seed-gym-1@seed.gym.test",
+  "password": "Test@1234"
+}
+
+### Upload avatar image
+POST {{baseUrl}}/uploads/avatar
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: multipart/form-data; boundary=RestClientBoundary
+
+--RestClientBoundary
+Content-Disposition: form-data; name="file"; filename="1x1.png"
+Content-Type: image/png
+
+< ./fixtures/1x1.png
+--RestClientBoundary--
+
+### Upload product photo
+POST {{baseUrl}}/uploads/product-photo
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: multipart/form-data; boundary=RestClientBoundary
+
+--RestClientBoundary
+Content-Disposition: form-data; name="file"; filename="1x1.png"
+Content-Type: image/png
+
+< ./fixtures/1x1.png
+--RestClientBoundary--

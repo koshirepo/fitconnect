@@ -1,0 +1,53 @@
+{
+  "name": "@fitconnect/api",
+  "version": "0.1.0",
+  "description": "Gym management API for Cloudflare Workers using Hono, Prisma, D1, R2, email, push notifications, and REST client collections.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "postinstall": "node scripts/ensure-prisma-client.mjs",
+    "prebuild": "node scripts/ensure-prisma-client.mjs",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "predev": "node scripts/ensure-prisma-client.mjs",
+    "dev": "wrangler dev",
+    "predeploy": "node scripts/ensure-prisma-client.mjs",
+    "deploy": "wrangler deploy --env production",
+    "pretypecheck": "node scripts/ensure-prisma-client.mjs",
+    "typecheck": "tsc --noEmit",
+    "generate": "prisma generate",
+    "seed:local": "node scripts/ensure-prisma-client.mjs seed-local",
+    "seed:remote": "npm run db:migrate:remote && node scripts/ensure-prisma-client.mjs seed-remote",
+    "seed:remote:sql": "node scripts/ensure-prisma-client.mjs seed-remote --no-execute",
+    "import:legacy:tenant": "node scripts/import-legacy-tenant.mjs",
+    "db:migration:init": "prisma migrate diff --from-empty --to-schema ./prisma/schema.prisma --script --output prisma/migrations/0001_init.sql",
+    "db:migration:diff": "prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script",
+    "db:migrate:local": "wrangler d1 migrations apply fit-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply fit-db --remote --env production",
+    "cf-typegen": "wrangler types",
+    "deploy:test": "wrangler deploy --env test",
+    "deploy:production": "wrangler deploy --env production",
+    "db:migrate:test": "wrangler d1 migrations apply fit-db-test --remote --env test",
+    "db:migrate:production": "wrangler d1 migrations apply fit-db --remote --env production",
+    "secrets:test": "node scripts/put-secrets.mjs test",
+    "secrets:production": "node scripts/put-secrets.mjs production"
+  },
+  "dependencies": {
+    "@prisma/adapter-d1": "^7.5.0",
+    "@prisma/client": "^7.5.0",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.3.1",
+    "hono": "^4.12.9",
+    "jose": "^6.2.2",
+    "nodemailer": "^8.0.4",
+    "web-push": "^3.6.7",
+    "zod": "^4.3.6",
+    "@fitconnect/shared": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@types/nodemailer": "^7.0.11",
+    "prisma": "^7.5.0",
+    "typescript": "^6.0.2",
+    "wrangler": "^4.77.0"
+  }
+}

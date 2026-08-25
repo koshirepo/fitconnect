@@ -1,0 +1,40 @@
+# Documentation: 12-push.http REST client collection.
+# - Exercises browser push subscription registration and unsubscription endpoints.
+# - Use a real browser-generated subscription payload if you want to validate end-to-end delivery instead of schema acceptance only.
+# - These requests are written for the VS Code REST Client extension and use its response-variable syntax extensively.
+@baseUrl = http://127.0.0.1:8787
+@json = application/json
+@seedPassword = Test@1234
+@memberEmail = member.1.seed-gym-1@seed.gym.test
+@endpoint = https://push.seed.gym.test/subscriptions/rest-client-endpoint
+
+# @name memberLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "member.1.seed-gym-1@seed.gym.test",
+  "password": "Test@1234"
+}
+
+### Subscribe the current user to push notifications
+POST {{baseUrl}}/push/subscribe
+Authorization: Bearer {{memberLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "endpoint": "{{endpoint}}",
+  "keys": {
+    "p256dh": "test-p256dh-key",
+    "auth": "test-auth-key"
+  }
+}
+
+### Unsubscribe the endpoint
+POST {{baseUrl}}/push/unsubscribe
+Authorization: Bearer {{memberLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "endpoint": "{{endpoint}}"
+}

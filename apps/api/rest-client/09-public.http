@@ -1,0 +1,12 @@
+# Documentation: 09-public.http REST client collection.
+# - Covers the unauthenticated public gym directory and tenant profile endpoints.
+# - These requests are useful for smoke-testing the public catalog without setting up auth headers.
+# - These requests are written for the VS Code REST Client extension and use its response-variable syntax extensively.
+@baseUrl = http://127.0.0.1:8787
+@tenantSlug = seed-gym-1
+
+### List public gyms
+GET {{baseUrl}}/public/gyms?page=1&limit=20
+
+### Get one public gym by slug
+GET {{baseUrl}}/public/gyms/{{tenantSlug}}

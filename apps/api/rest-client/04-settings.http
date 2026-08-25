@@ -1,0 +1,61 @@
+# Documentation: 04-settings.http REST client collection.
+# - Exercises tenant settings retrieval/update plus the CRUD flow for extra tenant charges.
+# - Use an admin token for write requests because the charge catalog drives downstream payment behavior.
+# - These requests are written for the VS Code REST Client extension and use its response-variable syntax extensively.
+@baseUrl = http://127.0.0.1:8787
+@json = application/json
+@seedPassword = Test@1234
+@tenantId = tenant_0001
+@adminEmail = admin.seed-gym-1@seed.gym.test
+
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin.seed-gym-1@seed.gym.test",
+  "password": "Test@1234"
+}
+
+### Get tenant settings
+GET {{baseUrl}}/tenants/{{tenantId}}/settings
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### Update tenant settings
+PUT {{baseUrl}}/tenants/{{tenantId}}/settings
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "overdueDays": 21
+}
+
+### List charges
+GET {{baseUrl}}/tenants/{{tenantId}}/charges
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### Create a charge
+# @name createCharge
+POST {{baseUrl}}/tenants/{{tenantId}}/charges
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "REST Client Charge {{$timestamp}}",
+  "amount": 75000,
+  "isMandatory": false
+}
+
+### Update the new charge
+PATCH {{baseUrl}}/tenants/{{tenantId}}/charges/{{createCharge.response.body.$.data.charge.id}}
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "amount": 65000,
+  "isActive": true
+}
+
+### Delete the new charge
+DELETE {{baseUrl}}/tenants/{{tenantId}}/charges/{{createCharge.response.body.$.data.charge.id}}
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}

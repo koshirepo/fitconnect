@@ -1,0 +1,80 @@
+# Documentation: 00-auth.http REST client collection.
+# - Exercises authentication bootstrap, login, token refresh, current-user lookup, platform-user creation, and password reset endpoints.
+# - Run the named login request first when you need bearer tokens for the later calls in this file.
+# - These requests are written for the VS Code REST Client extension and use its response-variable syntax extensively.
+@baseUrl = https://fit-api.koshimicrosystem.workers.dev/
+@json = application/json
+@seedPassword = Test@1234
+@superAdminEmail = superadmin@seed.gym.test
+
+### Bootstrap a super admin on an empty database only
+POST {{baseUrl}}/auth/bootstrap/super-admin
+Content-Type: application/json
+
+{
+  "name": "Bootstrap Admin",
+  "email": "bootstrap.superadmin@seed.gym.test",
+  "phone": "919100000001",
+  "password": "Test@1234"
+}
+
+### Login as seeded super admin
+# @name loginSuperAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@seed.gym.test",
+  "password": "Test@1234"
+}
+
+### Refresh access token
+# @name refreshSuperAdmin
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{loginSuperAdmin.response.body.$.data.refreshToken}}"
+}
+
+### Read current user profile
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{loginSuperAdmin.response.body.$.data.accessToken}}
+
+### Create a platform support user
+POST {{baseUrl}}/auth/platform-users
+Authorization: Bearer {{loginSuperAdmin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "REST Client Support {{$timestamp}}",
+  "email": "rest.platform.{{$timestamp}}@seed.gym.test",
+  "phone": "91{{$timestamp}}",
+  "role": "SUPPORT"
+}
+
+### Trigger forgot-password flow
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "superadmin@seed.gym.test"
+}
+
+### Reset password with a real token from email or DB
+POST {{baseUrl}}/auth/reset-password
+Content-Type: application/json
+
+{
+  "token": "paste-real-reset-token-here",
+  "password": "Test@1234"
+}
+
+### Logout using the issued refresh token
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{loginSuperAdmin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{loginSuperAdmin.response.body.$.data.refreshToken}}"
+}

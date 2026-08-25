@@ -1,0 +1,84 @@
+# Documentation: 01-tenants.http REST client collection.
+# - Covers tenant creation, listing, detail retrieval, updates, and tenant-level administration flows.
+# - This file mixes tenant id and slug lookups; keep the declared variables accurate when switching between seed data and custom fixtures.
+# - These requests are written for the VS Code REST Client extension and use its response-variable syntax extensively.
+@baseUrl = http://127.0.0.1:8787
+@json = application/json
+@seedPassword = Test@1234
+@superAdminEmail = superadmin@seed.gym.test
+@tenantId = tenant_0001
+@tenantSlug = seed-gym-1
+
+### Tenant detail currently resolves by slug in the controller.
+### Tenant update/status endpoints are more reliable with the raw tenant id.
+
+# @name superAdminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@seed.gym.test",
+  "password": "Test@1234"
+}
+
+### List tenants
+GET {{baseUrl}}/tenants?page=1&limit=10
+Authorization: Bearer {{superAdminLogin.response.body.$.data.accessToken}}
+
+### Get tenant detail by slug
+GET {{baseUrl}}/tenants/{{tenantSlug}}
+Authorization: Bearer {{superAdminLogin.response.body.$.data.accessToken}}
+
+### Create a tenant
+# @name createTenant
+POST {{baseUrl}}/tenants
+Authorization: Bearer {{superAdminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "REST Client Gym {{$timestamp}}",
+  "slug": "rest-client-gym-{{$timestamp}}",
+  "email": "gym.{{$timestamp}}@seed.gym.test",
+  "phone": "91{{$timestamp}}",
+  "address": "101 REST Client Road, Bengaluru",
+  "description": "Created from the VS Code REST Client request set.",
+  "admin": {
+    "name": "REST Tenant Admin",
+    "email": "tenant.admin.{{$timestamp}}@seed.gym.test",
+    "phone": "92{{$timestamp}}"
+  }
+}
+
+### Update seeded tenant by raw id
+PATCH {{baseUrl}}/tenants/{{tenantId}}
+Authorization: Bearer {{superAdminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "description": "Updated from rest-client/01-tenants.http",
+  "address": "102 Updated REST Lane, Bengaluru"
+}
+
+### Suspend or reactivate seeded tenant by raw id
+PATCH {{baseUrl}}/tenants/{{tenantId}}/status
+Authorization: Bearer {{superAdminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "status": "ACTIVE"
+}
+
+### Record a platform payment on the seeded tenant by slug
+POST {{baseUrl}}/tenants/{{tenantSlug}}/platform-payments
+Authorization: Bearer {{superAdminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "amount": 250000,
+  "note": "REST Client test platform payment",
+  "extendsUntil": "2027-12-31T00:00:00.000Z"
+}
+
+### List platform payments by slug
+GET {{baseUrl}}/tenants/{{tenantSlug}}/platform-payments?page=1&limit=10
+Authorization: Bearer {{superAdminLogin.response.body.$.data.accessToken}}

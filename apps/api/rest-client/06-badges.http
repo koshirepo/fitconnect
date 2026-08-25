@@ -1,0 +1,75 @@
+# Documentation: 06-badges.http REST client collection.
+# - Exercises badge catalog management and badge assignment/removal for tenant members.
+# - Badge writes require admin privileges, so reuse an elevated token from the login request at the top of the file.
+# - These requests are written for the VS Code REST Client extension and use its response-variable syntax extensively.
+@baseUrl = http://127.0.0.1:8787
+@json = application/json
+@seedPassword = Test@1234
+@tenantId = tenant_0001
+@adminEmail = admin.seed-gym-1@seed.gym.test
+@memberMembershipId = membership_0004
+
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin.seed-gym-1@seed.gym.test",
+  "password": "Test@1234"
+}
+
+### List badges
+GET {{baseUrl}}/tenants/{{tenantId}}/badges?page=1&limit=10&includeInactive=true
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### Create a badge
+# @name createBadge
+POST {{baseUrl}}/tenants/{{tenantId}}/badges
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "REST Client Badge {{$timestamp}}",
+  "description": "Created from the badge REST Client file.",
+  "color": "#1d4ed8",
+  "icon": "star"
+}
+
+### Get the created badge
+GET {{baseUrl}}/tenants/{{tenantId}}/badges/{{createBadge.response.body.$.data.badge.id}}
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### Update the created badge
+PATCH {{baseUrl}}/tenants/{{tenantId}}/badges/{{createBadge.response.body.$.data.badge.id}}
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "description": "Updated from REST Client",
+  "color": "#0f766e"
+}
+
+### Assign the badge to a seeded member
+POST {{baseUrl}}/tenants/{{tenantId}}/badges/{{createBadge.response.body.$.data.badge.id}}/assign
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "membershipId": "{{memberMembershipId}}"
+}
+
+### List badge assignments
+GET {{baseUrl}}/tenants/{{tenantId}}/badges/{{createBadge.response.body.$.data.badge.id}}/assignments
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### List badges for a member
+GET {{baseUrl}}/tenants/{{tenantId}}/members/{{memberMembershipId}}/badges
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### Unassign the badge
+DELETE {{baseUrl}}/tenants/{{tenantId}}/badges/{{createBadge.response.body.$.data.badge.id}}/assign/{{memberMembershipId}}
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### Delete the badge
+DELETE {{baseUrl}}/tenants/{{tenantId}}/badges/{{createBadge.response.body.$.data.badge.id}}
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}

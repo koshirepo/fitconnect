@@ -1,0 +1,113 @@
+# Documentation: Cloudflare Worker deployment configuration.
+# - Declares the Worker entrypoint, compatibility settings, and the D1/R2 bindings consumed by the runtime code.
+# - Binding names in this file must remain aligned with `src/index.ts`, `src/lib/prisma.ts`, and the upload routes before local or remote deploys will work.
+#
+# Environments
+# ------------
+#   (top level)   local development — `npm run dev`, backed by the local miniflare D1/R2 state
+#   env.test      shared test deployment — `npm run deploy:test`
+#   env.production live deployment      — `npm run deploy:production`
+#
+# Wrangler does NOT inherit `vars`, `d1_databases`, `r2_buckets`, or `triggers`
+# into named environments, so each block below repeats everything it needs.
+#
+# Secrets are NOT stored here. Set them per environment with:
+#   npx wrangler secret put JWT_SECRET --env test
+#   npx wrangler secret put EMAIL_USER --env test
+#   npx wrangler secret put EMAIL_PASSWORD --env test
+#   npx wrangler secret put VAPID_PRIVATE_KEY --env test
+# and again with `--env production`. For local development put the same keys in
+# `.dev.vars` (gitignored) — see `.dev.vars.example`.
+
+name = "fitconnect-api-dev"
+main = "src/index.ts"
+compatibility_date = "2026-03-27"
+compatibility_flags = ["nodejs_compat"]
+
+[triggers]
+crons = ["30 3 * * *"] # Daily at 03:30 UTC / 09:00 IST for tenant reports
+
+[[d1_databases]]
+binding = "DB"
+database_name = "fit-db"
+database_id = "36389687-c406-4607-9232-ef411bb0d754"
+migrations_dir = "prisma/migrations"
+
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "fit-bucket"
+
+[vars]
+APP_URL = "http://localhost:5173"
+APP_ROOT_DOMAINS = "localhost"
+R2_PUBLIC_URL = "https://pub-f9794d5233bf467ca886bdf6c65a7cbe.r2.dev"
+CORS_ORIGIN = "http://localhost:5173"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = "587"
+EMAIL_SECURE = "false"
+EMAIL_FROM = "Fit Connect <rudragymbakhri@gmail.com>"
+VAPID_EMAIL = "mailto:rudragymbakhri@gmail.com"
+VAPID_PUBLIC_KEY = "BGM8SxeUeDufKP-etZ5Q-GJpW9GTmBhay_fGHK2vBlsIWVfbsbHzPD_TLVbSl35oBOnjL2qdG47YibTHhwASP2c"
+
+# ─── Test ─────────────────────────────────────────────────────────────────────
+# Create the backing resources once, then paste the returned database_id below:
+#   npx wrangler d1 create fit-db-test
+#   npx wrangler r2 bucket create fit-bucket-test
+
+[env.test]
+name = "fitconnect-api-test"
+
+[env.test.triggers]
+crons = ["30 3 * * *"]
+
+[[env.test.d1_databases]]
+binding = "DB"
+database_name = "fit-db-test"
+database_id = "REPLACE_WITH_TEST_D1_DATABASE_ID"
+migrations_dir = "prisma/migrations"
+
+[[env.test.r2_buckets]]
+binding = "FILES"
+bucket_name = "fit-bucket-test"
+
+[env.test.vars]
+APP_URL = "https://test.fitconnect.co.in"
+APP_ROOT_DOMAINS = "test.fitconnect.co.in"
+R2_PUBLIC_URL = "https://pub-f9794d5233bf467ca886bdf6c65a7cbe.r2.dev"
+CORS_ORIGIN = "https://test.fitconnect.co.in"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = "587"
+EMAIL_SECURE = "false"
+EMAIL_FROM = "Fit Connect (Test) <rudragymbakhri@gmail.com>"
+VAPID_EMAIL = "mailto:rudragymbakhri@gmail.com"
+VAPID_PUBLIC_KEY = "BGM8SxeUeDufKP-etZ5Q-GJpW9GTmBhay_fGHK2vBlsIWVfbsbHzPD_TLVbSl35oBOnjL2qdG47YibTHhwASP2c"
+
+# ─── Production ───────────────────────────────────────────────────────────────
+
+[env.production]
+name = "fitconnect-api"
+
+[env.production.triggers]
+crons = ["30 3 * * *"]
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "fit-db"
+database_id = "36389687-c406-4607-9232-ef411bb0d754"
+migrations_dir = "prisma/migrations"
+
+[[env.production.r2_buckets]]
+binding = "FILES"
+bucket_name = "fit-bucket"
+
+[env.production.vars]
+APP_URL = "https://fitconnect.co.in"
+APP_ROOT_DOMAINS = "fitconnect.co.in"
+R2_PUBLIC_URL = "https://pub-f9794d5233bf467ca886bdf6c65a7cbe.r2.dev"
+CORS_ORIGIN = "https://fitconnect.co.in"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = "587"
+EMAIL_SECURE = "false"
+EMAIL_FROM = "Fit Connect <rudragymbakhri@gmail.com>"
+VAPID_EMAIL = "mailto:rudragymbakhri@gmail.com"
+VAPID_PUBLIC_KEY = "BGM8SxeUeDufKP-etZ5Q-GJpW9GTmBhay_fGHK2vBlsIWVfbsbHzPD_TLVbSl35oBOnjL2qdG47YibTHhwASP2c"

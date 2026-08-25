@@ -1,0 +1,74 @@
+# Documentation: 05-workouts.http REST client collection.
+# - Covers workout-plan CRUD, assignment, and plan visibility endpoints for staff and members.
+# - Run the staff-auth request in this file first because most workout operations are tenant-scoped and role-gated.
+# - These requests are written for the VS Code REST Client extension and use its response-variable syntax extensively.
+@baseUrl = http://127.0.0.1:8787
+@json = application/json
+@seedPassword = Test@1234
+@tenantId = tenant_0001
+@adminEmail = admin.seed-gym-1@seed.gym.test
+@memberMembershipId = membership_0004
+@seedPlanId = workout_plan_0004
+
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin.seed-gym-1@seed.gym.test",
+  "password": "Test@1234"
+}
+
+### List workout plans
+GET {{baseUrl}}/tenants/{{tenantId}}/workout-plans?page=1&limit=10
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### Get a seeded workout plan
+GET {{baseUrl}}/tenants/{{tenantId}}/workout-plans/{{seedPlanId}}
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### Create a workout plan
+# @name createPlan
+POST {{baseUrl}}/tenants/{{tenantId}}/workout-plans
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "title": "REST Client Strength Block {{$timestamp}}",
+  "description": "Created from the workout REST Client file.",
+  "exercises": [
+    {
+      "name": "Back Squat",
+      "sets": 5,
+      "reps": 5,
+      "notes": "Progressive overload"
+    },
+    {
+      "name": "Bench Press",
+      "sets": 4,
+      "reps": 8
+    }
+  ]
+}
+
+### Update the new workout plan
+PATCH {{baseUrl}}/tenants/{{tenantId}}/workout-plans/{{createPlan.response.body.$.data.plan.id}}
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "description": "Updated from REST Client after creation."
+}
+
+### Assign the new plan to a seeded member
+POST {{baseUrl}}/tenants/{{tenantId}}/workout-plans/{{createPlan.response.body.$.data.plan.id}}/assign
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "membershipId": "{{memberMembershipId}}"
+}
+
+### Delete the new workout plan
+DELETE {{baseUrl}}/tenants/{{tenantId}}/workout-plans/{{createPlan.response.body.$.data.plan.id}}
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}

@@ -1,0 +1,18 @@
+# Documentation: Local Worker secrets template.
+# - Copy to `.dev.vars` (gitignored) for `npm run dev`. Wrangler injects these as
+#   environment variables alongside the `[vars]` block in wrangler.toml.
+# - The same keys must be set for the deployed environments with
+#   `npx wrangler secret put <KEY> --env test` and `--env production`.
+# - Never commit real values: `.dev.vars` is ignored precisely so they stay local.
+
+# Signing key for access tokens. Any long random string works locally.
+JWT_SECRET="dev-local-jwt-secret-change-me"
+
+# SMTP credentials used for password-reset and report emails.
+# Leave blank locally to skip sending; the API logs the failure and continues.
+EMAIL_USER=""
+EMAIL_PASSWORD=""
+
+# Web Push private key. Must pair with VAPID_PUBLIC_KEY in wrangler.toml.
+# Generate a fresh pair with: npx web-push generate-vapid-keys
+VAPID_PRIVATE_KEY=""

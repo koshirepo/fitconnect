@@ -1,0 +1,97 @@
+# Documentation: 03-payments.http REST client collection.
+# - Covers subscription catalog management, payment recording, dues-oriented queries, and related payment lifecycle operations.
+# - Most requests require an authenticated tenant admin or coach because payment writes affect membership validity.
+# - These requests are written for the VS Code REST Client extension and use its response-variable syntax extensively.
+@baseUrl = http://127.0.0.1:8787
+@json = application/json
+@seedPassword = Test@1234
+@tenantId = tenant_0001
+@adminEmail = admin.seed-gym-1@seed.gym.test
+@memberEmail = member.1.seed-gym-1@seed.gym.test
+@memberMembershipId = membership_0004
+@chargeId = charge_0001
+
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin.seed-gym-1@seed.gym.test",
+  "password": "Test@1234"
+}
+
+# @name memberLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "member.1.seed-gym-1@seed.gym.test",
+  "password": "Test@1234"
+}
+
+### List subscriptions
+GET {{baseUrl}}/tenants/{{tenantId}}/subscriptions
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### Create a subscription
+# @name createSubscription
+POST {{baseUrl}}/tenants/{{tenantId}}/subscriptions
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "title": "REST Client Plan {{$timestamp}}",
+  "description": "Created from the REST Client payment file.",
+  "amount": 199900,
+  "durationDays": 45
+}
+
+### List payments
+GET {{baseUrl}}/tenants/{{tenantId}}/payments?page=1&limit=10&status=COMPLETED
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### Create a charge payment
+# @name createPayment
+POST {{baseUrl}}/tenants/{{tenantId}}/payments
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "membershipId": "{{memberMembershipId}}",
+  "chargeId": "{{chargeId}}",
+  "description": "REST Client custom payment",
+  "note": "Created via rest-client/03-payments.http",
+  "status": "COMPLETED",
+  "amount": 49900
+}
+
+### Get created payment detail
+GET {{baseUrl}}/tenants/{{tenantId}}/payments/{{createPayment.response.body.$.data.payment.id}}
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+
+### Update payment status
+PATCH {{baseUrl}}/tenants/{{tenantId}}/payments/{{createPayment.response.body.$.data.payment.id}}
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "status": "REFUNDED"
+}
+
+### Update payment fields
+PUT {{baseUrl}}/tenants/{{tenantId}}/payments/{{createPayment.response.body.$.data.payment.id}}
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
+Content-Type: application/json
+
+{
+  "amount": 39900,
+  "note": "Updated from REST Client"
+}
+
+### Member view of own payments
+GET {{baseUrl}}/tenants/{{tenantId}}/my-payments
+Authorization: Bearer {{memberLogin.response.body.$.data.accessToken}}
+
+### Payment analytics
+GET {{baseUrl}}/tenants/{{tenantId}}/payments/analytics
+Authorization: Bearer {{adminLogin.response.body.$.data.accessToken}}
