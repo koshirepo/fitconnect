@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useAuthStore } from "@/stores/auth";
-import { tenantsApi } from "@/api/tenants";
+import { useMyProfile, useUpdateMyProfile } from "@/api/queries/members";
 import { uploadsApi } from "@/api/uploads";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
@@ -20,13 +20,17 @@ import { PhotoCapture } from "@/components/ui/photo-capture";
 import { PageLoader } from "@/components/ui/spinner";
 import { Camera } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
-import type { TenantProfile } from "@/types/api";
 
 export default function ProfilePage() {
   const { currentTenantId, user } = useAuthStore();
 
-  const [profile, setProfile] = React.useState<TenantProfile | null>(null);
-  const [loading, setLoading] = React.useState(true);
+  const profileQuery = useMyProfile();
+  const profile = profileQuery.data ?? null;
+  const loading = profileQuery.isLoading;
+
+  // Both saves invalidate the members key, which this profile query lives under,
+  // so the refreshed profile arrives without a manual re-read.
+  const updateProfile = useUpdateMyProfile();
 
   // Edit form
   const [editing, setEditing] = React.useState(false);
@@ -46,24 +50,11 @@ export default function ProfilePage() {
   const currentPhoto = profile?.avatarUrl ?? null;
   const photoChanged = photoFile !== null || photoPreview !== currentPhoto;
 
+  // Seed the name field once the profile arrives, without clobbering an edit in
+  // progress if the query refetches in the background.
   React.useEffect(() => {
-    if (!currentTenantId) {
-      setLoading(false);
-      return;
-    }
-    const load = async () => {
-      try {
-        const res = await tenantsApi.getMyProfile(currentTenantId);
-        setProfile(res.data.data.profile);
-        setFName(res.data.data.profile.name);
-      } catch {
-        //
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [currentTenantId]);
+    if (profile && !editing) setFName(profile.name);
+  }, [profile, editing]);
 
   const handlePhotoSave = async () => {
     if (!currentTenantId || !profile || !photoChanged) return;
@@ -77,13 +68,7 @@ export default function ProfilePage() {
         avatarUrl = uploadRes.data.data.url;
       }
 
-      await tenantsApi.updateMyProfile(currentTenantId, {
-        avatarUrl: avatarUrl ?? null,
-      });
-
-      // Refresh profile
-      const res = await tenantsApi.getMyProfile(currentTenantId);
-      setProfile(res.data.data.profile);
+      await updateProfile.mutateAsync({ avatarUrl: avatarUrl ?? null });
       setPhotoDialogOpen(false);
       setPhotoFile(null);
       setPhotoPreview(null);
@@ -109,15 +94,11 @@ export default function ProfilePage() {
         payload.newPassword = fNewPwd;
       }
 
-      await tenantsApi.updateMyProfile(currentTenantId, payload);
+      await updateProfile.mutateAsync(payload);
       setFormSuccess("Profile updated successfully!");
       setEditing(false);
       setFCurrentPwd("");
       setFNewPwd("");
-
-      // Refresh profile
-      const res = await tenantsApi.getMyProfile(currentTenantId);
-      setProfile(res.data.data.profile);
     } catch (err) {
       setFormError(getApiError(err));
     } finally {

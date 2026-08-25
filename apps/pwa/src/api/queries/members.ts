@@ -20,6 +20,7 @@ import {
   unwrap,
   unwrapPaginated,
   useCurrentTenantId,
+  useTenantInfiniteQuery,
   useTenantMutation,
   useTenantQuery,
 } from "./shared";
@@ -95,19 +96,44 @@ export function useMember(membershipId: string | undefined) {
   );
 }
 
-export function useReferrals(filters: { page?: number; limit?: number; search?: string } = {}) {
-  return useTenantQuery(
-    (tenantId) => [...queryKeys.members.list(tenantId, { referrals: true, ...filters })],
-    async (tenantId) =>
-      unwrapPaginated(
+/** The referral leaderboard, paged for infinite scroll. */
+export function useReferralsInfinite(
+  filters: { search?: string; order?: "asc" | "desc" } = {},
+  options: { enabled?: boolean; limit?: number } = {},
+) {
+  const { limit = 20 } = options;
+  return useTenantInfiniteQuery(
+    (tenantId) => [
+      ...queryKeys.members.list(tenantId, { referrals: true, ...filters }),
+      "infinite",
+      limit,
+    ],
+    async (tenantId, page) => {
+      const { data, meta } = unwrapPaginated(
         await tenantsApi.listReferrals(
           tenantId,
-          filters.page ?? 1,
-          filters.limit ?? 20,
+          page,
+          limit,
           filters.search,
+          filters.order ?? "desc",
         ),
-      ),
-    { placeholderData: keepPreviousData },
+      );
+      return { data: data.referrals, meta };
+    },
+    options,
+  );
+}
+
+/**
+ * The gym's member report.
+ * Generated server-side on each call, so it is kept fresher than the default —
+ * a stale finance report is worse than a brief spinner.
+ */
+export function useMemberReport(options: { enabled?: boolean } = {}) {
+  return useTenantQuery(
+    (tenantId) => [...queryKeys.members.list(tenantId), "report"],
+    async (tenantId) => unwrap(await tenantsApi.generateReport(tenantId)),
+    { staleTime: 0, ...options },
   );
 }
 

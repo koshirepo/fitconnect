@@ -1,7 +1,8 @@
 import * as React from "react";
-import { useAuthStore } from "@/stores/auth";
 import { tenantsApi } from "@/api/tenants";
 import { paymentsApi } from "@/api/payments";
+import { useMemberReport } from "@/api/queries/members";
+import { usePaymentAnalytics } from "@/api/queries/payments";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -106,35 +107,19 @@ function CustomTooltip({
 }
 
 export default function FinanceReportsPage() {
-  const { currentTenantId } = useAuthStore();
   const navigate = useNavigate();
 
-  const [loading, setLoading] = React.useState(true);
-  const [report, setReport] = React.useState<ReportData | null>(null);
-  const [analytics, setAnalytics] = React.useState<AnalyticsData | null>(null);
-  const [error, setError] = React.useState("");
+  const reportQuery = useMemberReport();
+  const analyticsQuery = usePaymentAnalytics();
 
-  const loadReport = React.useCallback(async () => {
-    if (!currentTenantId) return;
-    setLoading(true);
-    setError("");
-    try {
-      const [reportRes, analyticsRes] = await Promise.all([
-        tenantsApi.generateReport(currentTenantId),
-        paymentsApi.analytics(currentTenantId),
-      ]);
-      setReport(reportRes.data.data);
-      setAnalytics(analyticsRes.data.data.analytics);
-    } catch (err: unknown) {
-      setError(getApiError(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [currentTenantId]);
-
-  React.useEffect(() => {
-    loadReport();
-  }, [loadReport]);
+  const report = (reportQuery.data as ReportData | undefined) ?? null;
+  const analytics = (analyticsQuery.data?.analytics as AnalyticsData | undefined) ?? null;
+  const loading = reportQuery.isLoading || analyticsQuery.isLoading;
+  const error = reportQuery.isError
+    ? getApiError(reportQuery.error)
+    : analyticsQuery.isError
+      ? getApiError(analyticsQuery.error)
+      : "";
 
   if (loading && !report) return <PageLoader />;
 
@@ -226,7 +211,14 @@ export default function FinanceReportsPage() {
             Complete overview of your gym's performance, members, and finances
           </p>
         </div>
-        <Button onClick={loadReport} disabled={loading} size="sm">
+        <Button
+          onClick={() => {
+            void reportQuery.refetch();
+            void analyticsQuery.refetch();
+          }}
+          disabled={loading}
+          size="sm"
+        >
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
           {loading ? "Refreshing…" : "Refresh"}
         </Button>

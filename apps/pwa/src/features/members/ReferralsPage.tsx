@@ -2,8 +2,8 @@ import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { tenantsApi } from "@/api/tenants";
-import { useAuthStore } from "@/stores/auth";
+import { useReferralsInfinite } from "@/api/queries/members";
+import { flattenPages } from "@/api/queries/shared";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageLoader, Spinner } from "@/components/ui/spinner";
-import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
+import { useInfiniteScroll } from "@/lib/use-infinite-scroll";
 import { formatDate } from "@/lib/utils";
 import { ArrowUpDown, Search, Sparkles, UserPlus, Users, X } from "lucide-react";
 import type { MemberReferralLeader } from "@/types/api";
@@ -23,16 +23,8 @@ import AvatarCard from "@/components/ui/avatarCard";
 export default function ReferralsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { currentTenantId } = useAuthStore();
   const { can } = usePermissions();
   const canViewReferrals = can(Permission.MEMBERS_REFERRALS_READ);
-
-  const [leaders, setLeaders] = React.useState<MemberReferralLeader[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [loadingMore, setLoadingMore] = React.useState(false);
-  const [page, setPage] = React.useState(1);
-  const [hasMore, setHasMore] = React.useState(true);
-  const [total, setTotal] = React.useState(0);
 
   const search = searchParams.get("search") ?? "";
   const order = searchParams.get("order") === "asc" ? "asc" : "desc";
@@ -58,73 +50,30 @@ export default function ReferralsPage() {
     [setSearchParams],
   );
 
-  const fetchLeaders = React.useCallback(
-    async (nextPage: number, mode: "replace" | "append") => {
-      if (!currentTenantId || !canViewReferrals) return;
-
-      if (mode === "replace") {
-        setLoading(true);
-      } else {
-        setLoadingMore(true);
-      }
-
-      try {
-        const res = await tenantsApi.listReferrals(
-          currentTenantId,
-          nextPage,
-          20,
-          search || undefined,
-          order,
-        );
-
-        const nextLeaders = res.data.data.referrals;
-        setLeaders((prev) =>
-          mode === "replace" ? nextLeaders : appendUniqueById(prev, nextLeaders),
-        );
-        setTotal(res.data.meta.total);
-        setPage(nextPage);
-        setHasMore(nextPage < res.data.meta.totalPages);
-      } catch {
-        if (mode === "replace") {
-          setLeaders([]);
-          setTotal(0);
-          setHasMore(false);
-        }
-      } finally {
-        if (mode === "replace") {
-          setLoading(false);
-        } else {
-          setLoadingMore(false);
-        }
-      }
-    },
-    [currentTenantId, canViewReferrals, search, order],
+  // Search and sort are part of the cache key, so changing either refetches from
+  // page one without any manual reset.
+  const leadersQuery = useReferralsInfinite(
+    { search: search || undefined, order },
+    { enabled: canViewReferrals },
   );
 
-  React.useEffect(() => {
-    if (!currentTenantId || !canViewReferrals) {
-      setLoading(false);
-      setLeaders([]);
-      setTotal(0);
-      setHasMore(false);
-      return;
-    }
-
-    setLeaders([]);
-    setTotal(0);
-    setHasMore(true);
-    void fetchLeaders(1, "replace");
-  }, [currentTenantId, canViewReferrals, search, order, fetchLeaders]);
-
-  const loadMore = React.useCallback(() => {
-    if (loading || loadingMore || !hasMore) return;
-    void fetchLeaders(page + 1, "append");
-  }, [loading, loadingMore, hasMore, page, fetchLeaders]);
+  const leaders = React.useMemo(
+    () => flattenPages<MemberReferralLeader>(leadersQuery.data?.pages),
+    [leadersQuery.data],
+  );
+  const total = leadersQuery.data?.pages[0]?.meta.total ?? 0;
+  const loading = leadersQuery.isLoading;
+  const loadingMore = leadersQuery.isFetchingNextPage;
+  const hasMore = Boolean(leadersQuery.hasNextPage);
 
   const loadMoreRef = useInfiniteScroll({
     hasMore,
     loading: loading || loadingMore,
-    onLoadMore: loadMore,
+    onLoadMore: () => {
+      if (leadersQuery.hasNextPage && !leadersQuery.isFetchingNextPage) {
+        void leadersQuery.fetchNextPage();
+      }
+    },
     disabled: !canViewReferrals,
   });
 
