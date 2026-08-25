@@ -24,3 +24,7 @@ worker-configuration.d.ts
 
 # Turbo / build caches, if adopted later
 .turbo/
+
+# Local editor/agent tool state
+.commandcode/settings.json
+.commandcode/taste/
