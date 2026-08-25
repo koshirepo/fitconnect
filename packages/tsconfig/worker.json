@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "FitConnect Cloudflare Worker",
+  "_comment": "Preset for Hono/Workers services. Extend this from any new API app added to the workspace.",
+  "extends": "./base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "WebWorker"],
+    "types": ["node"]
+  }
+}

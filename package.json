@@ -1,0 +1,29 @@
+{
+  "name": "fitconnect",
+  "version": "0.1.0",
+  "private": true,
+  "description": "FitConnect monorepo: gym management API, PWA, and the contracts they share.",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev:api": "npm run dev --workspace @fitconnect/api",
+    "dev:pwa": "npm run dev --workspace @fitconnect/pwa",
+    "build": "npm run build --workspaces --if-present",
+    "build:api": "npm run build --workspace @fitconnect/api",
+    "build:pwa": "npm run build --workspace @fitconnect/pwa",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "format": "npm run format --workspaces --if-present",
+    "deploy:test": "npm run deploy:test --workspaces --if-present",
+    "deploy:production": "npm run deploy:production --workspaces --if-present"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3"
+  }
+}

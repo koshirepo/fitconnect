@@ -1,0 +1,7 @@
+{
+  "name": "@fitconnect/tsconfig",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared TypeScript compiler presets for every app and package in the workspace.",
+  "files": ["base.json", "worker.json", "react-app.json"]
+}

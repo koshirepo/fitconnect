@@ -1,0 +1,26 @@
+# Documentation: Workspace-wide ignores.
+# - Covers artifacts produced anywhere in the monorepo; each app keeps its own
+#   .gitignore for tooling specific to it (Wrangler state, PWA dev output).
+
+node_modules/
+dist/
+dist-ssr/
+coverage/
+*.local
+*.log
+npm-debug.log*
+.DS_Store
+.idea/
+
+# Local secrets — never commit
+.env
+.env.local
+.env.*.local
+.dev.vars
+
+# Cloudflare
+.wrangler/
+worker-configuration.d.ts
+
+# Turbo / build caches, if adopted later
+.turbo/

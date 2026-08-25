@@ -1,0 +1,26 @@
+{
+  "name": "@fitconnect/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Contracts shared by every FitConnect app: role/permission catalog, enums, domain models, API envelopes, and pure utilities.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types/index.ts",
+    "./types/enums": "./src/types/enums.ts",
+    "./types/permissions": "./src/types/permissions.ts",
+    "./types/models": "./src/types/models.ts",
+    "./types/api": "./src/types/api.ts",
+    "./constants": "./src/constants/index.ts",
+    "./utils": "./src/utils/index.ts"
+  },
+  "files": ["src"],
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3"
+  }
+}
