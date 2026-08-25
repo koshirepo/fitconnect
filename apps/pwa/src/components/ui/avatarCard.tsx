@@ -1,41 +1,38 @@
-import { getInitials } from "@fitconnect/shared";
-import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
+/**
+ * Documentation: Inline person identity.
+ *
+ * - A thin adapter over `MemberCard`, so every place that shows an avatar with a name — payment rows, attendance entries, the sidebar, dialogs, profile headers — gets the same square-tile treatment as the member list without each screen restating it.
+ * - The props are the ones call sites already used (`variant`, `memberId`, `isActive`, `dueDate`, `role`, `vertical`, `children`); they are translated to the card's vocabulary here.
+ * - Prefer `MemberCard` directly for new list screens: it takes a person object and renders the full bordered row.
+ * - Primary exports: default export.
+ */
+import * as React from "react";
 import { cn } from "@/lib/utils";
-import { getDueDateState } from "@/lib/member-due";
-import { Shield, Dumbbell } from "lucide-react";
+import { AvatarTile, MemberCard, type CardPerson, type MemberCardSize } from "./member-card";
 
-const variantConfig = {
-  /** Compact — table rows, small lists */
-  sm: {
-    avatarSize: "sm" as const,
-    avatarClass: "",
-    gap: "gap-2",
-    nameClass: "text-sm font-medium",
-  },
-  /** Default — cards, sidebar items */
-  md: {
-    avatarSize: "default" as const,
-    avatarClass: "",
-    gap: "gap-3",
-    nameClass: "text-base font-semibold",
-  },
-  /** Page headers */
-  lg: {
-    avatarSize: "lg" as const,
-    avatarClass: "",
-    gap: "gap-4",
-    nameClass: "text-lg font-semibold tracking-tight",
-  },
-  /** Hero / profile banners */
-  xl: {
-    avatarSize: "lg" as const,
-    avatarClass: "h-20 w-20 text-xl",
-    gap: "gap-6",
-    nameClass: "text-3xl font-extrabold tracking-tight sm:text-4xl",
-  },
+/** Legacy size names, mapped onto the card's two real sizes. */
+const SIZE_FOR_VARIANT: Record<Variant, MemberCardSize> = {
+  sm: "sm",
+  md: "sm",
+  lg: "md",
+  xl: "md",
 };
 
-type Variant = keyof typeof variantConfig;
+const STACKED_TILE_CLASS: Record<Variant, string> = {
+  sm: "h-12 w-12",
+  md: "h-16 w-16",
+  lg: "h-20 w-20",
+  xl: "h-28 w-28",
+};
+
+const STACKED_NAME_CLASS: Record<Variant, string> = {
+  sm: "text-sm font-semibold",
+  md: "text-base font-semibold",
+  lg: "text-lg font-semibold tracking-tight",
+  xl: "text-2xl font-extrabold tracking-tight sm:text-3xl",
+};
+
+type Variant = "sm" | "md" | "lg" | "xl";
 
 type UserRole = "ADMIN" | "COACH" | "TRAINER" | "MEMBER";
 
@@ -43,17 +40,17 @@ interface AvatarCardProps {
   name: string;
   avatarUrl?: string | null;
   variant?: Variant;
-  /** Tenant-scoped sequential member number — renders as "#N – name" */
+  /** Tenant-scoped sequential member number — renders as "#N – name". */
   memberId?: number;
-  /** Stack avatar on top of text instead of side-by-side */
+  /** Stack avatar on top of text instead of side-by-side. */
   vertical?: boolean;
   avatarClassName?: string;
   children?: React.ReactNode;
   className?: string;
-  /** Whether the user is active */
+  /** Whether the user is active; drives the tile's edge colour. */
   isActive?: boolean;
   dueDate?: string | null;
-  /** User role for icon overlay (only shown for admin/trainer roles) */
+  /** Adds the role badge for admins and coaches. */
   role?: UserRole;
 }
 
@@ -70,74 +67,48 @@ export default function AvatarCard({
   dueDate,
   role,
 }: AvatarCardProps) {
-  const config = variantConfig[variant];
-  const dueDateState = getDueDateState(dueDate);
-  const ringClass =
-    dueDateState === "overdue"
-      ? "ring-2 ring-red-500"
-      : dueDateState === "current"
-        ? "ring-2 ring-emerald-500"
-        : isActive
-          ? "ring-2 ring-blue-500"
-          : isActive !== undefined
-            ? "ring-2 ring-yellow-500"
-            : "";
-
-  // Get role icon and size based on variant
-  const getRoleIcon = () => {
-    if (!role) return null;
-
-    const iconProps =
-      variant === "xl"
-        ? { className: "h-6 w-6" }
-        : variant === "lg"
-          ? { className: "h-5 w-5" }
-          : variant === "md"
-            ? { className: "h-4 w-4" }
-            : { className: "h-3 w-3" };
-
-    switch (role) {
-      case "ADMIN":
-        return <Shield {...iconProps} className={cn(iconProps.className, "text-white")} />;
-      case "COACH":
-      case "TRAINER":
-        return <Dumbbell {...iconProps} className={cn(iconProps.className, "text-white")} />;
-      default:
-        return null;
-    }
+  const person: CardPerson = {
+    name,
+    avatarUrl,
+    memberId,
+    role,
+    // `isActive` is the caller's vocabulary; the card reasons in status strings.
+    status: isActive === undefined ? undefined : isActive ? "ACTIVE" : "SUSPENDED",
+    dueDate,
+    isDue: Boolean(dueDate) && new Date(dueDate!).getTime() < Date.now(),
   };
 
-  const roleIcon = getRoleIcon();
+  const size = SIZE_FOR_VARIANT[variant];
+
+  if (vertical) {
+    return (
+      <div className={cn("flex flex-col items-center gap-3 text-center", className)}>
+        <AvatarTile
+          person={person}
+          size={size}
+          stacked
+          className={cn(STACKED_TILE_CLASS[variant], avatarClassName)}
+        />
+        <div className="min-w-0">
+          <p className={STACKED_NAME_CLASS[variant]}>
+            {memberId !== undefined && (
+              <span className="font-semibold text-muted-foreground">#{memberId} – </span>
+            )}
+            {name}
+          </p>
+          {children}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div
-      className={cn(
-        "flex",
-        vertical ? "flex-col items-center text-center" : "items-center",
-        config.gap,
-        className,
-      )}
-    >
-      <div className={cn("relative", ringClass)} style={{ borderRadius: "9999px" }}>
-        <Avatar size={config.avatarSize} className={cn(config.avatarClass, avatarClassName)}>
-          {avatarUrl && <AvatarImage src={avatarUrl} alt={name} />}
-          <AvatarFallback>{getInitials(name)}</AvatarFallback>
-        </Avatar>
-        {roleIcon && (
-          <div className="absolute bottom-0 right-0 flex h-1/3 w-1/3 items-center justify-center rounded-full bg-linear-to-br from-slate-700 to-slate-900 shadow-lg">
-            {roleIcon}
-          </div>
-        )}
-      </div>
-      <div className={cn(vertical ? "" : "flex-1 min-w-0")}>
-        <p className={cn(config.nameClass, !vertical && "truncate")}>
-          {memberId !== undefined && (
-            <span className="text-muted-foreground font-normal">#{memberId} – </span>
-          )}
-          {name}
-        </p>
-        {children}
-      </div>
-    </div>
+    <MemberCard
+      person={person}
+      size={size}
+      variant="inline"
+      subtitle={children}
+      className={className}
+    />
   );
 }

@@ -70,6 +70,42 @@ export const memberRepository = {
   },
 
   /**
+   * A live membership in this gym whose user already holds this email or phone.
+   *
+   * Uniqueness is per gym, not global: the same person may legitimately belong
+   * to two gyms, and two gyms may independently hold the same contact detail.
+   * That is why this is a scoped query rather than a unique index — email and
+   * phone live on `User` while the gym scope lives on `TenantMembership`, so
+   * the constraint cannot be expressed as a column uniqueness rule.
+   *
+   * `excludeMembershipId` lets an update ignore the record being edited.
+   */
+  findMembershipByContact(
+    tenantId: string,
+    contact: { email?: string | null; phone?: string | null },
+    excludeMembershipId?: string,
+  ) {
+    const contactFilters: { user: { email?: string } | { phone?: string } }[] = [];
+    if (contact.email) contactFilters.push({ user: { email: contact.email } });
+    if (contact.phone) contactFilters.push({ user: { phone: contact.phone } });
+    if (contactFilters.length === 0) return null;
+
+    return prisma.tenantMembership.findFirst({
+      where: {
+        tenantId,
+        status: { not: "DELETED" },
+        ...(excludeMembershipId ? { id: { not: excludeMembershipId } } : {}),
+        OR: contactFilters,
+      },
+      select: {
+        id: true,
+        memberId: true,
+        user: { select: { name: true, email: true, phone: true } },
+      },
+    });
+  },
+
+  /**
    * Run the `create user` persistence operation for the members module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */

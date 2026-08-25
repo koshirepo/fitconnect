@@ -281,6 +281,36 @@ async function dispatchReportEmails(
   }
 }
 
+/**
+ * Enforce that an email and phone are not already in use inside this gym.
+ *
+ * Returns a ready-to-return error when the contact is taken, or null when it is
+ * free. The message names the member holding it, because "email already in use"
+ * with twenty-odd members and no pointer is a dead end for whoever is on the
+ * front desk.
+ */
+async function checkContactIsFree(
+  tenantId: string,
+  contact: { email?: string | null; phone?: string | null },
+  excludeMembershipId?: string,
+) {
+  const clash = await memberRepository.findMembershipByContact(
+    tenantId,
+    contact,
+    excludeMembershipId,
+  );
+  if (!clash) return null;
+
+  const emailTaken = Boolean(contact.email) && clash.user.email === contact.email;
+  const field = emailTaken ? "email address" : "phone number";
+  const value = emailTaken ? contact.email : contact.phone;
+
+  return {
+    error: `That ${field} (${value}) already belongs to #${clash.memberId} ${clash.user.name} in this gym.`,
+    status: 409 as const,
+  };
+}
+
 export const memberService = {
   /**
    * Execute the `add member` workflow for the members module.
@@ -296,6 +326,12 @@ export const memberService = {
     if (callerRole === "COACH" && input.role !== "MEMBER") {
       return { error: "Coaches can only add members.", status: 403 as const };
     }
+
+    const contactClash = await checkContactIsFree(tenantId, {
+      email: input.email,
+      phone: input.phone,
+    });
+    if (contactClash) return contactClash;
 
     let user;
     if(input.email){
@@ -661,6 +697,16 @@ export const memberService = {
       return { error: "Not a member of this tenant.", status: 403 as const };
     }
 
+    // A member editing their own phone is still subject to the gym's uniqueness rule.
+    if (input.phone !== undefined) {
+      const contactClash = await checkContactIsFree(
+        tenantId,
+        { phone: input.phone },
+        membership.id,
+      );
+      if (contactClash) return contactClash;
+    }
+
     // Handle password change
     if (input.newPassword) {
       const user = await memberRepository.findUserPasswordHash(userId);
@@ -727,6 +773,17 @@ export const memberService = {
     );
     if (!membership) {
       return { error: "Member not found.", status: 404 as const };
+    }
+
+    // Changing a contact detail must not collide with another member of this
+    // gym. Only the phone is editable here; email is fixed after creation.
+    if (input.phone !== undefined) {
+      const contactClash = await checkContactIsFree(
+        tenantId,
+        { phone: input.phone },
+        membershipId,
+      );
+      if (contactClash) return contactClash;
     }
 
     const userUpdate: Record<string, unknown> = {};

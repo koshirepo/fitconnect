@@ -10,7 +10,7 @@ import { useBadges, useTenantSettings } from "@/api/queries/catalog";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Card } from "@/components/ui/card";
+import { MemberCard, PersonChip } from "@/components/ui/member-card";
 import {
   Select,
   SelectContent,
@@ -36,15 +36,11 @@ import {
   Edit2,
   MessageSquare,
   AlertTriangle,
-  CalendarClock,
   Clock,
   Ban,
   CheckCircle2,
-  Shield,
-  Dumbbell,
 } from "lucide-react";
 import type { TenantMember } from "@/types/api";
-import { getInitials } from "@fitconnect/shared";
 import { usePendingMutations } from "@/lib/use-pending-mutations";
 import { getTenantDashboardPath } from "@/lib/subdomain";
 
@@ -65,69 +61,6 @@ const STATUS_TABS = [
   { value: "INACTIVE", label: "Inactive", icon: Ban, iconClass: "text-muted-foreground" },
   { value: "DUE", label: "Due", icon: AlertCircle, iconClass: "text-red-600" },
 ];
-
-/** Small pill above the member name — status, due date, sync state. */
-function MemberChip({
-  icon: Icon,
-  children,
-  className,
-}: {
-  icon: React.ElementType;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <span
-      className={cn(
-        "inline-flex shrink-0 items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium whitespace-nowrap text-muted-foreground sm:gap-1.5 sm:px-2 sm:py-1 sm:text-xs",
-        className,
-      )}
-    >
-      <Icon className="size-2.5 sm:size-3.5" />
-      {children}
-    </span>
-  );
-}
-
-/** Large square avatar tile with a status-coloured border. */
-function MemberAvatar({ member }: { member: DisplayMember }) {
-  const accent = member.isDue
-    ? "border-red-500"
-    : member.status === "ACTIVE"
-      ? "border-emerald-500"
-      : "border-amber-500";
-
-  const RoleIcon = member.role === "ADMIN" ? Shield : member.role === "COACH" ? Dumbbell : null;
-
-  return (
-    <div
-      className={cn(
-        // Height comes from the card row; aspect-square derives the width from it,
-        // so the tile is always a perfect square filling the full card height.
-        "relative aspect-square h-full min-w-16 shrink-0 self-stretch overflow-hidden border-r-2 sm:min-w-24",
-        accent,
-      )}
-    >
-      {/* Taken out of flow so the photo's intrinsic size can't drive the tile's width */}
-      {member.avatarUrl ? (
-        <img
-          src={member.avatarUrl}
-          alt={member.name}
-          className="absolute inset-0 size-full object-cover"
-        />
-      ) : (
-        <div className="absolute inset-0 flex items-center justify-center bg-muted text-xl font-semibold tracking-wide text-muted-foreground sm:text-3xl">
-          {getInitials(member.name)}
-        </div>
-      )}
-      {RoleIcon && (
-        <div className="absolute right-1 bottom-1 flex size-5 items-center justify-center rounded-full bg-linear-to-br from-slate-700 to-slate-900 shadow-lg sm:size-6">
-          <RoleIcon className="h-3 w-3 text-white sm:h-3.5 sm:w-3.5" />
-        </div>
-      )}
-    </div>
-  );
-}
 
 export default function MembersPage() {
   const navigate = useAppNavigate();
@@ -473,94 +406,28 @@ export default function MembersPage() {
         <div className="space-y-4">
           <div className="space-y-4">
             {filteredAllMembers.map((m) => (
-              <Card
+              <MemberCard
                 key={m.id}
-                className={cn(
-                  "rounded-lg py-0 ring-1 ring-border transition-shadow hover:shadow-md",
-                  m._pending && "border-dashed opacity-70",
-                )}
-              >
-                <div className="flex min-h-20 items-stretch sm:min-h-32">
-                  {/* Member Info */}
-                  <div
-                    className="flex min-w-0 flex-1 cursor-pointer items-stretch"
-                    onClick={() => !m._pending && navigate(getTenantDashboardPath(`/members/${m.id}`))}
-                  >
-                    <MemberAvatar member={m} />
-
-                    <div className="min-w-0 flex-1 self-center px-3 py-2 sm:px-5 sm:py-4">
-                      {/* Status / due chips — kept on one line */}
-                      <div className="flex min-w-0 flex-nowrap items-center gap-1.5 overflow-hidden sm:gap-2">
-                        {m.status === "ACTIVE" ? (
-                          <MemberChip
-                            icon={CheckCircle2}
-                            className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                          >
-                            Active
-                          </MemberChip>
-                        ) : (
-                          <MemberChip
-                            icon={Ban}
-                            className="bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                          >
-                            Inactive
-                          </MemberChip>
-                        )}
-                        {m.dueDate && (
-                          <MemberChip
-                            icon={CalendarClock}
-                            className={
-                              m.isDue ? "bg-red-500/10 text-red-600 dark:text-red-400" : undefined
-                            }
-                          >
-                            <span className="hidden sm:inline">Until </span>
-                            {formatDate(m.dueDate)}
-                          </MemberChip>
-                        )}
-                        {m._pending && (
-                          <MemberChip
-                            icon={Clock}
-                            className="bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                          >
-                            Pending sync
-                          </MemberChip>
-                        )}
-                      </div>
-
-                      <p className="mt-2 truncate text-base font-bold tracking-tight sm:text-xl">
-                        {m.memberId !== undefined && (
-                          <span className="font-semibold text-muted-foreground">
-                            #{m.memberId} -{" "}
-                          </span>
-                        )}
-                        {m.name}
-                      </p>
-
-                      {/* Phone — shares its row with the actions on mobile */}
-                      <div className="mt-1 flex items-center justify-between gap-2">
-                        {m.phone ? (
-                          <p className="truncate text-sm text-muted-foreground sm:text-base">
-                            {m.phone}
-                          </p>
-                        ) : (
-                          <span />
-                        )}
-                        <div
-                          className="-mr-1 flex shrink-0 items-center gap-0.5 sm:hidden"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {renderMemberActions(m)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actions — own column from sm up */}
-                  <div className="hidden shrink-0 items-center justify-end gap-2 pr-4 sm:flex">
-                    {renderMemberActions(m)}
-                  </div>
-                </div>
-              </Card>
+                person={m}
+                onClick={
+                  m._pending
+                    ? undefined
+                    : () => navigate(getTenantDashboardPath(`/members/${m.id}`))
+                }
+                chips={
+                  m._pending ? (
+                    <PersonChip
+                      icon={Clock}
+                      className="bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                    >
+                      Pending sync
+                    </PersonChip>
+                  ) : null
+                }
+                subtitle={m.phone}
+                actions={renderMemberActions(m)}
+                className={cn(m._pending && "border-dashed opacity-70")}
+              />
             ))}
           </div>
 

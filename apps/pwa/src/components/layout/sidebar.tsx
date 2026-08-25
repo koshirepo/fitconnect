@@ -41,6 +41,12 @@ type NavItem = {
   icon: typeof LayoutDashboard;
   anyOf?: Permission[];
   excludePrefixes?: string[];
+  /**
+   * Match this path exactly rather than as a prefix. Needed for Dashboard,
+   * because on a gym subdomain every other page is nested under `/dashboard`
+   * and would otherwise light it up too.
+   */
+  exact?: boolean;
 };
 
 const platformNav: NavItem[] = [
@@ -78,7 +84,7 @@ const platformNav: NavItem[] = [
 ];
 
 const tenantNav: NavItem[] = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/members", label: "Members", icon: Users, anyOf: [Permission.MEMBERS_READ] },
   {
     to: "/referrals",
@@ -113,7 +119,14 @@ const tenantNav: NavItem[] = [
   },
   { to: "/orders/history", label: "My Orders", icon: ShoppingBag },
   { to: "/badges", label: "Badges", icon: Award, anyOf: [Permission.BADGES_READ] },
-  { to: "/settings", label: "Settings", icon: Settings, anyOf: [Permission.SETTINGS_UPDATE] },
+  {
+    to: "/settings",
+    label: "Settings",
+    icon: Settings,
+    anyOf: [Permission.SETTINGS_UPDATE],
+    // Roles has its own entry below and is nested under /settings.
+    excludePrefixes: ["/settings/roles"],
+  },
   {
     to: "/settings/roles",
     label: "Roles & Permissions",
@@ -247,6 +260,7 @@ export function Sidebar() {
                   <NavLink
                     key={item.to}
                     to={item.to}
+                    end={item.exact}
                     onClick={() => isMobile && setSidebarOpen(false)}
                     className={({ isActive }) =>
                       cn(
@@ -279,11 +293,15 @@ export function Sidebar() {
                   <NavLink
                     key={item.to}
                     to={getTenantRoute(item.to)}
+                    end={item.exact}
                     onClick={() => isMobile && setSidebarOpen(false)}
                     className={({ isActive }) =>
                       cn(
                         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 hover:bg-sidebar-accent",
                         isActive &&
+                          !item.excludePrefixes?.some((prefix) =>
+                            location.pathname.startsWith(getTenantRoute(prefix)),
+                          ) &&
                           "bg-primary/10 text-primary border-l-2 border-primary",
                       )
                     }
