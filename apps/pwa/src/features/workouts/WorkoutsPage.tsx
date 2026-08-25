@@ -3,7 +3,14 @@ import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
-import { workoutsApi } from "@/api/workouts";
+import {
+  useAssignWorkoutPlan,
+  useCreateWorkoutPlan,
+  useDeleteWorkoutPlan,
+  useUpdateWorkoutPlan,
+  useWorkoutPlansInfinite,
+} from "@/api/queries/catalog";
+import { flattenPages } from "@/api/queries/shared";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +28,7 @@ import {
 import { PageLoader, Spinner } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/utils";
-import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
+import { useInfiniteScroll } from "@/lib/use-infinite-scroll";
 import { Plus, Dumbbell, Trash2, UserPlus, X } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import MemberSelector from "@/components/ui/memberSelector";
@@ -39,11 +46,19 @@ export default function WorkoutsPage() {
   const canReadAllPlans = can(Permission.WORKOUTS_CREATE);
 
 
-  const [plans, setPlans] = React.useState<WorkoutPlan[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [page, setPage] = React.useState(1);
-  const [hasMore, setHasMore] = React.useState(true);
-  const [loadingMore, setLoadingMore] = React.useState(false);
+  const plansQuery = useWorkoutPlansInfinite();
+  const plans = React.useMemo(
+    () => flattenPages<WorkoutPlan>(plansQuery.data?.pages),
+    [plansQuery.data],
+  );
+  const loading = plansQuery.isLoading;
+  const loadingMore = plansQuery.isFetchingNextPage;
+  const hasMore = Boolean(plansQuery.hasNextPage);
+
+  const createPlan = useCreateWorkoutPlan();
+  const updatePlan = useUpdateWorkoutPlan();
+  const deletePlan = useDeleteWorkoutPlan();
+  const assignPlan = useAssignWorkoutPlan();
 
   // Create/Update dialog
   const [dialogOpen, setDialogOpen] = React.useState(false);
@@ -65,50 +80,14 @@ export default function WorkoutsPage() {
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [pendingDeleteId, setPendingDeleteId] = React.useState<string | null>(null);
 
-  const fetchPlans = React.useCallback(
-    async (nextPage: number, mode: "replace" | "append") => {
-      if (!currentTenantId) return;
-      if (mode === "replace") {
-        setLoading(true);
-      } else {
-        setLoadingMore(true);
-      }
-      try {
-        const res = await workoutsApi.list(currentTenantId, nextPage, 20);
-        const nextPlans = res.data.data.plans;
-        setPlans((prev) => (mode === "replace" ? nextPlans : appendUniqueById(prev, nextPlans)));
-        const totalPages = res.data.meta.totalPages;
-        setHasMore(nextPage < totalPages);
-        setPage(nextPage);
-      } catch {
-        //
-      } finally {
-        if (mode === "replace") {
-          setLoading(false);
-        } else {
-          setLoadingMore(false);
-        }
-      }
-    },
-    [currentTenantId],
-  );
-
-  React.useEffect(() => {
-    if (!currentTenantId) return;
-    setPlans([]);
-    setHasMore(true);
-    void fetchPlans(1, "replace");
-  }, [currentTenantId, fetchPlans]);
-
-  const loadMore = React.useCallback(() => {
-    if (loading || loadingMore || !hasMore) return;
-    void fetchPlans(page + 1, "append");
-  }, [loading, loadingMore, hasMore, page, fetchPlans]);
-
   const loadMoreRef = useInfiniteScroll({
     hasMore,
     loading: loading || loadingMore,
-    onLoadMore: loadMore,
+    onLoadMore: () => {
+      if (plansQuery.hasNextPage && !plansQuery.isFetchingNextPage) {
+        void plansQuery.fetchNextPage();
+      }
+    },
   });
 
   const openCreate = () => {
@@ -141,12 +120,11 @@ export default function WorkoutsPage() {
         exercises: formExercises.length > 0 ? formExercises : undefined,
       };
       if (editingPlan) {
-        await workoutsApi.update(currentTenantId, editingPlan.id, payload);
+        await updatePlan.mutateAsync({ planId: editingPlan.id, data: payload });
       } else {
-        await workoutsApi.create(currentTenantId, payload);
+        await createPlan.mutateAsync(payload);
       }
       setDialogOpen(false);
-      fetchPlans(1, "replace");
     } catch (err) {
       setFormError(getApiError(err));
     } finally {
@@ -161,10 +139,9 @@ export default function WorkoutsPage() {
   };
 
   const handleDeleteConfirmed = async () => {
-    if (!currentTenantId || !pendingDeleteId) return;
+    if (!pendingDeleteId) return;
     try {
-      await workoutsApi.delete(currentTenantId, pendingDeleteId);
-      fetchPlans(1, "replace");
+      await deletePlan.mutateAsync(pendingDeleteId);
     } catch {
       //
     } finally {
@@ -189,13 +166,12 @@ export default function WorkoutsPage() {
   };
 
   const handleAssign = async () => {
-    if (!currentTenantId || !assignPlanId || !selectedMemberId) return;
+    if (!assignPlanId || !selectedMemberId) return;
     try {
-      await workoutsApi.assign(currentTenantId, assignPlanId, selectedMemberId);
+      await assignPlan.mutateAsync({ planId: assignPlanId, membershipId: selectedMemberId });
       setAssignDialogOpen(false);
       setSelectedMember(null);
       setSelectedMemberId("");
-      fetchPlans(1, "replace");
     } catch {
       //
     }

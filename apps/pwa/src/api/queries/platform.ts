@@ -22,6 +22,7 @@ import {
   unwrapPaginated,
   useAppInfiniteQuery,
   useAppMutation,
+  useCurrentTenantId,
   useTenantQuery,
 } from "./shared";
 
@@ -119,6 +120,36 @@ export function usePlatformAuditLogs(
         ),
       ),
   });
+}
+
+/**
+ * Audit logs paged for the infinite-scroll list, from whichever scope applies.
+ * One hook rather than two, because the screen renders the same table either way
+ * and only the source endpoint differs.
+ */
+export function useAuditLogsInfinite(
+  scope: "platform" | "tenant",
+  filters: { action?: string; entity?: string } = {},
+  options: { enabled?: boolean; limit?: number } = {},
+) {
+  const { limit = 20 } = options;
+  const tenantId = useCurrentTenantId();
+  const isPlatform = scope === "platform";
+
+  return useAppInfiniteQuery(
+    isPlatform
+      ? [...queryKeys.audit.platform(filters), "infinite", limit]
+      : [...queryKeys.audit.tenant(tenantId ?? "none", filters), "infinite", limit],
+    async (page) => {
+      const response = isPlatform
+        ? await auditApi.platformLogs(page, limit, filters.entity, filters.action)
+        : await auditApi.tenantLogs(tenantId!, page, limit);
+      const { data, meta } = unwrapPaginated(response);
+      return { data: data.logs, meta };
+    },
+    // A tenant-scoped read needs a gym; a platform-scoped one does not.
+    { enabled: (options.enabled ?? true) && (isPlatform || Boolean(tenantId)) },
+  );
 }
 
 // ─── Commerce (platform admin) ────────────────────────────────────────────────

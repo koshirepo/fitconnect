@@ -3,7 +3,12 @@ import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
-import { workoutsApi } from "@/api/workouts";
+import {
+  useAssignWorkoutPlan,
+  useDeleteWorkoutPlan,
+  useUpdateWorkoutPlan,
+  useWorkoutPlan,
+} from "@/api/queries/catalog";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +21,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PageLoader } from "@/components/ui/spinner";
 import { formatDate } from "@/lib/utils";
 import { ArrowLeft, Dumbbell, Pencil, Plus, Trash2, UserPlus, Users, X } from "lucide-react";
-import type { WorkoutPlan, Exercise, TenantMember } from "@/types/api";
+import type { Exercise, TenantMember } from "@/types/api";
 import AvatarCard from "@/components/ui/avatarCard";
 import MemberSelector from "@/components/ui/memberSelector";
 import { loadAllTenantMembers } from "@/lib/tenant-members";
@@ -30,9 +35,16 @@ export default function WorkoutDetailPage() {
   const canDeletePlan = can(Permission.WORKOUTS_DELETE);
 
 
-  const [plan, setPlan] = React.useState<WorkoutPlan | null>(null);
-  const [loading, setLoading] = React.useState(true);
+  const planQuery = useWorkoutPlan(planId);
+  const plan = planQuery.data ?? null;
+  const loading = planQuery.isLoading;
   const [error, setError] = React.useState("");
+
+  // Each mutation invalidates the workouts key, so this query refetches itself
+  // after a save or an assignment.
+  const updatePlan = useUpdateWorkoutPlan();
+  const deletePlan = useDeleteWorkoutPlan();
+  const assignPlan = useAssignWorkoutPlan();
 
   // Edit mode
   const [editing, setEditing] = React.useState(false);
@@ -51,24 +63,6 @@ export default function WorkoutDetailPage() {
   const [selectedMemberId, setSelectedMemberId] = React.useState("");
   const [assigning, setAssigning] = React.useState(false);
 
-  const loadPlan = React.useCallback(async () => {
-    if (!currentTenantId || !planId) return;
-    setLoading(true);
-    setError("");
-    try {
-      const res = await workoutsApi.getById(currentTenantId, planId);
-      setPlan(res.data.data.plan);
-    } catch (err: unknown) {
-      setError(getApiError(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [currentTenantId, planId]);
-
-  React.useEffect(() => {
-    void loadPlan();
-  }, [loadPlan]);
-
   const startEditing = () => {
     if (!plan) return;
     setFormTitle(plan.title);
@@ -82,13 +76,15 @@ export default function WorkoutDetailPage() {
     setSaving(true);
     setError("");
     try {
-      await workoutsApi.update(currentTenantId, planId, {
-        title: formTitle,
-        description: formDesc || undefined,
-        exercises: formExercises.length > 0 ? formExercises : undefined,
+      await updatePlan.mutateAsync({
+        planId,
+        data: {
+          title: formTitle,
+          description: formDesc || undefined,
+          exercises: formExercises.length > 0 ? formExercises : undefined,
+        },
       });
       setEditing(false);
-      await loadPlan();
     } catch (err: unknown) {
       setError(getApiError(err));
     } finally {
@@ -99,7 +95,7 @@ export default function WorkoutDetailPage() {
   const handleDelete = async () => {
     if (!currentTenantId || !planId) return;
     try {
-      await workoutsApi.delete(currentTenantId, planId);
+      await deletePlan.mutateAsync(planId);
       navigate("/workouts");
     } catch (err: unknown) {
       setError(getApiError(err));
@@ -123,11 +119,10 @@ export default function WorkoutDetailPage() {
     if (!currentTenantId || !planId || !selectedMemberId) return;
     setAssigning(true);
     try {
-      await workoutsApi.assign(currentTenantId, planId, selectedMemberId);
+      await assignPlan.mutateAsync({ planId, membershipId: selectedMemberId });
       setAssignOpen(false);
       setSelectedMember(null);
       setSelectedMemberId("");
-      await loadPlan();
     } catch (err: unknown) {
       setError(getApiError(err));
     } finally {

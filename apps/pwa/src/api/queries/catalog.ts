@@ -55,6 +55,18 @@ export function useWorkoutPlan(planId: string | undefined) {
   );
 }
 
+/** Workout plans paged for the infinite-scroll list. */
+export function useWorkoutPlansInfinite(limit = 20, options: { enabled?: boolean } = {}) {
+  return useTenantInfiniteQuery(
+    (tenantId) => [...queryKeys.workouts.list(tenantId), "infinite", limit],
+    async (tenantId, page) => {
+      const { data, meta } = unwrapPaginated(await workoutsApi.list(tenantId, page, limit));
+      return { data: data.plans, meta };
+    },
+    options,
+  );
+}
+
 export function useCreateWorkoutPlan() {
   const tenantId = useCurrentTenantId();
   return useTenantMutation(

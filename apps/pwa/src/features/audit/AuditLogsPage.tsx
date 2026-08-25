@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useAuthStore } from "@/stores/auth";
-import { auditApi } from "@/api/audit";
+import { useAuditLogsInfinite } from "@/api/queries/platform";
+import { flattenPages } from "@/api/queries/shared";
 import { getApiError } from "@/api/client";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { PageLoader, Spinner } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatDateTime } from "@/lib/utils";
-import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
+import { useInfiniteScroll } from "@/lib/use-infinite-scroll";
 import type { AuditLog } from "@/types/api";
 import { ChevronDown, ChevronUp, FileText } from "lucide-react";
 
@@ -32,78 +33,34 @@ interface Props {
 }
 
 export default function AuditLogsPage({ scope = "tenant" }: Props) {
-  const { currentTenantId, isPlatformStaff } = useAuthStore();
+  const { isPlatformStaff } = useAuthStore();
   const effectiveScope = scope === "platform" && isPlatformStaff() ? "platform" : "tenant";
-
-  const [logs, setLogs] = React.useState<AuditLog[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [loadingMore, setLoadingMore] = React.useState(false);
-  const [error, setError] = React.useState("");
-
-  // Paging
-  const [page, setPage] = React.useState(1);
-  const [hasMore, setHasMore] = React.useState(true);
-  const limit = 20;
 
   // Filters
   const [actionFilter, setActionFilter] = React.useState("");
   const [expandedRow, setExpandedRow] = React.useState<string | null>(null);
 
-  const fetchLogs = React.useCallback(
-    async (nextPage: number, mode: "replace" | "append") => {
-      if (mode === "replace") {
-        setLoading(true);
-      } else {
-        setLoadingMore(true);
-      }
-      setError("");
-      try {
-        let res;
-        if (effectiveScope === "platform") {
-          res = await auditApi.platformLogs(nextPage, limit, undefined, actionFilter || undefined);
-        } else {
-          if (!currentTenantId) {
-            if (mode === "replace") setLoading(false);
-            else setLoadingMore(false);
-            return;
-          }
-          res = await auditApi.tenantLogs(currentTenantId, nextPage, limit);
-        }
-
-        const nextLogs = res.data.data.logs;
-        setLogs((prev) => (mode === "replace" ? nextLogs : appendUniqueById(prev, nextLogs)));
-        const totalPages =
-          res.data.meta.totalPages ?? Math.ceil((res.data.meta.total ?? 0) / limit);
-        setHasMore(nextPage < totalPages);
-        setPage(nextPage);
-      } catch (err) {
-        setError(getApiError(err));
-      } finally {
-        if (mode === "replace") {
-          setLoading(false);
-        } else {
-          setLoadingMore(false);
-        }
-      }
-    },
-    [effectiveScope, currentTenantId, actionFilter],
+  // The action filter only narrows the platform feed; the tenant endpoint takes
+  // no filter, so passing it there would only fragment the cache for nothing.
+  const logsQuery = useAuditLogsInfinite(
+    effectiveScope,
+    effectiveScope === "platform" ? { action: actionFilter || undefined } : {},
   );
 
-  React.useEffect(() => {
-    setLogs([]);
-    setHasMore(true);
-    void fetchLogs(1, "replace");
-  }, [fetchLogs]);
-
-  const loadMore = React.useCallback(() => {
-    if (loading || loadingMore || !hasMore) return;
-    void fetchLogs(page + 1, "append");
-  }, [loading, loadingMore, hasMore, page, fetchLogs]);
+  const logs = React.useMemo(() => flattenPages<AuditLog>(logsQuery.data?.pages), [logsQuery.data]);
+  const loading = logsQuery.isLoading;
+  const loadingMore = logsQuery.isFetchingNextPage;
+  const hasMore = Boolean(logsQuery.hasNextPage);
+  const error = logsQuery.isError ? getApiError(logsQuery.error) : "";
 
   const loadMoreRef = useInfiniteScroll({
     hasMore,
     loading: loading || loadingMore,
-    onLoadMore: loadMore,
+    onLoadMore: () => {
+      if (logsQuery.hasNextPage && !logsQuery.isFetchingNextPage) {
+        void logsQuery.fetchNextPage();
+      }
+    },
   });
 
   const actionBadgeVariant = (action: string) => {
