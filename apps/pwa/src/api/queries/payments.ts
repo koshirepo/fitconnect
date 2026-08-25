@@ -18,7 +18,6 @@ import {
   unwrap,
   unwrapPaginated,
   useCurrentTenantId,
-  useTenantInfiniteQuery,
   useTenantMutation,
   useTenantQuery,
 } from "./shared";
@@ -59,19 +58,34 @@ export function usePayments(filters: PaymentListFilters = {}, options: { enabled
   );
 }
 
-/** Gym-wide payments paged for the infinite-scroll list. */
-export function usePaymentsInfinite(
-  filters: { status?: string; search?: string } = {},
-  options: { enabled?: boolean; limit?: number } = {},
-) {
-  const { limit = 20 } = options;
-  return useTenantInfiniteQuery(
-    (tenantId) => [...queryKeys.payments.list(tenantId, filters), "infinite", limit],
-    async (tenantId, page) => {
-      const { data, meta } = unwrapPaginated(
-        await paymentsApi.list(tenantId, page, limit, filters.status, filters.search),
+/**
+ * Every payment in the gym, paged through in the background.
+ *
+ * The payments screen filters and searches client-side, the same way the member
+ * list does, so it needs the whole ledger rather than a page of it. One cached
+ * result then serves every tab, which is why switching tabs is instant and why
+ * a status change refreshes all of them at once.
+ */
+export function useAllPayments(options: { enabled?: boolean; pageSize?: number } = {}) {
+  const { pageSize = 200 } = options;
+
+  return useTenantQuery(
+    (tenantId) => [...queryKeys.payments.list(tenantId), "all", pageSize],
+    async (tenantId) => {
+      const first = unwrapPaginated(await paymentsApi.list(tenantId, 1, pageSize));
+      const totalPages = first.meta.totalPages;
+      if (totalPages <= 1) return first.data.payments;
+
+      const rest = await Promise.all(
+        Array.from({ length: totalPages - 1 }, (_, index) =>
+          paymentsApi.list(tenantId, index + 2, pageSize),
+        ),
       );
-      return { data: data.payments, meta };
+
+      return [
+        ...first.data.payments,
+        ...rest.flatMap((response) => unwrapPaginated(response).data.payments),
+      ];
     },
     options,
   );

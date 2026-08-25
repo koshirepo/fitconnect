@@ -52,23 +52,19 @@ export function PersonChip({
 
 const SIZES = {
   /**
-   * Embedded rows: payment lines, attendance entries, pickers.
-   *
-   * Fixed square rather than height-derived. These rows sit next to content of
-   * varying height, and a tile whose width follows the row height makes every
-   * row a slightly different shape — and steals width from an already-tight
-   * name column.
+   * Denser rows — payments, attendance, pickers — with the same flush-left
+   * tile as the member list, just scaled down.
    */
   sm: {
-    row: "min-h-14",
-    tile: "size-11 self-center sm:size-13",
-    fallback: "text-sm sm:text-base",
+    row: "min-h-16 sm:min-h-20",
+    tile: "min-w-14 sm:min-w-20",
+    fallback: "text-base sm:text-xl",
     roleBadge: "size-4 sm:size-5",
     roleIcon: "h-2.5 w-2.5 sm:h-3 sm:w-3",
-    body: "px-2.5 py-1.5 sm:px-3 sm:py-2",
-    name: "text-sm font-semibold sm:text-base",
+    body: "px-3 py-2 sm:px-4 sm:py-3",
+    name: "text-sm font-bold tracking-tight sm:text-base",
     subtitle: "text-xs sm:text-sm",
-    fixedTile: true,
+    fixedTile: false,
   },
   /** List cards and page headers. */
   md: {
@@ -93,9 +89,13 @@ function accentClass(person: CardPerson) {
   return person.status === "ACTIVE" ? "border-emerald-500" : "border-amber-500";
 }
 
-function roleIconFor(role?: PersonRole) {
-  if (role === "ADMIN") return Shield;
-  if (role === "COACH" || role === "TRAINER") return Dumbbell;
+/**
+ * The badge glyph for a role, as an element rather than a component reference —
+ * a component picked during render would remount whenever the role changed.
+ */
+function roleIconFor(role: PersonRole | undefined, className: string) {
+  if (role === "ADMIN") return <Shield className={className} />;
+  if (role === "COACH" || role === "TRAINER") return <Dumbbell className={className} />;
   return null;
 }
 
@@ -118,7 +118,7 @@ export function AvatarTile({
   className?: string;
 }) {
   const s = SIZES[size];
-  const RoleIcon = roleIconFor(person.role);
+  const roleIcon = roleIconFor(person.role, cn(s.roleIcon, "text-white"));
 
   return (
     <div
@@ -156,14 +156,14 @@ export function AvatarTile({
           {getInitials(person.name)}
         </div>
       )}
-      {RoleIcon && (
+      {roleIcon && (
         <div
           className={cn(
             "absolute right-1 bottom-1 flex items-center justify-center rounded-full bg-linear-to-br from-slate-700 to-slate-900 shadow-lg",
             s.roleBadge,
           )}
         >
-          <RoleIcon className={cn(s.roleIcon, "text-white")} />
+          {roleIcon}
         </div>
       )}
     </div>

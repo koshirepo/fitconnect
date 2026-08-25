@@ -67,16 +67,21 @@ export default function AvatarCard({
   dueDate,
   role,
 }: AvatarCardProps) {
-  const person: CardPerson = {
-    name,
-    avatarUrl,
-    memberId,
-    role,
-    // `isActive` is the caller's vocabulary; the card reasons in status strings.
-    status: isActive === undefined ? undefined : isActive ? "ACTIVE" : "SUSPENDED",
-    dueDate,
-    isDue: Boolean(dueDate) && new Date(dueDate!).getTime() < Date.now(),
-  };
+  // Memoised because `isDue` reads the clock: recomputing it on every render
+  // would make an otherwise-identical person object unstable.
+  const person: CardPerson = React.useMemo(
+    () => ({
+      name,
+      avatarUrl,
+      memberId,
+      role,
+      // `isActive` is the caller's vocabulary; the card reasons in status strings.
+      status: isActive === undefined ? undefined : isActive ? "ACTIVE" : "SUSPENDED",
+      dueDate,
+      isDue: Boolean(dueDate) && new Date(dueDate!) < new Date(),
+    }),
+    [name, avatarUrl, memberId, role, isActive, dueDate],
+  );
 
   const size = SIZE_FOR_VARIANT[variant];
 

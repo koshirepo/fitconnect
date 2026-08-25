@@ -5,31 +5,27 @@ import { useSearchParams } from "react-router-dom";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
 import { paymentsApi } from "@/api/payments";
-import {
-  useMyPayments,
-  usePaymentsInfinite,
-  useUpdatePaymentStatus,
-} from "@/api/queries/payments";
-import { flattenPages } from "@/api/queries/shared";
+import { useAllPayments, useMyPayments, useUpdatePaymentStatus } from "@/api/queries/payments";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { PageLoader, Spinner } from "@/components/ui/spinner";
+import { MemberCard, PersonChip } from "@/components/ui/member-card";
+import { PageLoader } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { downloadCsv } from "@/lib/csv";
-import { formatCurrency, formatDate } from "@/lib/utils";
-import { useInfiniteScroll } from "@/lib/use-infinite-scroll";
-import { Plus, CreditCard, CheckCircle2, XCircle, Download, Search, X, Clock } from "lucide-react";
+import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import {
+  Plus,
+  CreditCard,
+  CheckCircle2,
+  XCircle,
+  Download,
+  Search,
+  X,
+  Clock,
+  Wallet,
+  RotateCcw,
+} from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { Payment, PaymentStatus } from "@/types/api";
-import AvatarCard from "@/components/ui/avatarCard";
 import { usePendingMutations } from "@/lib/use-pending-mutations";
 
 type PendingPaymentMutationBody = {
@@ -43,6 +39,35 @@ type PendingPaymentMutationBody = {
 };
 
 type DisplayPayment = Payment & { _pending?: boolean };
+
+/** Client-side status tabs, mirroring the member list. */
+const STATUS_TABS = [
+  { value: "", label: "All", icon: Wallet, iconClass: "text-blue-600" },
+  { value: "COMPLETED", label: "Completed", icon: CheckCircle2, iconClass: "text-emerald-600" },
+  { value: "PENDING", label: "Pending", icon: Clock, iconClass: "text-amber-600" },
+  { value: "FAILED", label: "Failed", icon: XCircle, iconClass: "text-red-600" },
+  { value: "REFUNDED", label: "Refunded", icon: RotateCcw, iconClass: "text-muted-foreground" },
+];
+
+/** Icon and colour for each payment status, keyed the same way the tabs are. */
+const STATUS_CHIP: Record<PaymentStatus, { icon: React.ElementType; className: string }> = {
+  COMPLETED: {
+    icon: CheckCircle2,
+    className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  },
+  PENDING: { icon: Clock, className: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
+  FAILED: { icon: XCircle, className: "bg-red-500/10 text-red-600 dark:text-red-400" },
+  REFUNDED: { icon: RotateCcw, className: "" },
+};
+
+function PaymentStatusChip({ status }: { status: PaymentStatus }) {
+  const chip = STATUS_CHIP[status] ?? STATUS_CHIP.PENDING;
+  return (
+    <PersonChip icon={chip.icon} className={chip.className}>
+      {status.charAt(0) + status.slice(1).toLowerCase()}
+    </PersonChip>
+  );
+}
 
 export default function PaymentsPage() {
   const navigate = useAppNavigate();
@@ -84,71 +109,95 @@ export default function PaymentsPage() {
     });
   };
 
-  // Staff read the whole gym's ledger (paged); everyone else reads only their
-  // own receipts, which the API returns unpaged. Only one of these ever runs.
-  const allPaymentsQuery = usePaymentsInfinite(
-    { status: statusFilter || undefined, search: searchTerm || undefined },
-    { enabled: canViewAllPayments },
-  );
+  // The whole ledger is fetched once and filtered in the browser, the way the
+  // member list works: one cached result serves every tab, so switching tabs
+  // and typing in the search box cost nothing.
+  const allPaymentsQuery = useAllPayments({ enabled: canViewAllPayments });
   const myPaymentsQuery = useMyPayments({ enabled: !canViewAllPayments });
 
   const payments = React.useMemo<Payment[]>(
-    () =>
-      canViewAllPayments
-        ? flattenPages<Payment>(allPaymentsQuery.data?.pages)
-        : (myPaymentsQuery.data ?? []),
+    () => (canViewAllPayments ? (allPaymentsQuery.data ?? []) : (myPaymentsQuery.data ?? [])),
     [canViewAllPayments, allPaymentsQuery.data, myPaymentsQuery.data],
   );
 
-  const activeQuery = canViewAllPayments ? allPaymentsQuery : myPaymentsQuery;
-  const loading = activeQuery.isLoading;
-  const loadingMore = canViewAllPayments && allPaymentsQuery.isFetchingNextPage;
-  const hasMore = canViewAllPayments && Boolean(allPaymentsQuery.hasNextPage);
+  const loading = (canViewAllPayments ? allPaymentsQuery : myPaymentsQuery).isLoading;
 
   const updatePaymentStatus = useUpdatePaymentStatus();
 
-  const loadMoreRef = useInfiniteScroll({
-    hasMore,
-    loading: loading || loadingMore,
-    onLoadMore: () => {
-      if (allPaymentsQuery.hasNextPage && !allPaymentsQuery.isFetchingNextPage) {
-        void allPaymentsQuery.fetchNextPage();
-      }
-    },
-  });
-
   // Pending offline payments
   const pendingPayments = usePendingMutations<PendingPaymentMutationBody>("/payments");
-  const pendingPaymentItems: DisplayPayment[] = pendingPayments.map((p) => ({
-    id: `pending-${p.id}`,
-    amount: p.body?.amount ?? 0,
-    status: "PENDING" as const,
-    paidAt: null,
-    validFrom: null,
-    validUntil: p.body?.validUntil ?? null,
-    description: p.body?._subscriptionTitle ?? p.body?.note ?? null,
-    note: p.body?.note ?? null,
-    createdAt: new Date(p.createdAt).toISOString(),
-    member: p.body?._memberName
-      ? {
-          id: "pending",
-          memberId: p.body._memberMemberId ?? 0,
-          userId: "",
-          name: p.body._memberName,
-          email: "",
-          avatarUrl: p.body._memberAvatarUrl ?? null,
-        }
-      : undefined,
-    subscription: p.body?._subscriptionTitle
-      ? { id: "pending", title: p.body._subscriptionTitle }
-      : undefined,
-    _pending: true as const,
-  }));
-
-  // Merge and sort latest first
-  const allPayments: DisplayPayment[] = [...pendingPaymentItems, ...payments].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  const pendingPaymentItems: DisplayPayment[] = React.useMemo(
+    () =>
+      pendingPayments.map((p) => ({
+        id: `pending-${p.id}`,
+        amount: p.body?.amount ?? 0,
+        status: "PENDING" as const,
+        paidAt: null,
+        validFrom: null,
+        validUntil: p.body?.validUntil ?? null,
+        description: p.body?._subscriptionTitle ?? p.body?.note ?? null,
+        note: p.body?.note ?? null,
+        createdAt: new Date(p.createdAt).toISOString(),
+        member: p.body?._memberName
+          ? {
+              id: "pending",
+              memberId: p.body._memberMemberId ?? 0,
+              userId: "",
+              name: p.body._memberName,
+              email: "",
+              avatarUrl: p.body._memberAvatarUrl ?? null,
+            }
+          : undefined,
+        subscription: p.body?._subscriptionTitle
+          ? { id: "pending", title: p.body._subscriptionTitle }
+          : undefined,
+        _pending: true as const,
+      })),
+    [pendingPayments],
   );
+
+  // Merge offline-queued rows in, apply the search, and sort latest first — all
+  // in the browser, over the full ledger. The status tabs filter this list
+  // rather than the raw one, so the tab counts always match what a click shows.
+  const searchedPayments: DisplayPayment[] = React.useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+
+    return [...pendingPaymentItems, ...payments]
+      .filter((p) => {
+        if (!term) return true;
+
+        const haystack = [
+          p.member?.name,
+          p.member?.email,
+          p.member?.memberId,
+          p.subscription?.title,
+          p.description,
+          p.note,
+          p.amount,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        return haystack.includes(term);
+      })
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [pendingPaymentItems, payments, searchTerm]);
+
+  const allPayments: DisplayPayment[] = React.useMemo(
+    () =>
+      statusFilter ? searchedPayments.filter((p) => p.status === statusFilter) : searchedPayments,
+    [searchedPayments, statusFilter],
+  );
+
+  /** Row count behind each tab, so a tab shows what clicking it will reveal. */
+  const statusCounts = React.useMemo(() => {
+    const counts: Record<string, number> = { "": searchedPayments.length };
+    for (const p of searchedPayments) {
+      counts[p.status] = (counts[p.status] ?? 0) + 1;
+    }
+    return counts;
+  }, [searchedPayments]);
 
   const handleStatusUpdate = async (
     paymentId: string,
@@ -213,20 +262,6 @@ export default function PaymentsPage() {
     }
   };
 
-  const statusBadgeVariant = (status: PaymentStatus) => {
-    switch (status) {
-      case "COMPLETED":
-        return "success" as const;
-      case "PENDING":
-        return "warning" as const;
-      case "FAILED":
-      case "REFUNDED":
-        return "destructive" as const;
-      default:
-        return "secondary" as const;
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -257,7 +292,7 @@ export default function PaymentsPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search by name, phone, email, or admission no..."
+              placeholder="Search by name, email, admission no, plan, or amount..."
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -275,23 +310,40 @@ export default function PaymentsPage() {
               </button>
             )}
           </div>
-          <Select
-            value={statusFilter}
-            onValueChange={(value) => {
-              setStatusFilter(value ?? "");
-            }}
-          >
-            <SelectTrigger className="w-full sm:w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">All Status</SelectItem>
-              <SelectItem value="PENDING">Pending</SelectItem>
-              <SelectItem value="COMPLETED">Completed</SelectItem>
-              <SelectItem value="FAILED">Failed</SelectItem>
-              <SelectItem value="REFUNDED">Refunded</SelectItem>
-            </SelectContent>
-          </Select>
+        </div>
+      )}
+
+      {/* Status Filter Tabs */}
+      {canViewAllPayments && (
+        <div className="overflow-x-auto overflow-y-hidden border-b border-border [&::-webkit-scrollbar]:hidden">
+          <div className="flex min-w-max gap-6 sm:gap-8">
+            {STATUS_TABS.map((tab) => {
+              const active = statusFilter === tab.value;
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.value}
+                  onClick={() => {
+                    setStatusFilter(tab.value);
+                  }}
+                  className={cn(
+                    "flex items-center gap-2 border-b-2 pt-1 pb-3 text-sm transition-colors",
+                    active
+                      ? "border-foreground font-semibold text-foreground"
+                      : "border-transparent font-medium text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Icon
+                    className={cn("h-4 w-4", active ? tab.iconClass : "text-muted-foreground")}
+                  />
+                  {tab.label}
+                  <span className="text-xs text-muted-foreground">
+                    ({statusCounts[tab.value] ?? 0})
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -301,131 +353,110 @@ export default function PaymentsPage() {
         <EmptyState
           icon={CreditCard}
           title="No payments found"
-          description={canViewAllPayments ? "Record the first payment." : "No payment history yet."}
+          description={
+            statusFilter || searchTerm
+              ? "No payments match this filter."
+              : canViewAllPayments
+                ? "Record the first payment."
+                : "No payment history yet."
+          }
         />
       ) : (
         <div className="space-y-4">
           <div className="space-y-3">
             {allPayments.map((p) => (
-              <Card
-                onClick={() => !p._pending && navigate(`/payments/${p.id}`)}
+              <MemberCard
                 key={p.id}
-                className={`hover:shadow-md transition-shadow${p._pending ? " opacity-70 border-dashed" : ""}`}
-              >
-                <div className="flex sm:justify-start justify-between sm:items-start p-2 sm:p-4 sm:flex-row flex-col">
-                  {/* Payment Info */}
-                  <div className="flex gap-4 flex-1 min-w-0">
-                    {canViewAllPayments && p.member && (
-                      <AvatarCard
-                        name={p.member.name}
-                        avatarUrl={p.member.avatarUrl}
-                        memberId={p.member.memberId}
-                        variant="md"
+                size="md"
+                // A member viewing their own history has no other person to
+                // name, so the plan title stands in as the identity line.
+                person={
+                  canViewAllPayments && p.member
+                    ? p.member
+                    : { name: p.subscription?.title ?? p.description ?? "Payment" }
+                }
+                onClick={p._pending ? undefined : () => navigate(`/payments/${p.id}`)}
+                // This page is about the payment, not the membership, so the
+                // payment's status takes the chip slot the member list gives to
+                // Active/Until. The tile's coloured edge still reads membership.
+                showStatusChips={false}
+                chips={
+                  <>
+                    <PaymentStatusChip status={p.status} />
+                    {p._pending && (
+                      <PersonChip
+                        icon={Clock}
+                        className="bg-amber-500/10 text-amber-600 dark:text-amber-400"
                       >
-                        <p className="text-sm text-muted-foreground flex flex-wrap gap-x-1">
-                          <span>{p.subscription?.title ?? p.description ?? "—"}</span>
-                          {p.collectedBy && (
-                            <span className="text-xs font-medium text-foreground/70">
-                              · {p.collectedBy.userId === user?.id ? "You" : p.collectedBy.name}
-                            </span>
-                          )}
-                        </p>
-                      </AvatarCard>
+                        Pending sync
+                      </PersonChip>
                     )}
-                    {!canViewAllPayments && (
-                      <div className="flex-1">
-                        <p className="font-semibold">
-                          {p.subscription?.title ?? p.description ?? "—"}
-                        </p>
-                        <p className="text-sm text-muted-foreground">{formatCurrency(p.amount)}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Amount and Status */}
-                  <div className="flex gap-3 items-start sm:items-center mt-3 sm:mt-0">
-                    <div className="text-right">
-                      <p className="text-lg font-semibold">{formatCurrency(p.amount)}</p>
-                      {p.validUntil ? (
-                        <p className="text-xs font-medium text-foreground/70">
-                          {formatDate(p.validUntil)}
-                        </p>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">{formatDate(p.createdAt)}</p>
-                      )}
-                    </div>
-                    <Badge variant={statusBadgeVariant(p.status)}>{p.status}</Badge>
-                  </div>
-
-                  {/* Pending sync indicator */}
-                  {p._pending && (
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2 sm:mt-0 sm:mr-2">
-                      <Clock className="h-3 w-3" />
-                      Pending sync
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex gap-2 shrink-0 justify-end mt-3 sm:mt-0 w-full sm:w-auto">
-                    {isAdmin && !p._pending && (
+                  </>
+                }
+                subtitle={
+                  <>
+                    {/* The plan already names a self-view row, so it only
+                        repeats itself here; staff rows lead with it. */}
+                    {canViewAllPayments && p.member && (
                       <>
-                        {p.status === "PENDING" && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setConfirmAction({
-                                  paymentId: p.id,
-                                  status: "COMPLETED",
-                                  amount: p.amount,
-                                });
-                              }}
-                              title="Approve payment"
-                            >
-                              <CheckCircle2 className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setConfirmAction({
-                                  paymentId: p.id,
-                                  status: "FAILED",
-                                  amount: p.amount,
-                                });
-                              }}
-                              title="Reject payment"
-                            >
-                              <XCircle className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </>
+                        {p.subscription?.title ?? p.description ?? "—"}
+                        {p.collectedBy && (
+                          <span className="font-medium text-foreground/70">
+                            {" · "}
+                            {p.collectedBy.userId === user?.id ? "You" : p.collectedBy.name}
+                          </span>
                         )}
+                        {" · "}
                       </>
                     )}
-                  </div>
-                </div>
-              </Card>
+                    <span className="text-muted-foreground">
+                      {formatDate(p.validUntil ?? p.createdAt)}
+                    </span>
+                  </>
+                }
+                actions={
+                  <>
+                    <p className="text-base font-semibold sm:text-lg">{formatCurrency(p.amount)}</p>
+                    {isAdmin && !p._pending && p.status === "PENDING" && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmAction({
+                              paymentId: p.id,
+                              status: "COMPLETED",
+                              amount: p.amount,
+                            });
+                          }}
+                          title="Approve payment"
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmAction({
+                              paymentId: p.id,
+                              status: "FAILED",
+                              amount: p.amount,
+                            });
+                          }}
+                          title="Reject payment"
+                        >
+                          <XCircle className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </>
+                    )}
+                  </>
+                }
+                className={cn(p._pending && "border-dashed opacity-70")}
+              />
             ))}
           </div>
-
-          {canViewAllPayments && allPayments.length > 0 && (hasMore || loadingMore) && (
-            <div
-              ref={loadMoreRef}
-              className="flex items-center justify-center py-4 text-sm text-muted-foreground"
-            >
-              {loadingMore ? (
-                <div className="flex items-center gap-2">
-                  <Spinner size="sm" />
-                  Loading more...
-                </div>
-              ) : (
-                "Scroll to load more"
-              )}
-            </div>
-          )}
         </div>
       )}
 
