@@ -1,5 +1,6 @@
 import * as React from "react";
-import { tenantsApi } from "@/api/tenants";
+import { flattenPages } from "@/api/queries/shared";
+import { useTenantsInfinite, useUpdateTenantStatus } from "@/api/queries/platform";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +15,7 @@ import {
 import { PageLoader, Spinner } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/utils";
-import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
+import { useInfiniteScroll } from "@/lib/use-infinite-scroll";
 import { Plus, Building2 } from "lucide-react";
 import type { Tenant } from "@/types/api";
 import { Link } from "react-router-dom";
@@ -36,63 +37,30 @@ function getPlatformExpiryBadge(platformExpiresAt?: string | null) {
 }
 
 export default function TenantsPage() {
-  const [tenants, setTenants] = React.useState<Tenant[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [page, setPage] = React.useState(1);
-  const [hasMore, setHasMore] = React.useState(true);
-  const [loadingMore, setLoadingMore] = React.useState(false);
+  const query = useTenantsInfinite();
+  const updateStatus = useUpdateTenantStatus();
 
-  const fetchTenants = React.useCallback(async (nextPage: number, mode: "replace" | "append") => {
-    if (mode === "replace") {
-      setLoading(true);
-    } else {
-      setLoadingMore(true);
-    }
-    try {
-      const res = await tenantsApi.list(nextPage, 20);
-      const nextTenants = res.data.data.tenants;
-      setTenants((prev) =>
-        mode === "replace" ? nextTenants : appendUniqueById(prev, nextTenants),
-      );
-      const totalPages = res.data.meta.totalPages;
-      setHasMore(nextPage < totalPages);
-      setPage(nextPage);
-    } catch {
-      // silent
-    } finally {
-      if (mode === "replace") {
-        setLoading(false);
-      } else {
-        setLoadingMore(false);
-      }
-    }
-  }, []);
-
-  React.useEffect(() => {
-    setTenants([]);
-    setHasMore(true);
-    void fetchTenants(1, "replace");
-  }, [fetchTenants]);
-
-  const loadMore = React.useCallback(() => {
-    if (loading || loadingMore || !hasMore) return;
-    void fetchTenants(page + 1, "append");
-  }, [loading, loadingMore, hasMore, page, fetchTenants]);
+  const tenants = React.useMemo(
+    () => flattenPages<Tenant>(query.data?.pages),
+    [query.data],
+  );
+  const loading = query.isLoading;
+  const loadingMore = query.isFetchingNextPage;
 
   const loadMoreRef = useInfiniteScroll({
-    hasMore,
+    hasMore: Boolean(query.hasNextPage),
     loading: loading || loadingMore,
-    onLoadMore: loadMore,
+    onLoadMore: () => {
+      if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage();
+    },
   });
 
-  const handleStatusToggle = async (tenant: Tenant) => {
-    const newStatus = tenant.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
-    try {
-      await tenantsApi.updateStatus(tenant.id, newStatus);
-      fetchTenants(1, "replace");
-    } catch {
-      // silent
-    }
+  // The mutation invalidates the tenants key, so the list refetches itself.
+  const handleStatusToggle = (tenant: Tenant) => {
+    updateStatus.mutate({
+      tenantId: tenant.id,
+      status: tenant.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE",
+    });
   };
 
   return (
@@ -164,7 +132,7 @@ export default function TenantsPage() {
                 ))}
               </TableBody>
             </Table>
-            {tenants.length > 0 && (hasMore || loadingMore) && (
+            {tenants.length > 0 && (query.hasNextPage || loadingMore) && (
               <div
                 ref={loadMoreRef}
                 className="flex items-center justify-center py-4 text-sm text-muted-foreground"

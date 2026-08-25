@@ -2,7 +2,13 @@ import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { Navigate } from "react-router-dom";
-import { todosApi } from "@/api/todos";
+import {
+  useCreateTodo,
+  useDeleteTodo,
+  useTodosInfinite,
+  useUpdateTodo,
+} from "@/api/queries/catalog";
+import { flattenPages } from "@/api/queries/shared";
 import { getApiError } from "@/api/client";
 import { useAuthStore } from "@/stores/auth";
 import type { Todo, TodoVisibility } from "@/types/api";
@@ -30,7 +36,7 @@ import {
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageLoader, Spinner } from "@/components/ui/spinner";
-import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
+import { useInfiniteScroll } from "@/lib/use-infinite-scroll";
 import { formatDateTime } from "@/lib/utils";
 import { Edit, Lock, Plus, Search, Shield, Trash2 } from "lucide-react";
 
@@ -66,11 +72,6 @@ export default function TodosPage() {
   // Todo deletion is the narrower grant; everything else follows TODOS_UPDATE.
   const isAdmin = can(Permission.TODOS_DELETE);
 
-  const [todos, setTodos] = React.useState<Todo[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [page, setPage] = React.useState(1);
-  const [hasMore, setHasMore] = React.useState(true);
-  const [loadingMore, setLoadingMore] = React.useState(false);
   const [statusFilter, setStatusFilter] = React.useState<TodoStatusFilter>("ALL");
   const [searchText, setSearchText] = React.useState("");
   const deferredSearch = React.useDeferredValue(searchText);
@@ -87,65 +88,30 @@ export default function TodosPage() {
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [pendingDelete, setPendingDelete] = React.useState<Todo | null>(null);
 
-  const fetchTodos = React.useCallback(
-    async (nextPage: number, mode: "replace" | "append") => {
-      if (!currentTenantId || !canAccess) return;
-
-      if (mode === "replace") {
-        setLoading(true);
-      } else {
-        setLoadingMore(true);
-      }
-
-      try {
-        const res = await todosApi.list(
-          currentTenantId,
-          nextPage,
-          20,
-          statusFilter,
-          deferredSearch.trim() || undefined,
-        );
-        const nextTodos = res.data.data.todos;
-        setTodos((prev) => (mode === "replace" ? nextTodos : appendUniqueById(prev, nextTodos)));
-        setHasMore(nextPage < res.data.meta.totalPages);
-        setPage(nextPage);
-        setError("");
-      } catch (err) {
-        if (mode === "replace") {
-          setTodos([]);
-        }
-        setError(getApiError(err));
-      } finally {
-        if (mode === "replace") {
-          setLoading(false);
-        } else {
-          setLoadingMore(false);
-        }
-      }
-    },
-    [currentTenantId, canAccess, deferredSearch, statusFilter],
+  // Changing a filter re-keys the query, so react-query refetches and resets
+  // pagination on its own — no manual "reset then fetch page 1" dance.
+  const todosQuery = useTodosInfinite(
+    { status: statusFilter, search: deferredSearch.trim() || undefined },
+    { enabled: canAccess },
   );
 
-  React.useEffect(() => {
-    if (!currentTenantId || !canAccess) {
-      setLoading(false);
-      return;
-    }
+  const todos = React.useMemo(() => flattenPages<Todo>(todosQuery.data?.pages), [todosQuery.data]);
+  const loading = todosQuery.isLoading;
+  const loadingMore = todosQuery.isFetchingNextPage;
+  const hasMore = Boolean(todosQuery.hasNextPage);
 
-    setTodos([]);
-    setHasMore(true);
-    void fetchTodos(1, "replace");
-  }, [currentTenantId, canAccess, fetchTodos]);
-
-  const loadMore = React.useCallback(() => {
-    if (loading || loadingMore || !hasMore) return;
-    void fetchTodos(page + 1, "append");
-  }, [fetchTodos, hasMore, loading, loadingMore, page]);
+  const createTodo = useCreateTodo();
+  const updateTodo = useUpdateTodo();
+  const deleteTodo = useDeleteTodo();
 
   const loadMoreRef = useInfiniteScroll({
     hasMore,
     loading: loading || loadingMore,
-    onLoadMore: loadMore,
+    onLoadMore: () => {
+      if (todosQuery.hasNextPage && !todosQuery.isFetchingNextPage) {
+        void todosQuery.fetchNextPage();
+      }
+    },
   });
 
   const canMutateTodo = React.useCallback(
@@ -179,13 +145,16 @@ export default function TodosPage() {
     setFormError("");
     try {
       if (editingTodo) {
-        await todosApi.update(currentTenantId, editingTodo.id, {
-          title: formTitle.trim(),
-          description: formDescription.trim() ? formDescription.trim() : null,
-          ...(isAdmin ? { visibility: formVisibility } : {}),
+        await updateTodo.mutateAsync({
+          todoId: editingTodo.id,
+          data: {
+            title: formTitle.trim(),
+            description: formDescription.trim() ? formDescription.trim() : null,
+            ...(isAdmin ? { visibility: formVisibility } : {}),
+          },
         });
       } else {
-        await todosApi.create(currentTenantId, {
+        await createTodo.mutateAsync({
           title: formTitle.trim(),
           description: formDescription.trim() || undefined,
           visibility: isAdmin ? formVisibility : "PUBLIC",
@@ -193,7 +162,6 @@ export default function TodosPage() {
       }
 
       setDialogOpen(false);
-      void fetchTodos(1, "replace");
     } catch (err) {
       setFormError(getApiError(err));
     } finally {
@@ -202,13 +170,10 @@ export default function TodosPage() {
   };
 
   const handleToggleCompleted = async (todo: Todo, nextValue: boolean) => {
-    if (!currentTenantId || !canMutateTodo(todo)) return;
+    if (!canMutateTodo(todo)) return;
 
     try {
-      await todosApi.update(currentTenantId, todo.id, {
-        isCompleted: nextValue,
-      });
-      void fetchTodos(1, "replace");
+      await updateTodo.mutateAsync({ todoId: todo.id, data: { isCompleted: nextValue } });
     } catch (err) {
       setError(getApiError(err));
     }
@@ -220,11 +185,10 @@ export default function TodosPage() {
   };
 
   const handleDeleteConfirmed = async () => {
-    if (!currentTenantId || !pendingDelete) return;
+    if (!pendingDelete) return;
 
     try {
-      await todosApi.delete(currentTenantId, pendingDelete.id);
-      void fetchTodos(1, "replace");
+      await deleteTodo.mutateAsync(pendingDelete.id);
     } catch (err) {
       setError(getApiError(err));
     } finally {

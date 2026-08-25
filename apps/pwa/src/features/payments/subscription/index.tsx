@@ -3,8 +3,8 @@ import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
-import { badgesApi } from "@/api/badges";
-import { paymentsApi } from "@/api/payments";
+import { useBadges } from "@/api/queries/catalog";
+import { useDeleteSubscription, useSubscriptions, useUpdateSubscription } from "@/api/queries/payments";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,11 +33,7 @@ export default function SubscriptionsPage() {
   const { can } = usePermissions();
   const isAdmin = can(Permission.SUBSCRIPTIONS_UPDATE);
 
-  const [subscriptions, setSubscriptions] = React.useState<Subscription[]>([]);
-  const [availableBadges, setAvailableBadges] = React.useState<BadgeModel[]>([]);
-  const [loading, setLoading] = React.useState(true);
   const [pageError, setPageError] = React.useState("");
-  const [badgeLoadError, setBadgeLoadError] = React.useState("");
 
   const [editOpen, setEditOpen] = React.useState(false);
   const [editingSubscription, setEditingSubscription] = React.useState<Subscription | null>(null);
@@ -54,38 +50,30 @@ export default function SubscriptionsPage() {
   const [selectedSubscription, setSelectedSubscription] = React.useState<Subscription | null>(null);
   const [actionLoading, setActionLoading] = React.useState<string | null>(null);
 
-  const fetchSubscriptions = React.useCallback(async () => {
-    if (!currentTenantId) return;
-    setLoading(true);
-    setPageError("");
-    setBadgeLoadError("");
-    try {
-      const subscriptionsRes = await paymentsApi.listSubscriptions(currentTenantId, isAdmin);
-      setSubscriptions(subscriptionsRes.data.data.subscriptions);
+  // Admins see inactive plans too, so the flag is part of the cache key.
+  const subscriptionsQuery = useSubscriptions(isAdmin);
+  // Badges are only needed for the edit dialog's eligibility picker.
+  const badgesQuery = useBadges({ includeInactive: true, enabled: isAdmin });
 
-      if (isAdmin) {
-        try {
-          const badgesRes = await badgesApi.list(currentTenantId, 1, 100, true);
-          setAvailableBadges(badgesRes.data.data);
-        } catch {
-          setAvailableBadges([]);
-          setBadgeLoadError(
-            "Badges could not be loaded. You can still edit title, price, and duration.",
-          );
-        }
-      } else {
-        setAvailableBadges([]);
-      }
-    } catch (err) {
-      setPageError(getApiError(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [currentTenantId, isAdmin]);
+  const subscriptions = React.useMemo<Subscription[]>(
+    () => subscriptionsQuery.data ?? [],
+    [subscriptionsQuery.data],
+  );
+  const availableBadges = React.useMemo<BadgeModel[]>(
+    () => badgesQuery.data ?? [],
+    [badgesQuery.data],
+  );
+  const loading = subscriptionsQuery.isLoading;
 
-  React.useEffect(() => {
-    void fetchSubscriptions();
-  }, [fetchSubscriptions]);
+  const loadError = subscriptionsQuery.isError ? getApiError(subscriptionsQuery.error) : "";
+  // A badge failure must not block the dialog — the other fields still work.
+  const badgeLoadError =
+    isAdmin && badgesQuery.isError
+      ? "Badges could not be loaded. You can still edit title, price, and duration."
+      : "";
+
+  const updateSubscription = useUpdateSubscription();
+  const deleteSubscription = useDeleteSubscription();
 
   const openEdit = (subscription: Subscription) => {
     setEditingSubscription(subscription);
@@ -128,17 +116,18 @@ export default function SubscriptionsPage() {
     setEditSubmitting(true);
     setEditError("");
     try {
-      const res = await paymentsApi.updateSubscription(currentTenantId, editingSubscription.id, {
-        title: editTitle.trim(),
-        description: editDescription.trim() || null,
-        amount,
-        durationDays,
-        badgeIds: editSelectedBadgeIds,
+      // The mutation invalidates the subscriptions key, so the list refreshes
+      // itself rather than being patched in place.
+      await updateSubscription.mutateAsync({
+        subscriptionId: editingSubscription.id,
+        data: {
+          title: editTitle.trim(),
+          description: editDescription.trim() || null,
+          amount,
+          durationDays,
+          badgeIds: editSelectedBadgeIds,
+        },
       });
-      const updated = res.data.data.subscription;
-      setSubscriptions((prev) =>
-        prev.map((subscription) => (subscription.id === updated.id ? updated : subscription)),
-      );
       setEditOpen(false);
       setEditingSubscription(null);
     } catch (err) {
@@ -155,7 +144,7 @@ export default function SubscriptionsPage() {
   };
 
   const handleConfirm = async () => {
-    if (!currentTenantId || !selectedSubscription || !confirmMode) return;
+    if (!selectedSubscription || !confirmMode) return;
 
     const actionKey = `${selectedSubscription.id}:${confirmMode}`;
     setActionLoading(actionKey);
@@ -163,18 +152,12 @@ export default function SubscriptionsPage() {
 
     try {
       if (confirmMode === "delete") {
-        await paymentsApi.deleteSubscription(currentTenantId, selectedSubscription.id);
-        setSubscriptions((prev) =>
-          prev.filter((subscription) => subscription.id !== selectedSubscription.id),
-        );
+        await deleteSubscription.mutateAsync(selectedSubscription.id);
       } else {
-        const res = await paymentsApi.updateSubscription(currentTenantId, selectedSubscription.id, {
-          isActive: !selectedSubscription.isActive,
+        await updateSubscription.mutateAsync({
+          subscriptionId: selectedSubscription.id,
+          data: { isActive: !selectedSubscription.isActive },
         });
-        const updated = res.data.data.subscription;
-        setSubscriptions((prev) =>
-          prev.map((subscription) => (subscription.id === updated.id ? updated : subscription)),
-        );
       }
     } catch (err) {
       setPageError(getApiError(err));
@@ -212,9 +195,9 @@ export default function SubscriptionsPage() {
         )}
       </div>
 
-      {pageError && (
+      {(pageError || loadError) && (
         <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {pageError}
+          {pageError || loadError}
         </div>
       )}
       {badgeLoadError && (
