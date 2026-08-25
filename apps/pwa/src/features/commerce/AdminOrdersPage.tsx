@@ -2,7 +2,8 @@ import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate } from "react-router-dom";
-import { commerceApi } from "@/api/commerce";
+import { useAdminOrdersInfinite, useDeleteAdminOrder } from "@/api/queries/platform";
+import { flattenPages } from "@/api/queries/shared";
 import { getApiError } from "@/api/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { PageLoader, Spinner } from "@/components/ui/spinner";
 import { formatDateTime } from "@/lib/utils";
-import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
+import { useInfiniteScroll } from "@/lib/use-infinite-scroll";
 import { ArrowLeft, PackageSearch, Trash2 } from "lucide-react";
 import type { Order, OrderStatus } from "@/types/api";
 
@@ -40,85 +41,49 @@ export default function AdminOrdersPage() {
   const { can } = usePermissions();
   const canManageOrders = can(Permission.PLATFORM_ORDERS_UPDATE);
 
-  const [orders, setOrders] = React.useState<Order[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [loadingMore, setLoadingMore] = React.useState(false);
-  const [page, setPage] = React.useState(1);
-  const [hasMore, setHasMore] = React.useState(true);
   const [statusFilter, setStatusFilter] = React.useState("");
-  const [error, setError] = React.useState("");
+  const [actionError, setActionError] = React.useState("");
   const [orderToDelete, setOrderToDelete] = React.useState<Order | null>(null);
   const [deletingOrder, setDeletingOrder] = React.useState(false);
 
-  const fetchOrders = React.useCallback(
-    async (nextPage: number, mode: "replace" | "append") => {
-      if (!canManageOrders) return;
-
-      if (mode === "replace") {
-        setLoading(true);
-        setError("");
-      } else {
-        setLoadingMore(true);
-      }
-
-      try {
-        const status = statusFilter ? (statusFilter as OrderStatus) : undefined;
-        const res = await commerceApi.listAdminOrders(nextPage, 20, status);
-        const nextOrders = res.data.data.orders;
-        setOrders((prev) => (mode === "replace" ? nextOrders : appendUniqueById(prev, nextOrders)));
-        setHasMore(nextPage < res.data.meta.totalPages);
-        setPage(nextPage);
-      } catch (err: unknown) {
-        if (mode === "replace") setOrders([]);
-        setError(getApiError(err));
-      } finally {
-        if (mode === "replace") {
-          setLoading(false);
-        } else {
-          setLoadingMore(false);
-        }
-      }
-    },
-    [canManageOrders, statusFilter],
+  const ordersQuery = useAdminOrdersInfinite(
+    { status: statusFilter ? (statusFilter as OrderStatus) : undefined },
+    { enabled: canManageOrders },
   );
 
-  React.useEffect(() => {
-    if (!canManageOrders) {
-      setLoading(false);
-      setOrders([]);
-      return;
-    }
+  const orders = React.useMemo(
+    () => flattenPages<Order>(ordersQuery.data?.pages),
+    [ordersQuery.data],
+  );
+  const loading = ordersQuery.isLoading;
+  const loadingMore = ordersQuery.isFetchingNextPage;
+  const hasMore = Boolean(ordersQuery.hasNextPage);
+  const error = actionError || (ordersQuery.isError ? getApiError(ordersQuery.error) : "");
 
-    setOrders([]);
-    setHasMore(true);
-    void fetchOrders(1, "replace");
-  }, [canManageOrders, statusFilter, fetchOrders]);
-
-  const loadMore = React.useCallback(() => {
-    if (!canManageOrders || loading || loadingMore || !hasMore) return;
-    void fetchOrders(page + 1, "append");
-  }, [canManageOrders, loading, loadingMore, hasMore, page, fetchOrders]);
+  const deleteOrder = useDeleteAdminOrder();
 
   const loadMoreRef = useInfiniteScroll({
     hasMore: canManageOrders && hasMore,
     loading: loading || loadingMore,
-    onLoadMore: loadMore,
+    onLoadMore: () => {
+      if (ordersQuery.hasNextPage && !ordersQuery.isFetchingNextPage) {
+        void ordersQuery.fetchNextPage();
+      }
+    },
   });
 
   const handleDeleteOrder = async () => {
     if (!orderToDelete) return;
 
     setDeletingOrder(true);
-    setError("");
+    setActionError("");
 
     try {
-      await commerceApi.deleteAdminOrder(orderToDelete.id);
+      // Invalidating the orders key resets the paged list to page one for us.
+      await deleteOrder.mutateAsync(orderToDelete.id);
       setOrderToDelete(null);
-      setOrders([]);
-      setHasMore(true);
-      await fetchOrders(1, "replace");
     } catch (err: unknown) {
-      setError(getApiError(err));
+      setActionError(getApiError(err));
     } finally {
       setDeletingOrder(false);
     }

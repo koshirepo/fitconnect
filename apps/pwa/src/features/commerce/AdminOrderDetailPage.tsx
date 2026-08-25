@@ -2,7 +2,11 @@ import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate, useParams } from "react-router-dom";
-import { commerceApi } from "@/api/commerce";
+import {
+  useAdminOrder,
+  useDeleteAdminOrder,
+  useUpdateOrderStatus,
+} from "@/api/queries/platform";
 import { getApiError } from "@/api/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,7 +23,7 @@ import {
 import { PageLoader, Spinner } from "@/components/ui/spinner";
 import { formatDateTime } from "@/lib/utils";
 import { ArrowLeft, PackageSearch, Trash2 } from "lucide-react";
-import type { Order, OrderStatus } from "@/types/api";
+import type { OrderStatus } from "@/types/api";
 
 const STATUS_STYLE: Record<string, "warning" | "success" | "secondary"> = {
   PENDING: "warning",
@@ -40,48 +44,30 @@ export default function AdminOrderDetailPage() {
   const { can } = usePermissions();
   const canManageOrders = can(Permission.PLATFORM_ORDERS_UPDATE);
 
-  const [order, setOrder] = React.useState<Order | null>(null);
-  const [loading, setLoading] = React.useState(true);
   const [updatingStatus, setUpdatingStatus] = React.useState(false);
   const [deletingOrder, setDeletingOrder] = React.useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
-  const [error, setError] = React.useState("");
+  const [actionError, setActionError] = React.useState("");
 
-  const loadOrder = React.useCallback(async () => {
-    if (!orderId || !canManageOrders) {
-      setLoading(false);
-      return;
-    }
+  const orderQuery = useAdminOrder(canManageOrders ? orderId : undefined);
+  const order = orderQuery.data ?? null;
+  const loading = orderQuery.isLoading;
+  const error = actionError || (orderQuery.isError ? getApiError(orderQuery.error) : "");
 
-    setLoading(true);
-    setError("");
-
-    try {
-      const res = await commerceApi.getAdminOrderById(orderId);
-      setOrder(res.data.data.order);
-    } catch (err: unknown) {
-      setOrder(null);
-      setError(getApiError(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [orderId, canManageOrders]);
-
-  React.useEffect(() => {
-    void loadOrder();
-  }, [loadOrder]);
+  // Both writes invalidate the orders key, so this detail view refreshes itself.
+  const updateStatus = useUpdateOrderStatus();
+  const deleteOrder = useDeleteAdminOrder();
 
   const handleStatusChange = async (status: OrderStatus) => {
     if (!order) return;
 
     setUpdatingStatus(true);
-    setError("");
+    setActionError("");
 
     try {
-      const res = await commerceApi.updateOrderStatus(order.id, status);
-      setOrder(res.data.data.order);
+      await updateStatus.mutateAsync({ orderId: order.id, status });
     } catch (err: unknown) {
-      setError(getApiError(err));
+      setActionError(getApiError(err));
     } finally {
       setUpdatingStatus(false);
     }
@@ -91,13 +77,13 @@ export default function AdminOrderDetailPage() {
     if (!order) return;
 
     setDeletingOrder(true);
-    setError("");
+    setActionError("");
 
     try {
-      await commerceApi.deleteAdminOrder(order.id);
+      await deleteOrder.mutateAsync(order.id);
       navigate("/platform-commerce/orders");
     } catch (err: unknown) {
-      setError(getApiError(err));
+      setActionError(getApiError(err));
     } finally {
       setDeletingOrder(false);
     }

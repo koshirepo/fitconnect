@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
-import { commerceApi } from "@/api/commerce";
+import { useAdminProducts } from "@/api/queries/platform";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,24 +20,13 @@ const fmt = (amount: number) =>
 export default function AdminCommercePage() {
   const navigate = useNavigate();
 
-  const [products, setProducts] = React.useState<Product[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState("");
-
-  const fetchProducts = React.useCallback(async () => {
-    const res = await commerceApi.listAdminProducts(1, 100, true);
-    setProducts(res.data.data.products);
-    setError("");
-  }, []);
-
-  React.useEffect(() => {
-    setLoading(true);
-    fetchProducts()
-      .catch((err: unknown) => {
-        setError(getApiError(err));
-      })
-      .finally(() => setLoading(false));
-  }, [fetchProducts]);
+  const productsQuery = useAdminProducts({ page: 1, limit: 100 });
+  const products = React.useMemo<Product[]>(
+    () => productsQuery.data?.data.products ?? [],
+    [productsQuery.data],
+  );
+  const loading = productsQuery.isLoading;
+  const error = productsQuery.isError ? getApiError(productsQuery.error) : "";
 
   if (loading) {
     return <PageLoader />;

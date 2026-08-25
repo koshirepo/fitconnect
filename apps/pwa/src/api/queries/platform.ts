@@ -205,6 +205,37 @@ export function useAdminOrders(
   });
 }
 
+/** Platform orders paged for infinite scroll, optionally narrowed to one product. */
+export function useAdminOrdersInfinite(
+  filters: { status?: OrderStatus; productId?: string } = {},
+  options: { enabled?: boolean; limit?: number } = {},
+) {
+  const { limit = 20 } = options;
+  return useAppInfiniteQuery(
+    [...COMMERCE_KEY, "orders", "infinite", filters, limit],
+    async (page) => {
+      const { data, meta } = unwrapPaginated(
+        await commerceApi.listAdminOrders(page, limit, filters.status, filters.productId),
+      );
+      return { data: data.orders, meta };
+    },
+    options,
+  );
+}
+
+/** The signed-in user's own orders, paged for infinite scroll. */
+export function useMyOrdersInfinite(options: { enabled?: boolean; limit?: number } = {}) {
+  const { limit = 20 } = options;
+  return useAppInfiniteQuery(
+    [...COMMERCE_KEY, "orders", "mine", "infinite", limit],
+    async (page) => {
+      const { data, meta } = unwrapPaginated(await commerceApi.listMyOrders(page, limit));
+      return { data: data.orders, meta };
+    },
+    options,
+  );
+}
+
 export function useAdminOrder(orderId: string | undefined) {
   return useQuery({
     queryKey: [...COMMERCE_KEY, "orders", orderId ?? "none"],

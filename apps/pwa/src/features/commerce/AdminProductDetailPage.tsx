@@ -2,7 +2,12 @@ import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate, useParams } from "react-router-dom";
-import { commerceApi } from "@/api/commerce";
+import {
+  useAdminOrdersInfinite,
+  useAdminProduct,
+  useDeleteProduct,
+} from "@/api/queries/platform";
+import { flattenPages } from "@/api/queries/shared";
 import { getApiError } from "@/api/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,8 +17,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageLoader, Spinner } from "@/components/ui/spinner";
 import { formatDateTime } from "@/lib/utils";
 import { ArrowLeft, Edit2, PackageOpen, ShoppingBag, Trash2 } from "lucide-react";
-import type { Order, OrderItem, Product } from "@/types/api";
-import { appendUniqueById } from "@/lib/use-infinite-scroll";
+import type { Order, OrderItem } from "@/types/api";
 
 const STATUS_STYLE: Record<string, "warning" | "success" | "secondary"> = {
   PENDING: "warning",
@@ -38,97 +42,42 @@ export default function AdminProductDetailPage() {
   const { can } = usePermissions();
   const canManageOrders = can(Permission.PLATFORM_ORDERS_UPDATE);
 
-  const [product, setProduct] = React.useState<Product | null>(null);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [deletingProduct, setDeletingProduct] = React.useState(false);
+  const [actionError, setActionError] = React.useState("");
 
-  const [orders, setOrders] = React.useState<Order[]>([]);
-  const [ordersLoading, setOrdersLoading] = React.useState(false);
-  const [ordersLoadingMore, setOrdersLoadingMore] = React.useState(false);
-  const [ordersError, setOrdersError] = React.useState("");
-  const [ordersPage, setOrdersPage] = React.useState(1);
-  const [ordersHasMore, setOrdersHasMore] = React.useState(false);
+  const productQuery = useAdminProduct(productId);
+  const product = productQuery.data ?? null;
+  const loading = productQuery.isLoading;
+  const error = actionError || (productQuery.isError ? getApiError(productQuery.error) : "");
 
-  const loadProduct = React.useCallback(async () => {
-    if (!productId) return;
-
-    setLoading(true);
-    setError("");
-
-    try {
-      const res = await commerceApi.getAdminProductById(productId);
-      setProduct(res.data.data.product);
-    } catch (err: unknown) {
-      setProduct(null);
-      setError(getApiError(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [productId]);
-
-  const loadOrders = React.useCallback(
-    async (nextPage: number, mode: "replace" | "append") => {
-      if (!canManageOrders || !productId) return;
-
-      if (mode === "replace") {
-        setOrdersLoading(true);
-        setOrdersError("");
-      } else {
-        setOrdersLoadingMore(true);
-      }
-
-      try {
-        const res = await commerceApi.listAdminOrders(nextPage, 10, undefined, productId);
-        const nextOrders = res.data.data.orders;
-        setOrders((prev) => (mode === "replace" ? nextOrders : appendUniqueById(prev, nextOrders)));
-        setOrdersHasMore(nextPage < res.data.meta.totalPages);
-        setOrdersPage(nextPage);
-      } catch (err: unknown) {
-        if (mode === "replace") setOrders([]);
-        setOrdersError(getApiError(err));
-      } finally {
-        if (mode === "replace") {
-          setOrdersLoading(false);
-        } else {
-          setOrdersLoadingMore(false);
-        }
-      }
-    },
-    [canManageOrders, productId],
+  // Orders that include this product, only for callers who may read them.
+  const ordersQuery = useAdminOrdersInfinite(
+    { productId },
+    { enabled: canManageOrders && Boolean(productId), limit: 10 },
   );
+  const orders = React.useMemo(
+    () => flattenPages<Order>(ordersQuery.data?.pages),
+    [ordersQuery.data],
+  );
+  const ordersLoading = ordersQuery.isLoading;
+  const ordersLoadingMore = ordersQuery.isFetchingNextPage;
+  const ordersHasMore = Boolean(ordersQuery.hasNextPage);
+  const ordersError = ordersQuery.isError ? getApiError(ordersQuery.error) : "";
 
-  React.useEffect(() => {
-    void loadProduct();
-  }, [loadProduct]);
-
-  React.useEffect(() => {
-    if (!canManageOrders || !productId) {
-      setOrders([]);
-      setOrdersPage(1);
-      setOrdersHasMore(false);
-      setOrdersError("");
-      return;
-    }
-
-    setOrders([]);
-    setOrdersPage(1);
-    setOrdersHasMore(true);
-    void loadOrders(1, "replace");
-  }, [canManageOrders, productId, loadOrders]);
+  const deleteProduct = useDeleteProduct();
 
   const handleDeleteProduct = async () => {
     if (!product) return;
 
     setDeletingProduct(true);
-    setError("");
+    setActionError("");
 
     try {
-      await commerceApi.deleteProduct(product.id);
+      await deleteProduct.mutateAsync(product.id);
       navigate("/platform-commerce");
     } catch (err: unknown) {
-      setError(getApiError(err));
+      setActionError(getApiError(err));
     } finally {
       setDeletingProduct(false);
     }
@@ -345,7 +294,7 @@ export default function AdminProductDetailPage() {
               {(ordersHasMore || ordersLoadingMore) && (
                 <Button
                   variant="outline"
-                  onClick={() => void loadOrders(ordersPage + 1, "append")}
+                  onClick={() => void ordersQuery.fetchNextPage()}
                   disabled={ordersLoadingMore}
                   className="w-full"
                 >

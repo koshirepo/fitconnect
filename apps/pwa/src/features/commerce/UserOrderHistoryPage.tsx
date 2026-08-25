@@ -1,13 +1,14 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
-import { commerceApi } from "@/api/commerce";
+import { useMyOrdersInfinite } from "@/api/queries/platform";
+import { flattenPages } from "@/api/queries/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageLoader, Spinner } from "@/components/ui/spinner";
 import { formatDateTime } from "@/lib/utils";
-import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
+import { useInfiniteScroll } from "@/lib/use-infinite-scroll";
 import { PackageSearch } from "lucide-react";
 import type { Order } from "@/types/api";
 
@@ -26,46 +27,20 @@ const fmt = (amount: number) =>
 
 export default function UserOrderHistoryPage() {
   const navigate = useNavigate();
-  const [orders, setOrders] = React.useState<Order[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [loadingMore, setLoadingMore] = React.useState(false);
-  const [page, setPage] = React.useState(1);
-  const [hasMore, setHasMore] = React.useState(true);
-
-  const fetchOrders = React.useCallback(async (nextPage: number, mode: "replace" | "append") => {
-    if (mode === "replace") {
-      setLoading(true);
-    } else {
-      setLoadingMore(true);
-    }
-    try {
-      const res = await commerceApi.listMyOrders(nextPage, 20);
-      const nextOrders = res.data.data.orders;
-      setOrders((prev) => (mode === "replace" ? nextOrders : appendUniqueById(prev, nextOrders)));
-      const totalPages = res.data.meta.totalPages;
-      setHasMore(nextPage < totalPages);
-      setPage(nextPage);
-    } catch {
-      if (mode === "replace") setOrders([]);
-    } finally {
-      if (mode === "replace") {
-        setLoading(false);
-      } else {
-        setLoadingMore(false);
-      }
-    }
-  }, []);
-
-  React.useEffect(() => {
-    setOrders([]);
-    setHasMore(true);
-    void fetchOrders(1, "replace");
-  }, [fetchOrders]);
+  const ordersQuery = useMyOrdersInfinite();
+  const orders = React.useMemo(
+    () => flattenPages<Order>(ordersQuery.data?.pages),
+    [ordersQuery.data],
+  );
+  const loading = ordersQuery.isLoading;
+  const loadingMore = ordersQuery.isFetchingNextPage;
+  const hasMore = Boolean(ordersQuery.hasNextPage);
 
   const loadMore = React.useCallback(() => {
-    if (loading || loadingMore || !hasMore) return;
-    void fetchOrders(page + 1, "append");
-  }, [loading, loadingMore, hasMore, page, fetchOrders]);
+    if (ordersQuery.hasNextPage && !ordersQuery.isFetchingNextPage) {
+      void ordersQuery.fetchNextPage();
+    }
+  }, [ordersQuery]);
 
   const loadMoreRef = useInfiniteScroll({
     hasMore,
