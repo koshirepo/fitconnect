@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { tenantsApi } from "@/api/tenants";
 import { uploadsApi } from "@/api/uploads";
-import { paymentsApi } from "@/api/payments";
-import { settingsApi } from "@/api/settings";
-import { shiftsApi } from "@/api/shifts";
+import { useSubscriptions } from "@/api/queries/payments";
+import { useCharges, useShifts } from "@/api/queries/catalog";
+import { useAllMembers } from "@/api/queries/members";
+import { useQueryClient } from "@tanstack/react-query";
 import { getApiError } from "@/api/client";
 import { storeFileOffline } from "@/lib/offline-files";
 import { queueMutation } from "@/lib/api-cache";
@@ -44,25 +45,10 @@ function formatAmount(amount: number) {
   }).format(amount);
 }
 
-async function loadAllMembers(tenantId: string): Promise<TenantMember[]> {
-  const firstPage = await tenantsApi.listMembers(tenantId, 1, 100);
-  const firstBatch = firstPage.data.data.members;
-  const totalPages = firstPage.data.meta.totalPages;
-
-  if (totalPages <= 1) return firstBatch;
-
-  const remainingPages = await Promise.all(
-    Array.from({ length: totalPages - 1 }, (_, index) =>
-      tenantsApi.listMembers(tenantId, index + 2, 100),
-    ),
-  );
-
-  return [...firstBatch, ...remainingPages.flatMap((page) => page.data.data.members)];
-}
-
 export default function AddMemberPage() {
   const navigate = useNavigate();
   const { currentTenantId } = useAuthStore();
+  const queryClient = useQueryClient();
 
   // Step management: 1 = member details, 2 = subscription & charges
   const [step, setStep] = React.useState(1);
@@ -72,85 +58,44 @@ export default function AddMemberPage() {
   const [error, setError] = React.useState("");
   const [success, setSuccess] = React.useState(false);
   const [emailSent, setEmailSent] = React.useState(false);
-  const [shifts, setShifts] = React.useState<Shift[]>([]);
-  const [loadingShifts, setLoadingShifts] = React.useState(false);
-  const [referralOptions, setReferralOptions] = React.useState<TenantMember[]>([]);
 
-  // Step 2 data
-  const [subscriptions, setSubscriptions] = React.useState<Subscription[]>([]);
-  const [charges, setCharges] = React.useState<TenantCharge[]>([]);
-  const [loadingOptions, setLoadingOptions] = React.useState(false);
   const [selectedSubscriptionId, setSelectedSubscriptionId] =
     React.useState<string>("");
   const [selectedChargeIds, setSelectedChargeIds] = React.useState<string[]>(
     [],
   );
 
-  // Load subscriptions and charges when moving to step 2
-  const loadPaymentOptions = React.useCallback(async () => {
-    if (!currentTenantId) return;
-    setLoadingOptions(true);
-    try {
-      const [subsRes, chargesRes] = await Promise.all([
-        paymentsApi.listSubscriptions(currentTenantId),
-        settingsApi.listCharges(currentTenantId),
-      ]);
-      setSubscriptions(subsRes.data.data.subscriptions);
-      const activeCharges = chargesRes.data.data.charges.filter(
-        (c: TenantCharge) => c.isActive,
-      );
-      setCharges(activeCharges);
-      // Auto-select mandatory charges
-      setSelectedChargeIds(
-        activeCharges
-          .filter((c: TenantCharge) => c.isMandatory)
-          .map((c: TenantCharge) => c.id),
-      );
-    } catch {
-      setError("Failed to load subscription plans and charges.");
-    } finally {
-      setLoadingOptions(false);
-    }
-  }, [currentTenantId]);
+  const shiftsQuery = useShifts(false);
+  const shifts = React.useMemo<Shift[]>(() => shiftsQuery.data ?? [], [shiftsQuery.data]);
+  const loadingShifts = shiftsQuery.isLoading;
 
-  const loadShiftOptions = React.useCallback(async () => {
-    if (!currentTenantId) return;
-    setLoadingShifts(true);
-    try {
-      const res = await shiftsApi.list(currentTenantId, 1, 100, false);
-      setShifts(res.data.data.shifts);
-    } catch {
-      setShifts([]);
-    } finally {
-      setLoadingShifts(false);
-    }
-  }, [currentTenantId]);
+  // The referral picker searches the whole roster, so it needs every member.
+  const referralQuery = useAllMembers();
+  const referralOptions = React.useMemo<TenantMember[]>(
+    () => referralQuery.data ?? [],
+    [referralQuery.data],
+  );
 
+  // Plans and charges are only needed once the form reaches step 2.
+  const subscriptionsQuery = useSubscriptions(false, { enabled: step === 2 });
+  const chargesQuery = useCharges({ enabled: step === 2 });
+
+  const subscriptions = React.useMemo<Subscription[]>(
+    () => subscriptionsQuery.data ?? [],
+    [subscriptionsQuery.data],
+  );
+  const charges = React.useMemo<TenantCharge[]>(
+    () => (chargesQuery.data ?? []).filter((charge) => charge.isActive),
+    [chargesQuery.data],
+  );
+  const loadingOptions = subscriptionsQuery.isLoading || chargesQuery.isLoading;
+
+  // Mandatory charges start selected. Keyed on the charge list so this runs
+  // once per load rather than on every render.
   React.useEffect(() => {
-    void loadShiftOptions();
-  }, [loadShiftOptions]);
-
-  React.useEffect(() => {
-    if (!currentTenantId) return;
-
-    let cancelled = false;
-
-    loadAllMembers(currentTenantId)
-      .then((members) => {
-        if (!cancelled) {
-          setReferralOptions(members);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setReferralOptions([]);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [currentTenantId]);
+    if (charges.length === 0) return;
+    setSelectedChargeIds(charges.filter((charge) => charge.isMandatory).map((c) => c.id));
+  }, [charges]);
 
   const handleStep1Submit = async (data: MemberFormData) => {
     setError("");
@@ -160,7 +105,7 @@ export default function AddMemberPage() {
     }
     setMemberData(data);
     setStep(2);
-    loadPaymentOptions();
+    // Setting step 2 enables the plan and charge queries above.
   };
 
   const handleToggleCharge = (chargeId: string, mandatory: boolean) => {
@@ -252,6 +197,13 @@ export default function AddMemberPage() {
 
         setSuccess(true);
       }
+
+      // This write stays on the raw API rather than a mutation hook: it needs
+      // the untouched envelope to detect an offline queue and to read the
+      // welcome-message text. Invalidating here keeps the caches correct anyway.
+      await queryClient.invalidateQueries({
+        queryKey: ["members", currentTenantId],
+      });
     } catch (err: unknown) {
       setError(getApiError(err));
     } finally {

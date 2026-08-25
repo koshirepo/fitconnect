@@ -4,6 +4,9 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import { tenantsApi } from "@/api/tenants";
+import { useQueryClient } from "@tanstack/react-query";
+import { useUpdateTenantStatus } from "@/api/queries/platform";
+import { queryKeys } from "@/lib/query-keys";
 import { getApiError } from "@/api/client";
 import { useAuthStore } from "@/stores/auth";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +53,8 @@ type MemberSummary = {
 export default function TenantDetails() {
   const { tenantId } = useParams<{ tenantId: string }>();
   const canManageStatus = useAuthStore((s) => s.user?.platformRole === "SUPER_ADMIN");
+  const queryClient = useQueryClient();
+  const updateTenantStatus = useUpdateTenantStatus();
 
   const [loading, setLoading] = React.useState(true);
   const [statusUpdating, setStatusUpdating] = React.useState(false);
@@ -123,7 +128,9 @@ export default function TenantDetails() {
     setError("");
 
     try {
-      await tenantsApi.updateStatus(tenant.id, nextStatus);
+      // Also invalidates the tenants list, so the platform table agrees with
+      // the badge shown here.
+      await updateTenantStatus.mutateAsync({ tenantId: tenant.id, status: nextStatus });
       setTenant((prev) => (prev ? { ...prev, status: nextStatus } : prev));
     } catch (err) {
       setError(getApiError(err));
@@ -211,6 +218,8 @@ export default function TenantDetails() {
       // Refresh tenant (to get updated platformExpiresAt) and payments
       const tenantRes = await tenantsApi.get(tenantId);
       setTenant(tenantRes.data.data.tenant);
+      // The expiry drives the platform table's badge, so clear that cache too.
+      await queryClient.invalidateQueries({ queryKey: queryKeys.tenants.all() });
       setPaymentsHasMore(true);
       void loadPlatformPayments(tenantId, 1, "replace");
       setRecordDialogOpen(false);

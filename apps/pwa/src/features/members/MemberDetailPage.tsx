@@ -3,12 +3,24 @@ import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
-import { tenantsApi } from "@/api/tenants";
-import { settingsApi } from "@/api/settings";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  useMember,
+  useRemoveMember,
+  useUpdateMember,
+  useUpdateMemberRole,
+  useUpdateMemberStatus,
+} from "@/api/queries/members";
+import {
+  useAssignBadge,
+  useBadges,
+  useShifts,
+  useTenantSettings,
+  useUnassignBadge,
+} from "@/api/queries/catalog";
+import { queryKeys } from "@/lib/query-keys";
 import { uploadsApi } from "@/api/uploads";
-import { badgesApi } from "@/api/badges";
-import { attendanceApi } from "@/api/attendance";
-import { shiftsApi } from "@/api/shifts";
+import { useMemberAttendanceCalendar } from "@/api/queries/attendance";
 import { getApiError } from "@/api/client";
 import { formatDate, getInitials } from "@fitconnect/shared";
 import { getDueDateState } from "@/lib/member-due";
@@ -64,7 +76,7 @@ import {
   CalendarDays,
   Trash2,
 } from "lucide-react";
-import type { Badge, MemberDetail, Shift, TenantSettings } from "@/types/api";
+import type { Badge, MemberDetail, Shift } from "@/types/api";
 import AvatarCard from "@/components/ui/avatarCard";
 import MemberForm, { type MemberFormData } from "@/components/forms/MemberForm";
 
@@ -104,6 +116,7 @@ export default function MemberDetailPage() {
   const location = useLocation();
   const { currentTenantId, currentMembership } = useAuthStore();
   const { can } = usePermissions();
+  const queryClient = useQueryClient();
   const gymName = currentMembership()?.tenantName ?? "the gym";
   const canManageBadges = can(Permission.BADGES_ASSIGN);
   const canChangeStatus = can(Permission.MEMBERS_STATUS_UPDATE);
@@ -111,18 +124,11 @@ export default function MemberDetailPage() {
 
   const isEditMode = location.pathname.endsWith("/edit");
 
-  const [member, setMember] = React.useState<MemberDetail | null>(null);
-  const [tenantSettings, setTenantSettings] = React.useState<TenantSettings | null>(null);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState("");
+  const [actionError, setActionError] = React.useState("");
 
   const [editSubmitting, setEditSubmitting] = React.useState(false);
   const [editError, setEditError] = React.useState("");
-  const [shiftOptions, setShiftOptions] = React.useState<Shift[]>([]);
-  const [loadingShifts, setLoadingShifts] = React.useState(false);
 
-  const [availableBadges, setAvailableBadges] = React.useState<Badge[]>([]);
-  const [loadingBadges, setLoadingBadges] = React.useState(false);
   const [selectedBadgeId, setSelectedBadgeId] = React.useState("");
   const [badgeError, setBadgeError] = React.useState("");
 
@@ -131,73 +137,36 @@ export default function MemberDetailPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
   const [deletingMember, setDeletingMember] = React.useState(false);
   const paymentsSectionRef = React.useRef<HTMLDivElement>(null);
+
+  const memberQuery = useMember(membershipId);
+  const member = memberQuery.data ?? null;
+  const loading = memberQuery.isLoading;
+  const error = actionError || (memberQuery.isError ? getApiError(memberQuery.error) : "");
   const isMemberProfile = member?.role === "MEMBER";
 
-  const loadMember = React.useCallback(
-    async (showLoading = true) => {
-      if (!currentTenantId || !membershipId) return;
-      if (showLoading) setLoading(true);
-      setError("");
-      try {
-        const res = await tenantsApi.getMemberDetail(currentTenantId, membershipId);
-        setMember(res.data.data.member);
-      } catch (err: unknown) {
-        setMember(null);
-        setError(getApiError(err));
-      } finally {
-        if (showLoading) setLoading(false);
-      }
-    },
-    [currentTenantId, membershipId],
+  const settingsQuery = useTenantSettings();
+  const tenantSettings = settingsQuery.data ?? null;
+
+  // Badges are only needed for the assignment picker; shifts only in edit mode.
+  const badgesQuery = useBadges({ enabled: canManageBadges });
+  const availableBadges = React.useMemo<Badge[]>(
+    () => badgesQuery.data ?? [],
+    [badgesQuery.data],
   );
+  const loadingBadges = badgesQuery.isLoading;
 
-  const loadBadges = React.useCallback(async () => {
-    if (!currentTenantId || !canManageBadges) return;
-    setLoadingBadges(true);
-    try {
-      const res = await badgesApi.list(currentTenantId, 1, 100, false);
-      setAvailableBadges(res.data.data);
-    } catch {
-      setAvailableBadges([]);
-    } finally {
-      setLoadingBadges(false);
-    }
-  }, [currentTenantId, canManageBadges]);
+  const shiftsQuery = useShifts(true, { enabled: isEditMode });
+  const shiftOptions = React.useMemo<Shift[]>(() => shiftsQuery.data ?? [], [shiftsQuery.data]);
+  const loadingShifts = shiftsQuery.isLoading;
 
-  React.useEffect(() => {
-    void loadMember(true);
-  }, [loadMember]);
-
-  React.useEffect(() => {
-    if (!canManageBadges) return;
-    void loadBadges();
-  }, [canManageBadges, loadBadges]);
-
-  React.useEffect(() => {
-    if (!currentTenantId) return;
-    settingsApi
-      .getSettings(currentTenantId)
-      .then((res) => setTenantSettings(res.data.data.settings))
-      .catch(() => setTenantSettings(null));
-  }, [currentTenantId]);
-
-  const loadShifts = React.useCallback(async () => {
-    if (!currentTenantId) return;
-    setLoadingShifts(true);
-    try {
-      const res = await shiftsApi.list(currentTenantId, 1, 100, true);
-      setShiftOptions(res.data.data.shifts);
-    } catch {
-      setShiftOptions([]);
-    } finally {
-      setLoadingShifts(false);
-    }
-  }, [currentTenantId]);
-
-  React.useEffect(() => {
-    if (!isEditMode) return;
-    void loadShifts();
-  }, [isEditMode, loadShifts]);
+  // Every write below invalidates the members key, so this detail view and the
+  // member list both refresh without an explicit re-read.
+  const updateMember = useUpdateMember();
+  const updateMemberRole = useUpdateMemberRole();
+  const updateMemberStatus = useUpdateMemberStatus();
+  const removeMember = useRemoveMember();
+  const assignBadge = useAssignBadge();
+  const unassignBadge = useUnassignBadge();
 
   // Scroll to hash target (e.g. #attendance) once data is loaded
   React.useEffect(() => {
@@ -209,9 +178,6 @@ export default function MemberDetailPage() {
   // ─── Attendance calendar ────────────────────────────────────────────────────
   const today = new Date();
   const [calMonth, setCalMonth] = React.useState(getMonthStr(today));
-  const [calDates, setCalDates] = React.useState<Set<string>>(new Set());
-  const [calTotal, setCalTotal] = React.useState(0);
-  const [calLoading, setCalLoading] = React.useState(false);
 
   const navigateMonth = (dir: -1 | 1) => {
     const d = parseMonth(calMonth);
@@ -219,59 +185,44 @@ export default function MemberDetailPage() {
     setCalMonth(getMonthStr(d));
   };
 
-  React.useEffect(() => {
-    if (!currentTenantId || !membershipId || !isMemberProfile) {
-      setCalDates(new Set());
-      setCalTotal(0);
-      setCalLoading(false);
-      return;
-    }
-    let cancelled = false;
-    setCalLoading(true);
-    attendanceApi
-      .memberCalendar(currentTenantId, membershipId, calMonth)
-      .then((res) => {
-        if (cancelled) return;
-        setCalDates(new Set(res.data.data.dates));
-        setCalTotal(res.data.data.total);
-      })
-      .catch(() => {
-        if (!cancelled) setCalDates(new Set());
-      })
-      .finally(() => {
-        if (!cancelled) setCalLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [currentTenantId, membershipId, calMonth, isMemberProfile]);
+  // Only members have an attendance history worth charting. The month is part
+  // of the cache key, so stepping back and forth reuses months already loaded.
+  const calendarQuery = useMemberAttendanceCalendar(membershipId, calMonth, {
+    enabled: isMemberProfile,
+  });
+  const calDates = React.useMemo(
+    () => new Set(calendarQuery.data?.dates ?? []),
+    [calendarQuery.data],
+  );
+  const calTotal = calendarQuery.data?.total ?? 0;
+  const calLoading = calendarQuery.isLoading;
 
   const handleToggleStatus = async () => {
-    if (!currentTenantId || !membershipId || !member) return;
+    if (!membershipId || !member) return;
     const newStatus = member.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
     setStatusLoading(true);
-    // Optimistic
-    setMember((prev) => (prev ? { ...prev, status: newStatus } : prev));
+    setActionError("");
     try {
-      await tenantsApi.updateMemberStatus(currentTenantId, membershipId, newStatus);
+      // No optimistic patch needed: the mutation invalidates the member query,
+      // so the refetched record is the source of truth for the new status.
+      await updateMemberStatus.mutateAsync({ membershipId, status: newStatus });
     } catch (err: unknown) {
-      setMember((prev) => (prev ? { ...prev, status: member.status } : prev));
-      setError(getApiError(err));
+      setActionError(getApiError(err));
     } finally {
       setStatusLoading(false);
     }
   };
 
   const handleDeleteMember = async () => {
-    if (!currentTenantId || !membershipId) return;
+    if (!membershipId) return;
 
     setDeletingMember(true);
-    setError("");
+    setActionError("");
     try {
-      await tenantsApi.removeMember(currentTenantId, membershipId);
+      await removeMember.mutateAsync(membershipId);
       navigate(getTenantDashboardPath("/members"), { replace: true });
     } catch (err: unknown) {
-      setError(getApiError(err));
+      setActionError(getApiError(err));
     } finally {
       setDeletingMember(false);
     }
@@ -305,19 +256,21 @@ export default function MemberDetailPage() {
       }
 
       if (roleChanged) {
-        await tenantsApi.updateMemberRole(currentTenantId, membershipId, data.role);
+        await updateMemberRole.mutateAsync({ membershipId, role: data.role });
       }
 
       if (nameChanged || phoneChanged || shiftChanged || avatarUrl !== undefined) {
-        await tenantsApi.updateMember(currentTenantId, membershipId, {
-          ...(nameChanged ? { name: data.name } : {}),
-          ...(phoneChanged ? { phone: data.phone } : {}),
-          ...(shiftChanged ? { shiftId: nextShiftId } : {}),
-          ...(avatarUrl !== undefined ? { avatarUrl } : {}),
+        await updateMember.mutateAsync({
+          membershipId,
+          data: {
+            ...(nameChanged ? { name: data.name } : {}),
+            ...(phoneChanged ? { phone: data.phone } : {}),
+            ...(shiftChanged ? { shiftId: nextShiftId } : {}),
+            ...(avatarUrl !== undefined ? { avatarUrl } : {}),
+          },
         });
       }
 
-      await loadMember(false);
       navigate(getTenantDashboardPath(`/members/${membershipId}`), { replace: true });
     } catch (err: unknown) {
       setEditError(getApiError(err));
@@ -331,48 +284,55 @@ export default function MemberDetailPage() {
     return availableBadges.filter((badge) => badge.isActive && !assignedIds.has(badge.id));
   }, [availableBadges, member?.badges]);
 
+  /**
+   * Badge changes stay optimistic so the chip reacts instantly and the picker
+   * can stay open for the next one. The patch is applied to the cached member
+   * record rather than to local state, so it survives the invalidation the
+   * mutation triggers and every other reader of that record sees it too.
+   */
+  const patchCachedBadges = React.useCallback(
+    (update: (badges: MemberDetail["badges"]) => MemberDetail["badges"]) => {
+      if (!currentTenantId || !membershipId) return;
+      queryClient.setQueryData<MemberDetail>(
+        queryKeys.members.detail(currentTenantId, membershipId),
+        (prev) => (prev ? { ...prev, badges: update(prev.badges) } : prev),
+      );
+    },
+    [queryClient, currentTenantId, membershipId],
+  );
+
   const handleAssignBadge = async () => {
-    if (!currentTenantId || !membershipId || !selectedBadgeId) return;
+    if (!membershipId || !selectedBadgeId) return;
 
     const badge = availableBadges.find((b) => b.id === selectedBadgeId);
     if (!badge) return;
 
     setBadgeError("");
-
-    // Optimistic update — badge appears instantly, picker stays open for more
-    setMember((prev) => (prev ? { ...prev, badges: [...prev.badges, badge] } : prev));
+    patchCachedBadges((badges) => [...badges, badge]);
     setSelectedBadgeId("");
 
     try {
-      await badgesApi.assign(currentTenantId, badge.id, { membershipId });
+      await assignBadge.mutateAsync({ badgeId: badge.id, data: { membershipId } });
     } catch (err: unknown) {
-      // Revert on failure
-      setMember((prev) =>
-        prev ? { ...prev, badges: prev.badges.filter((b) => b.id !== badge.id) } : prev,
-      );
+      patchCachedBadges((badges) => badges.filter((b) => b.id !== badge.id));
       setSelectedBadgeId(badge.id);
       setBadgeError(getApiError(err));
     }
   };
 
   const handleRemoveBadge = async (badgeId: string) => {
-    if (!currentTenantId || !membershipId) return;
+    if (!membershipId) return;
 
     const badge = member?.badges.find((b) => b.id === badgeId);
     if (!badge) return;
 
     setBadgeError("");
-
-    // Optimistic update — badge disappears instantly
-    setMember((prev) =>
-      prev ? { ...prev, badges: prev.badges.filter((b) => b.id !== badgeId) } : prev,
-    );
+    patchCachedBadges((badges) => badges.filter((b) => b.id !== badgeId));
 
     try {
-      await badgesApi.unassign(currentTenantId, badgeId, membershipId);
+      await unassignBadge.mutateAsync({ badgeId, membershipId });
     } catch (err: unknown) {
-      // Revert on failure
-      setMember((prev) => (prev ? { ...prev, badges: [...prev.badges, badge] } : prev));
+      patchCachedBadges((badges) => [...badges, badge]);
       setBadgeError(getApiError(err));
     }
   };
@@ -420,7 +380,7 @@ export default function MemberDetailPage() {
           title={isNotFound ? "Member not found" : "Unable to load member"}
           description={error || "Could not load this member right now."}
           action={
-            <Button variant="outline" onClick={() => void loadMember(true)}>
+            <Button variant="outline" onClick={() => void memberQuery.refetch()}>
               Retry
             </Button>
           }

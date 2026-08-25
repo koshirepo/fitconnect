@@ -3,8 +3,8 @@ import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
-import { badgesApi } from "@/api/badges";
-import { paymentsApi } from "@/api/payments";
+import { useBadges } from "@/api/queries/catalog";
+import { useCreateSubscription } from "@/api/queries/payments";
 import { getApiError } from "@/api/client";
 import { formatCurrency } from "@/lib/utils";
 import { Badge as UiBadge } from "@/components/ui/badge";
@@ -30,6 +30,7 @@ export default function CreateSubscriptionPage() {
   const navigate = useNavigate();
   const { currentTenantId } = useAuthStore();
   const { can } = usePermissions();
+  const createSubscription = useCreateSubscription();
   const canManagePlans = can(Permission.SUBSCRIPTIONS_CREATE);
 
   // ─── Form state ─────────────────────────────────────────────────────────────
@@ -38,43 +39,22 @@ export default function CreateSubscriptionPage() {
   const [amount, setAmount] = React.useState("");
   const [durationDays, setDurationDays] = React.useState("30");
   const [customDuration, setCustomDuration] = React.useState(false);
-  const [availableBadges, setAvailableBadges] = React.useState<BadgeModel[]>([]);
   const [selectedBadgeIds, setSelectedBadgeIds] = React.useState<string[]>([]);
-  const [loadingBadges, setLoadingBadges] = React.useState(false);
-  const [badgeLoadError, setBadgeLoadError] = React.useState("");
 
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState("");
   const [success, setSuccess] = React.useState(false);
 
-  React.useEffect(() => {
-    if (!currentTenantId || !canManagePlans) return;
-
-    let cancelled = false;
-    setLoadingBadges(true);
-    setBadgeLoadError("");
-
-    badgesApi
-      .list(currentTenantId, 1, 100, true)
-      .then((res) => {
-        if (!cancelled) {
-          setAvailableBadges(res.data.data);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setAvailableBadges([]);
-          setBadgeLoadError("Failed to load badges. You can still create a plan for all members.");
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingBadges(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [currentTenantId, canManagePlans]);
+  // Badges gate plan eligibility; a failure here must not block plan creation.
+  const badgesQuery = useBadges({ includeInactive: true, enabled: canManagePlans });
+  const availableBadges = React.useMemo<BadgeModel[]>(
+    () => badgesQuery.data ?? [],
+    [badgesQuery.data],
+  );
+  const loadingBadges = badgesQuery.isLoading;
+  const badgeLoadError = badgesQuery.isError
+    ? "Failed to load badges. You can still create a plan for all members."
+    : "";
 
   // Only admins can create subscriptions
   if (!canManagePlans) {
@@ -117,7 +97,7 @@ export default function CreateSubscriptionPage() {
     setSubmitting(true);
 
     try {
-      await paymentsApi.createSubscription(currentTenantId, {
+      await createSubscription.mutateAsync({
         title: title.trim(),
         description: description.trim() || undefined,
         amount: parsedAmount,

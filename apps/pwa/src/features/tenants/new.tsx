@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { toSlug } from "@fitconnect/shared/utils";
-import { tenantsApi } from "@/api/tenants";
+import { useCreateTenant } from "@/api/queries/platform";
 import { uploadsApi } from "@/api/uploads";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
@@ -78,6 +78,7 @@ function normalizeSlugInput(value: string) {
 
 export default function NewTenant() {
   const navigate = useNavigate();
+  const createTenant = useCreateTenant();
 
   const [tenantName, setTenantName] = React.useState("");
   const [tenantSlug, setTenantSlug] = React.useState("");
@@ -238,9 +239,11 @@ export default function NewTenant() {
         },
       };
 
-      const res = await tenantsApi.create(payload);
+      // Invalidates the tenants list, so the new gym is on the platform table
+      // by the time the user navigates back to it.
+      const result = await createTenant.mutateAsync(payload);
       setCreatedTenantName(payload.name);
-      setGeneratedPassword(res.data.data.generatedPassword ?? "");
+      setGeneratedPassword(result.generatedPassword ?? "");
       setSuccess(true);
       resetForm();
     } catch (err) {

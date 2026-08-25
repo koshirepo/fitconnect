@@ -1,6 +1,10 @@
 import * as React from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { commerceApi } from "@/api/commerce";
+import {
+  useAdminProduct,
+  useCreateProduct,
+  useUpdateProduct,
+} from "@/api/queries/platform";
 import { uploadsApi } from "@/api/uploads";
 import { getApiError } from "@/api/client";
 import type { Product } from "@/types/api";
@@ -89,41 +93,24 @@ export default function CreateProductPage() {
   const [photoPreviews, setPhotoPreviews] = React.useState<string[]>([]);
   const [uploading, setUploading] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
-  const [loadingProduct, setLoadingProduct] = React.useState(false);
   const [error, setError] = React.useState("");
   const [success, setSuccess] = React.useState(false);
   const [savedProductName, setSavedProductName] = React.useState("");
 
+  // Only edit mode loads an existing product; create mode starts from the blank form.
+  const productQuery = useAdminProduct(isEditMode ? productId : undefined);
+  const loadingProduct = productQuery.isLoading;
+
+  const createProduct = useCreateProduct();
+  const updateProduct = useUpdateProduct();
+
+  // Seed the form once the product arrives.
   React.useEffect(() => {
-    if (!isEditMode || !productId) {
-      setLoadingProduct(false);
-      return;
-    }
-
-    let active = true;
-    setLoadingProduct(true);
-    setError("");
-
-    commerceApi
-      .getAdminProductById(productId)
-      .then((res) => {
-        if (!active) return;
-        const product = res.data.data.product;
-        setForm(toForm(product));
-        setPhotoPreviews(product.photos);
-      })
-      .catch((err: unknown) => {
-        if (!active) return;
-        setError(getApiError(err));
-      })
-      .finally(() => {
-        if (active) setLoadingProduct(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [isEditMode, productId]);
+    const product = productQuery.data;
+    if (!product) return;
+    setForm(toForm(product));
+    setPhotoPreviews(product.photos);
+  }, [productQuery.data]);
 
   const handlePhotoCapture = async (file: File | null, preview: string | null) => {
     if (!file || !preview) return;
@@ -203,11 +190,11 @@ export default function CreateProductPage() {
 
     setSubmitting(true);
     try {
-      const res =
+      const result =
         isEditMode && productId
-          ? await commerceApi.updateProduct(productId, payload)
-          : await commerceApi.createProduct(payload);
-      setSavedProductName(res.data.data.product.name);
+          ? await updateProduct.mutateAsync({ productId, data: payload })
+          : await createProduct.mutateAsync(payload);
+      setSavedProductName(result.product.name);
       setSuccess(true);
     } catch (err: unknown) {
       setError(getApiError(err));

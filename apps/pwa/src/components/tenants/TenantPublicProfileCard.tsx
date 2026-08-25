@@ -1,6 +1,6 @@
 import * as React from "react";
 import { getApiError } from "@/api/client";
-import { tenantsApi } from "@/api/tenants";
+import { useUpdateTenant } from "@/api/queries/platform";
 import { uploadsApi } from "@/api/uploads";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -66,6 +66,7 @@ export function TenantPublicProfileCard({
   description = "Manage the public profile details shown on your gym page.",
 }: TenantPublicProfileCardProps) {
   const [name, setName] = React.useState(tenant.name);
+  const updateTenant = useUpdateTenant();
   const [phone, setPhone] = React.useState(tenant.phone ?? "");
   const [address, setAddress] = React.useState(tenant.address ?? "");
   const [shortDescription, setShortDescription] = React.useState(tenant.description ?? "");
@@ -155,8 +156,12 @@ export function TenantPublicProfileCard({
         markdown: markdown.trim() ? markdown.trim() : null,
       };
 
-      const res = await tenantsApi.update(tenant.id, payload);
-      const updatedTenant = res.data.data.tenant;
+      // Invalidates the tenants keys, so the sidebar and platform table pick up
+      // the new name and logo alongside the event dispatched below.
+      const { tenant: updatedTenant } = await updateTenant.mutateAsync({
+        tenantId: tenant.id,
+        data: payload,
+      });
       setLogoFile(null);
       setSuccessMsg("Public page updated.");
       window.dispatchEvent(

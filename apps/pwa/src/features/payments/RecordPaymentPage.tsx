@@ -5,6 +5,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { badgesApi } from "@/api/badges";
 import { paymentsApi } from "@/api/payments";
+import { useQueryClient } from "@tanstack/react-query";
+import { loadAllTenantMembers } from "@/lib/tenant-members";
 import { settingsApi } from "@/api/settings";
 import { tenantsApi } from "@/api/tenants";
 import { getApiError } from "@/api/client";
@@ -74,27 +76,12 @@ function toTenantMember(member: TenantMember | MemberDetail): TenantMember {
   };
 }
 
-async function loadAllMembers(tenantId: string): Promise<TenantMember[]> {
-  const firstPage = await tenantsApi.listMembers(tenantId, 1, 100);
-  const firstBatch = firstPage.data.data.members;
-  const totalPages = firstPage.data.meta.totalPages;
-
-  if (totalPages <= 1) return firstBatch;
-
-  const remainingPages = await Promise.all(
-    Array.from({ length: totalPages - 1 }, (_, index) =>
-      tenantsApi.listMembers(tenantId, index + 2, 100),
-    ),
-  );
-
-  return [...firstBatch, ...remainingPages.flatMap((page) => page.data.data.members)];
-}
-
 export default function RecordPaymentPage() {
   const { membershipId } = useParams<{ membershipId?: string }>();
   const navigate = useNavigate();
   const { currentTenantId, currentMembership } = useAuthStore();
   const { can } = usePermissions();
+  const queryClient = useQueryClient();
   const gymName = currentMembership()?.tenantName ?? "the gym";
   const today = React.useMemo(() => new Date().toISOString().slice(0, 10), []);
 
@@ -144,7 +131,10 @@ export default function RecordPaymentPage() {
       : Promise.resolve<MemberDetail | null>(null);
 
     Promise.all([
-      loadAllMembers(currentTenantId),
+      // Four reads whose results depend on each other — the routed member is
+      // merged into the roster and seeds the badge cache — so this stays a
+      // coordinated load rather than four independent queries.
+      loadAllTenantMembers(currentTenantId, { pageSize: 100, forceRefresh: true }),
       paymentsApi.listSubscriptions(currentTenantId),
       selectedMemberRequest,
       settingsRequest,
@@ -330,7 +320,11 @@ export default function RecordPaymentPage() {
         _memberMemberId: selectedMember?.memberId,
         _subscriptionTitle: sub?.title,
       };
+      // The raw envelope is needed to tell a real save from an offline queue,
+      // but the invalidation below still keeps payments and members in step.
       const res = await paymentsApi.create(currentTenantId, payload);
+      await queryClient.invalidateQueries({ queryKey: ["payments", currentTenantId] });
+      await queryClient.invalidateQueries({ queryKey: ["members", currentTenantId] });
 
       // Skip WhatsApp when the mutation was queued offline
       if (!res.data._offlineQueued && selectedMember?.phone) {

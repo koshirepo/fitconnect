@@ -3,7 +3,7 @@ import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
-import { badgesApi } from "@/api/badges";
+import { useCreateBadge } from "@/api/queries/catalog";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,7 @@ export default function CreateBadgePage() {
   const navigate = useNavigate();
   const { currentTenantId } = useAuthStore();
   const { can } = usePermissions();
+  const createBadge = useCreateBadge();
 
   // ─── Form state ─────────────────────────────────────────────────────────────
   const [name, setName] = React.useState("");
@@ -69,7 +70,7 @@ export default function CreateBadgePage() {
     setSubmitting(true);
 
     try {
-      await badgesApi.create(currentTenantId, {
+      await createBadge.mutateAsync({
         name: name.trim(),
         description: description.trim() || undefined,
         color,
