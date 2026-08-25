@@ -24,6 +24,20 @@ runtime owns (Prisma queries, React components) stays in its app.
 `packages/tsconfig` holds the compiler presets so a new app inherits the same
 strictness instead of copying a config.
 
+## Repository history
+
+This repo consolidates two previously separate repositories,
+[fit-api](https://github.com/koshimicrosystem/fit-api) and
+[fit-pwa](https://github.com/koshimicrosystem/fit-pwa). Both histories were
+imported in full, rewritten so every commit records the path its files live at
+now — `git log` and `git blame` on `apps/api/...` and `apps/pwa/...` reach all
+the way back rather than stopping at the import.
+
+The rewrite means **commit SHAs differ from the original repositories**. Those
+repositories still exist on GitHub with their original hashes and were not
+modified; this is a new repo that needs its own remote, not a continuation of
+either one. Any open branch or PR there has to be re-landed here by hand.
+
 ## Getting started
 
 ```bash
