@@ -1,0 +1,25 @@
+# FitConnect — Gym Management Software
+# https://fitconnect.co.in
+
+User-agent: *
+Allow: /
+Allow: /shop
+Allow: /shop/*
+
+# Disallow private/authenticated routes
+Disallow: /dashboard
+Disallow: /members
+Disallow: /payments
+Disallow: /settings
+Disallow: /badges
+Disallow: /workouts
+Disallow: /subscriptions
+Disallow: /attendance
+Disallow: /commerce/admin
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://fitconnect.co.in/sitemap.xml
+
+# Crawl-delay
+Crawl-delay: 1

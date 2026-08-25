@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+
+  <!-- Homepage / Landing -->
+  <url>
+    <loc>https://fitconnect.co.in/</loc>
+    <lastmod>2026-03-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Shop — Gym Accessories Catalog -->
+  <url>
+    <loc>https://fitconnect.co.in/shop</loc>
+    <lastmod>2026-03-12</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://fitconnect.co.in/icons/og-image.png</image:loc>
+      <image:title>FitConnect Shop — Gym Accessories and Equipment</image:title>
+      <image:caption>Browse premium gym accessories including performance apparel, hydration bottles, and protein shakers</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Shop — Order Lookup (public) -->
+  <url>
+    <loc>https://fitconnect.co.in/shop/orders</loc>
+    <lastmod>2026-03-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- Login / Register -->
+  <url>
+    <loc>https://fitconnect.co.in/login</loc>
+    <lastmod>2026-03-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://fitconnect.co.in/register</loc>
+    <lastmod>2026-03-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+</urlset>

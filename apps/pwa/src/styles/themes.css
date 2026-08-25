@@ -1,0 +1,108 @@
+/* ─── GMS Theme Definitions ────────────────────────────────────────────────
+ *
+ *  Each theme is a plain CSS class on <html> that overrides the semantic
+ *  CSS variables declared in the @theme inline block in index.css.
+ *
+ *  How to add a new theme:
+ *   1. Add its name to the Theme union in src/stores/ui.ts
+ *   2. Copy one of the blocks below, rename the selector, and adjust values
+ *   3. Update the FOUC-prevention script in index.html if needed
+ *
+ *  Surface ramps (dark-blue theme):
+ *    bg-deep      #0d1b2a   oklch(0.17  0.042 248)  ← page background
+ *    bg-base      #102034   oklch(0.20  0.048 248)  ← card / panel
+ *    bg-raised    #132840   oklch(0.23  0.055 248)  ← popover / dialog
+ *    bg-elevated  #17314d   oklch(0.26  0.062 248)  ← elevated muted surface
+ *    border       #1c3a59   oklch(0.30  0.068 248)  ← dividers / inputs
+ *    sidebar      #0f1e30   oklch(0.185 0.044 248)  ← sidebar background
+ * ──────────────────────────────────────────────────────────────────────── */
+
+/* ── Dark-blue theme (.dark) ─────────────────────────────────────────────
+ *  Default theme. Applied to <html class="dark"> by the FOUC-prevention
+ *  script in index.html before React mounts, and kept in sync by
+ *  ThemeProvider. Background: #0d1b2a — Text: near-white.
+ */
+.dark {
+  --color-background: oklch(0.17 0.042 248); /* #0d1b2a */
+  --color-foreground: oklch(0.96 0.005 248); /* near-white */
+  --color-card: oklch(0.2 0.048 248);
+  --color-card-foreground: oklch(0.96 0.005 248);
+  --color-popover: oklch(0.23 0.055 248);
+  --color-popover-foreground: oklch(0.96 0.005 248);
+  --color-primary: oklch(0.509 0.206 28.9);
+  --color-primary-foreground: oklch(0.985 0 0);
+  --color-secondary: oklch(0.424 0.121 254.2);
+  --color-secondary-foreground: oklch(0.96 0.005 248);
+  --color-muted: oklch(0.26 0.062 248);
+  --color-muted-foreground: oklch(0.63 0.05 230);
+  --color-accent: oklch(0.659 0.23 35.2);
+  --color-accent-foreground: oklch(0.985 0 0);
+  --color-highlight: oklch(0.82 0.153 73.4);
+  --color-highlight-foreground: oklch(0.18 0.02 73);
+  --color-destructive: oklch(0.509 0.206 28.9);
+  --color-destructive-foreground: oklch(0.985 0 0);
+  --color-border: oklch(0.3 0.068 248);
+  --color-input: oklch(0.3 0.068 248);
+  --color-ring: oklch(0.509 0.206 28.9);
+
+  /* Charts */
+  --color-chart-1: oklch(0.509 0.206 28.9);
+  --color-chart-2: oklch(0.659 0.23 35.2);
+  --color-chart-3: oklch(0.82 0.153 73.4);
+  --color-chart-4: oklch(0.424 0.121 254.2);
+  --color-chart-5: oklch(0.55 0.18 160);
+
+  /* Sidebar */
+  --color-sidebar: oklch(0.185 0.044 248);
+  --color-sidebar-foreground: oklch(0.96 0.005 248);
+  --color-sidebar-primary: oklch(0.509 0.206 28.9);
+  --color-sidebar-primary-foreground: oklch(0.985 0 0);
+  --color-sidebar-accent: oklch(0.23 0.055 248);
+  --color-sidebar-accent-foreground: oklch(0.96 0.005 248);
+  --color-sidebar-border: oklch(0.3 0.068 248);
+  --color-sidebar-ring: oklch(0.509 0.206 28.9);
+}
+
+/* ── Light theme (.light) ────────────────────────────────────────────────
+ *  Applied to <html class="light"> when the user toggles via useTheme().
+ */
+.light {
+  --color-background: oklch(0.985 0 0);
+  --color-foreground: oklch(0.145 0.005 276);
+  --color-card: oklch(1 0 0);
+  --color-card-foreground: oklch(0.145 0.005 276);
+  --color-popover: oklch(1 0 0);
+  --color-popover-foreground: oklch(0.145 0.005 276);
+  --color-primary: oklch(0.509 0.206 28.9);
+  --color-primary-foreground: oklch(0.985 0 0);
+  --color-secondary: oklch(0.424 0.121 254.2);
+  --color-secondary-foreground: oklch(0.985 0 0);
+  --color-muted: oklch(0.955 0.005 276);
+  --color-muted-foreground: oklch(0.5 0.005 276);
+  --color-accent: oklch(0.659 0.23 35.2);
+  --color-accent-foreground: oklch(0.985 0 0);
+  --color-highlight: oklch(0.82 0.153 73.4);
+  --color-highlight-foreground: oklch(0.18 0.02 73);
+  --color-destructive: oklch(0.509 0.206 28.9);
+  --color-destructive-foreground: oklch(0.985 0 0);
+  --color-border: oklch(0.9 0.005 276);
+  --color-input: oklch(0.9 0.005 276);
+  --color-ring: oklch(0.509 0.206 28.9);
+
+  /* Charts */
+  --color-chart-1: oklch(0.509 0.206 28.9);
+  --color-chart-2: oklch(0.659 0.23 35.2);
+  --color-chart-3: oklch(0.82 0.153 73.4);
+  --color-chart-4: oklch(0.424 0.121 254.2);
+  --color-chart-5: oklch(0.55 0.18 160);
+
+  /* Sidebar */
+  --color-sidebar: oklch(0.975 0.005 276);
+  --color-sidebar-foreground: oklch(0.145 0.005 276);
+  --color-sidebar-primary: oklch(0.509 0.206 28.9);
+  --color-sidebar-primary-foreground: oklch(0.985 0 0);
+  --color-sidebar-accent: oklch(0.955 0.005 276);
+  --color-sidebar-accent-foreground: oklch(0.145 0.005 276);
+  --color-sidebar-border: oklch(0.9 0.005 276);
+  --color-sidebar-ring: oklch(0.509 0.206 28.9);
+}

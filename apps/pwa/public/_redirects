@@ -1,0 +1,10 @@
+# Cloudflare Pages routing.
+#
+# The app is a client-routed SPA, so every path that is not a real file must be
+# served index.html and let React Router resolve it. Without this rule a cold load
+# of a deep link (for example rudra.fitconnect.co.in/dashboard/members, or any
+# gym subdomain landing page) is served 404.html instead of the app — the service
+# worker's navigateFallback only covers navigations after it has installed.
+#
+# 200 rewrites rather than redirects, so the URL the user sees is preserved.
+/*    /index.html   200
