@@ -8,8 +8,8 @@
  */
 import { Hono } from "hono";
 import { authenticate } from "../../middleware/authenticate";
-import { requireTenantRoles } from "../../middleware/authorize";
-import { TenantRole } from "../../shared/types/enums";
+import { requireTenantPermissions } from "../../middleware/authorize";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import type { AppBindings } from "../../types/app-context";
 import { todoController } from "./todos.controller";
 
@@ -18,27 +18,27 @@ export const todoRoutes = new Hono<AppBindings>();
 todoRoutes.get(
   "/:tenantId/todos",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH]),
+  requireTenantPermissions(Permission.TODOS_READ),
   todoController.list,
 );
 
 todoRoutes.post(
   "/:tenantId/todos",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH]),
+  requireTenantPermissions(Permission.TODOS_CREATE),
   todoController.create,
 );
 
 todoRoutes.patch(
   "/:tenantId/todos/:todoId",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH]),
+  requireTenantPermissions(Permission.TODOS_UPDATE),
   todoController.update,
 );
 
 todoRoutes.delete(
   "/:tenantId/todos/:todoId",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH]),
+  requireTenantPermissions(Permission.TODOS_DELETE),
   todoController.delete,
 );

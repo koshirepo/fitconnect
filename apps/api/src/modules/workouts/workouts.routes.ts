@@ -7,9 +7,9 @@
  * - Primary exports: workoutRoutes.
  */
 import { Hono } from "hono";
-import { TenantRole } from "../../shared/types/enums";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { authenticate } from "../../middleware/authenticate";
-import { requireTenantRoles } from "../../middleware/authorize";
+import { requireTenantPermissions } from "../../middleware/authorize";
 import { workoutController } from "./workouts.controller";
 import type { AppBindings } from "../../types/app-context";
 
@@ -18,41 +18,41 @@ export const workoutRoutes = new Hono<AppBindings>();
 workoutRoutes.get(
   "/:tenantId/workout-plans",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH, TenantRole.MEMBER]),
+  requireTenantPermissions(Permission.WORKOUTS_READ),
   workoutController.listPlans,
 );
 
 workoutRoutes.get(
   "/:tenantId/workout-plans/:planId",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH, TenantRole.MEMBER]),
+  requireTenantPermissions(Permission.WORKOUTS_READ),
   workoutController.getPlan,
 );
 
 workoutRoutes.post(
   "/:tenantId/workout-plans",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH]),
+  requireTenantPermissions(Permission.WORKOUTS_CREATE),
   workoutController.createPlan,
 );
 
 workoutRoutes.patch(
   "/:tenantId/workout-plans/:planId",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH]),
+  requireTenantPermissions(Permission.WORKOUTS_UPDATE),
   workoutController.updatePlan,
 );
 
 workoutRoutes.delete(
   "/:tenantId/workout-plans/:planId",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN]),
+  requireTenantPermissions(Permission.WORKOUTS_DELETE),
   workoutController.deletePlan,
 );
 
 workoutRoutes.post(
   "/:tenantId/workout-plans/:planId/assign",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH]),
+  requireTenantPermissions(Permission.WORKOUTS_ASSIGN),
   workoutController.assignPlan,
 );

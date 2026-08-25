@@ -5,8 +5,9 @@
  * - Keep this file aligned with JWT payload structure and Cloudflare binding names when context or environment contracts change.
  * - Primary exports: AuthUser, TenantAccess, AppVariables, AppBindings.
  */
-import type { PlatformRole, TenantRole } from "../shared/types/enums";
+import type { PlatformRole, TenantRole } from "@fitconnect/shared/types/enums";
 import type { JwtTenants } from "../auth/jwt";
+import type { Permission } from "@fitconnect/shared/types/permissions";
 
 export type AuthUser = {
   id: string;
@@ -26,6 +27,12 @@ export type AppVariables = {
   authUser: AuthUser;
   optionalAuthUser?: AuthUser | null;
   tenantAccess: TenantAccess | null;
+  /**
+   * Effective capability set for this request, published by the authorize
+   * middleware so controllers can make finer-grained decisions (for example,
+   * narrowing a list to the caller's own records) without re-deriving it.
+   */
+  permissions: ReadonlySet<Permission>;
 };
 
 export type AppBindings = {

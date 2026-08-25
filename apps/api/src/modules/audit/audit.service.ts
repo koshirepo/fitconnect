@@ -5,7 +5,7 @@
  * - Prefer placing workflow logic, derived calculations, and domain invariants here instead of inside controllers or repositories.
  * - Primary exports: auditService.
  */
-import type { AuditAction } from "../../shared/types/enums";
+import type { AuditAction } from "@fitconnect/shared/types/enums";
 import { auditRepository } from "./audit.repository";
 
 export const auditService = {

@@ -55,6 +55,7 @@ export const ModelName = {
   PasswordResetToken: 'PasswordResetToken',
   RefreshToken: 'RefreshToken',
   Tenant: 'Tenant',
+  RolePermissionOverride: 'RolePermissionOverride',
   TenantSettings: 'TenantSettings',
   TenantCharge: 'TenantCharge',
   TenantMembership: 'TenantMembership',
@@ -148,6 +149,21 @@ export const TenantScalarFieldEnum = {
 } as const
 
 export type TenantScalarFieldEnum = (typeof TenantScalarFieldEnum)[keyof typeof TenantScalarFieldEnum]
+
+
+export const RolePermissionOverrideScalarFieldEnum = {
+  id: 'id',
+  scope: 'scope',
+  role: 'role',
+  permission: 'permission',
+  allowed: 'allowed',
+  tenantId: 'tenantId',
+  updatedBy: 'updatedBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RolePermissionOverrideScalarFieldEnum = (typeof RolePermissionOverrideScalarFieldEnum)[keyof typeof RolePermissionOverrideScalarFieldEnum]
 
 
 export const TenantSettingsScalarFieldEnum = {

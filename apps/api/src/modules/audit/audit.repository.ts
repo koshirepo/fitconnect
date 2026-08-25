@@ -6,7 +6,7 @@
  * - Primary exports: auditRepository.
  */
 import { prisma } from "../../lib/prisma";
-import type { AuditAction } from "../../shared/types/enums";
+import type { AuditAction } from "@fitconnect/shared/types/enums";
 
 const auditLogSelect = {
   id: true,

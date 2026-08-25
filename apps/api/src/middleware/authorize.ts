@@ -1,23 +1,139 @@
 /**
- * Documentation: Role-authorization middleware.
+ * Documentation: Permission-authorization middleware.
  *
- * - Builds middleware for platform-role and tenant-role checks after authentication has populated the request context.
- * - Keep role gating here so route files stay declarative and authorization errors remain consistent.
- * - Primary exports: requirePlatformRoles, requireTenantRoles.
+ * - Builds middleware that resolves an actor's effective permission set (platform-role grants unioned with tenant-role grants, plus any stored overrides) and gates routes on named capabilities instead of role strings.
+ * - Keep authorization wiring here so route files stay declarative and authorization errors remain consistent.
+ * - Primary exports: requirePermissions, requireAnyPermission, requireTenantPermissions, requireAnyTenantPermission, requirePlatformRoles, requireTenantRoles.
  */
-import { PlatformRole, type TenantRole } from "../shared/types/enums";
+import { PlatformRole, type TenantRole } from "@fitconnect/shared/types/enums";
+import {
+  type Permission,
+  isPlatformStaffRole,
+  resolveEffectivePermissions,
+} from "@fitconnect/shared/types/permissions";
 import { badRequest, forbidden } from "../lib/response";
 import { createMiddleware } from "hono/factory";
 import { prisma } from "../lib/prisma";
+import { rolePermissionRepository } from "../modules/roles/roles.repository";
 import type { AppBindings } from "../types/app-context";
+
+type PermissionMode = "all" | "any";
+
+type AuthorizeOptions = {
+  /** "all" (default) requires every listed permission; "any" requires at least one. */
+  mode?: PermissionMode;
+  /**
+   * Tenant-scoped routes resolve the caller's membership role, verify tenant
+   * platform access, and publish `tenantAccess`. Account/platform routes skip that.
+   */
+  scope?: "tenant" | "global";
+};
 
 function isTenantPlatformExpired(platformExpiresAt?: Date | null) {
   return Boolean(platformExpiresAt) && platformExpiresAt!.getTime() < Date.now();
 }
 
+function describeMissing(permissions: readonly Permission[], mode: PermissionMode) {
+  return mode === "any"
+    ? `Requires one of: ${permissions.join(", ")}.`
+    : `Requires: ${permissions.join(", ")}.`;
+}
+
 /**
- * Build or execute the `require platform roles` middleware step for the middleware layer.
- * Keep cross-cutting authentication and authorization checks centralized here so routes stay declarative.
+ * Core authorization step shared by every permission middleware in this file.
+ * Resolves the effective permission set once per request and stores it on the
+ * context so controllers can make finer-grained decisions without re-deriving it.
+ */
+function authorize(required: readonly Permission[], options: AuthorizeOptions = {}) {
+  const mode: PermissionMode = options.mode ?? "all";
+  const scope = options.scope ?? "global";
+
+  return createMiddleware<AppBindings>(async (c, next) => {
+    const user = c.get("authUser");
+    let tenantRole: TenantRole | null = null;
+    let tenantId: string | null = null;
+
+    if (scope === "tenant") {
+      tenantId = c.req.param("tenantId") || c.req.header("x-tenant-id") || null;
+
+      if (!tenantId) {
+        return badRequest(c, "Missing tenant context.");
+      }
+
+      const membershipRole = user.tenants?.[tenantId] as TenantRole | undefined;
+      const platformStaff = isPlatformStaffRole(user.platformRole);
+
+      if (!membershipRole && !platformStaff) {
+        return forbidden(c, "You are not a member of this tenant.");
+      }
+
+      tenantRole = membershipRole ?? null;
+
+      // Tenant members lose access when the gym's platform subscription lapses.
+      // Platform staff keep access so they can service an expired tenant.
+      if (membershipRole) {
+        const tenant = await prisma.tenant.findUnique({
+          where: { id: tenantId },
+          select: { platformExpiresAt: true },
+        });
+
+        if (isTenantPlatformExpired(tenant?.platformExpiresAt)) {
+          return forbidden(
+            c,
+            "Platform access is expired. Renew access to continue using the platform.",
+          );
+        }
+      }
+
+      c.set("tenantAccess", membershipRole ? { tenantId, role: membershipRole } : null);
+    }
+
+    const overrides = await rolePermissionRepository.listApplicableOverrides(tenantId);
+
+    const granted = resolveEffectivePermissions({
+      platformRole: user.platformRole,
+      tenantRole,
+      overrides,
+    });
+
+    c.set("permissions", granted);
+
+    const satisfied =
+      mode === "any"
+        ? required.some((permission) => granted.has(permission))
+        : required.every((permission) => granted.has(permission));
+
+    if (!satisfied) {
+      return forbidden(c, `Insufficient permissions. ${describeMissing(required, mode)}`);
+    }
+
+    await next();
+  });
+}
+
+// ─── Public middleware factories ──────────────────────────────────────────────
+
+/** Require every listed permission, without resolving a tenant context. */
+export const requirePermissions = (...permissions: Permission[]) =>
+  authorize(permissions, { mode: "all", scope: "global" });
+
+/** Require at least one of the listed permissions, without a tenant context. */
+export const requireAnyPermission = (...permissions: Permission[]) =>
+  authorize(permissions, { mode: "any", scope: "global" });
+
+/** Resolve the tenant membership, then require every listed permission. */
+export const requireTenantPermissions = (...permissions: Permission[]) =>
+  authorize(permissions, { mode: "all", scope: "tenant" });
+
+/** Resolve the tenant membership, then require at least one listed permission. */
+export const requireAnyTenantPermission = (...permissions: Permission[]) =>
+  authorize(permissions, { mode: "any", scope: "tenant" });
+
+// ─── Role middleware (kept for coarse platform gates) ─────────────────────────
+
+/**
+ * Platform-role check for the few routes that gate on identity rather than a
+ * capability (for example, "super admins only" bootstrap-style endpoints).
  */
 export const requirePlatformRoles = (allowedRoles: PlatformRole[]) => {
   return createMiddleware<AppBindings>(async (c, next) => {
@@ -27,12 +143,19 @@ export const requirePlatformRoles = (allowedRoles: PlatformRole[]) => {
       return forbidden(c, "Insufficient platform permissions.");
     }
 
+    const overrides = await rolePermissionRepository.listApplicableOverrides(null);
+    c.set(
+      "permissions",
+      resolveEffectivePermissions({ platformRole: user.platformRole, overrides }),
+    );
     await next();
   });
 };
 
 /**
- * Tenant role check — reads membership from JWT claims (no DB query).
+ * Tenant-role check retained for routes that genuinely gate on membership role
+ * rather than a capability. Prefer `requireTenantPermissions` for new routes —
+ * this still resolves and publishes the effective permission set.
  */
 export const requireTenantRoles = (allowedRoles: TenantRole[]) => {
   return createMiddleware<AppBindings>(async (c, next) => {
@@ -43,35 +166,42 @@ export const requireTenantRoles = (allowedRoles: TenantRole[]) => {
       return badRequest(c, "Missing tenant context.");
     }
 
-    if (
-      user.platformRole === PlatformRole.SUPER_ADMIN ||
-      user.platformRole === PlatformRole.SUPPORT
-    ) {
-      c.set("tenantAccess", null);
-      await next();
-      return;
-    }
+    const membershipRole = user.tenants?.[tenantId] as TenantRole | undefined;
+    const platformStaff = isPlatformStaffRole(user.platformRole);
 
-    const role = user.tenants?.[tenantId] as TenantRole | undefined;
-
-    if (!role) {
+    if (!membershipRole && !platformStaff) {
       return forbidden(c, "You are not a member of this tenant.");
     }
 
-    if (!allowedRoles.includes(role)) {
-      return forbidden(c, "Insufficient tenant permissions.");
+    if (membershipRole && !platformStaff) {
+      if (!allowedRoles.includes(membershipRole)) {
+        return forbidden(c, "Insufficient tenant permissions.");
+      }
+
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { platformExpiresAt: true },
+      });
+
+      if (isTenantPlatformExpired(tenant?.platformExpiresAt)) {
+        return forbidden(
+          c,
+          "Platform access is expired. Renew access to continue using the platform.",
+        );
+      }
     }
 
-    const tenant = await prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { platformExpiresAt: true },
-    });
+    const overrides = await rolePermissionRepository.listApplicableOverrides(tenantId);
 
-    if (isTenantPlatformExpired(tenant?.platformExpiresAt)) {
-      return forbidden(c, "Platform access is expired. Renew access to continue using the platform.");
-    }
-
-    c.set("tenantAccess", { tenantId, role });
+    c.set("tenantAccess", membershipRole ? { tenantId, role: membershipRole } : null);
+    c.set(
+      "permissions",
+      resolveEffectivePermissions({
+        platformRole: user.platformRole,
+        tenantRole: membershipRole ?? null,
+        overrides,
+      }),
+    );
     await next();
   });
 };

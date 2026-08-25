@@ -18,6 +18,7 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
 } from "./auth.schema";
+import { resolveRequestTenantHost } from "../../lib/tenant-host";
 import type { AppBindings } from "../../types/app-context";
 
 type AppContext = Context<AppBindings>;
@@ -36,7 +37,13 @@ export const authController = {
     const parsed = await parseBody(c, loginSchema);
     if (!parsed.ok) return parsed.response;
 
-    const result = await authService.login(parsed.data);
+    // A sign-in from a gym subdomain is scoped to that gym; the app root is not.
+    const requestTenant = resolveRequestTenantHost({
+      origin: c.req.header("origin"),
+      host: c.req.header("host"),
+    });
+
+    const result = await authService.login(parsed.data, requestTenant);
     if ("error" in result) {
       return result.status === 403 ? forbidden(c, result.error!) : unauthorized(c, result.error!);
     }

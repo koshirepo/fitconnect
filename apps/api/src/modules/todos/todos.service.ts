@@ -5,7 +5,7 @@
  * - Keep role checks and completion-state transitions here so controllers and repositories stay thin.
  * - Primary exports: todoService.
  */
-import { TenantRole, TodoVisibility } from "../../shared/types/enums";
+import { TenantRole, TodoVisibility } from "@fitconnect/shared/types/enums";
 import { todoRepository } from "./todos.repository";
 import type { CreateTodoInput, UpdateTodoInput } from "./todos.schema";
 

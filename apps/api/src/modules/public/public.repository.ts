@@ -6,6 +6,7 @@
  * - Primary exports: publicRepository.
  */
 import { prisma } from "../../lib/prisma";
+import { normalizeTenantHost } from "../../lib/tenant-host";
 
 const publicTenantSelect = {
   id: true,
@@ -26,6 +27,11 @@ const publicTenantSelect = {
     },
   },
 } as const;
+
+// Host parsing lives in `lib/tenant-host` so the API and PWA share one
+// definition of what counts as a gym subdomain. Re-exported here because
+// callers already import it from this module.
+export { normalizeTenantHost } from "../../lib/tenant-host";
 
 export const publicRepository = {
   /**
@@ -65,6 +71,12 @@ export const publicRepository = {
         },
       },
     });
+  },
+
+  findTenantByHost(host: string) {
+   const slug = normalizeTenantHost(host);
+   if (!slug) return null;
+   return this.findTenantBySlug(slug);
   },
 
   /**

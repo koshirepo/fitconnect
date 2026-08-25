@@ -6,7 +6,7 @@
  * - Primary exports: paymentRepository.
  */
 import { prisma } from "../../lib/prisma";
-import type { PaymentStatus } from "../../shared/types/enums";
+import type { PaymentStatus } from "@fitconnect/shared/types/enums";
 
 const subscriptionBadgeSelect = {
   id: true,

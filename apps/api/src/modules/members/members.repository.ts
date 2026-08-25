@@ -7,7 +7,7 @@
  */
 import { prisma } from "../../lib/prisma";
 import type { Prisma } from "../../generated/prisma/client";
-import type { PlatformRole, TenantRole } from "../../shared/types/enums";
+import type { PlatformRole, TenantRole } from "@fitconnect/shared/types/enums";
 
 function isMemberIdConflict(error: unknown) {
   if (

@@ -7,10 +7,10 @@
  * - Primary exports: commerceRoutes.
  */
 import { Hono } from "hono";
-import { PlatformRole } from "../../shared/types/enums";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { authenticate } from "../../middleware/authenticate";
 import { optionalAuthenticate } from "../../middleware/optional-authenticate";
-import { requirePlatformRoles } from "../../middleware/authorize";
+import { requirePermissions } from "../../middleware/authorize";
 import { commerceController } from "./commerce.controller";
 import type { AppBindings } from "../../types/app-context";
 
@@ -22,63 +22,69 @@ commerceRoutes.get("/products/:id", commerceController.getPublicProductById);
 commerceRoutes.post("/orders", optionalAuthenticate, commerceController.placeOrder);
 
 // Logged-in users
-commerceRoutes.get("/orders/me", authenticate, commerceController.listMyOrders);
+commerceRoutes.get(
+  "/orders/me",
+  authenticate,
+  requirePermissions(Permission.ORDERS_READ_SELF),
+  commerceController.listMyOrders,
+);
+// Guest order-status lookup: the order id itself is the bearer secret.
 commerceRoutes.get("/orders/:id", commerceController.getOrderById);
 
-// Platform product management (super-admin / support)
+// Platform product management
 commerceRoutes.get(
   "/admin/products",
   authenticate,
-  requirePlatformRoles([PlatformRole.SUPER_ADMIN, PlatformRole.SUPPORT]),
+  requirePermissions(Permission.PLATFORM_PRODUCTS_READ),
   commerceController.listAdminProducts,
 );
 commerceRoutes.post(
   "/admin/products",
   authenticate,
-  requirePlatformRoles([PlatformRole.SUPER_ADMIN, PlatformRole.SUPPORT]),
+  requirePermissions(Permission.PLATFORM_PRODUCTS_CREATE),
   commerceController.createProduct,
 );
 commerceRoutes.get(
   "/admin/products/:productId",
   authenticate,
-  requirePlatformRoles([PlatformRole.SUPER_ADMIN, PlatformRole.SUPPORT]),
+  requirePermissions(Permission.PLATFORM_PRODUCTS_READ),
   commerceController.getAdminProductById,
 );
 commerceRoutes.patch(
   "/admin/products/:productId",
   authenticate,
-  requirePlatformRoles([PlatformRole.SUPER_ADMIN, PlatformRole.SUPPORT]),
+  requirePermissions(Permission.PLATFORM_PRODUCTS_UPDATE),
   commerceController.updateProduct,
 );
 commerceRoutes.delete(
   "/admin/products/:productId",
   authenticate,
-  requirePlatformRoles([PlatformRole.SUPER_ADMIN, PlatformRole.SUPPORT]),
+  requirePermissions(Permission.PLATFORM_PRODUCTS_DELETE),
   commerceController.deleteProduct,
 );
 
-// Platform order management (super-admin only)
+// Platform order management
 commerceRoutes.get(
   "/admin/orders",
   authenticate,
-  requirePlatformRoles([PlatformRole.SUPER_ADMIN]),
+  requirePermissions(Permission.PLATFORM_ORDERS_READ),
   commerceController.listAdminOrders,
 );
 commerceRoutes.get(
   "/admin/orders/:orderId",
   authenticate,
-  requirePlatformRoles([PlatformRole.SUPER_ADMIN]),
+  requirePermissions(Permission.PLATFORM_ORDERS_READ),
   commerceController.getAdminOrderById,
 );
 commerceRoutes.patch(
   "/admin/orders/:orderId/status",
   authenticate,
-  requirePlatformRoles([PlatformRole.SUPER_ADMIN]),
+  requirePermissions(Permission.PLATFORM_ORDERS_UPDATE),
   commerceController.updateOrderStatus,
 );
 commerceRoutes.delete(
   "/admin/orders/:orderId",
   authenticate,
-  requirePlatformRoles([PlatformRole.SUPER_ADMIN]),
+  requirePermissions(Permission.PLATFORM_ORDERS_DELETE),
   commerceController.deleteOrder,
 );

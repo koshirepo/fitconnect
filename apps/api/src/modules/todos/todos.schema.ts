@@ -6,7 +6,7 @@
  * - Primary exports: createTodoSchema, updateTodoSchema, CreateTodoInput, UpdateTodoInput.
  */
 import { z } from "zod";
-import { TodoVisibility } from "../../shared/types/enums";
+import { TodoVisibility } from "@fitconnect/shared/types/enums";
 
 const visibilitySchema = z.enum([
   TodoVisibility.PRIVATE,

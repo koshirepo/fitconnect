@@ -105,8 +105,33 @@ model Tenant {
   platformPayments PlatformPayment[]
   attendances      Attendance[]
   todos            Todo[]
+  rolePermissions  RolePermissionOverride[]
 
   @@index([slug])
+}
+
+/// Per-role permission overrides layered on top of the static catalog in
+/// `src/shared/types/permissions.ts`. A row with `allowed = true` grants a
+/// permission the baseline role does not have; `allowed = false` revokes one it
+/// does. Rows with a null tenantId are platform-wide defaults.
+model RolePermissionOverride {
+  id         String   @id @default(cuid())
+  /// "PLATFORM" for PlatformRole rows, "TENANT" for TenantRole rows.
+  scope      String
+  /// PlatformRole or TenantRole value, depending on scope.
+  role       String
+  permission String
+  allowed    Boolean
+  /// Null for platform-wide rows; set for overrides scoped to a single gym.
+  tenantId   String?
+  tenant     Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  updatedBy  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([tenantId, scope, role, permission])
+  @@index([tenantId])
+  @@index([scope, role])
 }
 
 model TenantSettings {

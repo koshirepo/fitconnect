@@ -7,9 +7,9 @@
  * - Primary exports: settingsRoutes.
  */
 import { Hono } from "hono";
-import { TenantRole } from "../../shared/types/enums";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { authenticate } from "../../middleware/authenticate";
-import { requireTenantRoles } from "../../middleware/authorize";
+import { requireTenantPermissions } from "../../middleware/authorize";
 import { settingsController } from "./settings.controller";
 import type { AppBindings } from "../../types/app-context";
 
@@ -20,14 +20,14 @@ export const settingsRoutes = new Hono<AppBindings>();
 settingsRoutes.get(
   "/:tenantId/settings",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH, TenantRole.MEMBER]),
+  requireTenantPermissions(Permission.SETTINGS_READ),
   settingsController.getSettings,
 );
 
 settingsRoutes.put(
   "/:tenantId/settings",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN]),
+  requireTenantPermissions(Permission.SETTINGS_UPDATE),
   settingsController.updateSettings,
 );
 
@@ -36,27 +36,27 @@ settingsRoutes.put(
 settingsRoutes.get(
   "/:tenantId/charges",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH]),
+  requireTenantPermissions(Permission.CHARGES_READ),
   settingsController.listCharges,
 );
 
 settingsRoutes.post(
   "/:tenantId/charges",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN]),
+  requireTenantPermissions(Permission.CHARGES_CREATE),
   settingsController.createCharge,
 );
 
 settingsRoutes.patch(
   "/:tenantId/charges/:chargeId",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN]),
+  requireTenantPermissions(Permission.CHARGES_UPDATE),
   settingsController.updateCharge,
 );
 
 settingsRoutes.delete(
   "/:tenantId/charges/:chargeId",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN]),
+  requireTenantPermissions(Permission.CHARGES_DELETE),
   settingsController.deleteCharge,
 );

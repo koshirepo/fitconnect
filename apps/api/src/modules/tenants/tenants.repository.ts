@@ -6,7 +6,7 @@
  * - Primary exports: tenantRepository.
  */
 import { prisma } from "../../lib/prisma";
-import type { AccountStatus } from "../../shared/types/enums";
+import type { AccountStatus } from "@fitconnect/shared/types/enums";
 
 type CreateTenantData = {
   name: string;

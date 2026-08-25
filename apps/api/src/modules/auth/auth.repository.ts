@@ -6,7 +6,7 @@
  * - Primary exports: authRepository.
  */
 import { prisma } from "../../lib/prisma";
-import type { PlatformRole } from "../../shared/types/enums";
+import type { PlatformRole } from "@fitconnect/shared/types/enums";
 
 export const authRepository = {
   /**

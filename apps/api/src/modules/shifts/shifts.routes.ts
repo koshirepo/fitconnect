@@ -7,43 +7,47 @@
  * - Primary exports: shiftRoutes.
  */
 import { Hono } from "hono";
-import { TenantRole } from "../../shared/types/enums";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { authenticate } from "../../middleware/authenticate";
-import { requireTenantRoles } from "../../middleware/authorize";
+import { requireTenantPermissions } from "../../middleware/authorize";
 import { shiftController } from "./shifts.controller";
 import type { AppBindings } from "../../types/app-context";
 
 export const shiftRoutes = new Hono<AppBindings>();
 
+// Anonymous visitors read shift times from the public tenant profile
+// (`GET /public/gyms/:slug`), so this listing stays behind authentication.
 shiftRoutes.get(
   "/:tenantId/shifts",
+  authenticate,
+  requireTenantPermissions(Permission.SHIFTS_READ),
   shiftController.list,
 );
 
 shiftRoutes.post(
   "/:tenantId/shifts",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN]),
+  requireTenantPermissions(Permission.SHIFTS_CREATE),
   shiftController.create,
 );
 
 shiftRoutes.get(
   "/:tenantId/shifts/:shiftId",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN]),
+  requireTenantPermissions(Permission.SHIFTS_READ),
   shiftController.getById,
 );
 
 shiftRoutes.patch(
   "/:tenantId/shifts/:shiftId",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN]),
+  requireTenantPermissions(Permission.SHIFTS_UPDATE),
   shiftController.update,
 );
 
 shiftRoutes.delete(
   "/:tenantId/shifts/:shiftId",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN]),
+  requireTenantPermissions(Permission.SHIFTS_DELETE),
   shiftController.delete,
 );

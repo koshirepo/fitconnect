@@ -8,10 +8,22 @@
  */
 import { Hono } from "hono";
 import { authenticate } from "../../middleware/authenticate";
+import { requirePermissions } from "../../middleware/authorize";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { pushController } from "./push.controller";
 import type { AppBindings } from "../../types/app-context";
 
 export const pushRoutes = new Hono<AppBindings>();
 
-pushRoutes.post("/subscribe", authenticate, pushController.subscribe);
-pushRoutes.post("/unsubscribe", authenticate, pushController.unsubscribe);
+pushRoutes.post(
+  "/subscribe",
+  authenticate,
+  requirePermissions(Permission.PUSH_SUBSCRIBE),
+  pushController.subscribe,
+);
+pushRoutes.post(
+  "/unsubscribe",
+  authenticate,
+  requirePermissions(Permission.PUSH_SUBSCRIBE),
+  pushController.unsubscribe,
+);

@@ -13,7 +13,7 @@ import type {
   MessageResponse,
   PaginatedResponse,
   ApiError,
-} from "../shared";
+} from "@fitconnect/shared";
 
 // Re-export the type for local usage
 export type { ErrorCode };

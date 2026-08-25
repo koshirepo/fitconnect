@@ -9,7 +9,7 @@ import { email, z } from "zod";
 import {
   MIN_PASSWORD_LENGTH,
   MAX_PASSWORD_LENGTH,
-} from "../../shared/constants";
+} from "@fitconnect/shared/constants";
 
 export const addMemberSchema = z.object({
   name: z.string().min(2).max(120),

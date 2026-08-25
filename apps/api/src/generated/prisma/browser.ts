@@ -38,6 +38,14 @@ export type RefreshToken = Prisma.RefreshTokenModel
  */
 export type Tenant = Prisma.TenantModel
 /**
+ * Model RolePermissionOverride
+ * Per-role permission overrides layered on top of the static catalog in
+ * `src/shared/types/permissions.ts`. A row with `allowed = true` grants a
+ * permission the baseline role does not have; `allowed = false` revokes one it
+ * does. Rows with a null tenantId are platform-wide defaults.
+ */
+export type RolePermissionOverride = Prisma.RolePermissionOverrideModel
+/**
  * Model TenantSettings
  * 
  */

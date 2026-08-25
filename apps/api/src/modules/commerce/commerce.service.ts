@@ -5,8 +5,8 @@
  * - Prefer placing workflow logic, derived calculations, and domain invariants here instead of inside controllers or repositories.
  * - Primary exports: commerceService.
  */
-import type { OrderStatus } from "../../shared/types/enums";
-import { COMMERCE_DEFAULT_GST_RATE_PCT } from "../../shared/constants";
+import type { OrderStatus } from "@fitconnect/shared/types/enums";
+import { COMMERCE_DEFAULT_GST_RATE_PCT } from "@fitconnect/shared/constants";
 import { commerceRepository } from "./commerce.repository";
 import type { CreateProductInput, PlaceOrderInput, UpdateProductInput } from "./commerce.schema";
 

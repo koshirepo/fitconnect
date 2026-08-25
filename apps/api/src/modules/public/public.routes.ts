@@ -13,5 +13,7 @@ export const publicRoutes = new Hono();
 
 // No authentication required — these are public endpoints
 
+publicRoutes.get("/branding", publicController.getTenantBranding);
 publicRoutes.get("/gyms", publicController.listGyms);
+publicRoutes.get("/gyms/resolve", publicController.getTenantByHost);
 publicRoutes.get("/gyms/:slug", publicController.getTenantBySlug);

@@ -7,10 +7,10 @@
  * - Primary exports: authRoutes.
  */
 import { Hono } from "hono";
-import { PlatformRole } from "../../shared/types/enums";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { authenticate } from "../../middleware/authenticate";
 import { optionalAuthenticate } from "../../middleware/optional-authenticate";
-import { requirePlatformRoles } from "../../middleware/authorize";
+import { requirePermissions } from "../../middleware/authorize";
 import { authController } from "./auth.controller";
 import type { AppBindings } from "../../types/app-context";
 
@@ -23,7 +23,7 @@ authRoutes.get("/me", authenticate, authController.me);
 authRoutes.post(
   "/platform-users",
   authenticate,
-  requirePlatformRoles([PlatformRole.SUPER_ADMIN]),
+  requirePermissions(Permission.PLATFORM_USERS_CREATE),
   authController.createPlatformUser,
 );
 authRoutes.post("/forgot-password", authController.forgotPassword);

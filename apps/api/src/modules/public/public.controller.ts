@@ -23,6 +23,22 @@ export const publicController = {
     return ok(c, result.data);
   },
 
+  async getTenantByHost(c: Context) {
+   const host = c.req.query("host") ?? c.req.header("host") ?? "";
+   if (!host) return notFound(c, "Tenant host is required.");
+   const result = await publicService.getTenantByHost(host);
+   if ("error" in result) return notFound(c, result.error ?? "Tenant not found.");
+   return ok(c, result.data);
+  },
+
+  async getTenantBranding(c: Context) {
+   const host = c.req.query("host") ?? c.req.header("host") ?? "";
+   if (!host) return notFound(c, "Tenant host is required.");
+   const result = await publicService.getTenantBrandingByHost(host);
+   if ("error" in result) return notFound(c, result.error ?? "Tenant not found.");
+   return ok(c, result.data);
+  },
+
   /**
    * Handle the `list gyms` HTTP action for the public module.
    * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.

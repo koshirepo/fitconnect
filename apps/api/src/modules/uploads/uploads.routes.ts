@@ -10,6 +10,8 @@ import { Hono, type Context } from "hono";
 import { authenticate } from "../../middleware/authenticate";
 import { badRequest, ok } from "../../lib/response";
 import { uploadFile } from "../../lib/storage";
+import { requirePermissions } from "../../middleware/authorize";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import type { AppBindings } from "../../types/app-context";
 
 export const uploadRoutes = new Hono<AppBindings>();
@@ -84,15 +86,15 @@ uploadRoutes.get("/file/:folder/:filename", async (c) => {
   });
 });
 
-uploadRoutes.post("/logo", authenticate, async (c) => {
+uploadRoutes.post("/logo", authenticate, requirePermissions(Permission.UPLOADS_WRITE), async (c) => {
   return handleUpload(c, "logos");
 });
 
-uploadRoutes.post("/avatar", authenticate, async (c) => {
+uploadRoutes.post("/avatar", authenticate, requirePermissions(Permission.UPLOADS_WRITE), async (c) => {
   return handleUpload(c, "avatars");
 });
 
-uploadRoutes.post("/product-photo", authenticate, async (c) => {
+uploadRoutes.post("/product-photo", authenticate, requirePermissions(Permission.UPLOADS_WRITE), async (c) => {
   return handleUpload(c, "products");
 });
 

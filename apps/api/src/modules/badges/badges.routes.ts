@@ -7,9 +7,9 @@
  * - Primary exports: badgeRoutes.
  */
 import { Hono } from "hono";
-import { TenantRole } from "../../shared/types/enums";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { authenticate } from "../../middleware/authenticate";
-import { requireTenantRoles } from "../../middleware/authorize";
+import { requireTenantPermissions } from "../../middleware/authorize";
 import { badgeController } from "./badges.controller";
 import type { AppBindings } from "../../types/app-context";
 
@@ -20,35 +20,35 @@ export const badgeRoutes = new Hono<AppBindings>();
 badgeRoutes.get(
   "/:tenantId/badges",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH, TenantRole.MEMBER]),
+  requireTenantPermissions(Permission.BADGES_READ),
   badgeController.list,
 );
 
 badgeRoutes.post(
   "/:tenantId/badges",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN]),
+  requireTenantPermissions(Permission.BADGES_CREATE),
   badgeController.create,
 );
 
 badgeRoutes.get(
   "/:tenantId/badges/:badgeId",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH, TenantRole.MEMBER]),
+  requireTenantPermissions(Permission.BADGES_READ),
   badgeController.getById,
 );
 
 badgeRoutes.patch(
   "/:tenantId/badges/:badgeId",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN]),
+  requireTenantPermissions(Permission.BADGES_UPDATE),
   badgeController.update,
 );
 
 badgeRoutes.delete(
   "/:tenantId/badges/:badgeId",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN]),
+  requireTenantPermissions(Permission.BADGES_DELETE),
   badgeController.delete,
 );
 
@@ -57,21 +57,21 @@ badgeRoutes.delete(
 badgeRoutes.get(
   "/:tenantId/badges/:badgeId/assignments",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH]),
+  requireTenantPermissions(Permission.BADGES_ASSIGNMENTS_READ),
   badgeController.listAssignments,
 );
 
 badgeRoutes.post(
   "/:tenantId/badges/:badgeId/assign",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH]),
+  requireTenantPermissions(Permission.BADGES_ASSIGN),
   badgeController.assign,
 );
 
 badgeRoutes.delete(
   "/:tenantId/badges/:badgeId/assign/:membershipId",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH]),
+  requireTenantPermissions(Permission.BADGES_ASSIGN),
   badgeController.unassign,
 );
 
@@ -80,6 +80,6 @@ badgeRoutes.delete(
 badgeRoutes.get(
   "/:tenantId/members/:membershipId/badges",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH, TenantRole.MEMBER]),
+  requireTenantPermissions(Permission.BADGES_READ),
   badgeController.memberBadges,
 );

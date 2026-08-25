@@ -5,7 +5,7 @@
  * - Prefer placing workflow logic, derived calculations, and domain invariants here instead of inside controllers or repositories.
  * - Primary exports: memberService.
  */
-import { PlatformRole, type TenantRole } from "../../shared/types/enums";
+import { PlatformRole, type TenantRole } from "@fitconnect/shared/types/enums";
 import {
   hashPassword,
   verifyPassword,

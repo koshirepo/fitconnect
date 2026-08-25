@@ -5,7 +5,7 @@
  * - Prefer placing workflow logic, derived calculations, and domain invariants here instead of inside controllers or repositories.
  * - Primary exports: paymentService.
  */
-import type { PaymentStatus, TenantRole } from "../../shared/types/enums";
+import type { PaymentStatus } from "@fitconnect/shared/types/enums";
 import { memberRepository } from "../members/members.repository";
 import { paymentRepository } from "./payments.repository";
 import { flattenNestedMember } from "../../lib/flatten";
@@ -83,14 +83,15 @@ export const paymentService = {
     tenantId: string,
     paymentId: string,
     userId: string,
-    callerRole: TenantRole | null,
+    canReadAll: boolean,
   ) {
     const payment = await paymentRepository.findPaymentDetail(paymentId, tenantId);
     if (!payment) {
       return { error: "Payment not found.", status: 404 as const };
     }
 
-    if (callerRole === "MEMBER") {
+    // Without the gym-wide read capability the caller may only open their own receipt.
+    if (!canReadAll) {
       const membership = await paymentRepository.findMembershipByUser(tenantId, userId);
       if (!membership || membership.id !== payment.membershipId) {
         return { error: "You can only view your own payments.", status: 403 as const };

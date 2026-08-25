@@ -26,6 +26,8 @@ import {
   createSubscriptionSchema,
   updateSubscriptionSchema,
 } from "./payments.schema";
+import { can } from "../../lib/permissions";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import type { AppBindings } from "../../types/app-context";
 
 type AppContext = Context<AppBindings>;
@@ -72,13 +74,12 @@ export const paymentController = {
     const tenantId = c.req.param("tenantId")!;
     const paymentId = c.req.param("paymentId")!;
     const authUser = c.get("authUser");
-    const tenantAccess = c.get("tenantAccess");
 
     const result = await paymentService.getPaymentById(
       tenantId,
       paymentId,
       authUser.id,
-      tenantAccess?.role ?? null,
+      can(c, Permission.PAYMENTS_READ),
     );
 
     if ("error" in result) {
@@ -210,8 +211,9 @@ export const paymentController = {
    */
   async listSubscriptions(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
+    // Only callers who can manage plans may see deactivated ones.
     const includeInactive =
-      c.get("tenantAccess")?.role === "ADMIN" && c.req.query("includeInactive") === "true";
+      can(c, Permission.SUBSCRIPTIONS_UPDATE) && c.req.query("includeInactive") === "true";
     const result = await paymentService.listSubscriptions(tenantId, includeInactive);
     c.header("Cache-Control", "no-store");
     return ok(c, result.data);

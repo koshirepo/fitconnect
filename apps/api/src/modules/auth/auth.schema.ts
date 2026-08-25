@@ -6,7 +6,7 @@
  * - Primary exports: bootstrapSchema, loginSchema, refreshTokenSchema, createPlatformUserSchema, forgotPasswordSchema, resetPasswordSchema, BootstrapInput, LoginInput, CreatePlatformUserInput, ForgotPasswordInput, ResetPasswordInput.
  */
 import { z } from "zod";
-import { MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH } from "../../shared/constants";
+import { MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH } from "@fitconnect/shared/constants";
 
 export const bootstrapSchema = z.object({
   name: z.string().min(2).max(120),

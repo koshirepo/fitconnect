@@ -5,7 +5,10 @@
  * - Prefer placing workflow logic, derived calculations, and domain invariants here instead of inside controllers or repositories.
  * - Primary exports: authService.
  */
-import { PlatformRole } from "../../shared/types/enums";
+import { PlatformRole, type TenantRole } from "@fitconnect/shared/types/enums";
+import { isPlatformStaffRole, resolveEffectivePermissions } from "@fitconnect/shared/types/permissions";
+import { rolePermissionRepository } from "../roles/roles.repository";
+import type { RequestTenantHost } from "../../lib/tenant-host";
 import {
   signAccessToken,
   generateRefreshToken,
@@ -51,6 +54,72 @@ function mapMembership(
     tenantSlug: m.tenant.slug,
     role: m.role,
     platformExpiresAt: m.tenant.platformExpiresAt?.toISOString() ?? null,
+  };
+}
+
+/**
+ * Effective capability list for a signed-in user, resolved for their own gym.
+ * The PWA gates navigation and controls on this list, so it must be produced by
+ * the same catalog and override rows the API authorizes with.
+ */
+async function resolveUserPermissions(input: {
+  platformRole: PlatformRole;
+  tenantRole?: string | null;
+  tenantId?: string | null;
+}) {
+  const overrides = await rolePermissionRepository.listApplicableOverrides(
+    input.tenantId ?? null,
+  );
+
+  return Array.from(
+    resolveEffectivePermissions({
+      platformRole: input.platformRole,
+      tenantRole: (input.tenantRole as TenantRole | undefined) ?? null,
+      overrides,
+    }),
+  ).sort();
+}
+
+/**
+ * Reject a sign-in that arrives on a gym subdomain the account does not belong to.
+ *
+ * Returns an error result to hand straight back to the caller, or null when the
+ * sign-in may proceed. Requests carrying no gym context (the app root, the REST
+ * collection, a mobile client) are unrestricted — this narrows a gym's sign-in
+ * surface, it is not the tenant authorization boundary. That boundary is the
+ * per-request permission check, which scopes every read and write to the
+ * membership in the token regardless of which host the session was created on.
+ */
+function checkTenantHostAccess(
+  user: {
+    platformRole: string;
+    memberships: { tenant: { name: string; slug: string } }[];
+  },
+  requestTenant?: RequestTenantHost | null,
+) {
+  if (!requestTenant) return null;
+
+  // Platform staff may sign in anywhere so they can reproduce a gym's own view.
+  if (isPlatformStaffRole(user.platformRole as PlatformRole)) return null;
+
+  const membership = user.memberships.find(
+    (m) => m.tenant.slug === requestTenant.slug,
+  );
+  if (membership) return null;
+
+  // The password already checked out, so naming the account's own gym leaks
+  // nothing the person signing in does not already know — and without it they
+  // have no way to find the right address.
+  const ownTenant = user.memberships[0]?.tenant;
+  const destination = ownTenant
+    ? ` Sign in at ${ownTenant.slug}.${requestTenant.rootHost} instead.`
+    : "";
+
+  return {
+    error: ownTenant
+      ? `This account belongs to ${ownTenant.name}, not to this gym.${destination}`
+      : "This account is not a member of this gym.",
+    status: 403 as const,
   };
 }
 
@@ -110,7 +179,7 @@ export const authService = {
    * Execute the `login` workflow for the auth module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
-  async login(input: LoginInput) {
+  async login(input: LoginInput, requestTenant?: RequestTenantHost | null) {
     const user = await authRepository.findUserByEmail(input.email);
     if (!user) {
       return { error: "Invalid email or password.", status: 401 as const };
@@ -133,6 +202,14 @@ export const authService = {
       return { error: "Invalid email or password.", status: 401 as const };
     }
 
+    // A gym subdomain is a gym-specific sign-in surface. Letting another gym's
+    // member authenticate there would show their own data under this gym's
+    // branding, which is confusing at best and a convincing phishing surface at
+    // worst. Checked only after the password, so a wrong host cannot be used to
+    // probe which emails exist.
+    const tenantMismatch = checkTenantHostAccess(user, requestTenant);
+    if (tenantMismatch) return tenantMismatch;
+
     // Tenant memberships are embedded into the access token so downstream
     // authorization middleware can resolve tenant roles without a database hit.
     const accessToken = await signAccessToken({
@@ -148,6 +225,8 @@ export const authService = {
       refreshTokenExpiresAt(),
     );
 
+    const membership = mapMembership(user.memberships[0]);
+
     return {
       data: {
         accessToken,
@@ -158,7 +237,12 @@ export const authService = {
           email: user.email,
           phone: user.phone ?? null,
           platformRole: user.platformRole as PlatformRole,
-          membership: mapMembership(user.memberships[0]),
+          membership,
+          permissions: await resolveUserPermissions({
+            platformRole: user.platformRole as PlatformRole,
+            tenantRole: membership?.role,
+            tenantId: membership?.tenantId,
+          }),
         },
       },
     };
@@ -222,13 +306,19 @@ export const authService = {
     const user = await authRepository.findUserById(userId);
     if (!user) return { error: "User not found." };
 
-    const membership = await authRepository.getUserMembership(userId);
+    const membershipRecord = await authRepository.getUserMembership(userId);
+    const membership = mapMembership(membershipRecord);
 
     return {
       data: {
         user: {
           ...user,
-          membership: mapMembership(membership),
+          membership,
+          permissions: await resolveUserPermissions({
+            platformRole: user.platformRole as PlatformRole,
+            tenantRole: membership?.role,
+            tenantId: membership?.tenantId,
+          }),
         },
       },
     };

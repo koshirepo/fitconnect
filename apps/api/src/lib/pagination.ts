@@ -6,7 +6,7 @@
  * - Primary exports: parsePagination.
  */
 import type { Context } from "hono";
-import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "../shared/constants";
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "@fitconnect/shared/constants";
 
 /**
  * Extract and clamp page/limit from query parameters.

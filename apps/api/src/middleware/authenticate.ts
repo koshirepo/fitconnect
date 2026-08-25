@@ -8,6 +8,7 @@
 import { createMiddleware } from "hono/factory";
 import { verifyAccessToken } from "../auth/jwt";
 import { unauthorized } from "../lib/response";
+import { resolvePermissions } from "@fitconnect/shared/types/permissions";
 import type { AppBindings } from "../types/app-context";
 
 
@@ -41,6 +42,9 @@ export const authenticate = createMiddleware<AppBindings>(async (c, next) => {
       platformRole: payload.platformRole,
       tenants: payload.tenants,
     });
+    // Baseline capability set from the platform role. Tenant-scoped middleware
+    // widens this with the membership role once a tenant context is resolved.
+    c.set("permissions", resolvePermissions({ platformRole: payload.platformRole }));
     await next();
   } catch {
     return unauthorized(c, "Invalid or expired token.");

@@ -266,6 +266,7 @@ export type TenantWhereInput = {
   platformPayments?: Prisma.PlatformPaymentListRelationFilter
   attendances?: Prisma.AttendanceListRelationFilter
   todos?: Prisma.TodoListRelationFilter
+  rolePermissions?: Prisma.RolePermissionOverrideListRelationFilter
 }
 
 export type TenantOrderByWithRelationInput = {
@@ -295,6 +296,7 @@ export type TenantOrderByWithRelationInput = {
   platformPayments?: Prisma.PlatformPaymentOrderByRelationAggregateInput
   attendances?: Prisma.AttendanceOrderByRelationAggregateInput
   todos?: Prisma.TodoOrderByRelationAggregateInput
+  rolePermissions?: Prisma.RolePermissionOverrideOrderByRelationAggregateInput
 }
 
 export type TenantWhereUniqueInput = Prisma.AtLeast<{
@@ -327,6 +329,7 @@ export type TenantWhereUniqueInput = Prisma.AtLeast<{
   platformPayments?: Prisma.PlatformPaymentListRelationFilter
   attendances?: Prisma.AttendanceListRelationFilter
   todos?: Prisma.TodoListRelationFilter
+  rolePermissions?: Prisma.RolePermissionOverrideListRelationFilter
 }, "id" | "slug" | "phone">
 
 export type TenantOrderByWithAggregationInput = {
@@ -396,6 +399,7 @@ export type TenantCreateInput = {
   platformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateInput = {
@@ -425,6 +429,7 @@ export type TenantUncheckedCreateInput = {
   platformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoUncheckedCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUpdateInput = {
@@ -454,6 +459,7 @@ export type TenantUpdateInput = {
   platformPayments?: Prisma.PlatformPaymentUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateInput = {
@@ -483,6 +489,7 @@ export type TenantUncheckedUpdateInput = {
   platformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUncheckedUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateManyInput = {
@@ -587,14 +594,30 @@ export type TenantMinOrderByAggregateInput = {
   platformExpiresAt?: Prisma.SortOrder
 }
 
+export type TenantNullableScalarRelationFilter = {
+  is?: Prisma.TenantWhereInput | null
+  isNot?: Prisma.TenantWhereInput | null
+}
+
 export type TenantScalarRelationFilter = {
   is?: Prisma.TenantWhereInput
   isNot?: Prisma.TenantWhereInput
 }
 
-export type TenantNullableScalarRelationFilter = {
-  is?: Prisma.TenantWhereInput | null
-  isNot?: Prisma.TenantWhereInput | null
+export type TenantCreateNestedOneWithoutRolePermissionsInput = {
+  create?: Prisma.XOR<Prisma.TenantCreateWithoutRolePermissionsInput, Prisma.TenantUncheckedCreateWithoutRolePermissionsInput>
+  connectOrCreate?: Prisma.TenantCreateOrConnectWithoutRolePermissionsInput
+  connect?: Prisma.TenantWhereUniqueInput
+}
+
+export type TenantUpdateOneWithoutRolePermissionsNestedInput = {
+  create?: Prisma.XOR<Prisma.TenantCreateWithoutRolePermissionsInput, Prisma.TenantUncheckedCreateWithoutRolePermissionsInput>
+  connectOrCreate?: Prisma.TenantCreateOrConnectWithoutRolePermissionsInput
+  upsert?: Prisma.TenantUpsertWithoutRolePermissionsInput
+  disconnect?: Prisma.TenantWhereInput | boolean
+  delete?: Prisma.TenantWhereInput | boolean
+  connect?: Prisma.TenantWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.TenantUpdateToOneWithWhereWithoutRolePermissionsInput, Prisma.TenantUpdateWithoutRolePermissionsInput>, Prisma.TenantUncheckedUpdateWithoutRolePermissionsInput>
 }
 
 export type TenantCreateNestedOneWithoutSettingsInput = {
@@ -767,6 +790,138 @@ export type TenantUpdateOneWithoutAuditLogsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.TenantUpdateToOneWithWhereWithoutAuditLogsInput, Prisma.TenantUpdateWithoutAuditLogsInput>, Prisma.TenantUncheckedUpdateWithoutAuditLogsInput>
 }
 
+export type TenantCreateWithoutRolePermissionsInput = {
+  id?: string
+  name: string
+  slug: string
+  email?: string | null
+  phone?: string | null
+  logoUrl?: string | null
+  address?: string | null
+  estd?: Date | string | null
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  markdown?: string | null
+  description?: string | null
+  platformExpiresAt?: Date | string | null
+  memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutTenantInput
+  workoutPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutTenantInput
+  badges?: Prisma.BadgeCreateNestedManyWithoutTenantInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTenantInput
+  settings?: Prisma.TenantSettingsCreateNestedOneWithoutTenantInput
+  charges?: Prisma.TenantChargeCreateNestedManyWithoutTenantInput
+  platformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutTenantInput
+  attendances?: Prisma.AttendanceCreateNestedManyWithoutTenantInput
+  todos?: Prisma.TodoCreateNestedManyWithoutTenantInput
+}
+
+export type TenantUncheckedCreateWithoutRolePermissionsInput = {
+  id?: string
+  name: string
+  slug: string
+  email?: string | null
+  phone?: string | null
+  logoUrl?: string | null
+  address?: string | null
+  estd?: Date | string | null
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  markdown?: string | null
+  description?: string | null
+  platformExpiresAt?: Date | string | null
+  memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutTenantInput
+  workoutPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutTenantInput
+  badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutTenantInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTenantInput
+  settings?: Prisma.TenantSettingsUncheckedCreateNestedOneWithoutTenantInput
+  charges?: Prisma.TenantChargeUncheckedCreateNestedManyWithoutTenantInput
+  platformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutTenantInput
+  attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutTenantInput
+  todos?: Prisma.TodoUncheckedCreateNestedManyWithoutTenantInput
+}
+
+export type TenantCreateOrConnectWithoutRolePermissionsInput = {
+  where: Prisma.TenantWhereUniqueInput
+  create: Prisma.XOR<Prisma.TenantCreateWithoutRolePermissionsInput, Prisma.TenantUncheckedCreateWithoutRolePermissionsInput>
+}
+
+export type TenantUpsertWithoutRolePermissionsInput = {
+  update: Prisma.XOR<Prisma.TenantUpdateWithoutRolePermissionsInput, Prisma.TenantUncheckedUpdateWithoutRolePermissionsInput>
+  create: Prisma.XOR<Prisma.TenantCreateWithoutRolePermissionsInput, Prisma.TenantUncheckedCreateWithoutRolePermissionsInput>
+  where?: Prisma.TenantWhereInput
+}
+
+export type TenantUpdateToOneWithWhereWithoutRolePermissionsInput = {
+  where?: Prisma.TenantWhereInput
+  data: Prisma.XOR<Prisma.TenantUpdateWithoutRolePermissionsInput, Prisma.TenantUncheckedUpdateWithoutRolePermissionsInput>
+}
+
+export type TenantUpdateWithoutRolePermissionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  estd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutTenantNestedInput
+  workoutPlans?: Prisma.WorkoutPlanUpdateManyWithoutTenantNestedInput
+  badges?: Prisma.BadgeUpdateManyWithoutTenantNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutTenantNestedInput
+  settings?: Prisma.TenantSettingsUpdateOneWithoutTenantNestedInput
+  charges?: Prisma.TenantChargeUpdateManyWithoutTenantNestedInput
+  platformPayments?: Prisma.PlatformPaymentUpdateManyWithoutTenantNestedInput
+  attendances?: Prisma.AttendanceUpdateManyWithoutTenantNestedInput
+  todos?: Prisma.TodoUpdateManyWithoutTenantNestedInput
+}
+
+export type TenantUncheckedUpdateWithoutRolePermissionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  estd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutTenantNestedInput
+  workoutPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutTenantNestedInput
+  badges?: Prisma.BadgeUncheckedUpdateManyWithoutTenantNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTenantNestedInput
+  settings?: Prisma.TenantSettingsUncheckedUpdateOneWithoutTenantNestedInput
+  charges?: Prisma.TenantChargeUncheckedUpdateManyWithoutTenantNestedInput
+  platformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutTenantNestedInput
+  attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutTenantNestedInput
+  todos?: Prisma.TodoUncheckedUpdateManyWithoutTenantNestedInput
+}
+
 export type TenantCreateWithoutSettingsInput = {
   id?: string
   name: string
@@ -793,6 +948,7 @@ export type TenantCreateWithoutSettingsInput = {
   platformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutSettingsInput = {
@@ -821,6 +977,7 @@ export type TenantUncheckedCreateWithoutSettingsInput = {
   platformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoUncheckedCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutSettingsInput = {
@@ -865,6 +1022,7 @@ export type TenantUpdateWithoutSettingsInput = {
   platformPayments?: Prisma.PlatformPaymentUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutSettingsInput = {
@@ -893,6 +1051,7 @@ export type TenantUncheckedUpdateWithoutSettingsInput = {
   platformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUncheckedUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutChargesInput = {
@@ -921,6 +1080,7 @@ export type TenantCreateWithoutChargesInput = {
   platformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutChargesInput = {
@@ -949,6 +1109,7 @@ export type TenantUncheckedCreateWithoutChargesInput = {
   platformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoUncheckedCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutChargesInput = {
@@ -993,6 +1154,7 @@ export type TenantUpdateWithoutChargesInput = {
   platformPayments?: Prisma.PlatformPaymentUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutChargesInput = {
@@ -1021,6 +1183,7 @@ export type TenantUncheckedUpdateWithoutChargesInput = {
   platformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUncheckedUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutMembershipsInput = {
@@ -1049,6 +1212,7 @@ export type TenantCreateWithoutMembershipsInput = {
   platformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutMembershipsInput = {
@@ -1077,6 +1241,7 @@ export type TenantUncheckedCreateWithoutMembershipsInput = {
   platformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoUncheckedCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutMembershipsInput = {
@@ -1121,6 +1286,7 @@ export type TenantUpdateWithoutMembershipsInput = {
   platformPayments?: Prisma.PlatformPaymentUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutMembershipsInput = {
@@ -1149,6 +1315,7 @@ export type TenantUncheckedUpdateWithoutMembershipsInput = {
   platformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUncheckedUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutSubscriptionsInput = {
@@ -1177,6 +1344,7 @@ export type TenantCreateWithoutSubscriptionsInput = {
   platformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutSubscriptionsInput = {
@@ -1205,6 +1373,7 @@ export type TenantUncheckedCreateWithoutSubscriptionsInput = {
   platformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoUncheckedCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutSubscriptionsInput = {
@@ -1249,6 +1418,7 @@ export type TenantUpdateWithoutSubscriptionsInput = {
   platformPayments?: Prisma.PlatformPaymentUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutSubscriptionsInput = {
@@ -1277,6 +1447,7 @@ export type TenantUncheckedUpdateWithoutSubscriptionsInput = {
   platformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUncheckedUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutShiftsInput = {
@@ -1305,6 +1476,7 @@ export type TenantCreateWithoutShiftsInput = {
   platformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutShiftsInput = {
@@ -1333,6 +1505,7 @@ export type TenantUncheckedCreateWithoutShiftsInput = {
   platformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoUncheckedCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutShiftsInput = {
@@ -1377,6 +1550,7 @@ export type TenantUpdateWithoutShiftsInput = {
   platformPayments?: Prisma.PlatformPaymentUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutShiftsInput = {
@@ -1405,6 +1579,7 @@ export type TenantUncheckedUpdateWithoutShiftsInput = {
   platformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUncheckedUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutTodosInput = {
@@ -1433,6 +1608,7 @@ export type TenantCreateWithoutTodosInput = {
   charges?: Prisma.TenantChargeCreateNestedManyWithoutTenantInput
   platformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutTodosInput = {
@@ -1461,6 +1637,7 @@ export type TenantUncheckedCreateWithoutTodosInput = {
   charges?: Prisma.TenantChargeUncheckedCreateNestedManyWithoutTenantInput
   platformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutTodosInput = {
@@ -1505,6 +1682,7 @@ export type TenantUpdateWithoutTodosInput = {
   charges?: Prisma.TenantChargeUpdateManyWithoutTenantNestedInput
   platformPayments?: Prisma.PlatformPaymentUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutTodosInput = {
@@ -1533,6 +1711,7 @@ export type TenantUncheckedUpdateWithoutTodosInput = {
   charges?: Prisma.TenantChargeUncheckedUpdateManyWithoutTenantNestedInput
   platformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutPaymentsInput = {
@@ -1561,6 +1740,7 @@ export type TenantCreateWithoutPaymentsInput = {
   platformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutPaymentsInput = {
@@ -1589,6 +1769,7 @@ export type TenantUncheckedCreateWithoutPaymentsInput = {
   platformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoUncheckedCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutPaymentsInput = {
@@ -1633,6 +1814,7 @@ export type TenantUpdateWithoutPaymentsInput = {
   platformPayments?: Prisma.PlatformPaymentUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutPaymentsInput = {
@@ -1661,6 +1843,7 @@ export type TenantUncheckedUpdateWithoutPaymentsInput = {
   platformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUncheckedUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutWorkoutPlansInput = {
@@ -1689,6 +1872,7 @@ export type TenantCreateWithoutWorkoutPlansInput = {
   platformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutWorkoutPlansInput = {
@@ -1717,6 +1901,7 @@ export type TenantUncheckedCreateWithoutWorkoutPlansInput = {
   platformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoUncheckedCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutWorkoutPlansInput = {
@@ -1761,6 +1946,7 @@ export type TenantUpdateWithoutWorkoutPlansInput = {
   platformPayments?: Prisma.PlatformPaymentUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutWorkoutPlansInput = {
@@ -1789,6 +1975,7 @@ export type TenantUncheckedUpdateWithoutWorkoutPlansInput = {
   platformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUncheckedUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutBadgesInput = {
@@ -1817,6 +2004,7 @@ export type TenantCreateWithoutBadgesInput = {
   platformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutBadgesInput = {
@@ -1845,6 +2033,7 @@ export type TenantUncheckedCreateWithoutBadgesInput = {
   platformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoUncheckedCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutBadgesInput = {
@@ -1889,6 +2078,7 @@ export type TenantUpdateWithoutBadgesInput = {
   platformPayments?: Prisma.PlatformPaymentUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutBadgesInput = {
@@ -1917,6 +2107,7 @@ export type TenantUncheckedUpdateWithoutBadgesInput = {
   platformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUncheckedUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutPlatformPaymentsInput = {
@@ -1945,6 +2136,7 @@ export type TenantCreateWithoutPlatformPaymentsInput = {
   charges?: Prisma.TenantChargeCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutPlatformPaymentsInput = {
@@ -1973,6 +2165,7 @@ export type TenantUncheckedCreateWithoutPlatformPaymentsInput = {
   charges?: Prisma.TenantChargeUncheckedCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoUncheckedCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutPlatformPaymentsInput = {
@@ -2017,6 +2210,7 @@ export type TenantUpdateWithoutPlatformPaymentsInput = {
   charges?: Prisma.TenantChargeUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutPlatformPaymentsInput = {
@@ -2045,6 +2239,7 @@ export type TenantUncheckedUpdateWithoutPlatformPaymentsInput = {
   charges?: Prisma.TenantChargeUncheckedUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUncheckedUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutAttendancesInput = {
@@ -2073,6 +2268,7 @@ export type TenantCreateWithoutAttendancesInput = {
   charges?: Prisma.TenantChargeCreateNestedManyWithoutTenantInput
   platformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutAttendancesInput = {
@@ -2101,6 +2297,7 @@ export type TenantUncheckedCreateWithoutAttendancesInput = {
   charges?: Prisma.TenantChargeUncheckedCreateNestedManyWithoutTenantInput
   platformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoUncheckedCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutAttendancesInput = {
@@ -2145,6 +2342,7 @@ export type TenantUpdateWithoutAttendancesInput = {
   charges?: Prisma.TenantChargeUpdateManyWithoutTenantNestedInput
   platformPayments?: Prisma.PlatformPaymentUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutAttendancesInput = {
@@ -2173,6 +2371,7 @@ export type TenantUncheckedUpdateWithoutAttendancesInput = {
   charges?: Prisma.TenantChargeUncheckedUpdateManyWithoutTenantNestedInput
   platformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUncheckedUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutAuditLogsInput = {
@@ -2201,6 +2400,7 @@ export type TenantCreateWithoutAuditLogsInput = {
   platformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutAuditLogsInput = {
@@ -2229,6 +2429,7 @@ export type TenantUncheckedCreateWithoutAuditLogsInput = {
   platformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutTenantInput
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutTenantInput
   todos?: Prisma.TodoUncheckedCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutAuditLogsInput = {
@@ -2273,6 +2474,7 @@ export type TenantUpdateWithoutAuditLogsInput = {
   platformPayments?: Prisma.PlatformPaymentUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutAuditLogsInput = {
@@ -2301,6 +2503,7 @@ export type TenantUncheckedUpdateWithoutAuditLogsInput = {
   platformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutTenantNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutTenantNestedInput
   todos?: Prisma.TodoUncheckedUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 
@@ -2320,6 +2523,7 @@ export type TenantCountOutputType = {
   platformPayments: number
   attendances: number
   todos: number
+  rolePermissions: number
 }
 
 export type TenantCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2334,6 +2538,7 @@ export type TenantCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions
   platformPayments?: boolean | TenantCountOutputTypeCountPlatformPaymentsArgs
   attendances?: boolean | TenantCountOutputTypeCountAttendancesArgs
   todos?: boolean | TenantCountOutputTypeCountTodosArgs
+  rolePermissions?: boolean | TenantCountOutputTypeCountRolePermissionsArgs
 }
 
 /**
@@ -2423,6 +2628,13 @@ export type TenantCountOutputTypeCountTodosArgs<ExtArgs extends runtime.Types.Ex
   where?: Prisma.TodoWhereInput
 }
 
+/**
+ * TenantCountOutputType without action
+ */
+export type TenantCountOutputTypeCountRolePermissionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.RolePermissionOverrideWhereInput
+}
+
 
 export type TenantSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -2451,6 +2663,7 @@ export type TenantSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   platformPayments?: boolean | Prisma.Tenant$platformPaymentsArgs<ExtArgs>
   attendances?: boolean | Prisma.Tenant$attendancesArgs<ExtArgs>
   todos?: boolean | Prisma.Tenant$todosArgs<ExtArgs>
+  rolePermissions?: boolean | Prisma.Tenant$rolePermissionsArgs<ExtArgs>
   _count?: boolean | Prisma.TenantCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["tenant"]>
 
@@ -2519,6 +2732,7 @@ export type TenantInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   platformPayments?: boolean | Prisma.Tenant$platformPaymentsArgs<ExtArgs>
   attendances?: boolean | Prisma.Tenant$attendancesArgs<ExtArgs>
   todos?: boolean | Prisma.Tenant$todosArgs<ExtArgs>
+  rolePermissions?: boolean | Prisma.Tenant$rolePermissionsArgs<ExtArgs>
   _count?: boolean | Prisma.TenantCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type TenantIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -2539,6 +2753,7 @@ export type $TenantPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     platformPayments: Prisma.$PlatformPaymentPayload<ExtArgs>[]
     attendances: Prisma.$AttendancePayload<ExtArgs>[]
     todos: Prisma.$TodoPayload<ExtArgs>[]
+    rolePermissions: Prisma.$RolePermissionOverridePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2970,6 +3185,7 @@ export interface Prisma__TenantClient<T, Null = never, ExtArgs extends runtime.T
   platformPayments<T extends Prisma.Tenant$platformPaymentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$platformPaymentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PlatformPaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   attendances<T extends Prisma.Tenant$attendancesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$attendancesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AttendancePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   todos<T extends Prisma.Tenant$todosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$todosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  rolePermissions<T extends Prisma.Tenant$rolePermissionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$rolePermissionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RolePermissionOverridePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3684,6 +3900,30 @@ export type Tenant$todosArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
   take?: number
   skip?: number
   distinct?: Prisma.TodoScalarFieldEnum | Prisma.TodoScalarFieldEnum[]
+}
+
+/**
+ * Tenant.rolePermissions
+ */
+export type Tenant$rolePermissionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the RolePermissionOverride
+   */
+  select?: Prisma.RolePermissionOverrideSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the RolePermissionOverride
+   */
+  omit?: Prisma.RolePermissionOverrideOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RolePermissionOverrideInclude<ExtArgs> | null
+  where?: Prisma.RolePermissionOverrideWhereInput
+  orderBy?: Prisma.RolePermissionOverrideOrderByWithRelationInput | Prisma.RolePermissionOverrideOrderByWithRelationInput[]
+  cursor?: Prisma.RolePermissionOverrideWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.RolePermissionOverrideScalarFieldEnum | Prisma.RolePermissionOverrideScalarFieldEnum[]
 }
 
 /**

@@ -191,6 +191,21 @@ If you update bindings in [`wrangler.toml`](/l:/api/wrangler.toml), rerun `npm r
 
 [`scripts/ensure-prisma-client.mjs`](/l:/api/scripts/ensure-prisma-client.mjs) also contains the deterministic seed workflow used for local and remote environments.
 
+### Local test credentials
+
+Use these accounts to sign in during local development.
+
+- Platform super admin: `superadmin@seed.gym.test` / `Test@1234`
+- Support user: `support@seed.gym.test` / `Test@1234`
+- Tenant admin (replace `<tenant-slug>` with a seeded tenant slug): `admin.<tenant-slug>@seed.gym.test` / `Test@1234`
+
+Examples:
+
+- App-level platform login: `http://localhost:5173/login`
+- Tenant login on a public subdomain: `http://seed-gym-5.localhost:5173/login`
+
+When the host includes a tenant subdomain, the shared login page treats the user as a tenant-level user and defaults back to the tenant public page after sign-in. When there is no subdomain, it behaves as the platform/app login and redirects to the dashboard.
+
 Default seeded identities:
 
 - Super admin: `superadmin@seed.gym.test`

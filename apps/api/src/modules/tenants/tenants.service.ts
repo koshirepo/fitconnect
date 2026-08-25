@@ -5,8 +5,8 @@
  * - Prefer placing workflow logic, derived calculations, and domain invariants here instead of inside controllers or repositories.
  * - Primary exports: tenantService.
  */
-import type { AccountStatus } from "../../shared/types/enums";
-import { toSlug } from "../../shared/utils";
+import type { AccountStatus } from "@fitconnect/shared/types/enums";
+import { toSlug } from "@fitconnect/shared/utils";
 import { hashPassword, generateRandomPassword } from "../../auth/password";
 import { deleteFileByUrl, type StorageOptions } from "../../lib/storage";
 import { tenantRepository } from "./tenants.repository";

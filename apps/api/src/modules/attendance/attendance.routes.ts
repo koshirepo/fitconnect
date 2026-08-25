@@ -3,13 +3,13 @@
  *
  * - Declares the Hono routes and middleware chain for member check-ins, staff attendance marking, summaries, and calendar views. This route set is mounted from `/tenants` in the application entrypoint.
  * - Keep routing and authorization wiring here, and delegate request handling to the companion controller instead of placing business logic in route callbacks.
- * - Relative endpoints declared in this file: POST /:tenantId/attendance, POST /:tenantId/attendance/mark, POST /:tenantId/attendance/mark-all, DELETE /:tenantId/attendance/:membershipId/:date, GET /:tenantId/attendance, GET /:tenantId/attendance/member/:membershipId, GET /:tenantId/attendance/summary/:membershipId, GET /:tenantId/attendance/calendar, GET /:tenantId/attendance/member/:membershipId/calendar.
+ * - Relative endpoints declared in this file: GET /:tenantId/attendance/qr/members, POST /:tenantId/attendance/qr, POST /:tenantId/attendance, POST /:tenantId/attendance/mark, POST /:tenantId/attendance/mark-all, DELETE /:tenantId/attendance/:membershipId/:date, GET /:tenantId/attendance, GET /:tenantId/attendance/member/:membershipId, GET /:tenantId/attendance/summary/:membershipId, GET /:tenantId/attendance/calendar, GET /:tenantId/attendance/member/:membershipId/calendar.
  * - Primary exports: attendanceRoutes.
  */
 import { Hono } from "hono";
-import { TenantRole } from "../../shared/types/enums";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { authenticate } from "../../middleware/authenticate";
-import { requireTenantRoles } from "../../middleware/authorize";
+import { requireAnyTenantPermission, requireTenantPermissions } from "../../middleware/authorize";
 import { attendanceController } from "./attendance.controller";
 import type { AppBindings } from "../../types/app-context";
 
@@ -19,14 +19,14 @@ export const attendanceRoutes = new Hono<AppBindings>();
 attendanceRoutes.get(
   "/:tenantId/attendance/qr/members",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH]),
+  requireTenantPermissions(Permission.ATTENDANCE_QR_MANAGE),
   attendanceController.qrMembers,
 );
 
 attendanceRoutes.post(
   "/:tenantId/attendance/qr",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH, TenantRole.MEMBER]),
+  requireTenantPermissions(Permission.ATTENDANCE_CHECKIN_SELF),
   attendanceController.qrCheckIn,
 );
 
@@ -34,55 +34,53 @@ attendanceRoutes.post(
 attendanceRoutes.post(
   "/:tenantId/attendance",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH, TenantRole.MEMBER]),
+  requireTenantPermissions(Permission.ATTENDANCE_CHECKIN_SELF),
   attendanceController.checkIn,
 );
 
-// Admin/coach marks attendance for a specific member
+// Marking attendance on behalf of a member is a staff capability
 attendanceRoutes.post(
   "/:tenantId/attendance/mark",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH]),
+  requireTenantPermissions(Permission.ATTENDANCE_MARK),
   attendanceController.markForMember,
 );
 
-// Admin/coach marks attendance for multiple members at once
 attendanceRoutes.post(
   "/:tenantId/attendance/mark-all",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH]),
+  requireTenantPermissions(Permission.ATTENDANCE_MARK),
   attendanceController.markAll,
 );
 
-// Remove attendance record (admin only)
 attendanceRoutes.delete(
   "/:tenantId/attendance/:membershipId/:date",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN]),
+  requireTenantPermissions(Permission.ATTENDANCE_DELETE),
   attendanceController.remove,
 );
 
-// List attendance by date (admin/coach see all, members see their own via /my)
+// List attendance by date (staff view of the whole gym)
 attendanceRoutes.get(
   "/:tenantId/attendance",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH]),
+  requireTenantPermissions(Permission.ATTENDANCE_READ),
   attendanceController.listByDate,
 );
 
-// Member's own attendance history
+// Member history and summaries: staff may read anyone, members only themselves
+// (the controller scopes the query to the caller when they lack ATTENDANCE_READ).
 attendanceRoutes.get(
   "/:tenantId/attendance/member/:membershipId",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH, TenantRole.MEMBER]),
+  requireAnyTenantPermission(Permission.ATTENDANCE_READ, Permission.ATTENDANCE_READ_SELF),
   attendanceController.listByMember,
 );
 
-// Attendance summary for a member
 attendanceRoutes.get(
   "/:tenantId/attendance/summary/:membershipId",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH, TenantRole.MEMBER]),
+  requireAnyTenantPermission(Permission.ATTENDANCE_READ, Permission.ATTENDANCE_READ_SELF),
   attendanceController.summary,
 );
 
@@ -90,14 +88,16 @@ attendanceRoutes.get(
 attendanceRoutes.get(
   "/:tenantId/attendance/calendar",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH]),
+  requireTenantPermissions(Permission.ATTENDANCE_CALENDAR_READ),
   attendanceController.calendarMonth,
 );
 
-// Member calendar: attendance dates for a specific member in a month
 attendanceRoutes.get(
   "/:tenantId/attendance/member/:membershipId/calendar",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH, TenantRole.MEMBER]),
+  requireAnyTenantPermission(
+    Permission.ATTENDANCE_CALENDAR_READ,
+    Permission.ATTENDANCE_READ_SELF,
+  ),
   attendanceController.memberCalendar,
 );

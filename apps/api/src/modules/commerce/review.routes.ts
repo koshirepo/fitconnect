@@ -9,6 +9,8 @@
 import { Hono } from "hono";
 import { authenticate } from "../../middleware/authenticate";
 import { optionalAuthenticate } from "../../middleware/optional-authenticate";
+import { requirePermissions } from "../../middleware/authorize";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { reviewController } from "./review.controller";
 import type { AppBindings } from "../../types/app-context";
 
@@ -31,7 +33,17 @@ reviewRoutes.post(
 reviewRoutes.post("/reviews/:reviewId/comments", optionalAuthenticate, reviewController.addComment);
 
 // Mark review as helpful (authenticated only)
-reviewRoutes.post("/reviews/:reviewId/helpful", authenticate, reviewController.markHelpful);
+reviewRoutes.post(
+  "/reviews/:reviewId/helpful",
+  authenticate,
+  requirePermissions(Permission.REVIEWS_VOTE),
+  reviewController.markHelpful,
+);
 
 // Unmark review as helpful (authenticated only)
-reviewRoutes.delete("/reviews/:reviewId/helpful", authenticate, reviewController.unmarkHelpful);
+reviewRoutes.delete(
+  "/reviews/:reviewId/helpful",
+  authenticate,
+  requirePermissions(Permission.REVIEWS_VOTE),
+  reviewController.unmarkHelpful,
+);

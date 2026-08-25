@@ -6,7 +6,7 @@
  * - Primary exports: commerceRepository.
  */
 import { prisma } from "../../lib/prisma";
-import type { OrderStatus } from "../../shared/types/enums";
+import type { OrderStatus } from "@fitconnect/shared/types/enums";
 import type { CreateProductInput, UpdateProductInput } from "./commerce.schema";
 
 const productSelect = {

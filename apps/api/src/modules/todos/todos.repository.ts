@@ -6,7 +6,7 @@
  * - Primary exports: todoRepository.
  */
 import { prisma } from "../../lib/prisma";
-import { TenantRole, TodoVisibility } from "../../shared/types/enums";
+import { TenantRole, TodoVisibility } from "@fitconnect/shared/types/enums";
 import type { CreateTodoInput, UpdateTodoInput } from "./todos.schema";
 
 const todoActorSelect = {

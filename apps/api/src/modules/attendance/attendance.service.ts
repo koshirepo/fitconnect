@@ -172,9 +172,9 @@ export const attendanceService = {
     page: number,
     limit: number,
     callerUserId?: string,
-    callerRole?: string | null,
+    canReadAll = false,
   ) {
-    if (callerRole === "MEMBER") {
+    if (!canReadAll) {
       const membership = await attendanceRepository.findMembership(tenantId, membershipId);
       if (!membership || membership.userId !== callerUserId) {
         return { error: "You can only view your own attendance.", status: 403 as const };
@@ -206,9 +206,9 @@ export const attendanceService = {
     tenantId: string,
     membershipId: string,
     callerUserId?: string,
-    callerRole?: string | null,
+    canReadAll = false,
   ) {
-    if (callerRole === "MEMBER") {
+    if (!canReadAll) {
       const membership = await attendanceRepository.findMembership(tenantId, membershipId);
       if (!membership || membership.userId !== callerUserId) {
         return { error: "You can only view your own attendance summary.", status: 403 as const };
@@ -240,9 +240,9 @@ export const attendanceService = {
     membershipId: string,
     month: string,
     callerUserId?: string,
-    callerRole?: string | null,
+    canReadAll = false,
   ) {
-    if (callerRole === "MEMBER") {
+    if (!canReadAll) {
       const membership = await attendanceRepository.findMembership(tenantId, membershipId);
       if (!membership || membership.userId !== callerUserId) {
         return { error: "You can only view your own attendance calendar.", status: 403 as const };

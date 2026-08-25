@@ -6,7 +6,7 @@
  * - Primary exports: signAccessToken, verifyAccessToken, generateRefreshToken, refreshTokenExpiresAt, JwtTenants.
  */
 import { SignJWT, jwtVerify } from "jose";
-import type { PlatformRole, TenantRole } from "../shared/types/enums";
+import type { PlatformRole, TenantRole } from "@fitconnect/shared/types/enums";
 import { config } from "../config";
 
 /**

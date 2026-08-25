@@ -16,6 +16,8 @@ import {
   markAllAttendanceSchema,
   qrAttendanceSchema,
 } from "./attendance.schema";
+import { can } from "../../lib/permissions";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import type { AppBindings } from "../../types/app-context";
 
 type AppContext = Context<AppBindings>;
@@ -187,7 +189,8 @@ export const attendanceController = {
     const membershipId = c.req.param("membershipId")!;
     const { page, limit } = parsePagination(c);
     const user = c.get("authUser");
-    const role = c.get("tenantAccess")?.role ?? null;
+    // Staff read anyone's history; everyone else is narrowed to their own record.
+    const canReadAll = can(c, Permission.ATTENDANCE_READ);
 
     const result = await attendanceService.listByMember(
       tenantId,
@@ -195,7 +198,7 @@ export const attendanceController = {
       page,
       limit,
       user.id,
-      role,
+      canReadAll,
     );
     if ("error" in result) return badRequest(c, result.error!);
     const { data, total } = result;
@@ -207,9 +210,9 @@ export const attendanceController = {
     const tenantId = c.req.param("tenantId")!;
     const membershipId = c.req.param("membershipId")!;
     const user = c.get("authUser");
-    const role = c.get("tenantAccess")?.role ?? null;
+    const canReadAll = can(c, Permission.ATTENDANCE_READ);
 
-    const result = await attendanceService.summary(tenantId, membershipId, user.id, role);
+    const result = await attendanceService.summary(tenantId, membershipId, user.id, canReadAll);
     if ("error" in result) return badRequest(c, result.error!);
     return ok(c, result.data);
   },
@@ -234,14 +237,14 @@ export const attendanceController = {
     const month =
       c.req.query("month") ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     const user = c.get("authUser");
-    const role = c.get("tenantAccess")?.role ?? null;
+    const canReadAll = can(c, Permission.ATTENDANCE_CALENDAR_READ);
 
     const result = await attendanceService.memberCalendar(
       tenantId,
       membershipId,
       month,
       user.id,
-      role,
+      canReadAll,
     );
     if ("error" in result) return badRequest(c, result.error!);
     c.header("Cache-Control", "private, max-age=60");

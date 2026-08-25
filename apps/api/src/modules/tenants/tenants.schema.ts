@@ -6,7 +6,7 @@
  * - Primary exports: createTenantAdminSchema, createTenantSchema, updateTenantSchema, updateTenantStatusSchema, recordPlatformPaymentSchema, CreateTenantInput, UpdateTenantInput, RecordPlatformPaymentInput.
  */
 import { z } from "zod";
-import { SLUG_REGEX } from "../../shared/constants";
+import { SLUG_REGEX } from "@fitconnect/shared/constants";
 
 const optionalNullableString = <T extends z.ZodTypeAny>(schema: T) =>
   z

@@ -487,10 +487,6 @@ export type TenantChargeUncheckedUpdateManyWithoutTenantNestedInput = {
   deleteMany?: Prisma.TenantChargeScalarWhereInput | Prisma.TenantChargeScalarWhereInput[]
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
-}
-
 export type TenantChargeCreateNestedOneWithoutPaymentsInput = {
   create?: Prisma.XOR<Prisma.TenantChargeCreateWithoutPaymentsInput, Prisma.TenantChargeUncheckedCreateWithoutPaymentsInput>
   connectOrCreate?: Prisma.TenantChargeCreateOrConnectWithoutPaymentsInput

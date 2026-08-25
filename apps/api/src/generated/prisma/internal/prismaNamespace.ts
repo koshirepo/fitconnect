@@ -388,6 +388,7 @@ export const ModelName = {
   PasswordResetToken: 'PasswordResetToken',
   RefreshToken: 'RefreshToken',
   Tenant: 'Tenant',
+  RolePermissionOverride: 'RolePermissionOverride',
   TenantSettings: 'TenantSettings',
   TenantCharge: 'TenantCharge',
   TenantMembership: 'TenantMembership',
@@ -423,7 +424,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "passwordResetToken" | "refreshToken" | "tenant" | "tenantSettings" | "tenantCharge" | "tenantMembership" | "subscription" | "shift" | "todo" | "payment" | "product" | "productReview" | "productReviewComment" | "productReviewHelpful" | "order" | "orderItem" | "workoutPlan" | "workoutPlanAssignment" | "badge" | "platformPayment" | "attendance" | "auditLog" | "pushSubscription"
+    modelProps: "user" | "passwordResetToken" | "refreshToken" | "tenant" | "rolePermissionOverride" | "tenantSettings" | "tenantCharge" | "tenantMembership" | "subscription" | "shift" | "todo" | "payment" | "product" | "productReview" | "productReviewComment" | "productReviewHelpful" | "order" | "orderItem" | "workoutPlan" | "workoutPlanAssignment" | "badge" | "platformPayment" | "attendance" | "auditLog" | "pushSubscription"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -720,6 +721,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.TenantCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.TenantCountAggregateOutputType> | number
+        }
+      }
+    }
+    RolePermissionOverride: {
+      payload: Prisma.$RolePermissionOverridePayload<ExtArgs>
+      fields: Prisma.RolePermissionOverrideFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RolePermissionOverrideFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RolePermissionOverridePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RolePermissionOverrideFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RolePermissionOverridePayload>
+        }
+        findFirst: {
+          args: Prisma.RolePermissionOverrideFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RolePermissionOverridePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RolePermissionOverrideFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RolePermissionOverridePayload>
+        }
+        findMany: {
+          args: Prisma.RolePermissionOverrideFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RolePermissionOverridePayload>[]
+        }
+        create: {
+          args: Prisma.RolePermissionOverrideCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RolePermissionOverridePayload>
+        }
+        createMany: {
+          args: Prisma.RolePermissionOverrideCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RolePermissionOverrideCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RolePermissionOverridePayload>[]
+        }
+        delete: {
+          args: Prisma.RolePermissionOverrideDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RolePermissionOverridePayload>
+        }
+        update: {
+          args: Prisma.RolePermissionOverrideUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RolePermissionOverridePayload>
+        }
+        deleteMany: {
+          args: Prisma.RolePermissionOverrideDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RolePermissionOverrideUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RolePermissionOverrideUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RolePermissionOverridePayload>[]
+        }
+        upsert: {
+          args: Prisma.RolePermissionOverrideUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RolePermissionOverridePayload>
+        }
+        aggregate: {
+          args: Prisma.RolePermissionOverrideAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRolePermissionOverride>
+        }
+        groupBy: {
+          args: Prisma.RolePermissionOverrideGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RolePermissionOverrideGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RolePermissionOverrideCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RolePermissionOverrideCountAggregateOutputType> | number
         }
       }
     }
@@ -2299,6 +2374,21 @@ export const TenantScalarFieldEnum = {
 export type TenantScalarFieldEnum = (typeof TenantScalarFieldEnum)[keyof typeof TenantScalarFieldEnum]
 
 
+export const RolePermissionOverrideScalarFieldEnum = {
+  id: 'id',
+  scope: 'scope',
+  role: 'role',
+  permission: 'permission',
+  allowed: 'allowed',
+  tenantId: 'tenantId',
+  updatedBy: 'updatedBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RolePermissionOverrideScalarFieldEnum = (typeof RolePermissionOverrideScalarFieldEnum)[keyof typeof RolePermissionOverrideScalarFieldEnum]
+
+
 export const TenantSettingsScalarFieldEnum = {
   id: 'id',
   tenantId: 'tenantId',
@@ -2666,6 +2756,13 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
 
 
 /**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
  * Reference to a field of type 'Int'
  */
 export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
@@ -2683,13 +2780,6 @@ export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'J
  * Reference to a field of type 'QueryMode'
  */
 export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
-    
-
-
-/**
- * Reference to a field of type 'Boolean'
- */
-export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -2798,6 +2888,7 @@ export type GlobalOmitConfig = {
   passwordResetToken?: Prisma.PasswordResetTokenOmit
   refreshToken?: Prisma.RefreshTokenOmit
   tenant?: Prisma.TenantOmit
+  rolePermissionOverride?: Prisma.RolePermissionOverrideOmit
   tenantSettings?: Prisma.TenantSettingsOmit
   tenantCharge?: Prisma.TenantChargeOmit
   tenantMembership?: Prisma.TenantMembershipOmit

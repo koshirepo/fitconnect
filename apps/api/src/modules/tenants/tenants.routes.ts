@@ -7,9 +7,9 @@
  * - Primary exports: tenantRoutes.
  */
 import { Hono } from "hono";
-import { PlatformRole, TenantRole } from "../../shared/types/enums";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { authenticate } from "../../middleware/authenticate";
-import { requirePlatformRoles, requireTenantRoles } from "../../middleware/authorize";
+import { requirePermissions, requireTenantPermissions } from "../../middleware/authorize";
 import { tenantController } from "./tenants.controller";
 import type { AppBindings } from "../../types/app-context";
 
@@ -18,48 +18,48 @@ export const tenantRoutes = new Hono<AppBindings>();
 tenantRoutes.post(
   "/",
   authenticate,
-  requirePlatformRoles([PlatformRole.SUPER_ADMIN]),
+  requirePermissions(Permission.PLATFORM_TENANTS_CREATE),
   tenantController.create,
 );
 
 tenantRoutes.get(
   "/",
   authenticate,
-  requirePlatformRoles([PlatformRole.SUPER_ADMIN, PlatformRole.SUPPORT]),
+  requirePermissions(Permission.PLATFORM_TENANTS_READ),
   tenantController.list,
 );
 
 tenantRoutes.get(
   "/:tenantId",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN, TenantRole.COACH, TenantRole.MEMBER]),
+  requireTenantPermissions(Permission.TENANT_READ),
   tenantController.getById,
 );
 
 tenantRoutes.patch(
   "/:tenantId",
   authenticate,
-  requireTenantRoles([TenantRole.ADMIN]),
+  requireTenantPermissions(Permission.TENANT_UPDATE),
   tenantController.update,
 );
 
 tenantRoutes.patch(
   "/:tenantId/status",
   authenticate,
-  requirePlatformRoles([PlatformRole.SUPER_ADMIN]),
+  requirePermissions(Permission.PLATFORM_TENANTS_STATUS_UPDATE),
   tenantController.updateStatus,
 );
 
 tenantRoutes.post(
   "/:tenantId/platform-payments",
   authenticate,
-  requirePlatformRoles([PlatformRole.SUPER_ADMIN]),
+  requirePermissions(Permission.PLATFORM_PAYMENTS_CREATE),
   tenantController.recordPlatformPayment,
 );
 
 tenantRoutes.get(
   "/:tenantId/platform-payments",
   authenticate,
-  requirePlatformRoles([PlatformRole.SUPER_ADMIN, PlatformRole.SUPPORT]),
+  requirePermissions(Permission.PLATFORM_PAYMENTS_READ),
   tenantController.listPlatformPayments,
 );

@@ -1,4 +1,4 @@
-import type { WhatsAppTemplate, WhatsAppTemplateKey } from "../shared/types/models";
+import type { WhatsAppTemplate, WhatsAppTemplateKey } from "@fitconnect/shared/types/models";
 
 type TemplateContextValue = string | number | null | undefined;
 type TemplateMetadata = {
