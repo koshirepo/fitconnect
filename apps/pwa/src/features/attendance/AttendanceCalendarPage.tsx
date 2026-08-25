@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/spinner";
 import { ChevronLeft, ChevronRight, CalendarDays, Users, List, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getTenantDashboardPath } from "@/lib/subdomain";
 import AvatarCard from "@/components/ui/avatarCard";
 
 type DayData = {
@@ -100,7 +101,7 @@ export default function AttendanceCalendarPage() {
           <h1 className="text-2xl font-bold tracking-tight">Attendance Calendar</h1>
           <p className="text-muted-foreground">Monthly overview of gym visits</p>
         </div>
-        <Button variant="outline" onClick={() => navigate("/attendance")}>
+        <Button variant="outline" onClick={() => navigate(getTenantDashboardPath("/attendance"))}>
           <List className="h-4 w-4 mr-2" />
           Daily View
         </Button>
@@ -248,7 +249,7 @@ export default function AttendanceCalendarPage() {
                       key={m.id}
                       type="button"
                       className="flex w-full rounded-lg px-2.5 py-2 text-left hover:bg-muted/60 transition-colors"
-                      onClick={() => navigate(`/members/${m.id}`)}
+                      onClick={() => navigate(getTenantDashboardPath(`/members/${m.id}`))}
                     >
                       <AvatarCard name={m.name} memberId={m.memberId ?? undefined} variant="sm" />
                     </button>

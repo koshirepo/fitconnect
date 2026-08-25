@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
-import { toSlug } from "@/shared/utils";
+import { toSlug } from "@fitconnect/shared/utils";
 import { tenantsApi } from "@/api/tenants";
 import { uploadsApi } from "@/api/uploads";
 import { getApiError } from "@/api/client";

@@ -1,5 +1,6 @@
 import * as React from "react";
-import { useAuthStore } from "@/stores/auth";
+import { usePermissions } from "@/features/auth/permission-gate";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,8 +83,9 @@ export default function MemberForm({
   onCancel,
   submitLabel,
 }: MemberFormProps) {
-  const { tenantRole } = useAuthStore();
-  const callerRole = tenantRole() ?? "";
+  const { can } = usePermissions();
+  // Assigning a role to another member is its own capability.
+  const canAssignRoles = can(Permission.MEMBERS_ROLE_UPDATE);
 
   // Form state
   const [name, setName] = React.useState(initialData.name ?? "");
@@ -101,7 +103,7 @@ export default function MemberForm({
   const [internalError, setInternalError] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const availableRoles = ROLE_OPTIONS[callerRole] ?? ROLE_OPTIONS.COACH;
+  const availableRoles = canAssignRoles ? ROLE_OPTIONS.ADMIN : ROLE_OPTIONS.COACH;
   const selectedReferrer =
     referralOptions?.find((member) => member.id === referredByMembershipId) ?? null;
 
@@ -259,7 +261,7 @@ export default function MemberForm({
       )}
 
       {/* Role Selection */}
-      {callerRole === "ADMIN" && (
+      {canAssignRoles && (
         <div className="space-y-3">
           <Label>Role</Label>
           <div className="grid gap-3">

@@ -4,7 +4,10 @@ import { tenantsApi } from "@/api/tenants";
 import { useAuthStore } from "@/stores/auth";
 import { useUIStore } from "@/stores/ui";
 import { resolveAssetUrl } from "@/lib/assets";
+import { buildTenantPublicUrl, getTenantDashboardPath, isTenantSubdomain } from "@/lib/subdomain";
 import { cn } from "@/lib/utils";
+import { Permission } from "@fitconnect/shared/types/permissions";
+import { usePermissions } from "@/features/auth/permission-gate";
 import {
   LayoutDashboard,
   Building2,
@@ -21,51 +24,103 @@ import {
   X,
   CalendarCheck,
   UserPlus,
+  ShieldCheck,
 } from "lucide-react";
 import AvatarCard from "../ui/avatarCard";
 import type { Tenant } from "@/types/api";
 
-const platformNav = [
+/**
+ * Navigation entries gate on capabilities, not role names: an item shows when
+ * the user holds at least one of its `anyOf` permissions, and an item with no
+ * `anyOf` is always visible. This keeps the sidebar in step with the permission
+ * catalog and with any overrides configured on the roles screens.
+ */
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  anyOf?: Permission[];
+  excludePrefixes?: string[];
+};
+
+const platformNav: NavItem[] = [
   {
     to: "/tenants",
     label: "Tenants",
     icon: Building2,
-    roles: ["SUPER_ADMIN", "SUPPORT"],
+    anyOf: [Permission.PLATFORM_TENANTS_READ],
   },
   {
     to: "/platform-commerce",
     label: "Commerce",
     icon: ShoppingBag,
-    roles: ["SUPER_ADMIN", "SUPPORT"],
+    anyOf: [Permission.PLATFORM_PRODUCTS_READ],
     excludePrefixes: ["/platform-commerce/orders"],
   },
   {
     to: "/platform-commerce/orders",
     label: "Orders",
     icon: Package,
-    roles: ["SUPER_ADMIN"],
+    anyOf: [Permission.PLATFORM_ORDERS_READ],
+  },
+  {
+    to: "/platform-roles",
+    label: "Roles & Permissions",
+    icon: ShieldCheck,
+    anyOf: [Permission.PLATFORM_ROLES_READ],
   },
   {
     to: "/platform-audit",
     label: "Audit Logs",
     icon: ScrollText,
-    roles: ["SUPER_ADMIN", "SUPPORT"],
+    anyOf: [Permission.AUDIT_PLATFORM_READ],
   },
 ];
 
-const tenantNav = [
+const tenantNav: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/members", label: "Members", icon: Users, roles: ["ADMIN", "COACH"] },
-  { to: "/referrals", label: "Referrals", icon: UserPlus, roles: ["ADMIN", "COACH"] },
-  { to: "/todos", label: "Todos", icon: ListTodo, roles: ["ADMIN", "COACH"] },
-  { to: "/workouts", label: "Workout Plans", icon: Dumbbell },
-  { to: "/payments", label: "Payments", icon: CreditCard },
-  { to: "/subscriptions", label: "Subscriptions", icon: Package },
-  { to: "/attendance", label: "Attendance", icon: CalendarCheck },
+  { to: "/members", label: "Members", icon: Users, anyOf: [Permission.MEMBERS_READ] },
+  {
+    to: "/referrals",
+    label: "Referrals",
+    icon: UserPlus,
+    anyOf: [Permission.MEMBERS_REFERRALS_READ],
+  },
+  { to: "/todos", label: "Todos", icon: ListTodo, anyOf: [Permission.TODOS_READ] },
+  {
+    to: "/workouts",
+    label: "Workout Plans",
+    icon: Dumbbell,
+    anyOf: [Permission.WORKOUTS_READ],
+  },
+  {
+    to: "/payments",
+    label: "Payments",
+    icon: CreditCard,
+    anyOf: [Permission.PAYMENTS_READ, Permission.PAYMENTS_READ_SELF],
+  },
+  {
+    to: "/subscriptions",
+    label: "Subscriptions",
+    icon: Package,
+    anyOf: [Permission.SUBSCRIPTIONS_READ],
+  },
+  {
+    to: "/attendance",
+    label: "Attendance",
+    icon: CalendarCheck,
+    anyOf: [Permission.ATTENDANCE_READ, Permission.ATTENDANCE_CHECKIN_SELF],
+  },
   { to: "/orders/history", label: "My Orders", icon: ShoppingBag },
-  { to: "/badges", label: "Badges", icon: Award, roles: ["ADMIN"] },
-  { to: "/settings", label: "Settings", icon: Settings, roles: ["ADMIN"] },
-  { to: "/audit", label: "Audit Logs", icon: ScrollText, roles: ["ADMIN"] },
+  { to: "/badges", label: "Badges", icon: Award, anyOf: [Permission.BADGES_READ] },
+  { to: "/settings", label: "Settings", icon: Settings, anyOf: [Permission.SETTINGS_UPDATE] },
+  {
+    to: "/settings/roles",
+    label: "Roles & Permissions",
+    icon: ShieldCheck,
+    anyOf: [Permission.ROLES_READ],
+  },
+  { to: "/audit", label: "Audit Logs", icon: ScrollText, anyOf: [Permission.AUDIT_TENANT_READ] },
 ];
 
 export function Sidebar() {
@@ -74,22 +129,27 @@ export function Sidebar() {
     logout,
     currentTenantId,
     isPlatformStaff,
-    tenantRole,
     currentMembership,
   } = useAuthStore();
   const { sidebarOpen, setSidebarOpen, isMobile } = useUIStore();
+  const { canAny } = usePermissions();
   const navigate = useNavigate();
   const location = useLocation();
   const [currentTenant, setCurrentTenant] = React.useState<Tenant | null>(null);
 
   const membership = currentMembership();
+  const tenantPublicUrl = membership?.tenantSlug
+    ? buildTenantPublicUrl(membership.tenantSlug)
+    : currentTenant?.slug
+      ? buildTenantPublicUrl(currentTenant.slug)
+      : "/";
+  const getTenantRoute = (path: string) => (isTenantSubdomain() ? getTenantDashboardPath(path) : path);
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
-  const role = tenantRole();
 
   React.useEffect(() => {
     if (!currentTenantId) {
@@ -160,11 +220,11 @@ export function Sidebar() {
                 className="h-7 w-7 rounded-md shrink-0 object-cover"
               />
             </Link>
-            <Link to={`/gym/${membership?.tenantSlug}`}>
+            <a href={tenantPublicUrl} target="_blank" rel="noreferrer noopener">
               <span className="text-lg font-bold tracking-tight truncate text-gradient-brand">
                 {currentTenant?.name ?? (membership ? membership.tenantName : "FitConnect")}
               </span>
-            </Link>
+            </a>
           </div>
           {isMobile && (
             <button onClick={() => setSidebarOpen(false)}>
@@ -182,11 +242,7 @@ export function Sidebar() {
                 Platform
               </p>
               {platformNav
-                .filter(
-                  (item) =>
-                    !item.roles ||
-                    item.roles.includes(user?.platformRole ?? ""),
-                )
+                .filter((item) => !item.anyOf?.length || canAny(...item.anyOf))
                 .map((item) => (
                   <NavLink
                     key={item.to}
@@ -218,14 +274,11 @@ export function Sidebar() {
                 Gym
               </p>
               {tenantNav
-                .filter((item) => {
-                  if (!item.roles) return true;
-                  return item.roles.includes(role ?? "");
-                })
+                .filter((item) => !item.anyOf?.length || canAny(...item.anyOf))
                 .map((item) => (
                   <NavLink
                     key={item.to}
-                    to={item.to}
+                    to={getTenantRoute(item.to)}
                     onClick={() => isMobile && setSidebarOpen(false)}
                     className={({ isActive }) =>
                       cn(
@@ -246,7 +299,7 @@ export function Sidebar() {
         {/* User section */}
         <div className="border-t border-sidebar-border p-3">
           <NavLink
-            to="/profile"
+            to={getTenantRoute("/profile")}
             onClick={() => isMobile && setSidebarOpen(false)}
             className="flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-200 hover:bg-sidebar-accent"
           >

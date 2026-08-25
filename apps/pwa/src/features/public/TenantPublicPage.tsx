@@ -1,9 +1,10 @@
 import * as React from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import { publicApi } from "@/api/public";
+import { isTenantSubdomain } from "@/lib/subdomain";
 import { useAuthStore } from "@/stores/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,7 +44,6 @@ const fmt = (amount: number) =>
   }).format(amount);
 
 export default function TenantPublicPage() {
-  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
 
@@ -53,14 +53,24 @@ export default function TenantPublicPage() {
   const [copiedQrLink, setCopiedQrLink] = React.useState(false);
 
   React.useEffect(() => {
-    if (!slug) return;
+    if (!isTenantSubdomain()) {
+      setTenant(null);
+      setError("Gym not found or unavailable.");
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
+    setError("");
+
+    const tenantHost = typeof window !== "undefined" ? window.location.host : "";
+
     publicApi
-      .getTenantBySlug(slug)
+      .getTenantByHost(tenantHost)
       .then((res) => setTenant(res.data.data.tenant))
       .catch(() => setError("Gym not found or unavailable."))
       .finally(() => setLoading(false));
-  }, [slug]);
+  }, []);
 
   if (loading) return <PageLoader />;
 

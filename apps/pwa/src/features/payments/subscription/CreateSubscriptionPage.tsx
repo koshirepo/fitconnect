@@ -1,4 +1,6 @@
 import * as React from "react";
+import { usePermissions } from "@/features/auth/permission-gate";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { badgesApi } from "@/api/badges";
@@ -26,8 +28,9 @@ const DURATION_PRESETS = [
 
 export default function CreateSubscriptionPage() {
   const navigate = useNavigate();
-  const { currentTenantId, tenantRole } = useAuthStore();
-  const role = tenantRole();
+  const { currentTenantId } = useAuthStore();
+  const { can } = usePermissions();
+  const canManagePlans = can(Permission.SUBSCRIPTIONS_CREATE);
 
   // ─── Form state ─────────────────────────────────────────────────────────────
   const [title, setTitle] = React.useState("");
@@ -45,7 +48,7 @@ export default function CreateSubscriptionPage() {
   const [success, setSuccess] = React.useState(false);
 
   React.useEffect(() => {
-    if (!currentTenantId || role !== "ADMIN") return;
+    if (!currentTenantId || !canManagePlans) return;
 
     let cancelled = false;
     setLoadingBadges(true);
@@ -71,10 +74,10 @@ export default function CreateSubscriptionPage() {
     return () => {
       cancelled = true;
     };
-  }, [currentTenantId, role]);
+  }, [currentTenantId, canManagePlans]);
 
   // Only admins can create subscriptions
-  if (role !== "ADMIN") {
+  if (!canManagePlans) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <Card className="w-full max-w-md">

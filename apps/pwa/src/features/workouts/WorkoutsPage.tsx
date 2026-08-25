@@ -1,4 +1,6 @@
 import * as React from "react";
+import { usePermissions } from "@/features/auth/permission-gate";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { workoutsApi } from "@/api/workouts";
@@ -30,9 +32,12 @@ type ExerciseField = keyof Exercise;
 
 export default function WorkoutsPage() {
   const navigate = useNavigate();
-  const { currentTenantId, tenantRole } = useAuthStore();
-  const role = tenantRole();
-  const canCreate = role === "ADMIN" || role === "COACH";
+  const { currentTenantId } = useAuthStore();
+  const { can } = usePermissions();
+  const canCreate = can(Permission.WORKOUTS_CREATE);
+  const canDeletePlan = can(Permission.WORKOUTS_DELETE);
+  const canReadAllPlans = can(Permission.WORKOUTS_CREATE);
+
 
   const [plans, setPlans] = React.useState<WorkoutPlan[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -219,7 +224,7 @@ export default function WorkoutsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Workout Plans</h1>
           <p className="text-muted-foreground">
-            {role === "MEMBER" ? "Your assigned plans" : "Manage workout plans"}
+            {canReadAllPlans ? "Manage workout plans" : "Your assigned plans"}
           </p>
         </div>
         {canCreate && (
@@ -286,7 +291,7 @@ export default function WorkoutsPage() {
                         </Button>
                       </>
                     )}
-                    {role === "ADMIN" && (
+                    {canDeletePlan && (
                       <Button variant="ghost" size="sm" onClick={() => handleDelete(plan.id)}>
                         <Trash2 className="h-3 w-3 text-destructive-foreground" />
                       </Button>

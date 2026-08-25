@@ -1,4 +1,6 @@
 import * as React from "react";
+import { usePermissions } from "@/features/auth/permission-gate";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { paymentsApi } from "@/api/payments";
@@ -38,10 +40,12 @@ type DisplayPayment = Payment & { _pending?: boolean };
 export default function PaymentsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { currentTenantId, tenantRole, user } = useAuthStore();
-  const role = tenantRole();
-  const isAdmin = role === "ADMIN";
-  const canViewAllPayments = role === "ADMIN" || role === "COACH";
+  const { currentTenantId, user } = useAuthStore();
+  const { can } = usePermissions();
+  // Editing, deleting, and exporting payments are the admin-level grants.
+  const isAdmin = can(Permission.PAYMENTS_UPDATE);
+  const canViewAllPayments = can(Permission.PAYMENTS_READ);
+  const canRecordPayment = can(Permission.PAYMENTS_CREATE);
 
   const [payments, setPayments] = React.useState<Payment[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -266,7 +270,7 @@ export default function PaymentsPage() {
               <Download className="h-4 w-4" />
             </Button>
           )}
-          {(isAdmin || role === "COACH") && (
+          {canRecordPayment && (
             <Button onClick={() => navigate("/payments/record")}>
               <Plus className="h-4 w-4" />
             </Button>

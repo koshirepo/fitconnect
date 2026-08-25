@@ -11,6 +11,7 @@ import { PhotoCapture } from "@/components/ui/photo-capture";
 import { Textarea } from "@/components/ui/textarea";
 import type { Tenant, UpdateTenantPayload } from "@/types/api";
 import { AlertCircle, AlertTriangle, ExternalLink } from "lucide-react";
+import { buildTenantPublicUrl } from "@/lib/subdomain";
 
 const validators = {
   name: (value: string): string | null => {
@@ -171,7 +172,7 @@ export function TenantPublicProfileCard({
     }
   };
 
-  const publicUrl = `/gym/${tenant.slug}`;
+  const publicUrl = buildTenantPublicUrl(tenant.slug);
 
   return (
     <Card>

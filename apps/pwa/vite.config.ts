@@ -4,10 +4,16 @@ import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 
+/** Repo root, so Vite may read files outside this app (the shared workspace package). */
+const workspaceRoot = path.resolve(__dirname, "../..");
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const apiTarget = env.VITE_API_URL || "http://localhost:8787";
+  // Dev-only proxy target. Kept separate from VITE_API_URL: setting that would
+  // also become the client's axios baseURL, which bypasses this proxy and turns
+  // every local request cross-origin.
+  const apiTarget = env.VITE_API_PROXY_TARGET || "http://localhost:8787";
   const navigationAllowlist = [/^(?!\/(?:api|uploads)(?:\/|$)).*/];
 
   return {
@@ -134,7 +140,15 @@ export default defineConfig(({ mode }) => {
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Resolved explicitly so the workspace package is compiled from source by
+      // this app's pipeline, which keeps HMR working when shared contracts change.
+      "@fitconnect/shared": path.resolve(workspaceRoot, "packages/shared/src"),
     },
+  },
+  optimizeDeps: {
+    // Workspace source, not a published dependency — pre-bundling it would
+    // freeze a stale copy between edits.
+    exclude: ["@fitconnect/shared"],
   },
   build: {
     rollupOptions: {
@@ -158,6 +172,10 @@ export default defineConfig(({ mode }) => {
     },
   },
   server: {
+    fs: {
+      // Allow serving the shared workspace package from outside this app root.
+      allow: [workspaceRoot],
+    },
     proxy: {
       "/api": {
         target: apiTarget,

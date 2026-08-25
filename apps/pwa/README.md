@@ -79,6 +79,22 @@ pnpm dev
 
 By default, Vite proxies `/api` and `/uploads` to `VITE_API_URL` during local development.
 
+## Local Test Credentials
+
+Use these seeded credentials to validate both the platform app and tenant public flows locally.
+
+- Platform super admin: `superadmin@seed.gym.test` / `Test@1234`
+- Support user: `support@seed.gym.test` / `Test@1234`
+- Tenant admin: `admin.<tenant-slug>@seed.gym.test` / `Test@1234`
+
+Example routes:
+
+- App-level login: `http://localhost:5173/login`
+- Tenant login: `http://seed-gym-5.localhost:5173/login`
+- Tenant public page: `http://seed-gym-5.localhost:5173/`
+
+The app uses the current hostname to decide whether the login is app-level or tenant-level. Tenant pages are served from subdomains; slug-based URLs are not used as the canonical route or redirect target.
+
 ## Common Commands
 
 - `pnpm dev`: start the Vite dev server

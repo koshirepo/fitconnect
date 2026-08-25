@@ -1,4 +1,4 @@
-import { getInitials } from "@/shared";
+import { getInitials } from "@fitconnect/shared";
 import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
 import { cn } from "@/lib/utils";
 import { getDueDateState } from "@/lib/member-due";

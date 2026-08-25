@@ -1,4 +1,6 @@
 import * as React from "react";
+import { usePermissions } from "@/features/auth/permission-gate";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { attendanceApi } from "@/api/attendance";
@@ -10,6 +12,7 @@ import { PageLoader, Spinner } from "@/components/ui/spinner";
 import AvatarCard from "@/components/ui/avatarCard";
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { getTenantDashboardPath } from "@/lib/subdomain";
 import { loadAllTenantMembers } from "@/lib/tenant-members";
 import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
 import {
@@ -47,11 +50,13 @@ function formatMonthLabel(s: string) {
 
 export default function AttendancePage() {
   const navigate = useNavigate();
-  const { currentTenantId, tenantRole, currentMembership } = useAuthStore();
+  const { currentTenantId, currentMembership } = useAuthStore();
+  const { can } = usePermissions();
   const membership = currentMembership();
   const membershipId = membership?.id;
-  const role = tenantRole();
-  const isStaff = role === "ADMIN" || role === "COACH";
+  // "Staff" here means whoever may see the whole gym's attendance, not a role name.
+  const isStaff = can(Permission.ATTENDANCE_READ);
+  const canDeleteAttendance = can(Permission.ATTENDANCE_DELETE);
 
   const [date, setDate] = React.useState(() => {
     const d = new Date();
@@ -536,7 +541,7 @@ export default function AttendancePage() {
                         type="button"
                         className="flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
                         onClick={() =>
-                          r.membershipId && navigate(`/members/${r.membershipId}#attendance`)
+                          r.membershipId && navigate(getTenantDashboardPath(`/members/${r.membershipId}#attendance`))
                         }
                       >
                         <AvatarCard
@@ -557,7 +562,7 @@ export default function AttendancePage() {
                             minute: "2-digit",
                           })}
                         </span>
-                        {role === "ADMIN" && (
+                        {canDeleteAttendance && (
                           <Button
                             variant="ghost"
                             size="sm"

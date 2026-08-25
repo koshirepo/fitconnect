@@ -9,6 +9,7 @@ import { shiftsApi } from "@/api/shifts";
 import { getApiError } from "@/api/client";
 import { storeFileOffline } from "@/lib/offline-files";
 import { queueMutation } from "@/lib/api-cache";
+import { getTenantDashboardPath } from "@/lib/subdomain";
 import type {
   Subscription,
   TenantCharge,
@@ -323,7 +324,7 @@ export default function AddMemberPage() {
             )}
 
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => navigate("/members")}>
+              <Button variant="outline" onClick={() => navigate(getTenantDashboardPath("/members"))}>
                 Back to Members
               </Button>
               <Button onClick={handleAddAnother}>
@@ -353,7 +354,7 @@ export default function AddMemberPage() {
               referralOptions={referralOptions}
               loadingShifts={loadingShifts}
               onSubmit={handleStep1Submit}
-              onCancel={() => navigate("/members")}
+              onCancel={() => navigate(getTenantDashboardPath("/members"))}
               submitLabel="Next: Select Plan"
             />
           </CardContent>

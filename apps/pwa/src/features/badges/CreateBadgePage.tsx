@@ -1,4 +1,6 @@
 import * as React from "react";
+import { usePermissions } from "@/features/auth/permission-gate";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { badgesApi } from "@/api/badges";
@@ -24,8 +26,8 @@ const COLOR_PRESETS = [
 
 export default function CreateBadgePage() {
   const navigate = useNavigate();
-  const { currentTenantId, tenantRole } = useAuthStore();
-  const role = tenantRole();
+  const { currentTenantId } = useAuthStore();
+  const { can } = usePermissions();
 
   // ─── Form state ─────────────────────────────────────────────────────────────
   const [name, setName] = React.useState("");
@@ -38,8 +40,8 @@ export default function CreateBadgePage() {
   const [error, setError] = React.useState("");
   const [success, setSuccess] = React.useState(false);
 
-  // Only admins can create badges
-  if (role !== "ADMIN") {
+  // Badge authoring is gated on the capability, not the ADMIN role name.
+  if (!can(Permission.BADGES_CREATE)) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <Card className="w-full max-w-md">

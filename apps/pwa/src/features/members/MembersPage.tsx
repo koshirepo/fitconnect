@@ -1,4 +1,6 @@
 import * as React from "react";
+import { usePermissions } from "@/features/auth/permission-gate";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { tenantsApi } from "@/api/tenants";
@@ -15,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PageLoader, Spinner } from "@/components/ui/spinner";
+import { PageLoader } from "@/components/ui/spinner";
 import { downloadCsv } from "@/lib/csv";
 import { formatDate, cn } from "@/lib/utils";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
@@ -23,7 +25,6 @@ import {
   getTenantWhatsAppTemplateBody,
   renderWhatsAppTemplateBody,
 } from "@/lib/whatsapp-templates";
-import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
 import {
   Plus,
   Users,
@@ -42,8 +43,10 @@ import {
   Dumbbell,
 } from "lucide-react";
 import type { TenantMember, Badge, TenantSettings } from "@/types/api";
-import { getInitials } from "@/shared";
+import { getInitials } from "@fitconnect/shared";
 import { usePendingMutations } from "@/lib/use-pending-mutations";
+import { getTenantDashboardPath } from "@/lib/subdomain";
+import { loadAllTenantMembers } from "@/lib/tenant-members";
 
 type PendingMemberMutationBody = {
   name?: string;
@@ -129,16 +132,15 @@ function MemberAvatar({ member }: { member: DisplayMember }) {
 export default function MembersPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { currentTenantId, tenantRole, currentMembership } = useAuthStore();
-  const role = tenantRole();
+  const { currentTenantId, currentMembership } = useAuthStore();
+  const { can } = usePermissions();
   const gymName = currentMembership()?.tenantName ?? "the gym";
-  const isAdmin = role === "ADMIN";
+  // Gates the admin-only member operations (status, role, delete, reports).
+  const isAdmin = can(Permission.MEMBERS_STATUS_UPDATE);
+  const canAddMember = can(Permission.MEMBERS_CREATE);
 
   const [members, setMembers] = React.useState<TenantMember[]>([]);
   const [loading, setLoading] = React.useState(true);
-  const [loadingMore, setLoadingMore] = React.useState(false);
-  const [page, setPage] = React.useState(1);
-  const [hasMore, setHasMore] = React.useState(true);
   const [exporting, setExporting] = React.useState(false);
   const [badges, setBadges] = React.useState<Badge[]>([]);
   const [tenantSettings, setTenantSettings] = React.useState<TenantSettings | null>(null);
@@ -188,61 +190,24 @@ export default function MembersPage() {
       .catch(() => setTenantSettings(null));
   }, [currentTenantId]);
 
-  const fetchMembers = React.useCallback(
-    async (nextPage: number, mode: "replace" | "append") => {
-      if (!currentTenantId) return;
-      if (mode === "replace") {
-        setLoading(true);
-      } else {
-        setLoadingMore(true);
-      }
-      try {
-        const res = await tenantsApi.listMembers(
-          currentTenantId,
-          nextPage,
-          20,
-          roleFilter || undefined,
-          search || undefined,
-          statusFilter || undefined,
-          badgeFilter || undefined,
-        );
-        const nextMembers = res.data.data.members;
-        setMembers((prev) =>
-          mode === "replace" ? nextMembers : appendUniqueById(prev, nextMembers),
-        );
-        const totalPages = res.data.meta.totalPages;
-        setHasMore(nextPage < totalPages);
-        setPage(nextPage);
-      } catch {
-        // silent
-      } finally {
-        if (mode === "replace") {
-          setLoading(false);
-        } else {
-          setLoadingMore(false);
-        }
-      }
-    },
-    [currentTenantId, roleFilter, statusFilter, search, badgeFilter],
-  );
+  const fetchMembers = React.useCallback(async () => {
+    if (!currentTenantId) return;
+    setLoading(true);
+    try {
+      const allMembers = await loadAllTenantMembers(currentTenantId, { pageSize: 200 });
+      setMembers(allMembers);
+    } catch {
+      // silent
+    } finally {
+      setLoading(false);
+    }
+  }, [currentTenantId]);
 
   React.useEffect(() => {
     if (!currentTenantId) return;
     setMembers([]);
-    setHasMore(true);
-    void fetchMembers(1, "replace");
-  }, [currentTenantId, roleFilter, statusFilter, search, badgeFilter, fetchMembers]);
-
-  const loadMore = React.useCallback(() => {
-    if (loading || loadingMore || !hasMore) return;
-    void fetchMembers(page + 1, "append");
-  }, [loading, loadingMore, hasMore, page, fetchMembers]);
-
-  const loadMoreRef = useInfiniteScroll({
-    hasMore,
-    loading: loading || loadingMore,
-    onLoadMore: loadMore,
-  });
+    void fetchMembers();
+  }, [currentTenantId, fetchMembers]);
 
   const paymentReminderTemplateBody = React.useMemo(
     () => getTenantWhatsAppTemplateBody(tenantSettings, "payment_reminder"),
@@ -278,9 +243,45 @@ export default function MembersPage() {
   }));
 
   // Merge and sort latest first
-  const allMembers: DisplayMember[] = [...pendingMemberItems, ...members].sort(
-    (a, b) => new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime(),
-  );
+  const filteredAllMembers: DisplayMember[] = React.useMemo(() => {
+    const trimmedSearch = search.trim().toLowerCase();
+    const now = new Date();
+
+    return [...pendingMemberItems, ...members]
+      .filter((member) => {
+        if (roleFilter && member.role !== roleFilter) return false;
+
+        if (statusFilter === "ACTIVE") {
+          if (member.status !== "ACTIVE") return false;
+        } else if (statusFilter === "INACTIVE") {
+          const statusValue = String(member.status).toUpperCase();
+          if (statusValue !== "SUSPENDED" && statusValue !== "INACTIVE") return false;
+        } else if (statusFilter === "DUE") {
+          const due = member.isDue ?? (member.dueDate ? new Date(member.dueDate) <= now : false);
+          if (!due || member.status !== "ACTIVE") return false;
+        }
+
+        if (badgeFilter) {
+          const badgeIds = (member as DisplayMember & { badgeIds?: string[]; badges?: { id: string }[] })
+            .badgeIds ??
+            ((member as DisplayMember & { badges?: { id: string }[] })?.badges ?? [])
+              .map((badge) => badge.id);
+
+          const hasBadgeData =
+            "badgeIds" in member ||
+            "badges" in member ||
+            (Array.isArray(badgeIds) && badgeIds.length > 0);
+
+          if (hasBadgeData && !badgeIds.includes(badgeFilter)) return false;
+        }
+
+        if (!trimmedSearch) return true;
+
+        const searchableText = `${member.name} ${member.email} ${member.phone ?? ""} ${member.memberId ?? ""}`.toLowerCase();
+        return searchableText.includes(trimmedSearch);
+      })
+      .sort((a, b) => new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime());
+  }, [badgeFilter, members, pendingMemberItems, roleFilter, search, statusFilter]);
 
   const renderMemberActions = (m: DisplayMember) => (
     <>
@@ -305,7 +306,7 @@ export default function MembersPage() {
           variant="ghost"
           size="icon-lg"
           className="size-8 rounded-full text-muted-foreground hover:text-foreground sm:size-9"
-          onClick={() => navigate(`/members/${m.id}/edit`)}
+          onClick={() => navigate(getTenantDashboardPath(`/members/${m.id}/edit`))}
           title="Edit member"
         >
           <Edit2 className="size-4 sm:size-5" />
@@ -334,7 +335,7 @@ export default function MembersPage() {
     if (!currentTenantId || !pendingRemoveId) return;
     try {
       await tenantsApi.removeMember(currentTenantId, pendingRemoveId);
-      fetchMembers(1, "replace");
+      fetchMembers();
     } catch {
       // silent
     } finally {
@@ -395,9 +396,11 @@ export default function MembersPage() {
               <Download className="h-4 w-4" />
             </Button>
           )}
-          <Button onClick={() => navigate("/members/add")}>
-            <Plus className="h-4 w-4" />
-          </Button>
+          {canAddMember && (
+            <Button onClick={() => navigate(getTenantDashboardPath("/members/add"))}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -427,9 +430,8 @@ export default function MembersPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row">
-        {/* Search Input */}
-        <div className="relative min-w-0 flex-1">
+      <div className="space-y-3">
+        <div className="relative min-w-0">
           <Search className="pointer-events-none absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
@@ -448,11 +450,9 @@ export default function MembersPage() {
           )}
         </div>
 
-        {/* Role + badge filters — side by side on mobile, inline with search from sm up */}
-        <div className="flex min-w-0 gap-3 sm:contents">
-          {/* Role Filter */}
+        <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
           <Select value={roleFilter} onValueChange={(value) => updateParams({ role: value ?? "" })}>
-            <SelectTrigger className="h-12 w-full min-w-0 flex-1 rounded-lg sm:w-48 sm:flex-none sm:shrink-0">
+            <SelectTrigger className="h-12 w-full rounded-lg">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -462,13 +462,9 @@ export default function MembersPage() {
             </SelectContent>
           </Select>
 
-          {/* Badge Filter */}
           {badges.length > 0 && (
-            <Select
-              value={badgeFilter}
-              onValueChange={(value) => updateParams({ badge: value ?? "" })}
-            >
-              <SelectTrigger className="h-12 w-full min-w-0 flex-1 rounded-lg sm:w-44 sm:flex-none sm:shrink-0">
+            <Select value={badgeFilter} onValueChange={(value) => updateParams({ badge: value ?? "" })}>
+              <SelectTrigger className="h-12 w-full rounded-lg">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -486,22 +482,24 @@ export default function MembersPage() {
 
       {loading ? (
         <PageLoader />
-      ) : allMembers.length === 0 ? (
+      ) : filteredAllMembers.length === 0 ? (
         <EmptyState
           icon={Users}
           title="No members found"
           description="Add members to your gym to get started."
           action={
-            <Button onClick={() => navigate("/members/add")}>
-              <Plus className="h-4 w-4" />
-              Add Member
-            </Button>
+            canAddMember ? (
+              <Button onClick={() => navigate(getTenantDashboardPath("/members/add"))}>
+                <Plus className="h-4 w-4" />
+                Add Member
+              </Button>
+            ) : undefined
           }
         />
       ) : (
         <div className="space-y-4">
           <div className="space-y-4">
-            {allMembers.map((m) => (
+            {filteredAllMembers.map((m) => (
               <Card
                 key={m.id}
                 className={cn(
@@ -513,7 +511,7 @@ export default function MembersPage() {
                   {/* Member Info */}
                   <div
                     className="flex min-w-0 flex-1 cursor-pointer items-stretch"
-                    onClick={() => !m._pending && navigate(`/members/${m.id}`)}
+                    onClick={() => !m._pending && navigate(getTenantDashboardPath(`/members/${m.id}`))}
                   >
                     <MemberAvatar member={m} />
 
@@ -593,21 +591,6 @@ export default function MembersPage() {
             ))}
           </div>
 
-          {allMembers.length > 0 && (hasMore || loadingMore) && (
-            <div
-              ref={loadMoreRef}
-              className="flex items-center justify-center py-4 text-sm text-muted-foreground"
-            >
-              {loadingMore ? (
-                <div className="flex items-center gap-2">
-                  <Spinner size="sm" />
-                  Loading more...
-                </div>
-              ) : (
-                "Scroll to load more"
-              )}
-            </div>
-          )}
         </div>
       )}
 

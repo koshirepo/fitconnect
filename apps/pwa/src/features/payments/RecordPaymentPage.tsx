@@ -1,4 +1,6 @@
 import * as React from "react";
+import { usePermissions } from "@/features/auth/permission-gate";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { badgesApi } from "@/api/badges";
@@ -91,7 +93,8 @@ async function loadAllMembers(tenantId: string): Promise<TenantMember[]> {
 export default function RecordPaymentPage() {
   const { membershipId } = useParams<{ membershipId?: string }>();
   const navigate = useNavigate();
-  const { currentTenantId, tenantRole, currentMembership } = useAuthStore();
+  const { currentTenantId, currentMembership } = useAuthStore();
+  const { can } = usePermissions();
   const gymName = currentMembership()?.tenantName ?? "the gym";
   const today = React.useMemo(() => new Date().toISOString().slice(0, 10), []);
 
@@ -461,7 +464,7 @@ export default function RecordPaymentPage() {
                 min={1}
                 step={1}
                 placeholder="Enter amount in rupees"
-                disabled={tenantRole() !== "ADMIN"}
+                disabled={!can(Permission.PAYMENTS_UPDATE)}
               />
 
               {!fAmount && error.includes("amount") && (

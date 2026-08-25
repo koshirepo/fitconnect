@@ -1,4 +1,4 @@
-import { COMMERCE_DEFAULT_GST_RATE_PCT } from "@/shared";
+import { COMMERCE_DEFAULT_GST_RATE_PCT } from "@fitconnect/shared";
 
 export const GST_RATE_PCT = COMMERCE_DEFAULT_GST_RATE_PCT;
 

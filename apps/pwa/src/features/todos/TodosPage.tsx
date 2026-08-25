@@ -1,4 +1,6 @@
 import * as React from "react";
+import { usePermissions } from "@/features/auth/permission-gate";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { Navigate } from "react-router-dom";
 import { todosApi } from "@/api/todos";
 import { getApiError } from "@/api/client";
@@ -58,10 +60,11 @@ function visibilityMeta(visibility: TodoVisibility) {
 }
 
 export default function TodosPage() {
-  const { currentTenantId, tenantRole } = useAuthStore();
-  const role = tenantRole();
-  const isAdmin = role === "ADMIN";
-  const canAccess = isAdmin || role === "COACH";
+  const { currentTenantId } = useAuthStore();
+  const { can } = usePermissions();
+  const canAccess = can(Permission.TODOS_READ);
+  // Todo deletion is the narrower grant; everything else follows TODOS_UPDATE.
+  const isAdmin = can(Permission.TODOS_DELETE);
 
   const [todos, setTodos] = React.useState<Todo[]>([]);
   const [loading, setLoading] = React.useState(true);

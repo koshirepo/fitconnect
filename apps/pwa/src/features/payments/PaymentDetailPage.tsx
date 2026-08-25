@@ -1,4 +1,6 @@
 import * as React from "react";
+import { usePermissions } from "@/features/auth/permission-gate";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { paymentsApi } from "@/api/payments";
@@ -59,10 +61,10 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 export default function PaymentDetailPage() {
   const { paymentId } = useParams<{ paymentId: string }>();
   const navigate = useNavigate();
-  const { currentTenantId, tenantRole, user } = useAuthStore();
-  const role = tenantRole();
-  const isAdmin = role === "ADMIN";
-  const canRecordPayment = role === "ADMIN" || role === "COACH";
+  const { currentTenantId, user } = useAuthStore();
+  const { can } = usePermissions();
+  const isAdmin = can(Permission.PAYMENTS_UPDATE);
+  const canRecordPayment = can(Permission.PAYMENTS_CREATE);
 
   const [payment, setPayment] = React.useState<Payment | null>(null);
   const [loading, setLoading] = React.useState(true);

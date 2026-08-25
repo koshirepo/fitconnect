@@ -1,4 +1,6 @@
 import * as React from "react";
+import { usePermissions } from "@/features/auth/permission-gate";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { badgesApi } from "@/api/badges";
@@ -27,9 +29,9 @@ import type { Badge as BadgeModel, Subscription } from "@/types/api";
 
 export default function SubscriptionsPage() {
   const navigate = useNavigate();
-  const { currentTenantId, tenantRole } = useAuthStore();
-  const role = tenantRole();
-  const isAdmin = role === "ADMIN";
+  const { currentTenantId } = useAuthStore();
+  const { can } = usePermissions();
+  const isAdmin = can(Permission.SUBSCRIPTIONS_UPDATE);
 
   const [subscriptions, setSubscriptions] = React.useState<Subscription[]>([]);
   const [availableBadges, setAvailableBadges] = React.useState<BadgeModel[]>([]);

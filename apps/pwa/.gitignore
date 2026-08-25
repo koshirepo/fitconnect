@@ -16,9 +16,12 @@ dist-ssr
 dev-dist/
 
 # Environment files
+# Committed: the per-environment build config (.env.development/.test/.production).
+# VITE_* values are public — they are inlined into the client bundle, so nothing
+# secret may live in them. Ignored: personal machine overrides.
 .env
-.env.*
-!.env.example
+.env.local
+.env.*.local
 
 # Editor directories and files
 .vscode/*

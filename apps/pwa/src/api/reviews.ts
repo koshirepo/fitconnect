@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { ApiResponse } from "@/shared/types";
+import type { ApiResponse } from "@fitconnect/shared/types";
 
 export interface ProductReview {
   id: string;

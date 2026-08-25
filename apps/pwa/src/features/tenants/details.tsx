@@ -23,9 +23,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PageLoader, Spinner } from "@/components/ui/spinner";
 import { resolveAssetUrl } from "@/lib/assets";
+import { buildTenantPublicUrl } from "@/lib/subdomain";
 import { cn, formatDate } from "@/lib/utils";
 import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
-import { formatCurrency } from "@/shared";
+import { formatCurrency } from "@fitconnect/shared";
 import type { Tenant, TenantMember, PlatformPayment } from "@/types/api";
 import {
   AlertCircle,
@@ -260,7 +261,7 @@ export default function TenantDetails() {
 
         <div className="flex flex-wrap gap-2">
           <a
-            href={`/gym/${tenant.slug}`}
+            href={buildTenantPublicUrl(tenant.slug)}
             target="_blank"
             rel="noreferrer"
             className={cn(buttonVariants({ variant: "outline" }))}

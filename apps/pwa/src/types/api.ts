@@ -84,4 +84,4 @@ export type {
   MessageResponse,
   PaginatedResponse,
   ApiError,
-} from "@/shared";
+} from "@fitconnect/shared";

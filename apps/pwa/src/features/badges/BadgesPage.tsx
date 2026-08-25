@@ -1,4 +1,6 @@
 import * as React from "react";
+import { usePermissions } from "@/features/auth/permission-gate";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { badgesApi } from "@/api/badges";
@@ -27,9 +29,12 @@ import type { Badge, TenantMember } from "@/types/api";
 
 export default function BadgesPage() {
   const navigate = useNavigate();
-  const { currentTenantId, tenantRole } = useAuthStore();
-  const role = tenantRole();
-  const isAdmin = role === "ADMIN";
+  const { currentTenantId } = useAuthStore();
+  const { can } = usePermissions();
+  // Badge authoring is a capability, not the ADMIN role: assignment is a
+  // separate grant that coaches hold by default.
+  const isAdmin = can(Permission.BADGES_CREATE);
+  const canAssignBadges = can(Permission.BADGES_ASSIGN);
 
   // ─── Badge list state ───────────────────────────────────────────────────────
   const [badges, setBadges] = React.useState<Badge[]>([]);
@@ -315,31 +320,39 @@ export default function BadgesPage() {
                   </div>
 
                   {/* Actions */}
-                  {isAdmin && (
+                  {(isAdmin || canAssignBadges) && (
                     <div className="flex gap-2 flex-wrap">
-                      <Button variant="outline" size="sm" onClick={() => openEdit(badge)}>
-                        <Edit className="h-3 w-3" />
-                        Edit
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openAssign(badge.id, badge.name)}
-                      >
-                        <UserPlus className="h-3 w-3" />
-                        Assign
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openViewAssignments(badge.id, badge.name)}
-                      >
-                        <Users className="h-3 w-3" />
-                        View
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(badge.id)}>
-                        <Trash2 className="h-3 w-3 text-destructive" />
-                      </Button>
+                      {can(Permission.BADGES_UPDATE) && (
+                        <Button variant="outline" size="sm" onClick={() => openEdit(badge)}>
+                          <Edit className="h-3 w-3" />
+                          Edit
+                        </Button>
+                      )}
+                      {canAssignBadges && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openAssign(badge.id, badge.name)}
+                        >
+                          <UserPlus className="h-3 w-3" />
+                          Assign
+                        </Button>
+                      )}
+                      {can(Permission.BADGES_ASSIGNMENTS_READ) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openViewAssignments(badge.id, badge.name)}
+                        >
+                          <Users className="h-3 w-3" />
+                          View
+                        </Button>
+                      )}
+                      {can(Permission.BADGES_DELETE) && (
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(badge.id)}>
+                          <Trash2 className="h-3 w-3 text-destructive" />
+                        </Button>
+                      )}
                     </div>
                   )}
                 </CardContent>

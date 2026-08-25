@@ -1,7 +1,8 @@
 import * as React from "react";
-import { Outlet, useParams } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { PublicHeader } from "./public-header";
 import { publicApi } from "@/api/public";
+import { getTenantSlugFromHostname, isTenantSubdomain } from "@/lib/subdomain";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 
 const navItems = [
@@ -14,13 +15,13 @@ const navItems = [
 const DEFAULT_WHATSAPP_URL = "https://wa.me/919479422951";
 
 export function PublicLayout() {
-  const { slug } = useParams<{ slug?: string }>();
+  const resolvedSlug = getTenantSlugFromHostname();
   const [tenantWhatsAppUrl, setTenantWhatsAppUrl] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let isActive = true;
 
-    if (!slug) {
+    if (!resolvedSlug || !isTenantSubdomain()) {
       setTenantWhatsAppUrl(null);
       return () => {
         isActive = false;
@@ -30,7 +31,7 @@ export function PublicLayout() {
     setTenantWhatsAppUrl(null);
 
     publicApi
-      .getTenantBySlug(slug)
+      .getTenantByHost(typeof window !== "undefined" ? window.location.host : resolvedSlug)
       .then((res) => {
         if (!isActive) return;
         const tenant = res.data.data.tenant;
@@ -49,9 +50,9 @@ export function PublicLayout() {
     return () => {
       isActive = false;
     };
-  }, [slug]);
+  }, [resolvedSlug]);
 
-  const whatsappUrl = slug ? tenantWhatsAppUrl : DEFAULT_WHATSAPP_URL;
+  const whatsappUrl = resolvedSlug ? tenantWhatsAppUrl : DEFAULT_WHATSAPP_URL;
 
   return (
     <div className="min-h-screen bg-background text-foreground">

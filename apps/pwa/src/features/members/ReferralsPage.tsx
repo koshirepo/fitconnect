@@ -1,4 +1,6 @@
 import * as React from "react";
+import { usePermissions } from "@/features/auth/permission-gate";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { tenantsApi } from "@/api/tenants";
 import { useAuthStore } from "@/stores/auth";
@@ -21,9 +23,9 @@ import AvatarCard from "@/components/ui/avatarCard";
 export default function ReferralsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { currentTenantId, tenantRole } = useAuthStore();
-  const role = tenantRole();
-  const canViewReferrals = role === "ADMIN" || role === "COACH";
+  const { currentTenantId } = useAuthStore();
+  const { can } = usePermissions();
+  const canViewReferrals = can(Permission.MEMBERS_REFERRALS_READ);
 
   const [leaders, setLeaders] = React.useState<MemberReferralLeader[]>([]);
   const [loading, setLoading] = React.useState(true);

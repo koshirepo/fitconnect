@@ -1,8 +1,9 @@
 import * as React from "react";
+import { usePermissions } from "@/features/auth/permission-gate";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate, useParams } from "react-router-dom";
 import { commerceApi } from "@/api/commerce";
 import { getApiError } from "@/api/client";
-import { useAuthStore } from "@/stores/auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,8 +37,8 @@ const fmt = (amount: number) =>
 export default function AdminOrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
-  const { isSuperAdmin } = useAuthStore();
-  const canManageOrders = isSuperAdmin();
+  const { can } = usePermissions();
+  const canManageOrders = can(Permission.PLATFORM_ORDERS_UPDATE);
 
   const [order, setOrder] = React.useState<Order | null>(null);
   const [loading, setLoading] = React.useState(true);

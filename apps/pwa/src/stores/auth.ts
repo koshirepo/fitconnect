@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { User, TenantMembershipSummary } from "@/types/api";
 import { authApi } from "@/api/auth";
+import { resolveClientPermissions, type Permission } from "@/lib/permissions";
+import type { PlatformRole, TenantRole } from "@fitconnect/shared/types/enums";
 
 interface AuthState {
   // State
@@ -17,6 +19,14 @@ interface AuthState {
   isSupport: () => boolean;
   isPlatformStaff: () => boolean;
   tenantRole: () => string | undefined;
+  /** Effective capability set for the signed-in user. */
+  permissions: () => ReadonlySet<Permission>;
+  /** True when the user holds this capability. */
+  can: (permission: Permission) => boolean;
+  /** True when the user holds at least one of these capabilities. */
+  canAny: (...permissions: Permission[]) => boolean;
+  /** True when the user holds every one of these capabilities. */
+  canAll: (...permissions: Permission[]) => boolean;
       // Actions
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
@@ -47,6 +57,25 @@ export const useAuthStore = create<AuthState>()(
         return role === "SUPER_ADMIN" || role === "SUPPORT";
       },
       tenantRole: () => get().currentMembership()?.role,
+
+      permissions: () => {
+        const user = get().user;
+        return resolveClientPermissions({
+          platformRole: (user?.platformRole as PlatformRole | undefined) ?? null,
+          tenantRole: (user?.membership?.role as TenantRole | undefined) ?? null,
+          serverPermissions: user?.permissions ?? null,
+        });
+      },
+
+      can: (permission) => get().permissions().has(permission),
+      canAny: (...permissions) => {
+        const granted = get().permissions();
+        return permissions.some((permission) => granted.has(permission));
+      },
+      canAll: (...permissions) => {
+        const granted = get().permissions();
+        return permissions.every((permission) => granted.has(permission));
+      },
       // Actions
 
       login: async (email: string, password: string) => {

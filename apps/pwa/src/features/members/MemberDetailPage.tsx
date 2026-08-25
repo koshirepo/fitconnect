@@ -1,4 +1,6 @@
 import * as React from "react";
+import { usePermissions } from "@/features/auth/permission-gate";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { tenantsApi } from "@/api/tenants";
@@ -8,10 +10,11 @@ import { badgesApi } from "@/api/badges";
 import { attendanceApi } from "@/api/attendance";
 import { shiftsApi } from "@/api/shifts";
 import { getApiError } from "@/api/client";
-import { formatDate, getInitials } from "@/shared";
+import { formatDate, getInitials } from "@fitconnect/shared";
 import { getDueDateState } from "@/lib/member-due";
 import { formatShiftLabel, formatShiftWindow } from "@/lib/shifts";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import { getTenantDashboardPath } from "@/lib/subdomain";
 import { resolveAssetUrl } from "@/lib/assets";
 import {
   getTenantWhatsAppTemplateBody,
@@ -99,10 +102,12 @@ export default function MemberDetailPage() {
   const { membershipId } = useParams<{ membershipId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentTenantId, tenantRole, currentMembership } = useAuthStore();
-  const role = tenantRole();
+  const { currentTenantId, currentMembership } = useAuthStore();
+  const { can } = usePermissions();
   const gymName = currentMembership()?.tenantName ?? "the gym";
-  const canManageBadges = role === "ADMIN" || role === "COACH";
+  const canManageBadges = can(Permission.BADGES_ASSIGN);
+  const canChangeStatus = can(Permission.MEMBERS_STATUS_UPDATE);
+  const canDeleteMember = can(Permission.MEMBERS_DELETE);
 
   const isEditMode = location.pathname.endsWith("/edit");
 
@@ -264,7 +269,7 @@ export default function MemberDetailPage() {
     setError("");
     try {
       await tenantsApi.removeMember(currentTenantId, membershipId);
-      navigate("/members", { replace: true });
+      navigate(getTenantDashboardPath("/members"), { replace: true });
     } catch (err: unknown) {
       setError(getApiError(err));
     } finally {
@@ -287,7 +292,7 @@ export default function MemberDetailPage() {
       const avatarChanged = Boolean(data.photoFile) || data.photoPreview !== member.avatarUrl;
 
       if (!roleChanged && !nameChanged && !phoneChanged && !shiftChanged && !avatarChanged) {
-        navigate(`/members/${membershipId}`, { replace: true });
+        navigate(getTenantDashboardPath(`/members/${membershipId}`), { replace: true });
         return;
       }
 
@@ -313,7 +318,7 @@ export default function MemberDetailPage() {
       }
 
       await loadMember(false);
-      navigate(`/members/${membershipId}`, { replace: true });
+      navigate(getTenantDashboardPath(`/members/${membershipId}`), { replace: true });
     } catch (err: unknown) {
       setEditError(getApiError(err));
     } finally {
@@ -448,7 +453,7 @@ export default function MemberDetailPage() {
               shiftOptions={shiftOptions}
               loadingShifts={loadingShifts}
               onSubmit={handleEditSubmit}
-              onCancel={() => navigate(`/members/${membershipId}`)}
+              onCancel={() => navigate(getTenantDashboardPath(`/members/${membershipId}`))}
               submitLabel="Save Changes"
             />
           </CardContent>
@@ -658,7 +663,7 @@ export default function MemberDetailPage() {
           )}
           <button
             type="button"
-            onClick={() => navigate(`/members/${membershipId}/edit`)}
+            onClick={() => navigate(getTenantDashboardPath(`/members/${membershipId}/edit`))}
             className="flex flex-col items-center gap-1"
           >
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors">
@@ -666,7 +671,7 @@ export default function MemberDetailPage() {
             </span>
             <span className="text-[10px] text-muted-foreground">Edit</span>
           </button>
-          {role === "ADMIN" && (
+          {canChangeStatus && (
             <button
               type="button"
               onClick={handleToggleStatus}
@@ -692,7 +697,7 @@ export default function MemberDetailPage() {
               </span>
             </button>
           )}
-          {role === "ADMIN" && (
+          {canDeleteMember && (
             <button
               type="button"
               onClick={() => setDeleteConfirmOpen(true)}
@@ -756,11 +761,11 @@ export default function MemberDetailPage() {
               </Button>
             </a>
           )}
-          <Button size="sm" onClick={() => navigate(`/members/${membershipId}/edit`)}>
+          <Button size="sm" onClick={() => navigate(getTenantDashboardPath(`/members/${membershipId}/edit`))}>
             <Edit className="h-4 w-4 mr-2" />
             Edit
           </Button>
-          {role === "ADMIN" && (
+          {canChangeStatus && (
             <Button
               size="sm"
               variant="outline"
@@ -780,7 +785,7 @@ export default function MemberDetailPage() {
               )}
             </Button>
           )}
-          {role === "ADMIN" && (
+          {canDeleteMember && (
             <Button
               size="sm"
               variant="destructive"

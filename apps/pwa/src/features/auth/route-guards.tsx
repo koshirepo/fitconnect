@@ -1,8 +1,11 @@
 import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
+import { isTenantSubdomain } from "@/lib/subdomain";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
+import { usePermissions } from "./permission-gate";
+import type { Permission } from "@/lib/permissions";
 
 function isPlatformExpired(platformExpiresAt?: string | null) {
   return Boolean(platformExpiresAt) && new Date(platformExpiresAt!).getTime() < Date.now();
@@ -75,12 +78,27 @@ export function RequireTenantPlatformAccess() {
   return <Outlet />;
 }
 
-/** Redirects to /dashboard if the active tenant role is not ADMIN */
-export function RequireTenantAdmin() {
-  const { tenantRole } = useAuthStore();
+/**
+ * Gates a route subtree on capabilities rather than a role name.
+ * `anyOf` passes when the user holds at least one permission; `allOf` requires
+ * every one. Redirects to the dashboard rather than showing a dead screen.
+ */
+export function RequirePermission({
+  anyOf,
+  allOf,
+  redirectTo = "/dashboard",
+}: {
+  anyOf?: Permission[];
+  allOf?: Permission[];
+  redirectTo?: string;
+}) {
+  const { canAny, canAll } = usePermissions();
 
-  if (tenantRole() !== "ADMIN") {
-    return <Navigate to="/dashboard" replace />;
+  const allowed =
+    (anyOf?.length ? canAny(...anyOf) : true) && (allOf?.length ? canAll(...allOf) : true);
+
+  if (!allowed) {
+    return <Navigate to={redirectTo} replace />;
   }
   return <Outlet />;
 }
@@ -88,9 +106,10 @@ export function RequireTenantAdmin() {
 /** Redirects home if already authenticated (for login page) */
 export function RedirectIfAuth() {
   const { isAuthenticated } = useAuthStore();
+  const target = isTenantSubdomain() ? "/" : "/dashboard";
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={target} replace />;
   }
   return <Outlet />;
 }

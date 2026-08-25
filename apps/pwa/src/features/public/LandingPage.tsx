@@ -1,6 +1,7 @@
 import * as React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { publicApi } from "@/api/public";
+import { buildTenantPublicUrl } from "@/lib/subdomain";
 import { useAuthStore } from "@/stores/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -225,29 +226,33 @@ export default function LandingPage() {
               </p>
             </div>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {gyms.map((g) => (
-                <Link key={g.id} to={`/gym/${g.slug}`} className="group block">
-                  <Card className="h-full hover:border-primary/40 transition-colors">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center gap-4">
-                        <AvatarCard name={g.name} avatarUrl={g.logoUrl} variant="md">
-                          {g.address && (
-                            <p className="text-sm text-muted-foreground flex items-center gap-1 truncate">
-                              <MapPin className="h-3 w-3 shrink-0" />
-                              {g.address}
+              {gyms.map((g) => {
+                const gymUrl = buildTenantPublicUrl(g.slug);
+
+                return (
+                  <a key={g.id} href={gymUrl} className="group block" target="_blank" rel="noreferrer noopener">
+                    <Card className="h-full hover:border-primary/40 transition-colors">
+                      <CardContent className="pt-6">
+                        <div className="flex items-center gap-4">
+                          <AvatarCard name={g.name} avatarUrl={g.logoUrl} variant="md">
+                            {g.address && (
+                              <p className="text-sm text-muted-foreground flex items-center gap-1 truncate">
+                                <MapPin className="h-3 w-3 shrink-0" />
+                                {g.address}
+                              </p>
+                            )}
+                            <p className="text-xs text-muted-foreground mt-1">
+                              <Users className="inline h-3 w-3 mr-1" />
+                              {g._count.memberships} members
                             </p>
-                          )}
-                          <p className="text-xs text-muted-foreground mt-1">
-                            <Users className="inline h-3 w-3 mr-1" />
-                            {g._count.memberships} members
-                          </p>
-                        </AvatarCard>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
+                          </AvatarCard>
+                          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </a>
+                );
+              })}
             </div>
           </div>
         </section>

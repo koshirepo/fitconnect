@@ -1,4 +1,6 @@
 import * as React from "react";
+import { usePermissions } from "@/features/auth/permission-gate";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate } from "react-router-dom";
 import { auditApi } from "@/api/audit";
 import { commerceApi } from "@/api/commerce";
@@ -12,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageLoader } from "@/components/ui/spinner";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
+import { getTenantDashboardPath } from "@/lib/subdomain";
 import {
   Building2,
   AlertTriangle,
@@ -72,8 +75,8 @@ export default function DashboardPage() {
     currentMembership,
     user,
     isPlatformStaff,
-    isSuperAdmin,
   } = useAuthStore();
+  const { can } = usePermissions();
   const navigate = useNavigate();
 
   const [loading, setLoading] = React.useState(true);
@@ -95,7 +98,11 @@ export default function DashboardPage() {
   const membership = currentMembership();
   const role = membership?.role;
   const showPlatformDashboard = isPlatformStaff() && !currentTenantId;
-  const canManagePlatformOrders = isSuperAdmin();
+  const canManagePlatformOrders = can(Permission.PLATFORM_ORDERS_UPDATE);
+  // Staff-level gym views vs. the member view of their own records.
+  const canViewGymMembers = can(Permission.MEMBERS_READ);
+  const canViewAllPayments = can(Permission.PAYMENTS_READ);
+  const canViewFinance = can(Permission.PAYMENTS_ANALYTICS_READ);
   const subscriptionStatus = getSubscriptionStatus(profile);
   const latestSubscriptionPayment = profile?.payments?.find((payment) => payment.validUntil);
 
@@ -154,10 +161,10 @@ export default function DashboardPage() {
         setProfile(profileRes.data.data.profile);
         setWorkoutPlans(workoutsRes.data.data.plans);
 
-        if (role === "ADMIN" || role === "COACH") {
+        if (canViewGymMembers) {
           const [membersRes, paymentsRes] = await Promise.all([
             tenantsApi.listMembers(currentTenantId, 1, 1),
-            role === "ADMIN"
+            canViewAllPayments
               ? paymentsApi.list(currentTenantId, 1, 5)
               : paymentsApi.myPayments(currentTenantId),
           ]);
@@ -411,7 +418,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {role === "MEMBER" && (
+        {!canViewGymMembers && (
           <Card className="cursor-pointer" onClick={() => navigate("/profile")}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Subscription Status</CardTitle>
@@ -440,8 +447,8 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {(role === "ADMIN" || role === "COACH") && (
-          <Card className="cursor-pointer" onClick={() => navigate("/members")}>
+        {canViewGymMembers && (
+          <Card className="cursor-pointer" onClick={() => navigate(getTenantDashboardPath("/members"))}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Total Members</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
@@ -465,7 +472,7 @@ export default function DashboardPage() {
         <Card className="cursor-pointer" onClick={() => navigate("/payments")}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
-              {role === "ADMIN" ? "Recent Payments" : "My Payments"}
+              {canViewAllPayments ? "Recent Payments" : "My Payments"}
             </CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -474,7 +481,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {role === "ADMIN" && (
+        {canViewFinance && (
           <Card className="cursor-pointer" onClick={() => navigate("/finance")}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Finance Analytics</CardTitle>
@@ -484,7 +491,7 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {role === "MEMBER" && profile && (
+      {!canViewGymMembers && profile && (
         <Card
           className={
             subscriptionStatus.state === "overdue"
@@ -538,7 +545,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle>Recent Payments</CardTitle>
             <CardDescription>
-              {role === "ADMIN" ? "Latest payments across the gym" : "Your recent payment history"}
+              {canViewAllPayments ? "Latest payments across the gym" : "Your recent payment history"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -581,7 +588,7 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>{role === "MEMBER" ? "Your Workout Plans" : "Recent Workout Plans"}</CardTitle>
+            <CardTitle>{canViewGymMembers ? "Recent Workout Plans" : "Your Workout Plans"}</CardTitle>
             <CardDescription>Active workout programs</CardDescription>
           </CardHeader>
           <CardContent>
