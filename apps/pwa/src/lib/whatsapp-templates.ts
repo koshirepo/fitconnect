@@ -1,50 +1,27 @@
+/**
+ * Documentation: WhatsApp template helpers for the PWA.
+ *
+ * - Resolves the body to use for a message, preferring the gym's saved override from tenant settings and falling back to the shared default.
+ * - The default bodies and the placeholder renderer live in `@fitconnect/shared/whatsapp-templates`, so an edit to a template reaches the API and the PWA together instead of drifting between them.
+ * - Primary exports: getTenantWhatsAppTemplateBody, renderWhatsAppTemplateBody.
+ */
+import {
+  renderTemplateBody,
+  resolveWhatsAppTemplateBody,
+} from "@fitconnect/shared/whatsapp-templates";
 import type { TenantSettings, WhatsAppTemplateKey } from "@/types/api";
 
-type TemplateContextValue = string | number | null | undefined;
-
-const FALLBACK_WHATSAPP_TEMPLATES: Record<WhatsAppTemplateKey, string> = {
-  new_member_welcome: `Welcome to *{{gymName}}*!
-
-Hi *{{memberName}}*,
-Your membership has been created successfully.
-Member ID: *{{memberId}}*
-
-{{paymentSummarySection}}{{subscriptionLine}}Your login password is your phone number and your username is {{email}}.
-
-Thank you for joining us.`,
-  payment_reminder: `Hi {{memberName}},
-
-This is a friendly reminder from *{{gymName}}* that your subscription has expired{{expirySuffix}}.
-
-Please renew your membership at the earliest to continue enjoying uninterrupted access to the gym.
-
-Thank you.`,
-  payment_receipt: `Hi {{memberName}},
-
-Your payment of {{amount}} for *{{subscriptionTitle}}* at *{{gymName}}* has been recorded.
-Status: {{status}}
-{{validUntilLine}}{{noteLine}}Thank you.`,
-};
-
+/**
+ * The body this gym should use for a message: its own saved override when it has
+ * one, otherwise the shared default.
+ */
 export function getTenantWhatsAppTemplateBody(
   settings: TenantSettings | null | undefined,
   key: WhatsAppTemplateKey,
 ) {
-  return (
-    settings?.whatsappTemplates.find((template) => template.key === key)?.body ??
-    FALLBACK_WHATSAPP_TEMPLATES[key]
-  );
+  const override = settings?.whatsappTemplates.find((template) => template.key === key)?.body;
+  return override ?? resolveWhatsAppTemplateBody(key);
 }
 
-export function renderWhatsAppTemplateBody(
-  body: string,
-  context: Record<string, TemplateContextValue>,
-) {
-  return body
-    .replace(/{{\s*([a-zA-Z0-9_]+)\s*}}/g, (_, key: string) =>
-      String(context[key] ?? ""),
-    )
-    .replace(/[ \t]+\n/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
+/** Substitute `{{placeholders}}` and tidy the resulting whitespace. */
+export const renderWhatsAppTemplateBody = renderTemplateBody;

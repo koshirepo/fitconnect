@@ -14,9 +14,13 @@
     "./types/models": "./src/types/models.ts",
     "./types/api": "./src/types/api.ts",
     "./constants": "./src/constants/index.ts",
-    "./utils": "./src/utils/index.ts"
+    "./utils": "./src/utils/index.ts",
+    "./tenant-host": "./src/tenant-host.ts",
+    "./whatsapp-templates": "./src/whatsapp-templates.ts"
   },
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
   "scripts": {
     "typecheck": "tsc --noEmit"
   },

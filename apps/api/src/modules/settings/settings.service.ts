@@ -11,7 +11,7 @@ import type {
   CreateChargeInput,
   UpdateChargeInput,
 } from "./settings.schema";
-import { getWhatsAppTemplates } from "../../lib/whatsapp-templates";
+import { getWhatsAppTemplates } from "@fitconnect/shared/whatsapp-templates";
 
 const DEFAULT_SETTINGS = {
   overdueDays: 30,

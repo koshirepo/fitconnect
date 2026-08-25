@@ -23,7 +23,7 @@ import { prisma } from "../../lib/prisma";
 import { emailService } from "../../lib/email";
 import { settingsRepository } from "../settings/settings.repository";
 import { tenantRepository } from "../tenants/tenants.repository";
-import { renderWhatsAppTemplate } from "../../lib/whatsapp-templates";
+import { renderWhatsAppTemplate } from "@fitconnect/shared/whatsapp-templates";
 
 type BackgroundTaskScheduler = (promise: Promise<unknown>) => void;
 type ServiceError = { error: string; status?: 400 | 403 | 404 | 409 };

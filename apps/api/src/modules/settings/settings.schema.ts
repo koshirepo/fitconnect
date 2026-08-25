@@ -6,7 +6,7 @@
  * - Primary exports: updateSettingsSchema, createChargeSchema, updateChargeSchema, UpdateSettingsInput, CreateChargeInput, UpdateChargeInput.
  */
 import { z } from "zod";
-import { whatsappTemplateKeys } from "../../lib/whatsapp-templates";
+import { whatsappTemplateKeys } from "@fitconnect/shared/whatsapp-templates";
 
 const whatsappTemplateShape = Object.fromEntries(
   whatsappTemplateKeys.map((key) => [key, z.string().trim().min(1).max(4000).optional()]),

@@ -3,8 +3,9 @@
  *
  * - Turns the signed-in user's role and the permission list the API returns into the capability set the UI gates on.
  * - The server-supplied list wins when present, because it already reflects any stored role overrides; the static catalog is only the fallback for a cached session issued before permissions were returned.
+ * - Membership predicates (`hasPermission` and friends) live in `@fitconnect/shared/types/permissions`; this file only adds the client-specific resolution step.
  * - Gating here is a UX affordance only — the API enforces the same catalog on every request.
- * - Primary exports: resolveClientPermissions, hasPermission, hasAnyPermission, hasAllPermissions.
+ * - Primary exports: resolveClientPermissions.
  */
 import type { PlatformRole, TenantRole } from "@fitconnect/shared/types/enums";
 import { type Permission, resolvePermissions } from "@fitconnect/shared/types/permissions";
@@ -28,22 +29,4 @@ export function resolveClientPermissions(input: {
     platformRole: input.platformRole ?? null,
     tenantRole: input.tenantRole ?? null,
   });
-}
-
-export function hasPermission(granted: ReadonlySet<Permission>, permission: Permission) {
-  return granted.has(permission);
-}
-
-export function hasAnyPermission(
-  granted: ReadonlySet<Permission>,
-  permissions: readonly Permission[],
-) {
-  return permissions.some((permission) => granted.has(permission));
-}
-
-export function hasAllPermissions(
-  granted: ReadonlySet<Permission>,
-  permissions: readonly Permission[],
-) {
-  return permissions.every((permission) => granted.has(permission));
 }

@@ -1,4 +1,11 @@
-import type { WhatsAppTemplate, WhatsAppTemplateKey } from "@fitconnect/shared/types/models";
+/**
+ * Documentation: WhatsApp message templates.
+ *
+ * - Owns the template keys, their default bodies, and the placeholder renderer used to produce outgoing messages.
+ * - Lives in the shared package because both sides render the same messages: the API sends them, and the PWA opens pre-filled WhatsApp links. Two copies of the default bodies would silently drift the moment either was edited.
+ * - Primary exports: whatsappTemplateKeys, normalizeWhatsAppTemplateOverrides, resolveWhatsAppTemplateBody, getWhatsAppTemplates, renderTemplateBody, renderWhatsAppTemplate.
+ */
+import type { WhatsAppTemplate, WhatsAppTemplateKey } from "./types/models";
 
 type TemplateContextValue = string | number | null | undefined;
 type TemplateMetadata = {
