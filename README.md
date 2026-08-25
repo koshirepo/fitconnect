@@ -112,7 +112,7 @@ not duplication to clean up.
 PWA config lives in `apps/pwa/.env.development`, `.env.test`, and `.env.production`.
 Every `VITE_*` value is inlined into the client bundle and is therefore public;
 never put a secret in one.
-
+  npx wrangler d1 export fit-db --remote --env production --output ./fit-db-export.sql
 ### First-time setup for the test environment
 
 ```bash

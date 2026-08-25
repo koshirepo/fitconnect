@@ -25,9 +25,13 @@ import {
   CalendarCheck,
   UserPlus,
   ShieldCheck,
+  User,
+  Globe,
+  ChevronUp,
 } from "lucide-react";
-import AvatarCard from "../ui/avatarCard";
+import { Menu, MenuContent, MenuItem, MenuSeparator, MenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Tenant } from "@/types/api";
+import { getInitials } from "@fitconnect/shared";
 
 /**
  * Navigation entries gate on capabilities, not role names: an item shows when
@@ -316,35 +320,56 @@ export function Sidebar() {
 
         {/* User section */}
         <div className="border-t border-sidebar-border p-3">
-          <NavLink
-            to={getTenantRoute("/profile")}
-            onClick={() => isMobile && setSidebarOpen(false)}
-            className="flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-200 hover:bg-sidebar-accent"
-          >
-            {/* <Avatar src={user?.avatarUrl} fallback={getInitials(user?.name ?? "U")} size="sm" />
-            <div className="flex-1 truncate">
-              <p className="text-sm font-medium truncate">{user?.name}</p>
-              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-            </div> */}
-            <AvatarCard
-              name={user?.name ?? "User"}
-              avatarUrl={user?.avatarUrl}
-              variant="sm"
-            >
-              <div className="flex-1 truncate">
-                <p className="text-xs text-muted-foreground truncate">
-                  {user?.email}
-                </p>
-              </div>
-            </AvatarCard>
-          </NavLink>
-          <button
-            onClick={handleLogout}
-            className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all duration-200 hover:bg-destructive/10 hover:text-destructive"
-          >
-            <LogOut className="h-4 w-4" />
-            Logout
-          </button>
+          <Menu>
+            <MenuTrigger className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-all duration-200 hover:bg-sidebar-accent">
+              <span className="grid h-9 w-9 shrink-0 overflow-hidden rounded-md border-2 border-border bg-muted text-xs font-semibold text-muted-foreground">
+                {user?.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={user?.name ?? "User"}
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  <span className="grid place-items-center">{getInitials(user?.name ?? "User")}</span>
+                )}
+              </span>
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-sm font-medium text-sidebar-foreground">
+                  {user?.name ?? "User"}
+                </span>
+                <span className="truncate text-xs text-muted-foreground">{user?.email}</span>
+              </span>
+              <ChevronUp className="ml-1 h-4 w-4 shrink-0 text-muted-foreground" />
+            </MenuTrigger>
+            <MenuContent align="start">
+              <MenuItem
+                onClick={() => {
+                  if (isMobile) setSidebarOpen(false);
+                  navigate(getTenantRoute("/profile"));
+                }}
+              >
+                <User />
+                Profile
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  if (isMobile) setSidebarOpen(false);
+                  window.open(tenantPublicUrl, "_blank", "noreferrer noopener");
+                }}
+              >
+                <Globe />
+                View Public Page
+              </MenuItem>
+              <MenuSeparator />
+              <MenuItem
+                className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                onClick={handleLogout}
+              >
+                <LogOut />
+                Logout
+              </MenuItem>
+            </MenuContent>
+          </Menu>
         </div>
       </aside>
     </>
