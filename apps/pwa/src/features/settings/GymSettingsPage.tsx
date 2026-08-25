@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useNavigate } from "react-router-dom";
+import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
 import {
   useCharges,
@@ -51,7 +51,7 @@ function formatAmount(amount: number) {
 
 export default function GymSettingsPage() {
   const { currentTenantId } = useAuthStore();
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
 
   // Three parallel reads; each write below invalidates the settings or shifts
   // key, so the lists refresh themselves rather than being patched in place.

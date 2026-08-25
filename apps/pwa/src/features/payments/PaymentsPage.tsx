@@ -1,7 +1,8 @@
 import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
+import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
 import { paymentsApi } from "@/api/payments";
 import {
@@ -44,7 +45,7 @@ type PendingPaymentMutationBody = {
 type DisplayPayment = Payment & { _pending?: boolean };
 
 export default function PaymentsPage() {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { currentTenantId, user } = useAuthStore();
   const { can } = usePermissions();

@@ -1,5 +1,6 @@
 import * as React from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
+import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAttendanceCalendar } from "@/api/queries/attendance";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,7 @@ function formatMonthLabel(s: string) {
 }
 
 export default function AttendanceCalendarPage() {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const today = new Date();

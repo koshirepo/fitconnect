@@ -1,7 +1,8 @@
 import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
+import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useReferralsInfinite } from "@/api/queries/members";
 import { flattenPages } from "@/api/queries/shared";
 import { Card } from "@/components/ui/card";
@@ -21,7 +22,7 @@ import type { MemberReferralLeader } from "@/types/api";
 import AvatarCard from "@/components/ui/avatarCard";
 
 export default function ReferralsPage() {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { can } = usePermissions();
   const canViewReferrals = can(Permission.MEMBERS_REFERRALS_READ);

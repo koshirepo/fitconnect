@@ -63,15 +63,11 @@ export function buildTenantPublicUrl(
 }
 
 /**
- * Map an apex-relative dashboard path onto its gym-subdomain equivalent.
+ * Rewrite a path to its gym-subdomain form, regardless of the current host.
  * On a gym subdomain the dashboard lives under `/dashboard`, so `/members`
  * becomes `/dashboard/members`.
  */
-export function getTenantDashboardPath(path = "/") {
-  if (!isTenantSubdomain()) {
-    return path;
-  }
-
+export function toTenantDashboardPath(path = "/") {
   const normalizedPath = path === "/" ? "" : path.startsWith("/") ? path : `/${path}`;
   if (!normalizedPath || normalizedPath === "/dashboard") {
     return "/dashboard";
@@ -82,4 +78,45 @@ export function getTenantDashboardPath(path = "/") {
   }
 
   return `/dashboard${normalizedPath}`;
+}
+
+/**
+ * Map an apex-relative dashboard path onto its gym-subdomain equivalent, but
+ * only when already on a gym subdomain. Used by in-app links, which must stay
+ * relative to whichever host the user is currently on.
+ */
+export function getTenantDashboardPath(path = "/") {
+  return isTenantSubdomain() ? toTenantDashboardPath(path) : path;
+}
+
+/**
+ * True when this host can carry a gym subdomain at all.
+ * An IP address cannot, which is why local development should use
+ * `http://<slug>.localhost:5173` rather than `http://127.0.0.1:5173`.
+ */
+export function hostSupportsTenantSubdomains(
+  hostname = typeof window !== "undefined" ? window.location.hostname : "",
+) {
+  const root = getRootHostname(hostname);
+  return Boolean(root) && !isIpAddress(normalizeHostname(root));
+}
+
+/**
+ * Absolute URL for a path on a gym's own subdomain, or null when this host
+ * cannot carry one.
+ */
+export function buildTenantDashboardUrl(
+  slug: string,
+  path = "/",
+  origin = typeof window !== "undefined" ? window.location.origin : "",
+) {
+  if (!origin || !hostSupportsTenantSubdomains(new URL(origin).hostname)) {
+    return null;
+  }
+
+  const parsedOrigin = new URL(origin);
+  const rootHost = getRootHostname(parsedOrigin.hostname);
+  const port = parsedOrigin.port ? `:${parsedOrigin.port}` : "";
+
+  return `${parsedOrigin.protocol}//${slug}.${rootHost}${port}${toTenantDashboardPath(path)}`;
 }

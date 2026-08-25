@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useNavigate } from "react-router-dom";
+import { useAppNavigate } from "@/lib/use-app-navigate";
 import { tenantsApi } from "@/api/tenants";
 import { getApiError } from "@/api/client";
 import { TenantPublicProfileCard } from "@/components/tenants/TenantPublicProfileCard";
@@ -11,7 +11,7 @@ import type { Tenant } from "@/types/api";
 import { ArrowLeft } from "lucide-react";
 
 export default function PublicPageSettingsPage() {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const currentTenantId = useAuthStore((s) => s.currentTenantId);
   const [tenant, setTenant] = React.useState<Tenant | null>(null);
   const [loading, setLoading] = React.useState(true);

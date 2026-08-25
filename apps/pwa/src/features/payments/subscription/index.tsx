@@ -1,7 +1,7 @@
 import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
-import { useNavigate } from "react-router-dom";
+import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
 import { useBadges } from "@/api/queries/catalog";
 import { useDeleteSubscription, useSubscriptions, useUpdateSubscription } from "@/api/queries/payments";
@@ -28,7 +28,7 @@ import { Pencil, Plus, Power, Trash2, Package } from "lucide-react";
 import type { Badge as BadgeModel, Subscription } from "@/types/api";
 
 export default function SubscriptionsPage() {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const { currentTenantId } = useAuthStore();
   const { can } = usePermissions();
   const isAdmin = can(Permission.SUBSCRIPTIONS_UPDATE);

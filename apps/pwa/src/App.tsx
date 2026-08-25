@@ -1,10 +1,11 @@
 import * as React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import {
   RequireAuth,
   RequirePlatformStaff,
   RequireTenantPlatformAccess,
   RequirePermission,
+  RequireTenantHost,
   RedirectIfAuth,
 } from "@/features/auth/route-guards";
 import { AppLayout } from "@/components/layout/app-layout";
@@ -17,6 +18,7 @@ import { SyncStatus } from "@/components/ui/sync-status";
 import { ThemeProvider } from "@/components/theme-provider";
 import { PageLoader } from "@/components/ui/spinner";
 import { isTenantSubdomain } from "@/lib/subdomain";
+import { TenantPathNormalizer } from "@/features/auth/tenant-path-normalizer";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useAuthStore } from "@/stores/auth";
 
@@ -228,7 +230,7 @@ export default function App() {
         </Route>
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<TenantPathNormalizer />} />
     </Routes>
   );
 
@@ -277,14 +279,22 @@ export default function App() {
               {/* Protected routes */}
               <Route element={<RequireAuth />}>
                 <Route element={<AppLayout />}>
-                  <Route element={<RequireTenantPlatformAccess />}>
-                  {/* Dashboard — reachable by every signed-in member */}
+                  {/* Account-level, not gym-scoped: fine on the app's own host. */}
                   <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/profile" element={<ProfilePage />} />
                   <Route
                     path="/orders/history"
                     element={<UserOrderHistoryPage />}
                   />
+
+                  {/*
+                    Every gym page below is registered here only so a deep link
+                    to the app host still resolves — RequireTenantHost refuses
+                    to render any of them and redirects to the same path on the
+                    gym's own subdomain.
+                  */}
+                  <Route element={<RequireTenantHost />}>
+                  <Route element={<RequireTenantPlatformAccess />}>
+                  <Route path="/profile" element={<ProfilePage />} />
 
                   {/* Tenant-scoped, gated on capabilities */}
                   <Route element={<RequirePermission anyOf={[Permission.MEMBERS_READ]} />}>
@@ -401,6 +411,7 @@ export default function App() {
                       path="/audit"
                       element={<AuditLogsPage scope="tenant" />}
                     />
+                  </Route>
                   </Route>
                   </Route>
 

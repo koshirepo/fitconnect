@@ -1,7 +1,8 @@
 import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
-import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
+import { useParams, useLocation, Link } from "react-router-dom";
+import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -112,7 +113,7 @@ function formatMonthLabel(s: string) {
 
 export default function MemberDetailPage() {
   const { membershipId } = useParams<{ membershipId: string }>();
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const location = useLocation();
   const { currentTenantId, currentMembership } = useAuthStore();
   const { can } = usePermissions();

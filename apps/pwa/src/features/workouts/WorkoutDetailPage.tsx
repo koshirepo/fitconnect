@@ -1,7 +1,8 @@
 import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
 import {
   useAssignWorkoutPlan,
@@ -28,7 +29,7 @@ import { loadAllTenantMembers } from "@/lib/tenant-members";
 
 export default function WorkoutDetailPage() {
   const { planId } = useParams<{ planId: string }>();
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const { currentTenantId } = useAuthStore();
   const { can } = usePermissions();
   const canEdit = can(Permission.WORKOUTS_UPDATE);

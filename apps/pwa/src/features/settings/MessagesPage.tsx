@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useNavigate } from "react-router-dom";
+import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useTenantSettings, useUpdateTenantSettings } from "@/api/queries/catalog";
 import { getApiError } from "@/api/client";
 import type { WhatsAppTemplate, WhatsAppTemplateKey } from "@/types/api";
@@ -29,7 +29,7 @@ function toTemplateBodyMap(
 }
 
 export default function MessagesPage() {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
 
   const [templates, setTemplates] = React.useState<WhatsAppTemplate[]>([]);
   const [templateBodies, setTemplateBodies] = React.useState<

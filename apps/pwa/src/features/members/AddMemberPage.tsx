@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useNavigate } from "react-router-dom";
+import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
 import { tenantsApi } from "@/api/tenants";
 import { uploadsApi } from "@/api/uploads";
@@ -46,7 +46,7 @@ function formatAmount(amount: number) {
 }
 
 export default function AddMemberPage() {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const { currentTenantId } = useAuthStore();
   const queryClient = useQueryClient();
 

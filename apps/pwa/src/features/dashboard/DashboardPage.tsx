@@ -1,6 +1,6 @@
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
-import { useNavigate } from "react-router-dom";
+import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useMembers, useMyProfile } from "@/api/queries/members";
 import { useMyPayments, usePayments } from "@/api/queries/payments";
 import { useWorkoutPlans } from "@/api/queries/catalog";
@@ -80,7 +80,7 @@ export default function DashboardPage() {
     isPlatformStaff,
   } = useAuthStore();
   const { can } = usePermissions();
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
 
   const membership = currentMembership();
   const showPlatformDashboard = isPlatformStaff() && !currentTenantId;

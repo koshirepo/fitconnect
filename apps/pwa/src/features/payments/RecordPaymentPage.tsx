@@ -1,7 +1,8 @@
 import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
 import { badgesApi } from "@/api/badges";
 import { paymentsApi } from "@/api/payments";
@@ -78,7 +79,7 @@ function toTenantMember(member: TenantMember | MemberDetail): TenantMember {
 
 export default function RecordPaymentPage() {
   const { membershipId } = useParams<{ membershipId?: string }>();
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const { currentTenantId, currentMembership } = useAuthStore();
   const { can } = usePermissions();
   const queryClient = useQueryClient();

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useNavigate } from "react-router-dom";
+import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useMyOrdersInfinite } from "@/api/queries/platform";
 import { flattenPages } from "@/api/queries/shared";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +26,7 @@ const fmt = (amount: number) =>
   }).format(amount);
 
 export default function UserOrderHistoryPage() {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const ordersQuery = useMyOrdersInfinite();
   const orders = React.useMemo(
     () => flattenPages<Order>(ordersQuery.data?.pages),

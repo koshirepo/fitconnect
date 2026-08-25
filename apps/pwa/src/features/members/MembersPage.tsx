@@ -1,7 +1,8 @@
 import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
+import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
 import { tenantsApi } from "@/api/tenants";
 import { useAllMembers, useRemoveMember } from "@/api/queries/members";
@@ -129,7 +130,7 @@ function MemberAvatar({ member }: { member: DisplayMember }) {
 }
 
 export default function MembersPage() {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { currentTenantId, currentMembership } = useAuthStore();
   const { can } = usePermissions();
