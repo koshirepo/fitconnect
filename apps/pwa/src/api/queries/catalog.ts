@@ -116,6 +116,32 @@ export function useBadges(
   );
 }
 
+/** Badges paged for the infinite-scroll list. */
+export function useBadgesInfinite(
+  options: { includeInactive?: boolean; enabled?: boolean; limit?: number } = {},
+) {
+  const { includeInactive = false, limit = 20 } = options;
+  return useTenantInfiniteQuery(
+    (tenantId) => [...queryKeys.badges.list(tenantId), "infinite", includeInactive, limit],
+    async (tenantId, page) => {
+      const { data, meta } = unwrapPaginated(
+        await badgesApi.list(tenantId, page, limit, includeInactive),
+      );
+      return { data, meta };
+    },
+    options,
+  );
+}
+
+/** Members currently holding a badge, loaded on demand by the assignments dialog. */
+export function useBadgeAssignments(badgeId: string | null | undefined) {
+  return useTenantQuery(
+    (tenantId) => [...queryKeys.badges.list(tenantId), "assignments", badgeId ?? "none"],
+    async (tenantId) => unwrap(await badgesApi.listAssignments(tenantId, badgeId!)),
+    { enabled: Boolean(badgeId) },
+  );
+}
+
 export function useMemberBadges(membershipId: string | undefined) {
   return useTenantQuery(
     (tenantId) => [...queryKeys.badges.list(tenantId), "member", membershipId ?? "none"],

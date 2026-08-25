@@ -14,7 +14,14 @@ import type {
   UpdateSubscriptionPayload,
   UpdatePaymentPayload,
 } from "@/types/api";
-import { unwrap, unwrapPaginated, useCurrentTenantId, useTenantMutation, useTenantQuery } from "./shared";
+import {
+  unwrap,
+  unwrapPaginated,
+  useCurrentTenantId,
+  useTenantInfiniteQuery,
+  useTenantMutation,
+  useTenantQuery,
+} from "./shared";
 
 export type PaymentListFilters = {
   page?: number;
@@ -49,6 +56,24 @@ export function usePayments(filters: PaymentListFilters = {}, options: { enabled
         ),
       ),
     { placeholderData: keepPreviousData, ...options },
+  );
+}
+
+/** Gym-wide payments paged for the infinite-scroll list. */
+export function usePaymentsInfinite(
+  filters: { status?: string; search?: string } = {},
+  options: { enabled?: boolean; limit?: number } = {},
+) {
+  const { limit = 20 } = options;
+  return useTenantInfiniteQuery(
+    (tenantId) => [...queryKeys.payments.list(tenantId, filters), "infinite", limit],
+    async (tenantId, page) => {
+      const { data, meta } = unwrapPaginated(
+        await paymentsApi.list(tenantId, page, limit, filters.status, filters.search),
+      );
+      return { data: data.payments, meta };
+    },
+    options,
   );
 }
 

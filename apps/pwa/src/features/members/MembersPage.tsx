@@ -4,8 +4,8 @@ import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { tenantsApi } from "@/api/tenants";
-import { badgesApi } from "@/api/badges";
-import { settingsApi } from "@/api/settings";
+import { useAllMembers, useRemoveMember } from "@/api/queries/members";
+import { useBadges, useTenantSettings } from "@/api/queries/catalog";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -42,11 +42,10 @@ import {
   Shield,
   Dumbbell,
 } from "lucide-react";
-import type { TenantMember, Badge, TenantSettings } from "@/types/api";
+import type { TenantMember } from "@/types/api";
 import { getInitials } from "@fitconnect/shared";
 import { usePendingMutations } from "@/lib/use-pending-mutations";
 import { getTenantDashboardPath } from "@/lib/subdomain";
-import { loadAllTenantMembers } from "@/lib/tenant-members";
 
 type PendingMemberMutationBody = {
   name?: string;
@@ -139,11 +138,7 @@ export default function MembersPage() {
   const isAdmin = can(Permission.MEMBERS_STATUS_UPDATE);
   const canAddMember = can(Permission.MEMBERS_CREATE);
 
-  const [members, setMembers] = React.useState<TenantMember[]>([]);
-  const [loading, setLoading] = React.useState(true);
   const [exporting, setExporting] = React.useState(false);
-  const [badges, setBadges] = React.useState<Badge[]>([]);
-  const [tenantSettings, setTenantSettings] = React.useState<TenantSettings | null>(null);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [pendingRemoveId, setPendingRemoveId] = React.useState<string | null>(null);
 
@@ -174,40 +169,18 @@ export default function MembersPage() {
     [setSearchParams],
   );
 
-  React.useEffect(() => {
-    if (!currentTenantId) return;
-    badgesApi
-      .list(currentTenantId, 1, 100)
-      .then((res) => setBadges(res.data.data))
-      .catch(() => {});
-  }, [currentTenantId]);
+  // Three independent reads; react-query runs them in parallel and dedupes them
+  // against whatever other screens have already requested.
+  const membersQuery = useAllMembers();
+  const badgesQuery = useBadges();
+  const settingsQuery = useTenantSettings();
 
-  React.useEffect(() => {
-    if (!currentTenantId) return;
-    settingsApi
-      .getSettings(currentTenantId)
-      .then((res) => setTenantSettings(res.data.data.settings))
-      .catch(() => setTenantSettings(null));
-  }, [currentTenantId]);
+  const members = React.useMemo(() => membersQuery.data ?? [], [membersQuery.data]);
+  const badges = React.useMemo(() => badgesQuery.data ?? [], [badgesQuery.data]);
+  const tenantSettings = settingsQuery.data ?? null;
+  const loading = membersQuery.isLoading;
 
-  const fetchMembers = React.useCallback(async () => {
-    if (!currentTenantId) return;
-    setLoading(true);
-    try {
-      const allMembers = await loadAllTenantMembers(currentTenantId, { pageSize: 200 });
-      setMembers(allMembers);
-    } catch {
-      // silent
-    } finally {
-      setLoading(false);
-    }
-  }, [currentTenantId]);
-
-  React.useEffect(() => {
-    if (!currentTenantId) return;
-    setMembers([]);
-    void fetchMembers();
-  }, [currentTenantId, fetchMembers]);
+  const removeMember = useRemoveMember();
 
   const paymentReminderTemplateBody = React.useMemo(
     () => getTenantWhatsAppTemplateBody(tenantSettings, "payment_reminder"),
@@ -334,8 +307,7 @@ export default function MembersPage() {
   const handleRemoveConfirmed = async () => {
     if (!currentTenantId || !pendingRemoveId) return;
     try {
-      await tenantsApi.removeMember(currentTenantId, pendingRemoveId);
-      fetchMembers();
+      await removeMember.mutateAsync(pendingRemoveId);
     } catch {
       // silent
     } finally {

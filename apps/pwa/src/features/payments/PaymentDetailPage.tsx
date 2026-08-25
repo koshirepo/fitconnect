@@ -3,7 +3,13 @@ import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
-import { paymentsApi } from "@/api/payments";
+import {
+  useDeletePayment,
+  usePayment,
+  usePayments,
+  useUpdatePayment,
+  useUpdatePaymentStatus,
+} from "@/api/queries/payments";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -66,17 +72,20 @@ export default function PaymentDetailPage() {
   const isAdmin = can(Permission.PAYMENTS_UPDATE);
   const canRecordPayment = can(Permission.PAYMENTS_CREATE);
 
-  const [payment, setPayment] = React.useState<Payment | null>(null);
-  const [loading, setLoading] = React.useState(true);
+  const paymentQuery = usePayment(paymentId);
+  const payment = paymentQuery.data ?? null;
+  const loading = paymentQuery.isLoading;
+
+  // Every payment mutation invalidates the payments key, so this query and the
+  // member's other-payments list below both refresh after a write.
+  const updatePayment = useUpdatePayment();
+  const updatePaymentStatus = useUpdatePaymentStatus();
+  const deletePayment = useDeletePayment();
   const [error, setError] = React.useState("");
   const [updatingStatus, setUpdatingStatus] = React.useState(false);
   const [refundConfirmOpen, setRefundConfirmOpen] = React.useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
-
-  // Member's other payments
-  const [memberPayments, setMemberPayments] = React.useState<Payment[]>([]);
-  const [memberPaymentsLoading, setMemberPaymentsLoading] = React.useState(false);
 
   // Edit mode
   const [editing, setEditing] = React.useState(false);
@@ -116,15 +125,17 @@ export default function PaymentDetailPage() {
     setSaving(true);
     setError("");
     try {
-      await paymentsApi.update(currentTenantId, paymentId, {
-        amount: nextAmount,
-        description: editForm.description || undefined,
-        note: editForm.note || null,
-        validFrom: editForm.validFrom || null,
-        validUntil: editForm.validUntil || null,
+      await updatePayment.mutateAsync({
+        paymentId,
+        data: {
+          amount: nextAmount,
+          description: editForm.description || undefined,
+          note: editForm.note || null,
+          validFrom: editForm.validFrom || null,
+          validUntil: editForm.validUntil || null,
+        },
       });
       setEditing(false);
-      await loadPayment();
     } catch (err: unknown) {
       setError(getApiError(err));
     } finally {
@@ -132,37 +143,21 @@ export default function PaymentDetailPage() {
     }
   };
 
-  const loadPayment = React.useCallback(async () => {
-    if (!currentTenantId || !paymentId) return;
+  // This member's other receipts. The query only runs once the payment has
+  // loaded and told us which member it belongs to.
+  const memberPaymentsQuery = usePayments(
+    { membershipId: payment?.member?.id, limit: 20 },
+    { enabled: Boolean(payment?.member?.id) },
+  );
 
-    setLoading(true);
-    setError("");
-    try {
-      const res = await paymentsApi.getById(currentTenantId, paymentId);
-      setPayment(res.data.data.payment);
-    } catch (err: unknown) {
-      setError(getApiError(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [currentTenantId, paymentId]);
-
-  React.useEffect(() => {
-    void loadPayment();
-  }, [loadPayment]);
-
-  // Load member's other payments when payment loads
-  React.useEffect(() => {
-    if (!currentTenantId || !payment?.member?.id) return;
-    setMemberPaymentsLoading(true);
-    paymentsApi
-      .list(currentTenantId, 1, 20, undefined, undefined, payment.member.id)
-      .then((res) => {
-        setMemberPayments(res.data.data.payments.filter((p) => p.id !== payment.id));
-      })
-      .catch(() => {})
-      .finally(() => setMemberPaymentsLoading(false));
-  }, [currentTenantId, payment?.member?.id, payment?.id]);
+  const memberPayments = React.useMemo<Payment[]>(
+    () =>
+      (memberPaymentsQuery.data?.data.payments ?? []).filter(
+        (candidate) => candidate.id !== payment?.id,
+      ),
+    [memberPaymentsQuery.data, payment?.id],
+  );
+  const memberPaymentsLoading = memberPaymentsQuery.isLoading;
 
   const handleStatusUpdate = async (status: "COMPLETED" | "FAILED" | "REFUNDED") => {
     if (!currentTenantId || !paymentId) return;
@@ -170,8 +165,7 @@ export default function PaymentDetailPage() {
     setUpdatingStatus(true);
     setError("");
     try {
-      await paymentsApi.updateStatus(currentTenantId, paymentId, status);
-      await loadPayment();
+      await updatePaymentStatus.mutateAsync({ paymentId, status });
     } catch (err: unknown) {
       setError(getApiError(err));
     } finally {
@@ -185,7 +179,7 @@ export default function PaymentDetailPage() {
     setDeleting(true);
     setError("");
     try {
-      await paymentsApi.delete(currentTenantId, paymentId);
+      await deletePayment.mutateAsync(paymentId);
       navigate("/payments", { replace: true });
     } catch (err: unknown) {
       setError(getApiError(err));

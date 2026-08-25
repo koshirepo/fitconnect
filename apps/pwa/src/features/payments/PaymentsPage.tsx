@@ -4,6 +4,12 @@ import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { paymentsApi } from "@/api/payments";
+import {
+  useMyPayments,
+  usePaymentsInfinite,
+  useUpdatePaymentStatus,
+} from "@/api/queries/payments";
+import { flattenPages } from "@/api/queries/shared";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -18,7 +24,7 @@ import { PageLoader, Spinner } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { downloadCsv } from "@/lib/csv";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
+import { useInfiniteScroll } from "@/lib/use-infinite-scroll";
 import { Plus, CreditCard, CheckCircle2, XCircle, Download, Search, X, Clock } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { Payment, PaymentStatus } from "@/types/api";
@@ -47,11 +53,6 @@ export default function PaymentsPage() {
   const canViewAllPayments = can(Permission.PAYMENTS_READ);
   const canRecordPayment = can(Permission.PAYMENTS_CREATE);
 
-  const [payments, setPayments] = React.useState<Payment[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [page, setPage] = React.useState(1);
-  const [hasMore, setHasMore] = React.useState(true);
-  const [loadingMore, setLoadingMore] = React.useState(false);
   const [exporting, setExporting] = React.useState(false);
   const [confirmAction, setConfirmAction] = React.useState<{
     paymentId: string;
@@ -82,65 +83,37 @@ export default function PaymentsPage() {
     });
   };
 
-  const fetchPayments = React.useCallback(
-    async (nextPage: number, mode: "replace" | "append") => {
-      if (!currentTenantId) return;
-      if (mode === "replace") {
-        setLoading(true);
-      } else {
-        setLoadingMore(true);
-      }
-      try {
-        if (canViewAllPayments) {
-          const res = await paymentsApi.list(
-            currentTenantId,
-            nextPage,
-            20,
-            statusFilter || undefined,
-            searchTerm || undefined,
-          );
-          const nextPayments = res.data.data.payments;
-          setPayments((prev) =>
-            mode === "replace" ? nextPayments : appendUniqueById(prev, nextPayments),
-          );
-          const totalPages = res.data.meta.totalPages;
-          setHasMore(nextPage < totalPages);
-          setPage(nextPage);
-        } else {
-          const res = await paymentsApi.myPayments(currentTenantId);
-          setPayments(res.data.data.payments);
-          setHasMore(false);
-          setPage(1);
-        }
-      } catch {
-        //
-      } finally {
-        if (mode === "replace") {
-          setLoading(false);
-        } else {
-          setLoadingMore(false);
-        }
-      }
-    },
-    [currentTenantId, canViewAllPayments, statusFilter, searchTerm],
+  // Staff read the whole gym's ledger (paged); everyone else reads only their
+  // own receipts, which the API returns unpaged. Only one of these ever runs.
+  const allPaymentsQuery = usePaymentsInfinite(
+    { status: statusFilter || undefined, search: searchTerm || undefined },
+    { enabled: canViewAllPayments },
+  );
+  const myPaymentsQuery = useMyPayments({ enabled: !canViewAllPayments });
+
+  const payments = React.useMemo<Payment[]>(
+    () =>
+      canViewAllPayments
+        ? flattenPages<Payment>(allPaymentsQuery.data?.pages)
+        : (myPaymentsQuery.data ?? []),
+    [canViewAllPayments, allPaymentsQuery.data, myPaymentsQuery.data],
   );
 
-  React.useEffect(() => {
-    if (!currentTenantId) return;
-    setPayments([]);
-    setHasMore(true);
-    void fetchPayments(1, "replace");
-  }, [currentTenantId, canViewAllPayments, statusFilter, searchTerm, fetchPayments]);
+  const activeQuery = canViewAllPayments ? allPaymentsQuery : myPaymentsQuery;
+  const loading = activeQuery.isLoading;
+  const loadingMore = canViewAllPayments && allPaymentsQuery.isFetchingNextPage;
+  const hasMore = canViewAllPayments && Boolean(allPaymentsQuery.hasNextPage);
 
-  const loadMore = React.useCallback(() => {
-    if (!canViewAllPayments || loading || loadingMore || !hasMore) return;
-    void fetchPayments(page + 1, "append");
-  }, [canViewAllPayments, loading, loadingMore, hasMore, page, fetchPayments]);
+  const updatePaymentStatus = useUpdatePaymentStatus();
 
   const loadMoreRef = useInfiniteScroll({
-    hasMore: canViewAllPayments && hasMore,
+    hasMore,
     loading: loading || loadingMore,
-    onLoadMore: loadMore,
+    onLoadMore: () => {
+      if (allPaymentsQuery.hasNextPage && !allPaymentsQuery.isFetchingNextPage) {
+        void allPaymentsQuery.fetchNextPage();
+      }
+    },
   });
 
   // Pending offline payments
@@ -180,10 +153,8 @@ export default function PaymentsPage() {
     paymentId: string,
     status: "COMPLETED" | "FAILED" | "REFUNDED",
   ) => {
-    if (!currentTenantId) return;
     try {
-      await paymentsApi.updateStatus(currentTenantId, paymentId, status);
-      fetchPayments(1, "replace");
+      await updatePaymentStatus.mutateAsync({ paymentId, status });
     } catch {
       //
     }

@@ -3,7 +3,14 @@ import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
-import { badgesApi } from "@/api/badges";
+import {
+  useAssignBadge,
+  useBadgeAssignments,
+  useBadgesInfinite,
+  useDeleteBadge,
+  useUpdateBadge,
+} from "@/api/queries/catalog";
+import { flattenPages } from "@/api/queries/shared";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +30,7 @@ import { PageLoader, Spinner } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Plus, Award, Trash2, UserPlus, Edit, Users } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { appendUniqueById, useInfiniteScroll } from "@/lib/use-infinite-scroll";
+import { useInfiniteScroll } from "@/lib/use-infinite-scroll";
 import { loadAllTenantMembers } from "@/lib/tenant-members";
 import type { Badge, TenantMember } from "@/types/api";
 
@@ -36,12 +43,20 @@ export default function BadgesPage() {
   const isAdmin = can(Permission.BADGES_CREATE);
   const canAssignBadges = can(Permission.BADGES_ASSIGN);
 
-  // ─── Badge list state ───────────────────────────────────────────────────────
-  const [badges, setBadges] = React.useState<Badge[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [page, setPage] = React.useState(1);
-  const [hasMore, setHasMore] = React.useState(true);
-  const [loadingMore, setLoadingMore] = React.useState(false);
+  // ─── Badge list ─────────────────────────────────────────────────────────────
+  // Authors see inactive badges too, so the flag is part of the cache key.
+  const badgesQuery = useBadgesInfinite({ includeInactive: isAdmin });
+  const badges = React.useMemo(
+    () => flattenPages<Badge>(badgesQuery.data?.pages),
+    [badgesQuery.data],
+  );
+  const loading = badgesQuery.isLoading;
+  const loadingMore = badgesQuery.isFetchingNextPage;
+  const hasMore = Boolean(badgesQuery.hasNextPage);
+
+  const updateBadge = useUpdateBadge();
+  const deleteBadge = useDeleteBadge();
+  const assignBadge = useAssignBadge();
 
   // ─── Edit dialog state ──────────────────────────────────────────────────────
   const [editDialog, setEditDialog] = React.useState(false);
@@ -72,63 +87,19 @@ export default function BadgesPage() {
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [pendingDeleteId, setPendingDeleteId] = React.useState<string | null>(null);
   const [viewBadgeName, setViewBadgeName] = React.useState("");
-  const [viewAssignments, setViewAssignments] = React.useState<
-    {
-      membership?: {
-        id: string;
-        name: string;
-        email: string;
-        avatarUrl?: string | null;
-        memberId?: number;
-      };
-    }[]
-  >([]);
+  const [viewBadgeId, setViewBadgeId] = React.useState<string | null>(null);
 
-  // ─── Fetch badges ──────────────────────────────────────────────────────────
-  const fetchBadges = React.useCallback(
-    async (nextPage: number, mode: "replace" | "append") => {
-      if (!currentTenantId) return;
-      if (mode === "replace") {
-        setLoading(true);
-      } else {
-        setLoadingMore(true);
-      }
-      try {
-        const res = await badgesApi.list(currentTenantId, nextPage, 20, isAdmin);
-        const nextBadges = res.data.data;
-        setBadges((prev) => (mode === "replace" ? nextBadges : appendUniqueById(prev, nextBadges)));
-        const totalPages = res.data.meta.totalPages;
-        setHasMore(nextPage < totalPages);
-        setPage(nextPage);
-      } catch {
-        //
-      } finally {
-        if (mode === "replace") {
-          setLoading(false);
-        } else {
-          setLoadingMore(false);
-        }
-      }
-    },
-    [currentTenantId, isAdmin],
-  );
-
-  React.useEffect(() => {
-    if (!currentTenantId) return;
-    setBadges([]);
-    setHasMore(true);
-    void fetchBadges(1, "replace");
-  }, [currentTenantId, isAdmin, fetchBadges]);
-
-  const loadMore = React.useCallback(() => {
-    if (loading || loadingMore || !hasMore) return;
-    void fetchBadges(page + 1, "append");
-  }, [loading, loadingMore, hasMore, page, fetchBadges]);
+  const assignmentsQuery = useBadgeAssignments(viewBadgeId);
+  const viewAssignments = assignmentsQuery.data?.assignments ?? [];
 
   const loadMoreRef = useInfiniteScroll({
     hasMore,
     loading: loading || loadingMore,
-    onLoadMore: loadMore,
+    onLoadMore: () => {
+      if (badgesQuery.hasNextPage && !badgesQuery.isFetchingNextPage) {
+        void badgesQuery.fetchNextPage();
+      }
+    },
   });
 
   // ─── Edit handlers ──────────────────────────────────────────────────────────
@@ -149,15 +120,17 @@ export default function BadgesPage() {
     setEditError("");
     setEditSubmitting(true);
     try {
-      await badgesApi.update(currentTenantId, editingBadge.id, {
-        name: editName.trim(),
-        description: editDescription.trim() || undefined,
-        color: editColor,
-        icon: editIcon.trim() || undefined,
-        isActive: editActive,
+      await updateBadge.mutateAsync({
+        badgeId: editingBadge.id,
+        data: {
+          name: editName.trim(),
+          description: editDescription.trim() || undefined,
+          color: editColor,
+          icon: editIcon.trim() || undefined,
+          isActive: editActive,
+        },
       });
       setEditDialog(false);
-      fetchBadges(1, "replace");
     } catch (err) {
       setEditError(getApiError(err));
     } finally {
@@ -175,8 +148,7 @@ export default function BadgesPage() {
   const handleDeleteConfirmed = async () => {
     if (!currentTenantId || !pendingDeleteId) return;
     try {
-      await badgesApi.delete(currentTenantId, pendingDeleteId);
-      fetchBadges(1, "replace");
+      await deleteBadge.mutateAsync(pendingDeleteId);
     } catch {
       //
     } finally {
@@ -209,11 +181,11 @@ export default function BadgesPage() {
     setAssignError("");
     setAssignSubmitting(true);
     try {
-      await badgesApi.assign(currentTenantId, assignBadgeId, {
-        membershipId: selectedMemberId,
+      await assignBadge.mutateAsync({
+        badgeId: assignBadgeId,
+        data: { membershipId: selectedMemberId },
       });
       setAssignDialog(false);
-      fetchBadges(1, "replace");
     } catch (err) {
       setAssignError(getApiError(err));
     } finally {
@@ -222,15 +194,11 @@ export default function BadgesPage() {
   };
 
   // ─── View assignments ───────────────────────────────────────────────────────
-  const openViewAssignments = async (badgeId: string, badgeName: string) => {
-    if (!currentTenantId) return;
+  // Selecting a badge enables the query; closing the dialog clears the id and
+  // disables it again, so the list is fetched on demand and then cached.
+  const openViewAssignments = (badgeId: string, badgeName: string) => {
     setViewBadgeName(badgeName);
-    try {
-      const res = await badgesApi.listAssignments(currentTenantId, badgeId);
-      setViewAssignments(res.data.data.assignments);
-    } catch {
-      setViewAssignments([]);
-    }
+    setViewBadgeId(badgeId);
     setViewDialog(true);
   };
 
