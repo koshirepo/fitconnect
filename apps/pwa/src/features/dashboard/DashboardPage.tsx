@@ -1,12 +1,15 @@
-import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate } from "react-router-dom";
-import { auditApi } from "@/api/audit";
-import { commerceApi } from "@/api/commerce";
-import { tenantsApi } from "@/api/tenants";
-import { paymentsApi } from "@/api/payments";
-import { workoutsApi } from "@/api/workouts";
+import { useMembers, useMyProfile } from "@/api/queries/members";
+import { useMyPayments, usePayments } from "@/api/queries/payments";
+import { useWorkoutPlans } from "@/api/queries/catalog";
+import {
+  useAdminOrders,
+  useAdminProducts,
+  usePlatformAuditLogs,
+  useTenants,
+} from "@/api/queries/platform";
 import { useAuthStore } from "@/stores/auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,7 +31,7 @@ import {
   ShoppingBag,
   Users,
 } from "lucide-react";
-import type { AuditLog, Order, Payment, Tenant, TenantProfile, WorkoutPlan } from "@/types/api";
+import type { TenantProfile } from "@/types/api";
 
 function toDateOnly(value: Date) {
   return new Date(value.getFullYear(), value.getMonth(), value.getDate());
@@ -79,114 +82,70 @@ export default function DashboardPage() {
   const { can } = usePermissions();
   const navigate = useNavigate();
 
-  const [loading, setLoading] = React.useState(true);
-
-  const [profile, setProfile] = React.useState<TenantProfile | null>(null);
-  const [recentPayments, setRecentPayments] = React.useState<Payment[]>([]);
-  const [workoutPlans, setWorkoutPlans] = React.useState<WorkoutPlan[]>([]);
-  const [memberCount, setMemberCount] = React.useState(0);
-
-  const [platformError, setPlatformError] = React.useState("");
-  const [platformTenants, setPlatformTenants] = React.useState<Tenant[]>([]);
-  const [platformOrders, setPlatformOrders] = React.useState<Order[]>([]);
-  const [platformLogs, setPlatformLogs] = React.useState<AuditLog[]>([]);
-  const [tenantTotal, setTenantTotal] = React.useState(0);
-  const [productTotal, setProductTotal] = React.useState(0);
-  const [orderTotal, setOrderTotal] = React.useState(0);
-  const [auditTotal, setAuditTotal] = React.useState(0);
-
   const membership = currentMembership();
-  const role = membership?.role;
   const showPlatformDashboard = isPlatformStaff() && !currentTenantId;
   const canManagePlatformOrders = can(Permission.PLATFORM_ORDERS_UPDATE);
   // Staff-level gym views vs. the member view of their own records.
   const canViewGymMembers = can(Permission.MEMBERS_READ);
   const canViewAllPayments = can(Permission.PAYMENTS_READ);
   const canViewFinance = can(Permission.PAYMENTS_ANALYTICS_READ);
+  // ─── Platform overview ──────────────────────────────────────────────────────
+  // Each query is disabled unless this session actually renders that panel, so a
+  // gym member never issues platform requests and vice versa.
+  const tenantsQuery = useTenants(1, 5, { enabled: showPlatformDashboard });
+  const productsQuery = useAdminProducts({ page: 1, limit: 5 }, { enabled: showPlatformDashboard });
+  const platformLogsQuery = usePlatformAuditLogs(
+    { page: 1, limit: 5 },
+    { enabled: showPlatformDashboard },
+  );
+  const platformOrdersQuery = useAdminOrders(
+    { page: 1, limit: 5 },
+    { enabled: showPlatformDashboard && canManagePlatformOrders },
+  );
+
+  const platformTenants = tenantsQuery.data?.data.tenants ?? [];
+  const tenantTotal = tenantsQuery.data?.meta.total ?? 0;
+  const productTotal = productsQuery.data?.meta.total ?? 0;
+  const platformLogs = platformLogsQuery.data?.data.logs ?? [];
+  const auditTotal = platformLogsQuery.data?.meta.total ?? 0;
+  const platformOrders = platformOrdersQuery.data?.data.orders ?? [];
+  const orderTotal = platformOrdersQuery.data?.meta.total ?? 0;
+  const platformError =
+    showPlatformDashboard && (tenantsQuery.isError || platformLogsQuery.isError)
+      ? "Failed to load platform overview."
+      : "";
+
+  // ─── Gym overview ───────────────────────────────────────────────────────────
+  const isTenantDashboard = !showPlatformDashboard && Boolean(currentTenantId);
+  const profileQuery = useMyProfile({ enabled: isTenantDashboard });
+  const workoutsQuery = useWorkoutPlans(1, 5);
+  // Staff read the gym-wide ledger; members read their own receipts.
+  const recentPaymentsQuery = usePayments(
+    { page: 1, limit: 5 },
+    { enabled: isTenantDashboard && canViewAllPayments },
+  );
+  const myPaymentsQuery = useMyPayments({
+    enabled: isTenantDashboard && !canViewAllPayments,
+  });
+  // A one-row page: only the total matters for the member-count tile.
+  const memberCountQuery = useMembers(
+    { page: 1, limit: 1 },
+    { enabled: isTenantDashboard && canViewGymMembers },
+  );
+
+  const profile = profileQuery.data ?? null;
+  const workoutPlans = workoutsQuery.data?.data.plans ?? [];
+  const recentPayments = canViewAllPayments
+    ? (recentPaymentsQuery.data?.data.payments ?? [])
+    : (myPaymentsQuery.data ?? []);
+  const memberCount = memberCountQuery.data?.meta.total ?? 0;
+
+  const loading = showPlatformDashboard
+    ? tenantsQuery.isLoading || platformLogsQuery.isLoading
+    : isTenantDashboard && (profileQuery.isLoading || workoutsQuery.isLoading);
+
   const subscriptionStatus = getSubscriptionStatus(profile);
   const latestSubscriptionPayment = profile?.payments?.find((payment) => payment.validUntil);
-
-  React.useEffect(() => {
-    if (showPlatformDashboard) {
-      const loadPlatform = async () => {
-        setLoading(true);
-        setPlatformError("");
-
-        try {
-          const [tenantsRes, productsRes, logsRes, ordersRes] = await Promise.all([
-            tenantsApi.list(1, 5),
-            commerceApi.listAdminProducts(1, 5, true),
-            auditApi.platformLogs(1, 5),
-            canManagePlatformOrders ? commerceApi.listAdminOrders(1, 5) : Promise.resolve(null),
-          ]);
-
-          setPlatformTenants(tenantsRes.data.data.tenants);
-          setTenantTotal(tenantsRes.data.meta.total);
-
-          setProductTotal(productsRes.data.meta.total);
-
-          setPlatformLogs(logsRes.data.data.logs);
-          setAuditTotal(logsRes.data.meta.total);
-
-          if (ordersRes) {
-            setPlatformOrders(ordersRes.data.data.orders);
-            setOrderTotal(ordersRes.data.meta.total);
-          } else {
-            setPlatformOrders([]);
-            setOrderTotal(0);
-          }
-        } catch {
-          setPlatformError("Failed to load platform overview.");
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      void loadPlatform();
-      return;
-    }
-
-    if (!currentTenantId) {
-      setLoading(false);
-      return;
-    }
-
-    const loadTenantDashboard = async () => {
-      setLoading(true);
-      try {
-        const [profileRes, workoutsRes] = await Promise.all([
-          tenantsApi.getMyProfile(currentTenantId),
-          workoutsApi.list(currentTenantId, 1, 5),
-        ]);
-        setProfile(profileRes.data.data.profile);
-        setWorkoutPlans(workoutsRes.data.data.plans);
-
-        if (canViewGymMembers) {
-          const [membersRes, paymentsRes] = await Promise.all([
-            tenantsApi.listMembers(currentTenantId, 1, 1),
-            canViewAllPayments
-              ? paymentsApi.list(currentTenantId, 1, 5)
-              : paymentsApi.myPayments(currentTenantId),
-          ]);
-          setMemberCount(membersRes.data.meta.total);
-          const paymentData = paymentsRes.data as {
-            data: { payments: Payment[] };
-            success: boolean;
-          };
-          setRecentPayments(paymentData.data.payments);
-        } else {
-          const myPayments = await paymentsApi.myPayments(currentTenantId);
-          setRecentPayments(myPayments.data.data.payments);
-        }
-      } catch {
-        // Silently fail for tenant dashboard to preserve existing behavior.
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void loadTenantDashboard();
-  }, [currentTenantId, role, showPlatformDashboard, canManagePlatformOrders]);
 
   if (loading) return <PageLoader />;
 

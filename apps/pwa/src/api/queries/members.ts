@@ -39,7 +39,10 @@ function memberScope(tenantId: string | null) {
 }
 
 /** One page of members, keeping the previous page visible while the next loads. */
-export function useMembers(filters: MemberListFilters = {}) {
+export function useMembers(
+  filters: MemberListFilters = {},
+  options: { enabled?: boolean } = {},
+) {
   return useTenantQuery(
     (tenantId) => queryKeys.members.list(tenantId, filters),
     async (tenantId) =>
@@ -54,7 +57,7 @@ export function useMembers(filters: MemberListFilters = {}) {
           filters.badgeId,
         ),
       ),
-    { placeholderData: keepPreviousData },
+    { placeholderData: keepPreviousData, ...options },
   );
 }
 
