@@ -17,10 +17,13 @@ import type {
 
 // ─── User / Auth ──────────────────────────────────────────────────────────────
 
+export type Gender = "MALE" | "FEMALE" | "OTHER";
+
 export interface User {
   id: string;
   name: string;
   email: string;
+  gender?: Gender | null;
   phone?: string | null;
   avatarUrl?: string | null;
   platformRole: PlatformRole;
@@ -139,6 +142,7 @@ export interface TenantMember {
   userId: string;
   name: string;
   email: string;
+  gender?: Gender | null;
   phone?: string | null;
   avatarUrl?: string | null;
   role: TenantRole;
@@ -146,6 +150,10 @@ export interface TenantMember {
   joinedAt: string;
   isDue?: boolean;
   dueDate?: string | null;
+  /** True while any payment against this member is still PENDING. */
+  hasPendingPayment?: boolean;
+  /** Sum of those pending rows, in rupees. */
+  pendingPaymentAmount?: number;
   shift?: Shift | null;
   referralCount?: number;
   referredBy?: MemberReferral | null;
@@ -157,6 +165,7 @@ export interface MemberReferral {
   userId: string;
   name: string;
   email: string;
+  gender?: Gender | null;
   phone?: string | null;
   avatarUrl?: string | null;
   role: TenantRole;
@@ -175,6 +184,7 @@ export interface TenantProfile {
   userId: string;
   name: string;
   email: string;
+  gender?: Gender | null;
   phone?: string | null;
   avatarUrl?: string | null;
   userCreatedAt: string;
@@ -190,6 +200,7 @@ export interface AddMemberPayload {
   name: string;
   email: string;
   phone: string;
+  gender?: Gender;
   role?: TenantRole;
   avatarUrl?: string;
   subscriptionId?: string;
@@ -201,6 +212,7 @@ export interface AddMemberPayload {
 export interface UpdateProfilePayload {
   name?: string;
   phone?: string | null;
+  gender?: Gender | null;
   avatarUrl?: string | null;
   currentPassword?: string;
   newPassword?: string;
@@ -209,6 +221,7 @@ export interface UpdateProfilePayload {
 export interface UpdateMemberPayload {
   name?: string;
   phone?: string | null;
+  gender?: Gender | null;
   avatarUrl?: string | null;
   newPassword?: string;
   shiftId?: string | null;
@@ -220,6 +233,7 @@ export interface MemberDetail {
   userId: string;
   name: string;
   email: string;
+  gender?: Gender | null;
   phone?: string | null;
   avatarUrl?: string | null;
   userCreatedAt: string;
@@ -336,6 +350,7 @@ export interface Payment {
     userId: string;
     name: string;
     email: string;
+    gender?: Gender | null;
     phone?: string | null;
     avatarUrl?: string | null;
     status?: AccountStatus;
@@ -346,6 +361,7 @@ export interface Payment {
     userId: string;
     name: string;
     email: string;
+    gender?: Gender | null;
     phone?: string | null;
     avatarUrl?: string | null;
   };
@@ -410,6 +426,64 @@ export interface VerifyCheckoutPayload {
   orderId: string;
   paymentId: string;
   signature: string;
+}
+
+// ─── Public self-signup ───────────────────────────────────────────────────────
+
+/** What the public join form renders from: the gym and everything it offers. */
+export interface SignupOptions {
+  tenant: { id: string; name: string; slug: string; logoUrl?: string | null };
+  plans: {
+    id: string;
+    title: string;
+    description?: string | null;
+    amount: number;
+    durationDays: number;
+  }[];
+  charges: { id: string; name: string; amount: number; isMandatory: boolean }[];
+  shifts: Shift[];
+  /** False when the gym takes no cards yet — the signup then ends at the desk. */
+  onlinePaymentsEnabled: boolean;
+}
+
+export interface SelfSignupPayload {
+  name: string;
+  email?: string;
+  phone: string;
+  gender: Gender;
+  /** Required. Base64 data URL — there is no session to upload a file with. */
+  avatarDataUrl: string;
+  subscriptionId: string;
+  chargeIds?: string[];
+  shiftId?: string;
+}
+
+/**
+ * The result of joining: an inactive membership, the bill, and — when the gym
+ * takes cards — the order to pay it with. A null `checkout` means the member
+ * was created and owes the money at the front desk.
+ */
+export interface SelfSignupResult {
+  membership: { id: string; memberId: number; status: string };
+  loginEmail: string;
+  total: number;
+  lineItems: { description: string | null; amount: number }[];
+  checkout: {
+    orderId: string;
+    keyId: string;
+    amount: number;
+    currency: string;
+  } | null;
+}
+
+export interface SignupVerifyResult {
+  membership: {
+    id: string;
+    memberId: number;
+    status: string;
+    dueDate?: string | null;
+  } | null;
+  alreadySettled: boolean;
 }
 
 export interface PaymentSummary {
@@ -638,6 +712,7 @@ export interface AssignBadgePayload {
 export type WhatsAppTemplateKey =
   | "new_member_welcome"
   | "payment_reminder"
+  | "pending_payment_reminder"
   | "payment_receipt";
 
 export interface WhatsAppTemplate {

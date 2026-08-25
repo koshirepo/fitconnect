@@ -28,6 +28,8 @@
     "deploy:production": "wrangler deploy --env production",
     "db:migrate:test": "wrangler d1 migrations apply fit-db-test --remote --env test",
     "db:migrate:production": "wrangler d1 migrations apply fit-db --remote --env production",
+    "db:download": "node scripts/download-db.mjs production",
+    "db:download:test": "node scripts/download-db.mjs test",
     "secrets:test": "node scripts/put-secrets.mjs test",
     "secrets:production": "node scripts/put-secrets.mjs production"
   },

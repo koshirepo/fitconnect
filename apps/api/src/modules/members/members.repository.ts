@@ -28,6 +28,24 @@ function isMemberIdConflict(error: unknown) {
   return false;
 }
 
+/**
+ * What counts as overdue: an active membership whose due date passed more than
+ * `overdueDays` ago.
+ *
+ * Shared by the read and the suspend so the two can never disagree about who is
+ * in the set, and so neither has to name its members one id at a time.
+ */
+function overdueWhere(tenantId: string, overdueDays: number) {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - overdueDays);
+
+  return {
+    tenantId,
+    status: "ACTIVE",
+    dueDate: { not: null, lte: cutoff },
+  } satisfies Prisma.TenantMembershipWhereInput;
+}
+
 const shiftSelect = {
   id: true,
   tenantId: true,
@@ -52,6 +70,7 @@ const referralMemberSelect = {
       name: true,
       email: true,
       phone: true,
+      gender: true,
       avatarUrl: true,
     },
   },
@@ -109,6 +128,25 @@ export const memberRepository = {
    * Run the `create user` persistence operation for the members module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
+  /**
+   * What each member of this gym still owes, keyed by membership id.
+   *
+   * Scoped to the whole gym rather than to the ids on the current page: D1
+   * allows about a hundred bind parameters per statement, and a page of 200
+   * members would blow straight through that as an `IN` list. Grouping by
+   * tenant instead is two parameters, and the result is bounded by how many
+   * members actually owe something — far fewer than the roster.
+   */
+  async findPendingPaymentTotals(tenantId: string) {
+    const rows = await prisma.payment.groupBy({
+      by: ["membershipId"],
+      where: { tenantId, status: "PENDING" },
+      _sum: { amount: true },
+    });
+
+    return new Map(rows.map((row) => [row.membershipId, row._sum.amount ?? 0]));
+  },
+
   createUser(data: {
     name: string;
     email: string;
@@ -116,6 +154,7 @@ export const memberRepository = {
     passwordHash: string;
     platformRole: PlatformRole;
     avatarUrl?: string;
+    gender?: string;
   }) {
     return prisma.user.create({
       data,
@@ -212,6 +251,12 @@ export const memberRepository = {
     role: TenantRole,
     shiftId?: string,
     referredByMembershipId?: string,
+    /**
+     * Defaults to ACTIVE, which is right for a member an admin adds in person.
+     * Self-signup passes SUSPENDED — the app's "Inactive" — so the membership
+     * only comes alive once the money actually lands.
+     */
+    status?: "ACTIVE" | "SUSPENDED",
   ) {
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const latestMember = await prisma.tenantMembership.findFirst({
@@ -229,13 +274,15 @@ export const memberRepository = {
             memberId: (latestMember?.memberId ?? 0) + 1,
             ...(shiftId ? { shiftId } : {}),
             ...(referredByMembershipId ? { referredByMembershipId } : {}),
+            ...(status ? { status } : {}),
           },
           select: {
             id: true,
             memberId: true,
             role: true,
+            status: true,
             shift: { select: shiftSelect },
-            user: { select: { id: true, name: true, email: true, phone: true } },
+            user: { select: { id: true, name: true, email: true, phone: true, gender: true } },
           },
         });
       } catch (error) {
@@ -313,6 +360,7 @@ export const memberRepository = {
               name: true,
               email: true,
               phone: true,
+              gender: true,
               avatarUrl: true,
             },
           },
@@ -345,6 +393,7 @@ export const memberRepository = {
             name: true,
             email: true,
             phone: true,
+            gender: true,
             avatarUrl: true,
             createdAt: true,
           },
@@ -391,6 +440,7 @@ export const memberRepository = {
         name: true,
         email: true,
         phone: true,
+        gender: true,
         avatarUrl: true,
         updatedAt: true,
       },
@@ -611,14 +661,8 @@ export const memberRepository = {
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
   async getOverdueMembers(tenantId: string, overdueDays: number) {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - overdueDays);
     return prisma.tenantMembership.findMany({
-      where: {
-        tenantId,
-        status: "ACTIVE",
-        dueDate: { not: null, lte: cutoff },
-      },
+      where: overdueWhere(tenantId, overdueDays),
       select: {
         id: true,
         memberId: true,
@@ -629,12 +673,18 @@ export const memberRepository = {
   },
 
   /**
-   * Run the `suspend many` persistence operation for the members module.
-   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   * Suspend everyone this gym counts as overdue.
+   *
+   * Written as the same predicate `getOverdueMembers` reads with, rather than
+   * as a list of the ids it returned. Two reasons: an id list is one bind
+   * parameter per member and D1 allows about a hundred per statement, so a gym
+   * with a long overdue list would fail outright; and a member who pays between
+   * the read and this update simply stops matching, where an id list would
+   * suspend them anyway.
    */
-  async suspendMany(ids: string[]) {
+  async suspendOverdue(tenantId: string, overdueDays: number) {
     return prisma.tenantMembership.updateMany({
-      where: { id: { in: ids } },
+      where: overdueWhere(tenantId, overdueDays),
       data: { status: "SUSPENDED" },
     });
   },
@@ -667,6 +717,7 @@ export const memberRepository = {
             name: true,
             email: true,
             phone: true,
+            gender: true,
             avatarUrl: true,
             createdAt: true,
           },

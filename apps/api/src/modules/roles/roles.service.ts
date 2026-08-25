@@ -21,6 +21,7 @@ import {
 } from "@fitconnect/shared/types/permissions";
 import { PLATFORM_ROLE_LABELS, TENANT_ROLE_LABELS } from "@fitconnect/shared/constants";
 import { rolePermissionRepository } from "./roles.repository";
+import { invalidateCached } from "../../lib/request-cache";
 
 const PLATFORM_ROLES = Object.values(PlatformRole) as string[];
 const TENANT_ROLES = Object.values(TenantRole) as string[];
@@ -178,6 +179,10 @@ export const roleService = {
       updatedBy: input.actorId,
     });
 
+    // Authorization caches these; drop the entry so the change is in force on
+    // the next request in this isolate instead of after the TTL.
+    invalidateCached(`role-overrides:${input.tenantId ?? "platform"}`);
+
     return {
       data: {
         scope: input.scope,
@@ -201,6 +206,9 @@ export const roleService = {
     }
 
     await rolePermissionRepository.resetRole(input);
+    // Authorization caches these; drop the entry so the change is in force on
+    // the next request in this isolate instead of after the TTL.
+    invalidateCached(`role-overrides:${input.tenantId ?? "platform"}`);
 
     return {
       data: {

@@ -29,6 +29,8 @@ model User {
   phone        String?
   passwordHash String
   avatarUrl    String?
+  /// "MALE", "FEMALE", or "OTHER". Null for accounts created before it was asked for.
+  gender       String?
   platformRole String   @default("USER")
   status       String   @default("ACTIVE")
   createdAt    DateTime @default(now())
@@ -46,6 +48,22 @@ model User {
   recordedPlatformPayments PlatformPayment[]
 
   @@index([email])
+}
+
+/// A write the API has already applied, remembered so a replay of the same
+/// queued mutation returns the original outcome instead of doing it twice.
+/// Rows are short-lived by nature — they only have to outlive a lost response.
+model IdempotencyKey {
+  key        String   @id
+  userId     String
+  method     String
+  path       String
+  statusCode Int
+  /// The original response body, replayed verbatim on a repeat.
+  response   String
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model PasswordResetToken {
@@ -158,7 +176,7 @@ model TenantCharge {
   tenantId    String
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name        String /// e.g. "Admission Fee", "Security Deposit"
-  amount      Int /// Amount in smallest currency unit (paise/cents)
+  amount      Int /// Rupees, like every other amount in this schema. Converted to paise only at the Razorpay boundary.
   isMandatory Boolean  @default(true) /// Must be paid when adding a new member
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -293,8 +311,8 @@ model Payment {
 
   /// "RAZORPAY" for online payments; null for cash and other manual entries.
   gateway          String?
-  /// Gateway order id. Unique so a replayed verify cannot settle twice.
-  gatewayOrderId   String?  @unique
+  /// Gateway order id. Shared by every row a single checkout paid for.
+  gatewayOrderId   String?
   /// Gateway payment id, set once the charge is authorized or captured.
   gatewayPaymentId String?
   /// Whether this gym's own gateway account collected it, or the platform's.
@@ -308,6 +326,10 @@ model Payment {
   @@index([status])
   @@index([createdAt])
   @@index([gatewayOrderId])
+  /// The shapes the hot reads actually use: one gym filtered by status, and
+  /// one gym newest-first.
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
 }
 
 // Commerce

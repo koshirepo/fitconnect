@@ -197,6 +197,7 @@ export default function ReferralsPage() {
                       <AvatarCard
                         name={leader.name}
                         avatarUrl={leader.avatarUrl}
+                        gender={leader.gender}
                         memberId={leader.memberId}
                         variant="lg"
                         role={leader.role}
@@ -241,6 +242,7 @@ export default function ReferralsPage() {
                             <AvatarCard
                               name={referral.name}
                               avatarUrl={referral.avatarUrl}
+                              gender={referral.gender}
                               memberId={referral.memberId}
                               variant="md"
                               role={referral.role}

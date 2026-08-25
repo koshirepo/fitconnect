@@ -14,6 +14,7 @@ export type {
   AuditAction,
   // Models
   User,
+  Gender,
   TenantMembershipSummary,
   AuthResponse,
   TokenRefreshResponse,
@@ -77,6 +78,11 @@ export type {
   UpdateGatewayPayload,
   CheckoutSession,
   VerifyCheckoutPayload,
+  // Public self-signup
+  SignupOptions,
+  SelfSignupPayload,
+  SelfSignupResult,
+  SignupVerifyResult,
   // Platform Billing
   PlatformPayment,
   RecordPlatformPaymentPayload,

@@ -12,6 +12,9 @@ import {
   useUpdatePaymentStatus,
 } from "@/api/queries/payments";
 import { getApiError } from "@/api/client";
+import { queryKeys } from "@/lib/query-keys";
+import { getTenantDashboardPath } from "@/lib/subdomain";
+import { useAdjacentRecord } from "@/lib/use-adjacent-record";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -19,6 +22,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PageLoader } from "@/components/ui/spinner";
+import { SwipePane } from "@/components/ui/swipe-pane";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import {
   Calendar,
@@ -74,6 +78,23 @@ export default function PaymentDetailPage() {
   const canRecordPayment = can(Permission.PAYMENTS_CREATE);
 
   const paymentQuery = usePayment(paymentId);
+
+  /**
+   * The payments either side of this one, read from the ledger cache so a
+   * swipe costs no request. Ordered newest first, the way the list shows them.
+   */
+  const siblings = useAdjacentRecord<Payment>({
+    queryKey: [...queryKeys.payments.list(currentTenantId ?? "none"), "all", 200],
+    currentId: paymentId,
+    sort: (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  });
+
+  const goToSibling = (id: string | null) => {
+    // `replace` keeps the back button pointing at the ledger, not at the
+    // trail of payments swiped through to get here.
+    if (id) navigate(getTenantDashboardPath(`/payments/${id}`), { replace: true });
+  };
+
   const payment = paymentQuery.data ?? null;
   const loading = paymentQuery.isLoading;
 
@@ -215,22 +236,31 @@ export default function PaymentDetailPage() {
         : null;
 
   return (
-    <div className="space-y-5">
+    <SwipePane
+      paneKey={paymentId ?? "payment"}
+      paneIndex={siblings.index}
+      onNext={() => goToSibling(siblings.nextId)}
+      onPrevious={() => goToSibling(siblings.previousId)}
+      className="space-y-5"
+    >
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-xl font-bold tracking-tight truncate">{title}</h1>
+      {/* Four buttons and a title do not share one row on a phone — the title
+          loses and ends up as an ellipsis. They stack instead, and sit side by
+          side again once there is width for both. */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="min-w-0 sm:flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="min-w-0 truncate text-xl font-bold tracking-tight">{title}</h1>
             <Badge variant={statusBadgeVariant(payment.status)}>
               {statusLabel[payment.status]}
             </Badge>
           </div>
-          <p className="text-xs text-muted-foreground truncate mt-0.5">
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
             {formatDateTime(payment.createdAt)}
           </p>
         </div>
         {isAdmin && (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
             {!editing && (
               <Button variant="outline" size="sm" onClick={startEditing}>
                 <Pencil className="h-4 w-4" />
@@ -419,6 +449,7 @@ export default function PaymentDetailPage() {
                 <AvatarCard
                   name={payment.member.name}
                   avatarUrl={payment.member.avatarUrl}
+                  gender={payment.member.gender}
                   memberId={payment.member.memberId}
                   variant="md"
                   dueDate={payment.member.dueDate}
@@ -459,6 +490,7 @@ export default function PaymentDetailPage() {
                 <AvatarCard
                   name={payment.collectedBy.name}
                   avatarUrl={payment.collectedBy.avatarUrl}
+                  gender={payment.collectedBy.gender}
                   variant="sm"
                 >
                   <p className="text-xs text-muted-foreground">{payment.collectedBy.email}</p>
@@ -527,6 +559,6 @@ export default function PaymentDetailPage() {
           </CardContent>
         </Card>
       )}
-    </div>
+    </SwipePane>
   );
 }

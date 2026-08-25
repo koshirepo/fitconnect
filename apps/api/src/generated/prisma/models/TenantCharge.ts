@@ -773,7 +773,7 @@ export type $TenantChargePayload<ExtArgs extends runtime.Types.Extensions.Intern
      */
     name: string
     /**
-     * Amount in smallest currency unit (paise/cents)
+     * Rupees, like every other amount in this schema. Converted to paise only at the Razorpay boundary.
      */
     amount: number
     /**

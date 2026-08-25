@@ -16,6 +16,7 @@ export const addMemberSchema = z.object({
   email: z.string().optional(),
   phone: z.string().min(10).max(15),
   role: z.enum(["MEMBER", "COACH", "ADMIN"]).default("MEMBER"),
+  gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
   avatarUrl: z.string().optional(),
   subscriptionId: z.string().optional(),
   chargeIds: z.array(z.string()).optional(),
@@ -31,6 +32,7 @@ export const updateMyProfileSchema = z
   .object({
     name: z.string().min(2).max(120).optional(),
     phone: z.string().min(10).max(15).nullable().optional(),
+    gender: z.enum(["MALE", "FEMALE", "OTHER"]).nullable().optional(),
     avatarUrl: z.string().url().nullable().optional(),
     currentPassword: z.string().min(1).optional(),
     newPassword: z
@@ -53,6 +55,7 @@ export const updateMyProfileSchema = z
 export const updateMemberSchema = z.object({
   name: z.string().min(2).max(120).optional(),
   phone: z.string().min(10).max(15).nullable().optional(),
+  gender: z.enum(["MALE", "FEMALE", "OTHER"]).nullable().optional(),
   avatarUrl: z.string().url().nullable().optional(),
   newPassword: z
     .string()

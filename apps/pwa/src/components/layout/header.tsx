@@ -102,7 +102,10 @@ export function Header() {
       <div className="min-w-0 flex-1 overflow-hidden">
         {breadcrumbItems.length > 0 && (
           <Breadcrumb className="overflow-x-auto whitespace-nowrap pb-1 pr-2 [&::-webkit-scrollbar]:hidden">
-            <BreadcrumbList>
+            {/* The list wraps by default, which in a fixed-height header shows
+                up as a trail split across two lines. The container scrolls
+                sideways instead, so a long trail stays on one line. */}
+            <BreadcrumbList className="flex-nowrap">
               {breadcrumbItems.map((item, index) => (
                 <React.Fragment key={index}>
                   {index > 0 && <BreadcrumbSeparator />}

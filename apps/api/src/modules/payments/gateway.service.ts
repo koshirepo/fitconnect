@@ -17,6 +17,7 @@ import {
   type RazorpayCredentials,
 } from "../../lib/razorpay";
 import { paymentRepository } from "./payments.repository";
+import { pushService } from "../push/push.service";
 import type {
   UpdateGatewayInput,
   CheckoutInput,
@@ -220,7 +221,8 @@ export const gatewayService = {
 
     try {
       await createOrder(credentials, {
-        amount: 100,
+        // One rupee. `createOrder` converts to paise.
+        amount: 1,
         receipt: `test_${Date.now()}`,
         notes: { purpose: "credential check" },
       });
@@ -368,10 +370,11 @@ export const gatewayService = {
       };
     }
 
-    const payment = await paymentRepository.findPaymentByOrderId(
+    const payments = await paymentRepository.findPaymentsByOrderId(
       input.orderId,
       tenantId,
     );
+    const payment = payments[0];
     if (!payment) {
       return { error: "Payment not found.", status: 404 as const };
     }
@@ -386,7 +389,7 @@ export const gatewayService = {
       return { error: "Payment not found.", status: 404 as const };
     }
 
-    if (payment.status === "COMPLETED") {
+    if (payments.every((row) => row.status === "COMPLETED")) {
       return { data: { payment, alreadySettled: true } };
     }
 
@@ -400,38 +403,84 @@ export const gatewayService = {
     );
 
     if (!signatureValid) {
-      await paymentRepository.markGatewayFailure(payment.id, input.paymentId);
+      await gatewayService.failOrder(payments, input.paymentId);
       return {
         error: "This payment could not be verified.",
         status: 400 as const,
       };
     }
 
-    const settled = await gatewayService.settlePayment(
-      payment.id,
-      input.paymentId,
-    );
-    return { data: { payment: settled, alreadySettled: false } };
+    const settled = await gatewayService.settleOrder(payments, input.paymentId);
+    return { data: { payment: settled[0] ?? payment, alreadySettled: false } };
   },
 
   /**
-   * Mark a gateway payment complete and bring the membership with it.
+   * Mark every payment a gateway order covers complete, and bring the
+   * membership with it.
+   *
+   * An order is usually one row, but a self-signup pays for a plan and its
+   * mandatory charges together, so the whole order settles or none of it does.
+   * The due date and the reactivation are computed once at the end rather than
+   * per row: intermediate states here are not worth writing.
    *
    * Shared by the browser-verified path and the webhook so the two can race
    * without disagreeing about the outcome.
    */
-  async settlePayment(paymentId: string, gatewayPaymentId: string) {
-    const payment = await paymentRepository.settleGatewayPayment(
-      paymentId,
-      gatewayPaymentId,
-    );
-
-    if (payment.validUntil) {
-      await paymentRepository.refreshDueDate(payment.membershipId);
+  async settleOrder(
+    payments: {
+      id: string;
+      status: string;
+      amount: number;
+      membershipId: string;
+      tenantId?: string;
+      member?: { memberId: number; user: { name: string } } | null;
+    }[],
+    gatewayPaymentId: string,
+  ) {
+    const settled = [];
+    for (const row of payments) {
+      // A row the webhook already settled is left exactly as it was, so the
+      // paid date does not move when the browser arrives second.
+      if (row.status === "COMPLETED") continue;
+      settled.push(
+        await paymentRepository.settleGatewayPayment(row.id, gatewayPaymentId),
+      );
     }
-    await paymentRepository.reactivateIfPaidUp(payment.membershipId);
 
-    return payment;
+    const membershipId = payments[0]?.membershipId;
+    if (membershipId) {
+      if (settled.some((row) => row.validUntil)) {
+        await paymentRepository.refreshDueDate(membershipId);
+      }
+      await paymentRepository.reactivateIfPaidUp(membershipId);
+    }
+
+    // One notification for the order rather than one per line item: the member
+    // paid a single amount and that is what an admin wants to read.
+    const tenantId = payments[0]?.tenantId;
+    if (tenantId && settled.length > 0) {
+      const first = payments[0];
+      await pushService.notifyPaymentReceived(tenantId, {
+        amount: settled.reduce((sum, row) => sum + row.amount, 0),
+        memberId: first?.member?.memberId,
+        memberName: first?.member?.user.name,
+        description: settled.length === 1 ? settled[0].description : null,
+        source: "ONLINE",
+      });
+    }
+
+    return settled;
+  },
+
+  /** Mark every unsettled row of an order failed. */
+  async failOrder(
+    payments: { id: string; status: string }[],
+    gatewayPaymentId: string,
+  ) {
+    for (const row of payments) {
+      if (row.status === "COMPLETED") continue;
+      await paymentRepository.markGatewayFailure(row.id, gatewayPaymentId);
+    }
   },
 
   // ─── Webhooks ───────────────────────────────────────────────────────────────
@@ -485,23 +534,23 @@ export const gatewayService = {
       return { data: { handled: false, event: event.event ?? null } };
     }
 
-    const payment = await paymentRepository.findPaymentByOrderId(
+    const payments = await paymentRepository.findPaymentsByOrderId(
       entity.order_id,
       tenantId,
     );
-    if (!payment) {
+    if (payments.length === 0) {
       return { data: { handled: false, event: event.event ?? null } };
     }
 
+    const unsettled = payments.some((row) => row.status !== "COMPLETED");
+
     if (event.event === "payment.failed") {
-      if (payment.status !== "COMPLETED") {
-        await paymentRepository.markGatewayFailure(payment.id, entity.id);
-      }
+      await gatewayService.failOrder(payments, entity.id);
       return { data: { handled: true, event: event.event } };
     }
 
     if (event.event === "payment.captured" || event.event === "order.paid") {
-      if (payment.status !== "COMPLETED") {
+      if (unsettled) {
         // Confirm against Razorpay rather than the body alone: the signature
         // proves the message came from Razorpay, not that it says what we think.
         let remote;
@@ -519,7 +568,7 @@ export const gatewayService = {
         }
 
         if (remote.status === "captured" || remote.status === "authorized") {
-          await gatewayService.settlePayment(payment.id, entity.id);
+          await gatewayService.settleOrder(payments, entity.id);
         }
       }
       return { data: { handled: true, event: event.event } };

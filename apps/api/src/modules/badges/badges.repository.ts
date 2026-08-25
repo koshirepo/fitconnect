@@ -119,7 +119,7 @@ export const badgeRepository = {
           select: {
             id: true,
             memberId: true,
-            user: { select: { id: true, name: true, email: true, phone: true, avatarUrl: true } },
+            user: { select: { id: true, name: true, email: true, phone: true, gender: true, avatarUrl: true } },
           },
         },
       },
@@ -148,7 +148,7 @@ export const badgeRepository = {
       select: {
         id: true,
         memberId: true,
-        user: { select: { id: true, name: true, email: true, phone: true, avatarUrl: true } },
+        user: { select: { id: true, name: true, email: true, phone: true, gender: true, avatarUrl: true } },
       },
     });
   },

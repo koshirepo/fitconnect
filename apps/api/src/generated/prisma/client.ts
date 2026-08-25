@@ -44,6 +44,13 @@ export { Prisma }
  */
 export type User = Prisma.UserModel
 /**
+ * Model IdempotencyKey
+ * A write the API has already applied, remembered so a replay of the same
+ * queued mutation returns the original outcome instead of doing it twice.
+ * Rows are short-lived by nature — they only have to outlive a lost response.
+ */
+export type IdempotencyKey = Prisma.IdempotencyKeyModel
+/**
  * Model PasswordResetToken
  * 
  */

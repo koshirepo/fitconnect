@@ -470,14 +470,6 @@ export type TenantSettingsUncheckedUpdateOneWithoutTenantNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.TenantSettingsUpdateToOneWithWhereWithoutTenantInput, Prisma.TenantSettingsUpdateWithoutTenantInput>, Prisma.TenantSettingsUncheckedUpdateWithoutTenantInput>
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type TenantSettingsCreateWithoutTenantInput = {
   id?: string
   overdueDays?: number

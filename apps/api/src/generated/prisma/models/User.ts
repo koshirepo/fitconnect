@@ -31,6 +31,7 @@ export type UserMinAggregateOutputType = {
   phone: string | null
   passwordHash: string | null
   avatarUrl: string | null
+  gender: string | null
   platformRole: string | null
   status: string | null
   createdAt: Date | null
@@ -44,6 +45,7 @@ export type UserMaxAggregateOutputType = {
   phone: string | null
   passwordHash: string | null
   avatarUrl: string | null
+  gender: string | null
   platformRole: string | null
   status: string | null
   createdAt: Date | null
@@ -57,6 +59,7 @@ export type UserCountAggregateOutputType = {
   phone: number
   passwordHash: number
   avatarUrl: number
+  gender: number
   platformRole: number
   status: number
   createdAt: number
@@ -72,6 +75,7 @@ export type UserMinAggregateInputType = {
   phone?: true
   passwordHash?: true
   avatarUrl?: true
+  gender?: true
   platformRole?: true
   status?: true
   createdAt?: true
@@ -85,6 +89,7 @@ export type UserMaxAggregateInputType = {
   phone?: true
   passwordHash?: true
   avatarUrl?: true
+  gender?: true
   platformRole?: true
   status?: true
   createdAt?: true
@@ -98,6 +103,7 @@ export type UserCountAggregateInputType = {
   phone?: true
   passwordHash?: true
   avatarUrl?: true
+  gender?: true
   platformRole?: true
   status?: true
   createdAt?: true
@@ -184,6 +190,7 @@ export type UserGroupByOutputType = {
   phone: string | null
   passwordHash: string
   avatarUrl: string | null
+  gender: string | null
   platformRole: string
   status: string
   createdAt: Date
@@ -218,6 +225,7 @@ export type UserWhereInput = {
   phone?: Prisma.StringNullableFilter<"User"> | string | null
   passwordHash?: Prisma.StringFilter<"User"> | string
   avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  gender?: Prisma.StringNullableFilter<"User"> | string | null
   platformRole?: Prisma.StringFilter<"User"> | string
   status?: Prisma.StringFilter<"User"> | string
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -241,6 +249,7 @@ export type UserOrderByWithRelationInput = {
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  gender?: Prisma.SortOrderInput | Prisma.SortOrder
   platformRole?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -267,6 +276,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   phone?: Prisma.StringNullableFilter<"User"> | string | null
   passwordHash?: Prisma.StringFilter<"User"> | string
   avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  gender?: Prisma.StringNullableFilter<"User"> | string | null
   platformRole?: Prisma.StringFilter<"User"> | string
   status?: Prisma.StringFilter<"User"> | string
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -290,6 +300,7 @@ export type UserOrderByWithAggregationInput = {
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  gender?: Prisma.SortOrderInput | Prisma.SortOrder
   platformRole?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -309,6 +320,7 @@ export type UserScalarWhereWithAggregatesInput = {
   phone?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   passwordHash?: Prisma.StringWithAggregatesFilter<"User"> | string
   avatarUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  gender?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   platformRole?: Prisma.StringWithAggregatesFilter<"User"> | string
   status?: Prisma.StringWithAggregatesFilter<"User"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
@@ -322,6 +334,7 @@ export type UserCreateInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -345,6 +358,7 @@ export type UserUncheckedCreateInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -368,6 +382,7 @@ export type UserUpdateInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -391,6 +406,7 @@ export type UserUncheckedUpdateInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -414,6 +430,7 @@ export type UserCreateManyInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -427,6 +444,7 @@ export type UserUpdateManyMutationInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -440,6 +458,7 @@ export type UserUncheckedUpdateManyInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -453,6 +472,7 @@ export type UserCountOrderByAggregateInput = {
   phone?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
+  gender?: Prisma.SortOrder
   platformRole?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -466,6 +486,7 @@ export type UserMaxOrderByAggregateInput = {
   phone?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
+  gender?: Prisma.SortOrder
   platformRole?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -479,6 +500,7 @@ export type UserMinOrderByAggregateInput = {
   phone?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
+  gender?: Prisma.SortOrder
   platformRole?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -662,6 +684,7 @@ export type UserCreateWithoutPasswordResetTokensInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -684,6 +707,7 @@ export type UserUncheckedCreateWithoutPasswordResetTokensInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -722,6 +746,7 @@ export type UserUpdateWithoutPasswordResetTokensInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -744,6 +769,7 @@ export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -766,6 +792,7 @@ export type UserCreateWithoutRefreshTokensInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -788,6 +815,7 @@ export type UserUncheckedCreateWithoutRefreshTokensInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -826,6 +854,7 @@ export type UserUpdateWithoutRefreshTokensInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -848,6 +877,7 @@ export type UserUncheckedUpdateWithoutRefreshTokensInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -870,6 +900,7 @@ export type UserCreateWithoutMembershipsInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -892,6 +923,7 @@ export type UserUncheckedCreateWithoutMembershipsInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -930,6 +962,7 @@ export type UserUpdateWithoutMembershipsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -952,6 +985,7 @@ export type UserUncheckedUpdateWithoutMembershipsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -974,6 +1008,7 @@ export type UserCreateWithoutReviewsInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -996,6 +1031,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -1034,6 +1070,7 @@ export type UserUpdateWithoutReviewsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1056,6 +1093,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1078,6 +1116,7 @@ export type UserCreateWithoutCommentsInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -1100,6 +1139,7 @@ export type UserUncheckedCreateWithoutCommentsInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -1138,6 +1178,7 @@ export type UserUpdateWithoutCommentsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1160,6 +1201,7 @@ export type UserUncheckedUpdateWithoutCommentsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1182,6 +1224,7 @@ export type UserCreateWithoutHelpfulInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -1204,6 +1247,7 @@ export type UserUncheckedCreateWithoutHelpfulInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -1242,6 +1286,7 @@ export type UserUpdateWithoutHelpfulInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1264,6 +1309,7 @@ export type UserUncheckedUpdateWithoutHelpfulInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1286,6 +1332,7 @@ export type UserCreateWithoutOrdersInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -1308,6 +1355,7 @@ export type UserUncheckedCreateWithoutOrdersInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -1346,6 +1394,7 @@ export type UserUpdateWithoutOrdersInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1368,6 +1417,7 @@ export type UserUncheckedUpdateWithoutOrdersInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1390,6 +1440,7 @@ export type UserCreateWithoutRecordedPlatformPaymentsInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -1412,6 +1463,7 @@ export type UserUncheckedCreateWithoutRecordedPlatformPaymentsInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -1450,6 +1502,7 @@ export type UserUpdateWithoutRecordedPlatformPaymentsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1472,6 +1525,7 @@ export type UserUncheckedUpdateWithoutRecordedPlatformPaymentsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1494,6 +1548,7 @@ export type UserCreateWithoutAuditLogsInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -1516,6 +1571,7 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -1554,6 +1610,7 @@ export type UserUpdateWithoutAuditLogsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1576,6 +1633,7 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1598,6 +1656,7 @@ export type UserCreateWithoutPushSubscriptionsInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -1620,6 +1679,7 @@ export type UserUncheckedCreateWithoutPushSubscriptionsInput = {
   phone?: string | null
   passwordHash: string
   avatarUrl?: string | null
+  gender?: string | null
   platformRole?: string
   status?: string
   createdAt?: Date | string
@@ -1658,6 +1718,7 @@ export type UserUpdateWithoutPushSubscriptionsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1680,6 +1741,7 @@ export type UserUncheckedUpdateWithoutPushSubscriptionsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformRole?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1814,6 +1876,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   phone?: boolean
   passwordHash?: boolean
   avatarUrl?: boolean
+  gender?: boolean
   platformRole?: boolean
   status?: boolean
   createdAt?: boolean
@@ -1838,6 +1901,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   phone?: boolean
   passwordHash?: boolean
   avatarUrl?: boolean
+  gender?: boolean
   platformRole?: boolean
   status?: boolean
   createdAt?: boolean
@@ -1851,6 +1915,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   phone?: boolean
   passwordHash?: boolean
   avatarUrl?: boolean
+  gender?: boolean
   platformRole?: boolean
   status?: boolean
   createdAt?: boolean
@@ -1864,13 +1929,14 @@ export type UserSelectScalar = {
   phone?: boolean
   passwordHash?: boolean
   avatarUrl?: boolean
+  gender?: boolean
   platformRole?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "phone" | "passwordHash" | "avatarUrl" | "platformRole" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "phone" | "passwordHash" | "avatarUrl" | "gender" | "platformRole" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   memberships?: boolean | Prisma.User$membershipsArgs<ExtArgs>
   refreshTokens?: boolean | Prisma.User$refreshTokensArgs<ExtArgs>
@@ -1908,6 +1974,10 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     phone: string | null
     passwordHash: string
     avatarUrl: string | null
+    /**
+     * "MALE", "FEMALE", or "OTHER". Null for accounts created before it was asked for.
+     */
+    gender: string | null
     platformRole: string
     status: string
     createdAt: Date
@@ -2351,6 +2421,7 @@ export interface UserFieldRefs {
   readonly phone: Prisma.FieldRef<"User", 'String'>
   readonly passwordHash: Prisma.FieldRef<"User", 'String'>
   readonly avatarUrl: Prisma.FieldRef<"User", 'String'>
+  readonly gender: Prisma.FieldRef<"User", 'String'>
   readonly platformRole: Prisma.FieldRef<"User", 'String'>
   readonly status: Prisma.FieldRef<"User", 'String'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>

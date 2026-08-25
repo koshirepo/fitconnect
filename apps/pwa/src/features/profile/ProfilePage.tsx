@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { PhotoCapture } from "@/components/ui/photo-capture";
 import { PageLoader } from "@/components/ui/spinner";
+import { PushToggle } from "@/components/ui/push-toggle";
 import { Camera } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
 
@@ -144,6 +145,7 @@ export default function ProfilePage() {
               <AvatarCard
                 name={profile.name}
                 avatarUrl={profile.avatarUrl}
+                gender={profile.gender}
                 variant="xl"
                 vertical
                 role={profile.role}
@@ -172,6 +174,17 @@ export default function ProfilePage() {
                 {user.platformRole}
               </Badge>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Notifications */}
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle>Notifications</CardTitle>
+            <CardDescription>Alerts on this device</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PushToggle description="Admins are notified when a member joins and when a payment comes in." />
           </CardContent>
         </Card>
 

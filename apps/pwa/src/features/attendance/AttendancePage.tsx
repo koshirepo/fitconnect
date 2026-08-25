@@ -431,6 +431,7 @@ export default function AttendancePage() {
                   <AvatarCard
                     name={m.name}
                     avatarUrl={m.avatarUrl}
+                    gender={m.gender}
                     memberId={m.memberId}
                     variant="sm"
                     isActive={m.status === "ACTIVE"}

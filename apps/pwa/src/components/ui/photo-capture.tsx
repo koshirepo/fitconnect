@@ -25,7 +25,10 @@ export function PhotoCapture({
   onChange,
   requireFace = true,
   cropAspectRatio = 1,
-  cropShape = "circle",
+  // Square, not circular. The crop is written to a JPEG, which has no
+  // transparency, so a circular mask bakes black corners into the file — while
+  // every place that shows an avatar already rounds it in CSS.
+  cropShape = "rect",
   cropOutputWidth,
   cropOutputHeight,
   croppedFileName = "avatar.jpg",

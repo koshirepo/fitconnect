@@ -4,11 +4,19 @@ import { useOnlineStatus } from "@/lib/use-online-status";
 import {
   getPendingCount,
   getConflictCount,
+  getFailedCount,
   flushPendingMutations,
   type SyncResult,
 } from "@/lib/sync-engine";
+import { FailedSyncDialog } from "@/components/ui/failed-sync-dialog";
 
-type SyncState = "idle" | "syncing" | "synced" | "has-pending" | "has-conflicts";
+type SyncState =
+  | "idle"
+  | "syncing"
+  | "synced"
+  | "has-pending"
+  | "has-conflicts"
+  | "has-failed";
 
 /**
  * Floating pill that shows sync status:
@@ -22,6 +30,8 @@ export function SyncStatus() {
   const [state, setState] = React.useState<SyncState>("idle");
   const [pending, setPending] = React.useState(0);
   const [conflicts, setConflicts] = React.useState(0);
+  const [failed, setFailed] = React.useState(0);
+  const [failedOpen, setFailedOpen] = React.useState(false);
   const stateRef = React.useRef(state);
 
   React.useEffect(() => {
@@ -34,11 +44,17 @@ export function SyncStatus() {
     const poll = async () => {
       if (!active) return;
       try {
-        const [p, c] = await Promise.all([getPendingCount(), getConflictCount()]);
+        const [p, c, f] = await Promise.all([
+          getPendingCount(),
+          getConflictCount(),
+          getFailedCount(),
+        ]);
         if (!active) return;
         setPending(p);
         setConflicts(c);
+        setFailed(f);
         if (c > 0) setState("has-conflicts");
+        else if (f > 0) setState("has-failed");
         else if (p > 0) setState("has-pending");
         else if (stateRef.current !== "synced") setState("idle");
       } catch {
@@ -89,7 +105,7 @@ export function SyncStatus() {
   };
 
   // Nothing to show
-  if (state === "idle" && pending === 0) return null;
+  if (state === "idle" && pending === 0 && failed === 0) return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium shadow-lg backdrop-blur-sm transition-all animate-in fade-in slide-in-from-bottom-2">
@@ -108,6 +124,15 @@ export function SyncStatus() {
           {pending} pending change{pending !== 1 ? "s" : ""}
         </button>
       )}
+      {state === "has-failed" && (
+        <button
+          onClick={() => setFailedOpen(true)}
+          className="flex items-center gap-1.5 rounded-full bg-destructive px-3 py-1.5 text-destructive-foreground transition-colors hover:opacity-90"
+        >
+          <AlertTriangle className="h-3.5 w-3.5" />
+          {failed} change{failed !== 1 ? "s" : ""} didn&apos;t save
+        </button>
+      )}
       {state === "has-conflicts" && (
         <span className="flex items-center gap-1.5 bg-destructive text-destructive-foreground rounded-full px-3 py-1.5">
           <AlertTriangle className="h-3.5 w-3.5" />
@@ -120,6 +145,15 @@ export function SyncStatus() {
           Syncing…
         </span>
       )}
+
+      <FailedSyncDialog
+        open={failedOpen}
+        onOpenChange={setFailedOpen}
+        onChanged={() => {
+          // Recount straight away rather than waiting for the next poll.
+          void getFailedCount().then(setFailed);
+        }}
+      />
     </div>
   );
 }

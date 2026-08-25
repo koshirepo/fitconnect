@@ -23,7 +23,14 @@ interface PhotoCropProps {
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 5;
 const ZOOM_STEP = 0.1;
-const DEFAULT_OUTPUT_WIDTH = 400;
+/**
+ * Avatars and logos are written at 200×200. Nothing shows them larger than a
+ * list tile, and the file that leaves here is the only one ever uploaded — the
+ * original never goes to the server — so this is also the ceiling on what a
+ * member photo costs to store and to send down to every screen that lists them.
+ * Callers needing more (product photos) pass their own size.
+ */
+const DEFAULT_OUTPUT_WIDTH = 200;
 const CROP_FRAME_SCALE = 0.82;
 const RECT_RADIUS = 24;
 

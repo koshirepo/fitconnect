@@ -22,7 +22,14 @@ export const createPaymentSchema = z
     description: z.string().max(200).optional(),
     note: z.string().max(500).optional(),
     status: z.enum(["PENDING", "COMPLETED"]).default("COMPLETED"),
+    /** The full price of what is being paid for. */
     amount: z.number().int().min(1),
+    /**
+     * What the member actually handed over, when that is less than the price.
+     * The difference is written as a second, PENDING row — the balance they
+     * still owe. Omit it for a payment made in full.
+     */
+    paidAmount: z.number().int().min(1).optional(),
     validFrom: z.coerce.date().optional(),
     validUntil: z.coerce.date().optional(),
   })
@@ -33,6 +40,26 @@ export const createPaymentSchema = z
         message: "Either subscriptionId or chargeId is required.",
         path: ["subscriptionId"],
       });
+    }
+
+    if (data.paidAmount !== undefined) {
+      if (data.paidAmount > data.amount) {
+        ctx.addIssue({
+          code: "custom",
+          message: "The amount received cannot be more than the total.",
+          path: ["paidAmount"],
+        });
+      }
+
+      // A part payment is money taken now; a payment recorded as pending has
+      // taken nothing yet, so there is no part of it to split.
+      if (data.status !== "COMPLETED" && data.paidAmount < data.amount) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Only a completed payment can be a part payment.",
+          path: ["paidAmount"],
+        });
+      }
     }
 
     if (data.validUntil) {

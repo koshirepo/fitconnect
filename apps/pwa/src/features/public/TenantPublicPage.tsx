@@ -175,10 +175,15 @@ export default function TenantPublicPage() {
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <Button onClick={() => navigate(isAuthenticated ? "/dashboard" : "/login")}>
-                {isAuthenticated ? "Go to Dashboard" : "Sign In to Continue"}
+              <Button onClick={() => navigate(isAuthenticated ? "/dashboard" : "/signup")}>
+                {isAuthenticated ? "Go to Dashboard" : "Join This Gym"}
                 <ArrowRight className="h-4 w-4" />
               </Button>
+              {!isAuthenticated && (
+                <Button variant="outline" onClick={() => navigate("/login")}>
+                  Sign In
+                </Button>
+              )}
               <Button variant="outline" onClick={() => navigate("/")}>
                 <ArrowLeft className="h-4 w-4" />
                 Back to Home
@@ -447,15 +452,26 @@ export default function TenantPublicPage() {
               <Dumbbell className="mx-auto h-8 w-8 text-primary" />
               <h3 className="mt-3 text-lg font-semibold">Ready to start?</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Sign in to continue your registration journey with this gym.
+                {isAuthenticated
+                  ? "Pick up where you left off with this gym."
+                  : "Sign up, pick a plan, and pay online to activate your membership."}
               </p>
               <Button
                 className="mt-4 w-full"
-                onClick={() => navigate(isAuthenticated ? "/dashboard" : "/login")}
+                onClick={() => navigate(isAuthenticated ? "/dashboard" : "/signup")}
               >
-                {isAuthenticated ? "Open Dashboard" : "Sign In"}
+                {isAuthenticated ? "Open Dashboard" : "Join Now"}
                 <ArrowRight className="h-4 w-4" />
               </Button>
+              {!isAuthenticated && (
+                <Button
+                  variant="ghost"
+                  className="mt-2 w-full"
+                  onClick={() => navigate("/login")}
+                >
+                  I already have an account
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>

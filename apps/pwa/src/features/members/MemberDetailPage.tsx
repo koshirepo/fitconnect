@@ -25,6 +25,9 @@ import { useMemberAttendanceCalendar } from "@/api/queries/attendance";
 import { getApiError } from "@/api/client";
 import { formatDate, getInitials } from "@fitconnect/shared";
 import { getDueDateState } from "@/lib/member-due";
+import { genderMeta } from "@/lib/gender";
+import { useAdjacentRecord } from "@/lib/use-adjacent-record";
+import { SwipePane } from "@/components/ui/swipe-pane";
 import { formatShiftLabel, formatShiftWindow } from "@/lib/shifts";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { getTenantDashboardPath } from "@/lib/subdomain";
@@ -77,7 +80,7 @@ import {
   CalendarDays,
   Trash2,
 } from "lucide-react";
-import type { Badge, MemberDetail, Shift } from "@/types/api";
+import type { Badge, MemberDetail, Shift, TenantMember } from "@/types/api";
 import AvatarCard from "@/components/ui/avatarCard";
 import MemberForm, { type MemberFormData } from "@/components/forms/MemberForm";
 
@@ -144,6 +147,23 @@ export default function MemberDetailPage() {
   const loading = memberQuery.isLoading;
   const error = actionError || (memberQuery.isError ? getApiError(memberQuery.error) : "");
   const isMemberProfile = member?.role === "MEMBER";
+
+  /**
+   * The members either side of this one, taken from the list cache so a swipe
+   * costs nothing. Deep-linked here with no cached list, there are simply no
+   * neighbours and the gesture does nothing.
+   */
+  const siblings = useAdjacentRecord<TenantMember>({
+    queryKey: queryKeys.members.list(currentTenantId ?? "none", { all: true }),
+    currentId: membershipId,
+    sort: (a, b) => new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime(),
+  });
+
+  const goToSibling = (id: string | null) => {
+    // `replace` so swiping through ten members does not bury the list ten
+    // entries deep in the back stack.
+    if (id) navigate(getTenantDashboardPath(`/members/${id}`), { replace: true });
+  };
 
   const settingsQuery = useTenantSettings();
   const tenantSettings = settingsQuery.data ?? null;
@@ -238,12 +258,13 @@ export default function MemberDetailPage() {
       const roleChanged = data.role !== member.role;
       const nameChanged = data.name !== member.name;
       const phoneChanged = data.phone !== (member.phone ?? "");
+      const genderChanged = data.gender !== (member.gender ?? null);
       const nextShiftId = data.shiftId || null;
       const currentShiftId = member.shift?.id ?? null;
       const shiftChanged = nextShiftId !== currentShiftId;
       const avatarChanged = Boolean(data.photoFile) || data.photoPreview !== member.avatarUrl;
 
-      if (!roleChanged && !nameChanged && !phoneChanged && !shiftChanged && !avatarChanged) {
+      if (!roleChanged && !nameChanged && !phoneChanged && !genderChanged && !shiftChanged && !avatarChanged) {
         navigate(getTenantDashboardPath(`/members/${membershipId}`), { replace: true });
         return;
       }
@@ -260,12 +281,13 @@ export default function MemberDetailPage() {
         await updateMemberRole.mutateAsync({ membershipId, role: data.role });
       }
 
-      if (nameChanged || phoneChanged || shiftChanged || avatarUrl !== undefined) {
+      if (nameChanged || phoneChanged || genderChanged || shiftChanged || avatarUrl !== undefined) {
         await updateMember.mutateAsync({
           membershipId,
           data: {
             ...(nameChanged ? { name: data.name } : {}),
             ...(phoneChanged ? { phone: data.phone } : {}),
+            ...(genderChanged ? { gender: data.gender } : {}),
             ...(shiftChanged ? { shiftId: nextShiftId } : {}),
             ...(avatarUrl !== undefined ? { avatarUrl } : {}),
           },
@@ -407,6 +429,9 @@ export default function MemberDetailPage() {
                 name: member.name,
                 email: member.email,
                 phone: member.phone ?? "",
+                // Left unset for records from before the field existed, so the
+                // form falls back to its own default rather than to null.
+                ...(member.gender ? { gender: member.gender } : {}),
                 role: member.role,
                 shiftId: member.shift?.id ?? "",
                 photoPreview: member.avatarUrl,
@@ -424,26 +449,36 @@ export default function MemberDetailPage() {
   }
 
   // ─── Shared meta + badges (used in both mobile and desktop layouts) ──────────
+  const memberGender = genderMeta(member.gender);
+
   const memberMeta = (
     <>
-      <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <Mail className="h-3.5 w-3.5" />
-          {member.email}
+      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-muted-foreground">
+        {/* The email is the one item that can be long enough to push the row
+            around, so it gets the whole line to itself and truncates. */}
+        <span className="flex w-full min-w-0 items-center gap-1 sm:w-auto">
+          <Mail className="h-3.5 w-3.5 shrink-0" />
+          <span className="truncate">{member.email}</span>
         </span>
         {member.phone && (
-          <span className="flex items-center gap-1">
-            <Phone className="h-3.5 w-3.5" />
+          <span className="flex items-center gap-1 whitespace-nowrap">
+            <Phone className="h-3.5 w-3.5 shrink-0" />
             {member.phone}
           </span>
         )}
-        <span className="flex items-center gap-1">
-          <Calendar className="h-3.5 w-3.5" />
+        {memberGender && (
+          <span className="flex items-center gap-1 whitespace-nowrap">
+            <memberGender.icon className="h-3.5 w-3.5 shrink-0" />
+            {memberGender.label}
+          </span>
+        )}
+        <span className="flex items-center gap-1 whitespace-nowrap">
+          <Calendar className="h-3.5 w-3.5 shrink-0" />
           Joined {formatDate(member.joinedAt)}
         </span>
         {member.shift && (
-          <span className="flex items-center gap-1">
-            <Clock className="h-3.5 w-3.5" />
+          <span className="flex items-center gap-1 whitespace-nowrap">
+            <Clock className="h-3.5 w-3.5 shrink-0" />
             {formatShiftLabel(member.shift)}
           </span>
         )}
@@ -549,7 +584,13 @@ export default function MemberDetailPage() {
     : `This will permanently delete this ${viewedRoleLabel} profile. Workout plans assigned to them and workout plans created by them will be deleted. Payments they collected and attendance entries they marked will be kept, but the collected-by and marked-by references will be cleared. This action cannot be undone.`;
 
   return (
-    <div className="space-y-6">
+    <SwipePane
+      paneKey={membershipId ?? "member"}
+      paneIndex={siblings.index}
+      onNext={() => goToSibling(siblings.nextId)}
+      onPrevious={() => goToSibling(siblings.previousId)}
+      className="space-y-6"
+    >
       <ConfirmDialog
         open={deleteConfirmOpen}
         onOpenChange={setDeleteConfirmOpen}
@@ -691,6 +732,7 @@ export default function MemberDetailPage() {
           <AvatarCard
             name={member.name}
             avatarUrl={member.avatarUrl}
+            gender={member.gender}
             memberId={member.memberId}
             className="min-w-0"
             role={member.role}
@@ -774,7 +816,7 @@ export default function MemberDetailPage() {
 
       <div
         className={cn(
-          "grid gap-4 sm:grid-cols-2",
+          "grid grid-cols-2 gap-3 sm:gap-4",
           isMemberProfile ? "lg:grid-cols-4" : "lg:grid-cols-2",
         )}
       >
@@ -788,7 +830,7 @@ export default function MemberDetailPage() {
               })
             }
           >
-            <CardContent className="pt-6">
+            <CardContent className="px-4 pt-4 pb-4 sm:px-6 sm:pt-6">
               <div className="flex items-center gap-3">
                 <CreditCard className="h-5 w-5 text-muted-foreground" />
                 <div>
@@ -801,7 +843,7 @@ export default function MemberDetailPage() {
         )}
 
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="px-4 pt-4 pb-4 sm:px-6 sm:pt-6">
             <div className="flex items-center gap-3">
               <Award className="h-5 w-5 text-muted-foreground" />
               <div>
@@ -814,7 +856,7 @@ export default function MemberDetailPage() {
 
         {isMemberProfile && (
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="px-4 pt-4 pb-4 sm:px-6 sm:pt-6">
               <div className="flex items-center gap-3">
                 <Dumbbell className="h-5 w-5 text-muted-foreground" />
                 <div>
@@ -827,7 +869,7 @@ export default function MemberDetailPage() {
         )}
 
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="px-4 pt-4 pb-4 sm:px-6 sm:pt-6">
             <div className="flex items-center gap-3">
               <Clock className="h-5 w-5 text-muted-foreground" />
               <div>
@@ -1019,6 +1061,6 @@ export default function MemberDetailPage() {
           </CardContent>
         </Card>
       )}
-    </div>
+    </SwipePane>
   );
 }

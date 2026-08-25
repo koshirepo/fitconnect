@@ -15,6 +15,7 @@ import { badRequest, forbidden } from "../lib/response";
 import { createMiddleware } from "hono/factory";
 import { prisma } from "../lib/prisma";
 import { rolePermissionRepository } from "../modules/roles/roles.repository";
+import { cached } from "../lib/request-cache";
 import type { AppBindings } from "../types/app-context";
 
 type PermissionMode = "all" | "any";
@@ -69,26 +70,36 @@ function authorize(required: readonly Permission[], options: AuthorizeOptions = 
 
       tenantRole = membershipRole ?? null;
 
-      // Tenant members lose access when the gym's platform subscription lapses.
-      // Platform staff keep access so they can service an expired tenant.
-      if (membershipRole) {
-        const tenant = await prisma.tenant.findUnique({
-          where: { id: tenantId },
-          select: { platformExpiresAt: true },
-        });
-
-        if (isTenantPlatformExpired(tenant?.platformExpiresAt)) {
-          return forbidden(
-            c,
-            "Platform access is expired. Renew access to continue using the platform.",
-          );
-        }
-      }
-
       c.set("tenantAccess", membershipRole ? { tenantId, role: membershipRole } : null);
     }
 
-    const overrides = await rolePermissionRepository.listApplicableOverrides(tenantId);
+    // Two reads that used to run one after the other on every single
+    // tenant-scoped request. They are independent, so they go together, and
+    // both are cached briefly — neither the gym's expiry date nor its role
+    // overrides change between two requests a second apart.
+    const [tenantExpiry, overrides] = await Promise.all([
+      scope === "tenant" && tenantRole
+        ? cached(`tenant-expiry:${tenantId}`, async () => {
+            const tenant = await prisma.tenant.findUnique({
+              where: { id: tenantId! },
+              select: { platformExpiresAt: true },
+            });
+            return tenant?.platformExpiresAt ?? null;
+          })
+        : Promise.resolve(null),
+      cached(`role-overrides:${tenantId ?? "platform"}`, () =>
+        rolePermissionRepository.listApplicableOverrides(tenantId),
+      ),
+    ]);
+
+    // Tenant members lose access when the gym's platform subscription lapses.
+    // Platform staff keep access so they can service an expired tenant.
+    if (isTenantPlatformExpired(tenantExpiry)) {
+      return forbidden(
+        c,
+        "Platform access is expired. Renew access to continue using the platform.",
+      );
+    }
 
     const granted = resolveEffectivePermissions({
       platformRole: user.platformRole,

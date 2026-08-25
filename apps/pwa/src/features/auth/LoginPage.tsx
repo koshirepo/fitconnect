@@ -148,17 +148,18 @@ export default function LoginPage() {
             </div>
           </form>
 
-          <div className="mt-4 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setError("");
-              }}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Already have an account? Sign in
-            </button>
-          </div>
+          {/* Joining is gym-specific, so this only makes sense on a gym's own site. */}
+          {tenantContext && (
+            <div className="mt-4 text-center text-sm text-muted-foreground">
+              New here?{" "}
+              <Link
+                to="/signup"
+                className="font-medium text-foreground hover:underline"
+              >
+                Join {tenantBrand?.name ?? "this gym"}
+              </Link>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

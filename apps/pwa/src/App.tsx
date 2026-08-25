@@ -22,32 +22,34 @@ import { TenantPathNormalizer } from "@/features/auth/tenant-path-normalizer";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useAuthStore } from "@/stores/auth";
 
-// Eagerly loaded pages that are available offline after first load
+// Eager: the handful of screens a session starts on. Everything else is
+// lazy — Workbox precaches every built chunk, so a lazily-imported page is
+// still available offline after first load, it just is not in first paint.
 import DashboardPage from "@/features/dashboard/DashboardPage";
 import MembersPage from "@/features/members/MembersPage";
-import MemberDetailPage from "@/features/members/MemberDetailPage";
-import AddMemberPage from "@/features/members/AddMemberPage";
-import ReferralsPage from "@/features/members/ReferralsPage";
+const MemberDetailPage = React.lazy(() => import("@/features/members/MemberDetailPage"));
+const AddMemberPage = React.lazy(() => import("@/features/members/AddMemberPage"));
+const ReferralsPage = React.lazy(() => import("@/features/members/ReferralsPage"));
 import PaymentsPage from "@/features/payments/PaymentsPage";
-import PaymentDetailPage from "@/features/payments/PaymentDetailPage";
-import RecordPaymentPage from "@/features/payments/RecordPaymentPage";
-import BadgesPage from "@/features/badges/BadgesPage";
-import CreateBadgePage from "@/features/badges/CreateBadgePage";
-import AttendancePage from "@/features/attendance/AttendancePage";
-import AttendanceCalendarPage from "@/features/attendance/AttendanceCalendarPage";
-import AttendanceQrPage from "@/features/attendance/AttendanceQrPage";
-import WorkoutsPage from "@/features/workouts/WorkoutsPage";
-import WorkoutDetailPage from "@/features/workouts/WorkoutDetailPage";
-import TodosPage from "@/features/todos/TodosPage";
-import ProfilePage from "@/features/profile/ProfilePage";
-import SubscriptionsPage from "@/features/payments/subscription";
-import CreateSubscriptionPage from "@/features/payments/subscription/CreateSubscriptionPage";
-import GymSettingsPage from "@/features/settings/GymSettingsPage";
-import MessagesPage from "@/features/settings/MessagesPage";
-import FinanceReportsPage from "@/features/finance/FinanceReportsPage";
-import AuditLogsPage from "@/features/audit/AuditLogsPage";
+const PaymentDetailPage = React.lazy(() => import("@/features/payments/PaymentDetailPage"));
+const RecordPaymentPage = React.lazy(() => import("@/features/payments/RecordPaymentPage"));
+const BadgesPage = React.lazy(() => import("@/features/badges/BadgesPage"));
+const CreateBadgePage = React.lazy(() => import("@/features/badges/CreateBadgePage"));
+const AttendancePage = React.lazy(() => import("@/features/attendance/AttendancePage"));
+const AttendanceCalendarPage = React.lazy(() => import("@/features/attendance/AttendanceCalendarPage"));
+const AttendanceQrPage = React.lazy(() => import("@/features/attendance/AttendanceQrPage"));
+const WorkoutsPage = React.lazy(() => import("@/features/workouts/WorkoutsPage"));
+const WorkoutDetailPage = React.lazy(() => import("@/features/workouts/WorkoutDetailPage"));
+const TodosPage = React.lazy(() => import("@/features/todos/TodosPage"));
+const ProfilePage = React.lazy(() => import("@/features/profile/ProfilePage"));
+const SubscriptionsPage = React.lazy(() => import("@/features/payments/subscription"));
+const CreateSubscriptionPage = React.lazy(() => import("@/features/payments/subscription/CreateSubscriptionPage"));
+const GymSettingsPage = React.lazy(() => import("@/features/settings/GymSettingsPage"));
+const MessagesPage = React.lazy(() => import("@/features/settings/MessagesPage"));
+const FinanceReportsPage = React.lazy(() => import("@/features/finance/FinanceReportsPage"));
+const AuditLogsPage = React.lazy(() => import("@/features/audit/AuditLogsPage"));
 import LoginPage from "@/features/auth/LoginPage";
-import UserOrderHistoryPage from "@/features/commerce/UserOrderHistoryPage";
+const UserOrderHistoryPage = React.lazy(() => import("@/features/commerce/UserOrderHistoryPage"));
 
 // Lazy loaded pages for public and admin flows that are not critical offline
 const TenantDetails = React.lazy(() => import("./features/tenants/details"));
@@ -62,6 +64,7 @@ const ResetPasswordPage = React.lazy(
   () => import("@/features/auth/ResetPasswordPage"),
 );
 const LandingPage = React.lazy(() => import("@/features/public/LandingPage"));
+const SignupPage = React.lazy(() => import("@/features/public/SignupPage"));
 const TenantPublicPage = React.lazy(
   () => import("@/features/public/TenantPublicPage"),
 );
@@ -136,6 +139,9 @@ export default function App() {
       <Route path="/attendance/qr/:tenantId" element={<AttendanceQrPage />} />
       <Route element={<RedirectIfAuth />}>
         <Route path="/login" element={<LoginPage />} />
+        {/* Joining is for people without an account; a signed-in member is
+            sent to their dashboard instead. */}
+        <Route path="/signup" element={<SignupPage />} />
       </Route>
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />

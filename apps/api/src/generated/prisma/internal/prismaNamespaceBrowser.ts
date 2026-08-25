@@ -52,6 +52,7 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
+  IdempotencyKey: 'IdempotencyKey',
   PasswordResetToken: 'PasswordResetToken',
   RefreshToken: 'RefreshToken',
   Tenant: 'Tenant',
@@ -98,6 +99,7 @@ export const UserScalarFieldEnum = {
   phone: 'phone',
   passwordHash: 'passwordHash',
   avatarUrl: 'avatarUrl',
+  gender: 'gender',
   platformRole: 'platformRole',
   status: 'status',
   createdAt: 'createdAt',
@@ -105,6 +107,19 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const IdempotencyKeyScalarFieldEnum = {
+  key: 'key',
+  userId: 'userId',
+  method: 'method',
+  path: 'path',
+  statusCode: 'statusCode',
+  response: 'response',
+  createdAt: 'createdAt'
+} as const
+
+export type IdempotencyKeyScalarFieldEnum = (typeof IdempotencyKeyScalarFieldEnum)[keyof typeof IdempotencyKeyScalarFieldEnum]
 
 
 export const PasswordResetTokenScalarFieldEnum = {

@@ -87,6 +87,7 @@ app.use(
   }),
 );
 
+
 app.get("/", (c) => ok(c, { status: "ok", service: "gms-api" }));
 
 app.route("/auth", authRoutes);

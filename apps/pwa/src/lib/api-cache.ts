@@ -50,6 +50,19 @@ function isNetworkError(error: unknown): boolean {
  * Queue a mutation for later sync. Shared by the axios interceptor and manual
  * offline paths (e.g. AddMemberPage).
  */
+/**
+ * A key that identifies one intended write for as long as it is queued.
+ *
+ * `crypto.randomUUID` needs a secure context, which a PWA always has; the
+ * fallback only matters for an insecure-origin dev server.
+ */
+function newIdempotencyKey() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 export async function queueMutation(
   url: string,
   method: "POST" | "PATCH" | "PUT" | "DELETE",
@@ -69,6 +82,9 @@ export async function queueMutation(
     },
     createdAt: Date.now(),
     retries: 0,
+    // Generated once, here, and reused by every retry. A key minted at send
+    // time would be new on each attempt and defeat the whole point.
+    idempotencyKey: newIdempotencyKey(),
   });
 
   // Trigger Background Sync if supported
@@ -241,6 +257,11 @@ export async function queueFailedMutation(error: unknown): Promise<AxiosResponse
   // Skip auth endpoints
   const url = config.url ?? "";
   if (url.includes("/auth/")) return Promise.reject(error);
+
+  // Skip public self-signup. Replaying it later would create a member whose
+  // payment window is long gone, and the visitor is standing there waiting for
+  // an answer now — a queued "we'll get to it" is worse than a plain failure.
+  if (url.includes("/public/signup")) return Promise.reject(error);
 
   // Skip FormData/multipart requests — binary data can't be serialized to JSON.
   // File uploads must be handled explicitly (e.g. AddMemberPage stores files in pendingFiles).

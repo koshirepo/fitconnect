@@ -58,6 +58,7 @@ export default function MemberSelector({
           <AvatarCard
             name={selectedMember.name}
             avatarUrl={selectedMember.avatarUrl}
+            gender={selectedMember.gender}
             memberId={selectedMember.memberId}
             dueDate={selectedMember.dueDate}
             variant="sm"
@@ -115,6 +116,7 @@ export default function MemberSelector({
                       <AvatarCard
                         name={m.name}
                         avatarUrl={m.avatarUrl}
+                        gender={m.gender}
                         memberId={m.memberId}
                         dueDate={m.dueDate}
                         variant="sm"

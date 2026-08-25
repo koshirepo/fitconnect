@@ -4,12 +4,11 @@ import { Permission } from "@fitconnect/shared/types/permissions";
 import { useParams } from "react-router-dom";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
-import { badgesApi } from "@/api/badges";
 import { paymentsApi } from "@/api/payments";
 import { useQueryClient } from "@tanstack/react-query";
-import { loadAllTenantMembers } from "@/lib/tenant-members";
-import { settingsApi } from "@/api/settings";
-import { tenantsApi } from "@/api/tenants";
+import { useAllMembers, useMember } from "@/api/queries/members";
+import { useSubscriptions } from "@/api/queries/payments";
+import { useTenantSettings } from "@/api/queries/catalog";
 import { getApiError } from "@/api/client";
 import { formatCurrency } from "@/lib/utils";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
@@ -69,6 +68,7 @@ function toTenantMember(member: TenantMember | MemberDetail): TenantMember {
     email: member.email,
     phone: member.phone,
     avatarUrl: member.avatarUrl,
+    gender: member.gender ?? null,
     role: member.role,
     status: member.status,
     joinedAt: member.joinedAt,
@@ -86,140 +86,64 @@ export default function RecordPaymentPage() {
   const gymName = currentMembership()?.tenantName ?? "the gym";
   const today = React.useMemo(() => new Date().toISOString().slice(0, 10), []);
 
-  const [members, setMembers] = React.useState<TenantMember[]>([]);
-  const [subscriptions, setSubscriptions] = React.useState<Subscription[]>([]);
-  const [tenantSettings, setTenantSettings] = React.useState<TenantSettings | null>(null);
-  const [selectedMember, setSelectedMember] = React.useState<TenantMember | null>(null);
-  const [selectedMemberBadges, setSelectedMemberBadges] = React.useState<MemberBadgeSummary[]>([]);
-  const [loadingMemberBadges, setLoadingMemberBadges] = React.useState(false);
-  const [memberBadgeError, setMemberBadgeError] = React.useState("");
-  const [loading, setLoading] = React.useState(true);
-  const [submitting, setSubmitting] = React.useState(false);
-  const [error, setError] = React.useState("");
-  const memberBadgeCacheRef = React.useRef<Record<string, MemberBadgeSummary[]>>({});
-
   // Form state
   const [fMembershipId, setFMembershipId] = React.useState(membershipId ?? "");
   const [fSubscriptionId, setFSubscriptionId] = React.useState("");
   const [fAmount, setFAmount] = React.useState("");
   const [fValidUntil, setFValidUntil] = React.useState("");
   const [fNote, setFNote] = React.useState("");
+  const [fPaidAmount, setFPaidAmount] = React.useState("");
   const [fStatus, setFStatus] = React.useState<"PENDING" | "COMPLETED">("COMPLETED");
 
-  React.useEffect(() => {
-    if (!currentTenantId) return;
-    let cancelled = false;
+  const [submitting, setSubmitting] = React.useState(false);
+  const [error, setError] = React.useState("");
 
-    setLoading(true);
-    setError("");
-    setSelectedMember(null);
-    setSelectedMemberBadges([]);
-    setLoadingMemberBadges(false);
-    setMemberBadgeError("");
-    memberBadgeCacheRef.current = {};
-    setFMembershipId(membershipId ?? "");
+  /**
+   * Everything this page reads comes from the shared query cache, so arriving
+   * from a screen that already loaded a member renders immediately and
+   * revalidates in the background instead of blocking on a fresh download.
+   */
+  const selectedMemberQuery = useMember(fMembershipId || undefined);
+  // The roster is only needed to pick someone. Routed here from a member,
+  // the member is already decided, so the whole list is never fetched.
+  const rosterQuery = useAllMembers({ enabled: !membershipId });
+  const subscriptionsQuery = useSubscriptions();
+  const settingsQuery = useTenantSettings();
 
-    const settingsRequest = settingsApi
-      .getSettings(currentTenantId)
-      .then((res) => res.data.data.settings)
-      .catch(() => null);
+  const members = React.useMemo(() => rosterQuery.data ?? [], [rosterQuery.data]);
+  const subscriptions = React.useMemo<Subscription[]>(
+    () => subscriptionsQuery.data ?? [],
+    [subscriptionsQuery.data],
+  );
+  const tenantSettings: TenantSettings | null = settingsQuery.data ?? null;
 
-    const selectedMemberRequest = membershipId
-      ? tenantsApi
-          .getMemberDetail(currentTenantId, membershipId)
-          .then((res) => res.data.data.member)
-          .catch(() => null)
-      : Promise.resolve<MemberDetail | null>(null);
-
-    Promise.all([
-      // Four reads whose results depend on each other — the routed member is
-      // merged into the roster and seeds the badge cache — so this stays a
-      // coordinated load rather than four independent queries.
-      loadAllTenantMembers(currentTenantId, { pageSize: 100, forceRefresh: true }),
-      paymentsApi.listSubscriptions(currentTenantId),
-      selectedMemberRequest,
-      settingsRequest,
-    ])
-      .then(([allMembers, subsRes, routedMemberDetail, settings]) => {
-        if (cancelled) return;
-
-        const rosterMembers = allMembers;
-        const routedMember = routedMemberDetail ? toTenantMember(routedMemberDetail) : null;
-        const membersWithSelected =
-          routedMember && !rosterMembers.some((m) => m.id === routedMember.id)
-            ? [routedMember, ...rosterMembers]
-            : rosterMembers;
-
-        setMembers(membersWithSelected);
-        setSubscriptions(subsRes.data.data.subscriptions);
-        setTenantSettings(settings);
-
-        const initialMember =
-          routedMember ?? membersWithSelected.find((m) => m.id === membershipId) ?? null;
-
-        if (routedMemberDetail) {
-          memberBadgeCacheRef.current[routedMemberDetail.id] =
-            routedMemberDetail.badges.map(toMemberBadgeSummary);
-        }
-
-        setSelectedMember(initialMember);
-        setFMembershipId(initialMember?.id ?? membershipId ?? "");
-      })
-      .catch(() => {
-        if (!cancelled) setError("Failed to load data");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [currentTenantId, membershipId]);
-
-  React.useEffect(() => {
-    if (!currentTenantId || !selectedMember?.id) {
-      setSelectedMemberBadges([]);
-      setLoadingMemberBadges(false);
-      setMemberBadgeError("");
-      return;
+  const selectedMemberDetail = selectedMemberQuery.data ?? null;
+  const selectedMember = React.useMemo<TenantMember | null>(() => {
+    if (!fMembershipId) return null;
+    // The detail record is the fuller one; the roster row covers the moment
+    // between picking someone and their detail arriving.
+    if (selectedMemberDetail?.id === fMembershipId) {
+      return toTenantMember(selectedMemberDetail);
     }
+    return members.find((m) => m.id === fMembershipId) ?? null;
+  }, [fMembershipId, members, selectedMemberDetail]);
 
-    const cachedBadges = memberBadgeCacheRef.current[selectedMember.id];
-    if (cachedBadges) {
-      setSelectedMemberBadges(cachedBadges);
-      setLoadingMemberBadges(false);
-      setMemberBadgeError("");
-      return;
-    }
+  const selectedMemberBadges = React.useMemo<MemberBadgeSummary[]>(
+    () =>
+      selectedMemberDetail?.id === fMembershipId
+        ? selectedMemberDetail.badges.map(toMemberBadgeSummary)
+        : [],
+    [fMembershipId, selectedMemberDetail],
+  );
+  const loadingMemberBadges = Boolean(fMembershipId) && selectedMemberQuery.isLoading;
+  const memberBadgeError = selectedMemberQuery.isError
+    ? "Failed to load this member's badges."
+    : "";
 
-    let cancelled = false;
-    setSelectedMemberBadges([]);
-    setLoadingMemberBadges(true);
-    setMemberBadgeError("");
-
-    badgesApi
-      .memberBadges(currentTenantId, selectedMember.id)
-      .then((res) => {
-        if (cancelled) return;
-        const badges = res.data.data.badges.map(toMemberBadgeSummary);
-        memberBadgeCacheRef.current[selectedMember.id] = badges;
-        setSelectedMemberBadges(badges);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setSelectedMemberBadges([]);
-          setMemberBadgeError("Failed to load this member's badges.");
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingMemberBadges(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [currentTenantId, selectedMember?.id]);
+  // Plans decide what can be recorded, so the page waits for them; the roster
+  // and the member resolve on their own.
+  const loading =
+    subscriptionsQuery.isLoading || (Boolean(membershipId) && selectedMemberQuery.isLoading);
 
   const selectedMemberBadgeIds = React.useMemo(
     () => new Set(selectedMemberBadges.map((badge) => badge.id)),
@@ -241,6 +165,7 @@ export default function RecordPaymentPage() {
     if (availableSubscriptions.some((subscription) => subscription.id === fSubscriptionId)) return;
     setFSubscriptionId("");
     setFAmount("");
+    setFPaidAmount("");
     setFValidUntil("");
   }, [availableSubscriptions, fSubscriptionId]);
 
@@ -248,9 +173,8 @@ export default function RecordPaymentPage() {
     setFMembershipId(memberId);
     setFSubscriptionId("");
     setFAmount("");
+    setFPaidAmount("");
     setFValidUntil("");
-    const member = members.find((m) => m.id === memberId);
-    setSelectedMember(member || null);
   };
 
   const handleSubChange = (subId: string) => {
@@ -258,11 +182,18 @@ export default function RecordPaymentPage() {
     const sub = availableSubscriptions.find((s) => s.id === subId);
     if (sub) {
       setFAmount(String(sub.amount));
+      setFPaidAmount("");
       const validUntil = new Date(today);
       validUntil.setDate(validUntil.getDate() + sub.durationDays);
       setFValidUntil(validUntil.toISOString().slice(0, 10));
     }
   };
+
+  // A part payment: blank means the member is paying the whole amount.
+  const totalAmount = Number(fAmount) || 0;
+  const receivedAmount = fPaidAmount === "" ? totalAmount : Number(fPaidAmount) || 0;
+  const balanceAmount =
+    fStatus === "COMPLETED" ? Math.max(totalAmount - receivedAmount, 0) : 0;
 
   const paymentReceiptTemplateBody = React.useMemo(
     () => getTenantWhatsAppTemplateBody(tenantSettings, "payment_receipt"),
@@ -300,6 +231,17 @@ export default function RecordPaymentPage() {
       return;
     }
 
+    if (fStatus === "COMPLETED" && fPaidAmount !== "") {
+      if (!Number.isInteger(receivedAmount) || receivedAmount <= 0) {
+        setError("Amount received must be a positive whole number");
+        return;
+      }
+      if (receivedAmount > amount) {
+        setError("Amount received cannot be more than the total");
+        return;
+      }
+    }
+
     if (!currentTenantId) {
       setError("No tenant selected");
       return;
@@ -312,6 +254,9 @@ export default function RecordPaymentPage() {
         membershipId: fMembershipId,
         subscriptionId: fSubscriptionId,
         amount,
+        // Sent only when it is actually a part payment, so an ordinary
+        // payment in full keeps the simpler payload it always had.
+        ...(balanceAmount > 0 ? { paidAmount: receivedAmount } : {}),
         status: fStatus,
         note: fNote || undefined,
         validUntil: fValidUntil,
@@ -331,7 +276,7 @@ export default function RecordPaymentPage() {
       if (!res.data._offlineQueued && selectedMember?.phone) {
         const msg = renderWhatsAppTemplateBody(paymentReceiptTemplateBody, {
           memberName: selectedMember.name,
-          amount: formatCurrency(amount),
+          amount: formatCurrency(balanceAmount > 0 ? receivedAmount : amount),
           subscriptionTitle: sub?.title ?? "subscription",
           gymName,
           status: fStatus === "COMPLETED" ? "Completed" : "Pending",
@@ -466,6 +411,36 @@ export default function RecordPaymentPage() {
                 <p className="text-sm text-destructive-foreground">{error}</p>
               )}
             </div>
+
+            {/* Part payment — blank means paid in full. */}
+            {fStatus === "COMPLETED" && (
+              <div className="space-y-2">
+                <Label htmlFor="paidAmount">Amount Received Now</Label>
+                <Input
+                  id="paidAmount"
+                  type="number"
+                  value={fPaidAmount}
+                  onChange={(e) => setFPaidAmount(e.target.value)}
+                  min={1}
+                  max={totalAmount || undefined}
+                  step={1}
+                  placeholder={
+                    totalAmount > 0
+                      ? `Full amount (${formatCurrency(totalAmount)})`
+                      : "Full amount"
+                  }
+                />
+                {balanceAmount > 0 ? (
+                  <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                    {formatCurrency(balanceAmount)} will be logged as a pending balance for this member.
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Leave blank for a payment in full. Enter less to take a part payment.
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Valid Until */}
             <div className="space-y-2">

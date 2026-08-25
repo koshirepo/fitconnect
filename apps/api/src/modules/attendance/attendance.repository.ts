@@ -100,7 +100,7 @@ export const attendanceRepository = {
             select: {
               id: true,
               memberId: true,
-              user: { select: { id: true, name: true, avatarUrl: true } },
+              user: { select: { id: true, name: true, gender: true, avatarUrl: true } },
             },
           },
           markedBy: {
@@ -210,7 +210,7 @@ export const attendanceRepository = {
       select: {
         id: true,
         memberId: true,
-        user: { select: { name: true, avatarUrl: true } },
+        user: { select: { name: true, gender: true, avatarUrl: true } },
       },
     });
 

@@ -50,6 +50,12 @@ export default function AddMemberPage() {
   const { currentTenantId } = useAuthStore();
   const queryClient = useQueryClient();
 
+  // A photo is mandatory unless an admin is the one adding the member: they can
+  // register someone at the desk now and add the photo on the member's page.
+  const isAdmin = useAuthStore(
+    (state) => state.tenantRole() === "ADMIN" || state.isPlatformStaff(),
+  );
+
   // Step management: 1 = member details, 2 = subscription & charges
   const [step, setStep] = React.useState(1);
   const [memberData, setMemberData] = React.useState<MemberFormData | null>(null);
@@ -140,6 +146,7 @@ export default function AddMemberPage() {
         name: memberData.name,
         email: memberData.email,
         phone: memberData.phone,
+        gender: memberData.gender,
         role: memberData.role,
         ...(selectedSubscriptionId
           ? { subscriptionId: selectedSubscriptionId }
@@ -305,6 +312,7 @@ export default function AddMemberPage() {
               shiftOptions={shifts}
               referralOptions={referralOptions}
               loadingShifts={loadingShifts}
+              requirePhoto={!isAdmin}
               onSubmit={handleStep1Submit}
               onCancel={() => navigate(getTenantDashboardPath("/members"))}
               submitLabel="Next: Select Plan"

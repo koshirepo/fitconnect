@@ -99,7 +99,12 @@ export const paymentController = {
     const parsed = await parseBody(c, createPaymentSchema);
     if (!parsed.ok) return parsed.response;
 
-    const result = await paymentService.createPayment(tenantId, c.get("authUser").id, parsed.data);
+    const result = await paymentService.createPayment(
+      tenantId,
+      c.get("authUser").id,
+      parsed.data,
+      (promise) => c.executionCtx.waitUntil(promise),
+    );
 
     if ("error" in result) {
       if (result.status === 400) return badRequest(c, result.error!);
@@ -164,6 +169,8 @@ export const paymentController = {
       tenantId,
       paymentId,
       parsed.data.status,
+      c.get("authUser").id,
+      (promise) => c.executionCtx.waitUntil(promise),
     );
 
     if ("error" in result) return notFound(c, result.error!);

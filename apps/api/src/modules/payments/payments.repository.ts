@@ -16,6 +16,22 @@ const subscriptionBadgeSelect = {
   isActive: true,
 } as const;
 
+/** What the gateway paths need to decide whether and how to settle a row. */
+const gatewayPaymentSelect = {
+  id: true,
+  status: true,
+  amount: true,
+  description: true,
+  // Carried so the settle path can notify the gym's admins without a second
+  // read: which gym, and who paid.
+  tenantId: true,
+  membershipId: true,
+  member: { select: { memberId: true, user: { select: { name: true } } } },
+  gatewayOrderId: true,
+  gatewayPaymentId: true,
+  subscription: { select: { id: true, title: true, durationDays: true } },
+} as const;
+
 export const paymentRepository = {
   /**
    * Run the `list payments` persistence operation for the payments module.
@@ -68,14 +84,14 @@ export const paymentRepository = {
               memberId: true,
               status: true,
               dueDate: true,
-              user: { select: { id: true, name: true, email: true, phone: true, avatarUrl: true } },
+              user: { select: { id: true, name: true, email: true, phone: true, gender: true, avatarUrl: true } },
             },
           },
           subscription: { select: { id: true, title: true } },
           collectedBy: {
             select: {
               id: true,
-              user: { select: { id: true, name: true, email: true, phone: true, avatarUrl: true } },
+              user: { select: { id: true, name: true, email: true, phone: true, gender: true, avatarUrl: true } },
             },
           },
         },
@@ -157,6 +173,8 @@ export const paymentRepository = {
       where: { id: subscriptionId, tenantId },
       select: {
         id: true,
+        // Names the balance row when a payment is only partly made.
+        title: true,
         badges: {
           select: { id: true },
         },
@@ -227,6 +245,7 @@ export const paymentRepository = {
         id: true,
         amount: true,
         status: true,
+        description: true,
         createdAt: true,
         member: {
           select: {
@@ -255,6 +274,11 @@ export const paymentRepository = {
         note: true,
         validFrom: true,
         validUntil: true,
+        // Enough to name the payer in the notification an admin receives when
+        // this row is settled.
+        member: {
+          select: { memberId: true, user: { select: { name: true } } },
+        },
       },
     });
   },
@@ -284,13 +308,13 @@ export const paymentRepository = {
             memberId: true,
             status: true,
             dueDate: true,
-            user: { select: { id: true, name: true, email: true, phone: true, avatarUrl: true } },
+            user: { select: { id: true, name: true, email: true, phone: true, gender: true, avatarUrl: true } },
           },
         },
         collectedBy: {
           select: {
             id: true,
-            user: { select: { id: true, name: true, email: true, phone: true, avatarUrl: true } },
+            user: { select: { id: true, name: true, email: true, phone: true, gender: true, avatarUrl: true } },
           },
         },
         subscription: {
@@ -518,21 +542,28 @@ export const paymentRepository = {
   /**
    * Find a payment by the gateway order it was opened against.
    *
-   * `gatewayOrderId` is unique, and the tenant is part of the filter, so a
-   * webhook aimed at one gym cannot settle another gym's payment.
+   * The tenant is part of the filter, so a webhook aimed at one gym cannot
+   * settle another gym's payment.
    */
   findPaymentByOrderId(gatewayOrderId: string, tenantId: string) {
     return prisma.payment.findFirst({
       where: { gatewayOrderId, tenantId },
-      select: {
-        id: true,
-        status: true,
-        amount: true,
-        membershipId: true,
-        gatewayOrderId: true,
-        gatewayPaymentId: true,
-        subscription: { select: { id: true, title: true, durationDays: true } },
-      },
+      select: gatewayPaymentSelect,
+    });
+  },
+
+  /**
+   * Every payment one gateway order covers.
+   *
+   * A self-signup pays for a plan and its mandatory charges in a single order,
+   * so an order maps to several rows. The single-plan checkout returns one row
+   * through the same query, which is why both paths can share it.
+   */
+  findPaymentsByOrderId(gatewayOrderId: string, tenantId: string) {
+    return prisma.payment.findMany({
+      where: { gatewayOrderId, tenantId },
+      select: gatewayPaymentSelect,
+      orderBy: { createdAt: "asc" },
     });
   },
 

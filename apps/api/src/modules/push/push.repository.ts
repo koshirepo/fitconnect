@@ -35,4 +35,24 @@ export const pushRepository = {
   findByUserId(userId: string) {
     return prisma.pushSubscription.findMany({ where: { userId } });
   },
+
+  /**
+   * Every push endpoint belonging to an active admin of this gym.
+   *
+   * `excludeUserId` leaves out the person whose own action triggered the
+   * notification — an admin who just recorded a payment does not need their
+   * phone to buzz about it.
+   */
+  findTenantAdminSubscriptions(tenantId: string, excludeUserId?: string) {
+    return prisma.pushSubscription.findMany({
+      where: {
+        ...(excludeUserId ? { userId: { not: excludeUserId } } : {}),
+        user: {
+          memberships: {
+            some: { tenantId, role: "ADMIN", status: "ACTIVE" },
+          },
+        },
+      },
+    });
+  },
 };

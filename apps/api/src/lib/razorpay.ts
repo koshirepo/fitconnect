@@ -94,12 +94,16 @@ async function request<T>(
 /**
  * Create an order — the object the checkout widget is opened against.
  *
- * `amount` is in the smallest currency unit (paise), matching how amounts are
- * stored throughout this codebase, so no conversion happens on the way in.
+ * `amount` is in rupees, the way plans, charges, and payment rows are stored
+ * and displayed everywhere else in this codebase. Razorpay wants the smallest
+ * currency unit, so the conversion to paise happens here, at the boundary —
+ * the one place that talks to Razorpay — rather than at each call site where
+ * forgetting it would silently charge a hundredth of the real price.
  */
 export async function createOrder(
   credentials: RazorpayCredentials,
   input: {
+    /** Rupees. */
     amount: number;
     currency?: string;
     receipt?: string;
@@ -109,7 +113,7 @@ export async function createOrder(
   return request<RazorpayOrder>(credentials, "/orders", {
     method: "POST",
     body: JSON.stringify({
-      amount: input.amount,
+      amount: Math.round(input.amount * 100),
       currency: input.currency ?? "INR",
       receipt: input.receipt,
       notes: input.notes,

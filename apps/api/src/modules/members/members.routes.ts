@@ -9,6 +9,7 @@
 import { Hono } from "hono";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { authenticate } from "../../middleware/authenticate";
+import { idempotency } from "../../middleware/idempotency";
 import { requireTenantPermissions } from "../../middleware/authorize";
 import { memberController } from "./members.controller";
 import type { AppBindings } from "../../types/app-context";
@@ -18,6 +19,9 @@ export const memberRoutes = new Hono<AppBindings>();
 memberRoutes.post(
   "/:tenantId/members",
   authenticate,
+  // A member added offline is replayed when the connection returns; without
+  // this a lost response produces the same person twice.
+  idempotency,
   requireTenantPermissions(Permission.MEMBERS_CREATE),
   memberController.addMember,
 );

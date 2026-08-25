@@ -22,7 +22,7 @@ import type {
 import { prisma } from "../../lib/prisma";
 import { emailService } from "../../lib/email";
 import { settingsRepository } from "../settings/settings.repository";
-import { tenantRepository } from "../tenants/tenants.repository";
+import { pushService } from "../push/push.service";
 import { renderWhatsAppTemplate } from "@fitconnect/shared/whatsapp-templates";
 
 type BackgroundTaskScheduler = (promise: Promise<unknown>) => void;
@@ -127,161 +127,6 @@ async function cleanupPreviousAsset(
 }
 
 /**
- * Execute the `enforce overdue memberships for tenant` workflow for the members module.
- * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
- */
-async function enforceOverdueMembershipsForTenant(
-  tenantId: string,
-  gymName: string,
-  overdueDays: number,
-  scheduleBackgroundTask?: BackgroundTaskScheduler,
-) {
-  const overdueMembers = (await memberRepository.getOverdueMembers(
-    tenantId,
-    overdueDays,
-  )) as Array<{
-    id: string;
-    memberId: number;
-    user: { name: string; email: string };
-  }>;
-  const suspended: { id: string; memberId: number; name: string }[] = [];
-
-  if (overdueMembers.length === 0) {
-    return { overdueMembers, suspended };
-  }
-
-  await memberRepository.suspendMany(overdueMembers.map((member) => member.id));
-
-  for (const member of overdueMembers) {
-    suspended.push({
-      id: member.id,
-      memberId: member.memberId,
-      name: member.user.name,
-    });
-  }
-
-  const backgroundWork = Promise.allSettled(
-    overdueMembers.map((member) =>
-      emailService
-        .sendSuspensionEmail(
-          member.user.email,
-          member.user.name,
-          gymName,
-          overdueDays,
-        )
-        .catch((err) => {
-          console.error("Suspension email failed.", err);
-        }),
-    ),
-  ).then(() => undefined);
-
-  if (scheduleBackgroundTask) {
-    scheduleBackgroundTask(backgroundWork);
-  } else {
-    await backgroundWork;
-  }
-
-  return { overdueMembers, suspended };
-}
-
-/**
- * Execute the `build tenant report data` workflow for scheduled and on-demand reports.
- * Keep report aggregation in one place so HTTP-triggered and cron-triggered flows stay consistent.
- */
-async function buildTenantReportData(
-  tenantId: string,
-  options: {
-    gymName?: string;
-    overdueDays?: number;
-    scheduleBackgroundTask?: BackgroundTaskScheduler;
-  } = {},
-) {
-  const {
-    gymName: providedGymName,
-    overdueDays: providedOverdueDays,
-    scheduleBackgroundTask,
-  } = options;
-
-  const [memberStats, financeStats, settings, tenant] = await Promise.all([
-    memberRepository.getDashboardStats(tenantId),
-    memberRepository.getFinanceStats(tenantId),
-    providedOverdueDays === undefined
-      ? prisma.tenantSettings.findUnique({
-          where: { tenantId },
-          select: { overdueDays: true },
-        })
-      : Promise.resolve(null),
-    providedGymName === undefined
-      ? prisma.tenant.findUnique({
-          where: { id: tenantId },
-          select: { name: true },
-        })
-      : Promise.resolve(null),
-  ]);
-
-  const overdueDays =
-    providedOverdueDays ?? settings?.overdueDays ?? DEFAULT_OVERDUE_DAYS;
-  const gymName = providedGymName ?? tenant?.name ?? "Fit Connect";
-
-  const { overdueMembers, suspended } =
-    await enforceOverdueMembershipsForTenant(
-      tenantId,
-      gymName,
-      overdueDays,
-      scheduleBackgroundTask,
-    );
-
-  return {
-    gymName,
-    reportData: {
-      members: memberStats,
-      finances: financeStats,
-      overdue: {
-        allowedDays: overdueDays,
-        found: overdueMembers.length,
-        suspended,
-      },
-    },
-  };
-}
-
-/**
- * Execute the `dispatch report emails` workflow for tenant reports.
- * Keep recipient fan-out isolated so both ad-hoc and scheduled report paths reuse the same email behavior.
- */
-async function dispatchReportEmails(
-  recipients: { email: string; name?: string | null }[],
-  gymName: string,
-  reportData: Awaited<ReturnType<typeof buildTenantReportData>>["reportData"],
-  scheduleBackgroundTask?: BackgroundTaskScheduler,
-) {
-  if (recipients.length === 0) return;
-
-  const backgroundWork = Promise.allSettled(
-    recipients.map((recipient) =>
-      emailService
-        .sendReportEmail({
-          to: recipient.email,
-          adminName: recipient.name ?? "Admin",
-          gymName,
-          members: reportData.members,
-          finances: reportData.finances,
-          overdue: reportData.overdue,
-        })
-        .catch((err) => {
-          console.error("Report email failed.", err);
-        }),
-    ),
-  ).then(() => undefined);
-
-  if (scheduleBackgroundTask) {
-    scheduleBackgroundTask(backgroundWork);
-  } else {
-    await backgroundWork;
-  }
-}
-
-/**
  * Enforce that an email and phone are not already in use inside this gym.
  *
  * Returns a ready-to-return error when the contact is taken, or null when it is
@@ -321,10 +166,19 @@ export const memberService = {
     input: AddMemberInput,
     callerRole: TenantRole | null,
     scheduleBackgroundTask?: BackgroundTaskScheduler,
+    /** Who is adding them — excluded from the admin notification below. */
+    actorUserId?: string,
   ): Promise<{ data: AddMemberResult } | ServiceError> {
     // Coaches can only add members (not other coaches or admins)
     if (callerRole === "COACH" && input.role !== "MEMBER") {
       return { error: "Coaches can only add members.", status: 403 as const };
+    }
+
+    // A photo is part of the record for everyone except an admin, who is
+    // trusted to add one from the desk and fill the photo in later. Platform
+    // staff (no tenant role) fall under the same trust.
+    if (callerRole && callerRole !== "ADMIN" && !input.avatarUrl) {
+      return { error: "A photo is required.", status: 400 as const };
     }
 
     const contactClash = await checkContactIsFree(tenantId, {
@@ -345,6 +199,7 @@ export const memberService = {
         passwordHash: await hashPassword(input.phone),
         platformRole: PlatformRole.USER,
         ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
+        ...(input.gender ? { gender: input.gender } : {}),
       });
     }
 
@@ -561,11 +416,76 @@ export const memberService = {
       settings?.whatsappTemplates,
     );
 
+    // The gym's admins hear about the admission and, when money changed hands
+    // with it, about the payment. Both go out in the background: a push
+    // provider having a slow day must not hold up the response.
+    // A member who gave a real address gets their credentials by email. The
+    // synthetic `phone@name.com` address invented for phone-only members is
+    // not a mailbox, so there is nothing to send to.
+    const welcomeEmailTo = input.email?.trim() ? input.email.trim() : null;
+
+    const sendWelcomeEmail = async () => {
+      if (!welcomeEmailTo) return;
+      try {
+        await emailService.sendWelcomeEmail({
+          to: welcomeEmailTo,
+          memberName: input.name,
+          gymName,
+          email: welcomeEmailTo,
+          // The phone number is what `createUser` hashed as the password.
+          password: input.phone,
+          memberId: membership.memberId,
+          payments: payments.map((payment) => ({
+            description: payment.description,
+            amount: payment.amount,
+          })),
+          ...(subscription
+            ? {
+                subscriptionTitle: subscription.title,
+                subscriptionDays: subscription.durationDays,
+              }
+            : {}),
+        });
+      } catch (error) {
+        // A mail server having a bad day must not fail an admission that has
+        // already been written.
+        console.error("Welcome email failed.", { membershipId: membership.id, error });
+      }
+    };
+
+    const notifyAdmins = async () => {
+      await pushService.notifyNewMember(tenantId, {
+        membershipId: membership.id,
+        memberId: membership.memberId,
+        name: input.name,
+        actorUserId,
+      });
+
+      if (total > 0) {
+        await pushService.notifyPaymentReceived(tenantId, {
+          amount: total,
+          memberId: membership.memberId,
+          memberName: input.name,
+          description: subscription?.title ?? null,
+          source: "DESK",
+          actorUserId,
+        });
+      }
+    };
+
+    if (scheduleBackgroundTask) {
+      scheduleBackgroundTask(Promise.all([notifyAdmins(), sendWelcomeEmail()]));
+    } else {
+      await Promise.all([notifyAdmins(), sendWelcomeEmail()]);
+    }
+
     return {
       data: {
         membership: flattenNestedMember(membership),
         payments,
         whatsappText,
+        /** Whether a welcome email was dispatched to a real address. */
+        emailSent: Boolean(welcomeEmailTo),
       },
     };
   },
@@ -593,6 +513,12 @@ export const memberService = {
       badgeId,
     );
     const now = new Date();
+
+    // One read for the gym: a member with an unpaid row is worth singling out
+    // in the list, and asking per member would not scale.
+    const pendingTotals =
+      await memberRepository.findPendingPaymentTotals(tenantId);
+
     return {
       data: {
         members: members.map((m) => {
@@ -601,7 +527,16 @@ export const memberService = {
             m.status === "ACTIVE" &&
             m.dueDate != null &&
             new Date(m.dueDate) <= now;
-          return { ...flat, isDue, dueDate: m.dueDate };
+          const pendingPaymentAmount = pendingTotals.get(m.id);
+          return {
+            ...flat,
+            isDue,
+            dueDate: m.dueDate,
+            hasPendingPayment: pendingPaymentAmount !== undefined,
+            ...(pendingPaymentAmount !== undefined
+              ? { pendingPaymentAmount }
+              : {}),
+          };
         }),
       },
       total,
@@ -729,6 +664,7 @@ export const memberService = {
     if (input.name !== undefined) userUpdate.name = input.name;
     if (input.phone !== undefined) userUpdate.phone = input.phone;
     if (input.avatarUrl !== undefined) userUpdate.avatarUrl = nextAvatarUrl;
+    if (input.gender !== undefined) userUpdate.gender = input.gender;
     if (input.newPassword) {
       userUpdate.passwordHash = await hashPassword(input.newPassword);
     }
@@ -792,6 +728,7 @@ export const memberService = {
     if (input.name !== undefined) userUpdate.name = input.name;
     if (input.phone !== undefined) userUpdate.phone = input.phone;
     if (input.avatarUrl !== undefined) userUpdate.avatarUrl = nextAvatarUrl;
+    if (input.gender !== undefined) userUpdate.gender = input.gender;
     if (input.newPassword) {
       userUpdate.passwordHash = await hashPassword(input.newPassword);
     }
@@ -935,145 +872,6 @@ export const memberService = {
 
     const deleted = await memberRepository.deleteMemberCascade(membershipId);
     return { data: { membershipId, deleted } };
-  },
-
-  /**
-   * Execute the `generate report` workflow for the members module.
-   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
-   */
-  async generateReport(
-    tenantId: string,
-    adminUserId: string,
-    scheduleBackgroundTask?: BackgroundTaskScheduler,
-  ) {
-    const [adminUser, { gymName, reportData }] = await Promise.all([
-      prisma.user.findUnique({
-        where: { id: adminUserId },
-        select: { email: true, name: true },
-      }),
-      buildTenantReportData(tenantId, { scheduleBackgroundTask }),
-    ]);
-
-    // Send report email to admin in the background.
-    if (adminUser?.email) {
-      await dispatchReportEmails(
-        [{ email: adminUser.email, name: adminUser.name }],
-        gymName,
-        reportData,
-        scheduleBackgroundTask,
-      );
-    }
-
-    return { data: reportData };
-  },
-
-  /**
-   * Execute the `run scheduled tenant reports` workflow for all active tenants.
-   * Keep cron-specific fan-out logic here so the Worker scheduled handler stays thin.
-   */
-  async runScheduledTenantReports(
-    scheduleBackgroundTask?: BackgroundTaskScheduler,
-  ) {
-    const tenants =
-      await tenantRepository.listActiveTenantsForScheduledReports();
-    const summary: {
-      processedTenants: number;
-      targetedAdmins: number;
-      tenants: {
-        tenantId: string;
-        gymName: string;
-        targetedAdmins: number;
-        suspendedCount: number;
-      }[];
-    } = {
-      processedTenants: tenants.length,
-      targetedAdmins: 0,
-      tenants: [],
-    };
-
-    for (const tenant of tenants) {
-      const recipients = tenant.memberships
-        .map((membership) => membership.user)
-        .filter(
-          (user, index, users) =>
-            user.status === "ACTIVE" &&
-            typeof user.email === "string" &&
-            user.email.length > 0 &&
-            users.findIndex((candidate) => candidate.id === user.id) === index,
-        )
-        .map((user) => ({
-          email: user.email as string,
-          name: user.name,
-        }));
-
-      const { gymName, reportData } = await buildTenantReportData(tenant.id, {
-        gymName: tenant.name,
-        overdueDays: tenant.settings?.overdueDays ?? DEFAULT_OVERDUE_DAYS,
-        scheduleBackgroundTask,
-      });
-
-      await dispatchReportEmails(
-        recipients,
-        gymName,
-        reportData,
-        scheduleBackgroundTask,
-      );
-
-      summary.targetedAdmins += recipients.length;
-      summary.tenants.push({
-        tenantId: tenant.id,
-        gymName,
-        targetedAdmins: recipients.length,
-        suspendedCount: reportData.overdue.suspended.length,
-      });
-    }
-
-    return { data: summary };
-  },
-
-  /**
-   * Execute the `run scheduled overdue enforcement` workflow for the members module.
-   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
-   */
-  async runScheduledOverdueEnforcement(
-    scheduleBackgroundTask?: BackgroundTaskScheduler,
-  ) {
-    const tenants =
-      await tenantRepository.listActiveTenantsForOverdueEnforcement();
-    const summary: {
-      processedTenants: number;
-      suspendedMembers: number;
-      tenants: {
-        tenantId: string;
-        gymName: string;
-        overdueDays: number;
-        suspendedCount: number;
-      }[];
-    } = {
-      processedTenants: tenants.length,
-      suspendedMembers: 0,
-      tenants: [],
-    };
-
-    for (const tenant of tenants) {
-      const overdueDays = tenant.settings?.overdueDays ?? DEFAULT_OVERDUE_DAYS;
-      const result = await enforceOverdueMembershipsForTenant(
-        tenant.id,
-        tenant.name,
-        overdueDays,
-        scheduleBackgroundTask,
-      );
-
-      summary.suspendedMembers += result.suspended.length;
-      summary.tenants.push({
-        tenantId: tenant.id,
-        gymName: tenant.name,
-        overdueDays,
-        suspendedCount: result.suspended.length,
-      });
-    }
-
-    return { data: summary };
   },
 
   /**

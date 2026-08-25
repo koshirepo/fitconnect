@@ -5,18 +5,12 @@ import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import MemberSelector from "@/components/ui/memberSelector";
 import { PhotoCapture } from "@/components/ui/photo-capture";
 import { formatShiftLabel } from "@/lib/shifts";
-import { AlertCircle } from "lucide-react";
-import type { Shift, TenantMember, TenantRole } from "@/types/api";
+import { AlertCircle, CircleSlash, Clock } from "lucide-react";
+import type { Gender, Shift, TenantMember, TenantRole } from "@/types/api";
+import { DEFAULT_GENDER, GENDER_OPTIONS } from "@/lib/gender";
 
 // ─── Role options per caller role ─────────────────────────────────────────────
 const ROLE_OPTIONS: Record<string, { value: TenantRole; label: string; description: string }[]> = {
@@ -46,10 +40,47 @@ const ROLE_OPTIONS: Record<string, { value: TenantRole; label: string; descripti
   ],
 };
 
+/**
+ * One selectable chip. Chips are used wherever the choices are few and worth
+ * seeing at a glance — gender, shift — instead of hiding them behind a select.
+ */
+function ChipOption({
+  icon: Icon,
+  label,
+  selected,
+  disabled,
+  onSelect,
+}: {
+  icon: React.ElementType;
+  label: string;
+  selected: boolean;
+  disabled?: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={onSelect}
+      disabled={disabled}
+      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
+        selected
+          ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary"
+          : "border-border text-muted-foreground hover:bg-accent/50"
+      }`}
+    >
+      <Icon className="h-4 w-4" />
+      {label}
+    </button>
+  );
+}
+
 export interface MemberFormData {
   name: string;
   email: string;
   phone: string;
+  gender: Gender;
   role: TenantRole;
   shiftId: string;
   referredByMembershipId: string;
@@ -66,6 +97,11 @@ interface MemberFormProps {
   shiftOptions?: Shift[];
   referralOptions?: TenantMember[];
   loadingShifts?: boolean;
+  /**
+   * A photo is mandatory for everyone except an admin, who can add a member
+   * from the desk now and fill the photo in later.
+   */
+  requirePhoto?: boolean;
   onSubmit: (data: MemberFormData) => Promise<void> | void;
   onCancel: () => void;
   submitLabel?: string;
@@ -79,6 +115,7 @@ export default function MemberForm({
   shiftOptions,
   referralOptions,
   loadingShifts = false,
+  requirePhoto = false,
   onSubmit,
   onCancel,
   submitLabel,
@@ -91,6 +128,7 @@ export default function MemberForm({
   const [name, setName] = React.useState(initialData.name ?? "");
   const [email, setEmail] = React.useState(initialData.email ?? "");
   const [phone, setPhone] = React.useState(initialData.phone ?? "");
+  const [gender, setGender] = React.useState<Gender>(initialData.gender ?? DEFAULT_GENDER);
   const [role, setRole] = React.useState<TenantRole>(initialData.role ?? ("MEMBER" as TenantRole));
   const [shiftId, setShiftId] = React.useState(initialData.shiftId ?? "");
   const [referredByMembershipId, setReferredByMembershipId] = React.useState(
@@ -111,12 +149,20 @@ export default function MemberForm({
     e.preventDefault();
     setInternalError("");
 
+    // On edit the existing avatar is already on file, so only a new record has
+    // to produce one here.
+    if (requirePhoto && mode === "create" && !photoFile && !photoPreview) {
+      setInternalError("A photo is required.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await onSubmit({
         name,
         email,
         phone,
+        gender,
         role,
         shiftId,
         referredByMembershipId,
@@ -136,15 +182,24 @@ export default function MemberForm({
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Photo */}
       <div className="space-y-2">
-        <Label>Photo</Label>
+        <Label>
+          Photo
+          {requirePhoto && <span className="ml-1 text-destructive">*</span>}
+        </Label>
         <PhotoCapture
           value={photoPreview}
           onChange={(file, preview) => {
             setPhotoFile(file);
             setPhotoPreview(preview);
+            if (preview) setInternalError("");
           }}
           disabled={isSubmitting || submitting}
         />
+        {requirePhoto && (
+          <p className="text-xs text-muted-foreground">
+            Take or upload a photo — it's how the gym recognises you at the door.
+          </p>
+        )}
       </div>
 
       {/* Name */}
@@ -197,6 +252,23 @@ export default function MemberForm({
         />
       </div>
 
+      {/* Gender — chips that behave as one radio group. */}
+      <div className="space-y-2">
+        <Label>Gender</Label>
+        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Gender">
+          {GENDER_OPTIONS.map((option) => (
+            <ChipOption
+              key={option.value}
+              icon={option.icon}
+              label={option.label}
+              selected={gender === option.value}
+              disabled={isSubmitting || submitting}
+              onSelect={() => setGender(option.value)}
+            />
+          ))}
+        </div>
+      </div>
+
       {mode === "create" && referralOptions !== undefined && (
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
@@ -227,33 +299,36 @@ export default function MemberForm({
         </div>
       )}
 
+      {/* Shift — the same chip radio group as gender, with "no shift" as a chip
+          of its own since the field is optional. */}
       {shiftOptions !== undefined && (
         <div className="space-y-2">
-          <Label htmlFor="shiftId">Shift</Label>
-          <Select
-            value={shiftId}
-            onValueChange={(value) => setShiftId(value ?? "")}
-            disabled={isSubmitting || submitting || loadingShifts || shiftOptions.length === 0}
-          >
-            <SelectTrigger id="shiftId" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">
-                {loadingShifts
-                  ? "Loading shifts..."
-                  : shiftOptions.length === 0
-                    ? "No shifts configured"
-                    : "Choose a shift (optional)"}
-              </SelectItem>
+          <Label>Shift</Label>
+          {loadingShifts ? (
+            <p className="text-sm text-muted-foreground">Loading shifts...</p>
+          ) : shiftOptions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No shifts configured.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Shift">
+              <ChipOption
+                icon={CircleSlash}
+                label="No shift"
+                selected={shiftId === ""}
+                disabled={isSubmitting || submitting}
+                onSelect={() => setShiftId("")}
+              />
               {shiftOptions.map((shift) => (
-                <SelectItem key={shift.id} value={shift.id}>
-                  {formatShiftLabel(shift)}
-                  {!shift.isActive ? " - Inactive" : ""}
-                </SelectItem>
+                <ChipOption
+                  key={shift.id}
+                  icon={Clock}
+                  label={`${formatShiftLabel(shift)}${shift.isActive ? "" : " - Inactive"}`}
+                  selected={shiftId === shift.id}
+                  disabled={isSubmitting || submitting}
+                  onSelect={() => setShiftId(shift.id)}
+                />
               ))}
-            </SelectContent>
-          </Select>
+            </div>
+          )}
           <p className="text-xs text-muted-foreground">
             Assign the member to a gym shift or batch.
           </p>

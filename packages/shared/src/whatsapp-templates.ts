@@ -18,6 +18,7 @@ type TemplateMetadata = {
 export const whatsappTemplateKeys = [
   "new_member_welcome",
   "payment_reminder",
+  "pending_payment_reminder",
   "payment_receipt",
 ] as const satisfies readonly WhatsAppTemplateKey[];
 
@@ -52,6 +53,19 @@ Thank you for joining us.`,
 This is a friendly reminder from *{{gymName}}* that your subscription has expired{{expirySuffix}}.
 
 Please renew your membership at the earliest to continue enjoying uninterrupted access to the gym.
+
+Thank you.`,
+  },
+  pending_payment_reminder: {
+    label: "Pending Payment Reminder",
+    description:
+      "Used when a member has an unpaid payment — a signup that never finished checkout, or a bill the desk recorded as pending.",
+    variables: ["memberName", "gymName", "amountLine"],
+    defaultBody: `Hi {{memberName}},
+
+We have a pending payment on your account at *{{gymName}}*.{{amountLine}}
+
+Please complete it to activate your membership and start training with us.
 
 Thank you.`,
   },

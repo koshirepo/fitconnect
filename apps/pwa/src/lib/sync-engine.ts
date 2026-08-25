@@ -1,4 +1,4 @@
-import { getDB } from "./offline-db";
+import { getDB, type GmsDB } from "./offline-db";
 import { api } from "@/api/client";
 import { getOfflineFile, deleteOfflineFile } from "./offline-files";
 
@@ -15,7 +15,12 @@ export type SyncResult = { synced: number; failed: number; conflicts: number };
  *   expired tokens are auto-refreshed.
  * - `X-Offline-Mutation` header tells the queueFailedMutation interceptor
  *   NOT to re-queue if the replay fails (prevents infinite duplication).
- * - 4xx (except 409) = permanent failure → discard.
+ * - Every attempt carries the mutation's `Idempotency-Key`, so a write the
+ *   server accepted before the response was lost is recognised as a repeat
+ *   rather than applied twice. This is what stops a flaky connection from
+ *   producing two payments for one collection.
+ * - 4xx (except 409) = permanent failure → kept and marked failed, never
+ *   deleted: work someone believes they did has to remain visible.
  * - 409 = conflict → mark for user review.
  * - 5xx / network error = transient → increment retries, stop draining.
  */
@@ -29,7 +34,11 @@ export async function flushPendingMutations(): Promise<SyncResult> {
   let conflicts = 0;
 
   try {
-    const mutations = await db.getAll("pendingMutations");
+    // Rows already marked conflicted or failed are waiting on a human, not
+    // on the network. Replaying them would loop forever.
+    const mutations = (await db.getAll("pendingMutations")).filter(
+      (mutation) => !mutation.status,
+    );
     mutations.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
 
     for (const mutation of mutations) {
@@ -72,6 +81,12 @@ export async function flushPendingMutations(): Promise<SyncResult> {
           headers: {
             "X-Offline-Mutation": "true",
             "X-Mutation-Timestamp": String(mutation.createdAt),
+            // Same key on every attempt, so a write the server already
+            // accepted before the response was lost is recognised as a
+            // repeat instead of being applied a second time.
+            ...(mutation.idempotencyKey
+              ? { "Idempotency-Key": mutation.idempotencyKey }
+              : {}),
           },
         });
 
@@ -95,10 +110,10 @@ export async function flushPendingMutations(): Promise<SyncResult> {
         }
 
         if (status && status >= 400 && status < 500) {
-          console.warn(
-            `[Sync] Permanent failure (${status}) for mutation ${mutation.id}, discarding`,
-          );
-          await db.delete("pendingMutations", mutation.id!);
+          // The server will never accept this. Keep the row and mark it so
+          // the person who made the change can see that it did not land —
+          // deleting it loses work they believe they did.
+          await markFailed(db, mutation, describeError(err, status));
           failed++;
           continue;
         }
@@ -106,8 +121,11 @@ export async function flushPendingMutations(): Promise<SyncResult> {
         // 5xx / network — transient, increment retries
         const retries = mutation.retries + 1;
         if (retries >= MAX_RETRIES) {
-          console.error(`[Sync] Max retries for mutation ${mutation.id}, discarding`);
-          await db.delete("pendingMutations", mutation.id!);
+          await markFailed(
+            db,
+            mutation,
+            "Could not reach the server after several attempts.",
+          );
           failed++;
         } else {
           const tx = db.transaction("pendingMutations", "readwrite");
@@ -128,10 +146,73 @@ export async function flushPendingMutations(): Promise<SyncResult> {
   return result;
 }
 
-/** Count of mutations waiting to sync. */
+/** Best available description of why the server refused a write. */
+function describeError(err: unknown, status: number) {
+  const data = (err as { response?: { data?: { error?: { message?: string } } } })
+    ?.response?.data;
+  return data?.error?.message ?? `The server rejected this change (${status}).`;
+}
+
+/**
+ * Keep a write that will never succeed, marked with why.
+ *
+ * Deleting it was the old behaviour and the reason a member added on a bad
+ * connection could disappear with nothing on screen to say so.
+ */
+/** One queued write, as stored. */
+type PendingMutation = GmsDB["pendingMutations"]["value"];
+
+async function markFailed(
+  db: Awaited<ReturnType<typeof getDB>>,
+  mutation: PendingMutation,
+  error: string,
+) {
+  const tx = db.transaction("pendingMutations", "readwrite");
+  await tx.store.put({
+    ...mutation,
+    status: "failed" as const,
+    error,
+    failedAt: Date.now(),
+  });
+  await tx.done;
+}
+
+/**
+ * Count of mutations still waiting to sync.
+ *
+ * Excludes rows already parked for a person to deal with — counting those
+ * as pending would leave the status pill stuck on a number that retrying
+ * can never clear.
+ */
 export async function getPendingCount(): Promise<number> {
   const db = await getDB();
-  return db.count("pendingMutations");
+  const all = await db.getAll("pendingMutations");
+  return all.filter((mutation) => !mutation.status).length;
+}
+
+/** Writes the server refused, or that ran out of retries. */
+export async function getFailedMutations(): Promise<PendingMutation[]> {
+  const db = await getDB();
+  const all = await db.getAll("pendingMutations");
+  return all.filter((mutation) => mutation.status === "failed");
+}
+
+export async function getFailedCount(): Promise<number> {
+  return (await getFailedMutations()).length;
+}
+
+/**
+ * Put a failed write back in the queue.
+ *
+ * The retry counter resets but the idempotency key does not, so if the
+ * original attempt did reach the server the retry still cannot double it.
+ */
+export async function retryMutation(id: number): Promise<void> {
+  const db = await getDB();
+  const mutation = await db.get("pendingMutations", id);
+  if (!mutation) return;
+  const { status: _status, error: _error, failedAt: _failedAt, ...rest } = mutation;
+  await db.put("pendingMutations", { ...rest, retries: 0 });
 }
 
 /** Count of conflicted mutations needing user review. */

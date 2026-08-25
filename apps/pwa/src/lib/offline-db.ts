@@ -55,8 +55,21 @@ export interface GmsDB extends DBSchema {
       headers: Record<string, string>;
       createdAt: number;
       retries: number;
-      /** Set to "conflicted" by sync engine on 409; undefined = pending. */
-      status?: "conflicted";
+      /**
+       * Stable per-write key, sent as `Idempotency-Key`. Survives every
+       * retry of this mutation so a write the server already accepted is
+       * recognised as a repeat rather than applied twice.
+       */
+      idempotencyKey?: string;
+      /**
+       * "conflicted" on 409, "failed" when the server refused it or it ran
+       * out of retries. Both are kept rather than deleted: a write the
+       * person made and lost has to be visible to them.
+       */
+      status?: "conflicted" | "failed";
+      /** Why it failed, for the UI to show. */
+      error?: string;
+      failedAt?: number;
     };
   };
   apiCache: {

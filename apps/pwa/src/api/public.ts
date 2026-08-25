@@ -4,6 +4,11 @@ import type {
   PublicGymSummary,
   ApiResponse,
   PaginatedResponse,
+  SignupOptions,
+  SelfSignupPayload,
+  SelfSignupResult,
+  SignupVerifyResult,
+  VerifyCheckoutPayload,
 } from "@/types/api";
 
 export type TenantBrandingPayload = {
@@ -18,6 +23,9 @@ export type TenantBrandingPayload = {
   address?: string | null;
   estd?: string | null;
 };
+
+/** The gym subdomain this browser is on, which is what identifies the tenant. */
+const currentHost = () => (typeof window !== "undefined" ? window.location.host : "");
 
 export const publicApi = {
   getTenantBySlug: (slug: string) =>
@@ -38,5 +46,24 @@ export const publicApi = {
   listGyms: (page = 1, limit = 20) =>
     api.get<PaginatedResponse<{ gyms: PublicGymSummary[] }>>("/public/gyms", {
       params: { page, limit },
+    }),
+
+  // ─── Self-signup ────────────────────────────────────────────────────────────
+  // The gym comes from the host, exactly as it does for branding, so a visitor
+  // can only ever join the gym whose site they are standing on.
+
+  getSignupOptions: (host = currentHost()) =>
+    api.get<ApiResponse<SignupOptions>>("/public/signup/options", {
+      params: { host, _: Date.now() },
+    }),
+
+  selfSignup: (payload: SelfSignupPayload, host = currentHost()) =>
+    api.post<ApiResponse<SelfSignupResult>>("/public/signup", payload, {
+      params: { host },
+    }),
+
+  verifySignup: (payload: VerifyCheckoutPayload, host = currentHost()) =>
+    api.post<ApiResponse<SignupVerifyResult>>("/public/signup/verify", payload, {
+      params: { host },
     }),
 };

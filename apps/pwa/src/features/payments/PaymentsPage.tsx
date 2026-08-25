@@ -9,6 +9,7 @@ import { useAllPayments, useMyPayments, useUpdatePaymentStatus } from "@/api/que
 import { Button } from "@/components/ui/button";
 import { MemberCard, PersonChip } from "@/components/ui/member-card";
 import { PageLoader } from "@/components/ui/spinner";
+import { SwipePane } from "@/components/ui/swipe-pane";
 import { EmptyState } from "@/components/ui/empty-state";
 import { downloadCsv } from "@/lib/csv";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
@@ -89,6 +90,12 @@ export default function PaymentsPage() {
   const statusFilter = searchParams.get("status") ?? "";
   const searchTerm = searchParams.get("search") ?? "";
 
+  // Swiping walks the same tab strip the taps use.
+  const statusTabIndex = Math.max(
+    STATUS_TABS.findIndex((tab) => tab.value === statusFilter),
+    0,
+  );
+
   const setStatusFilter = (value: string) => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
@@ -97,6 +104,11 @@ export default function PaymentsPage() {
       next.delete("page");
       return next;
     });
+  };
+
+  const goToTab = (offset: number) => {
+    const next = STATUS_TABS[statusTabIndex + offset];
+    if (next) setStatusFilter(next.value);
   };
 
   const setSearchTerm = (value: string) => {
@@ -347,6 +359,13 @@ export default function PaymentsPage() {
         </div>
       )}
 
+      <SwipePane
+        paneKey={statusFilter}
+        paneIndex={statusTabIndex}
+        enabled={canViewAllPayments}
+        onNext={() => goToTab(1)}
+        onPrevious={() => goToTab(-1)}
+      >
       {loading ? (
         <PageLoader />
       ) : allPayments.length === 0 ? (
@@ -459,6 +478,7 @@ export default function PaymentsPage() {
           </div>
         </div>
       )}
+      </SwipePane>
 
       <ConfirmDialog
         open={!!confirmAction}

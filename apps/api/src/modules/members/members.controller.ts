@@ -7,6 +7,7 @@
  */
 import type { Context } from "hono";
 import { memberService } from "./members.service";
+import { reportService } from "./reports.service";
 import { auditLog } from "../../lib/audit";
 import { parseBody } from "../../lib/http";
 import { parsePagination } from "../../lib/pagination";
@@ -47,6 +48,7 @@ export const memberController = {
       parsed.data,
       callerRole,
       (promise) => c.executionCtx.waitUntil(promise),
+      c.get("authUser").id,
     );
 
     if ("error" in result) {
@@ -268,7 +270,7 @@ export const memberController = {
    */
   async generateReport(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
-    const result = await memberService.generateReport(
+    const result = await reportService.generateReport(
       tenantId,
       c.get("authUser").id,
       (promise) => c.executionCtx.waitUntil(promise),

@@ -80,6 +80,7 @@ function loadScript() {
 export async function openRazorpayCheckout(input: {
   keyId: string;
   orderId: string;
+  /** Rupees, as the API returns them. Converted to paise for the widget below. */
   amount: number;
   currency: string;
   name: string;
@@ -107,7 +108,10 @@ export async function openRazorpayCheckout(input: {
     const instance = new Razorpay({
       key: input.keyId,
       order_id: input.orderId,
-      amount: input.amount,
+      // The widget reads the smallest currency unit. The order it was created
+      // against is the authority on what is charged; this only has to agree
+      // with it so the summary shows the same number.
+      amount: Math.round(input.amount * 100),
       currency: input.currency,
       name: input.name,
       description: input.description,

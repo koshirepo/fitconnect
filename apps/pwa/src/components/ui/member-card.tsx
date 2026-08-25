@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/utils";
 import { Card } from "./card";
 import { Ban, CalendarClock, CheckCircle2, Dumbbell, Shield } from "lucide-react";
+import { genderMeta } from "@/lib/gender";
 
 export type PersonRole = "ADMIN" | "COACH" | "TRAINER" | "MEMBER" | string;
 
@@ -21,31 +22,51 @@ export type CardPerson = {
   /** Tenant-scoped sequential member number — renders as "#N – name". */
   memberId?: number;
   role?: PersonRole;
+  /** "MALE" | "FEMALE" | "OTHER"; null on records that predate the field. */
+  gender?: string | null;
   status?: string;
   dueDate?: string | null;
   /** Set when the membership has lapsed; drives the red accent. */
   isDue?: boolean;
 };
 
-/** Small pill above the name — status, due date, sync state. */
+/**
+ * Small pill above the name — status, due date, sync state.
+ *
+ * `iconOnlyOnMobile` drops the words on a phone and keeps the glyph, which is
+ * how several of these fit on one line on the screen this app is mostly used
+ * on. Reserve it for chips whose icon and colour already carry the meaning; a
+ * chip whose value is the text (a date, an amount) has to keep its label.
+ */
 export function PersonChip({
   icon: Icon,
   children,
+  iconOnlyOnMobile = false,
   className,
 }: {
   icon: React.ElementType;
   children: React.ReactNode;
+  iconOnlyOnMobile?: boolean;
   className?: string;
 }) {
   return (
     <span
       className={cn(
         "inline-flex shrink-0 items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium whitespace-nowrap text-muted-foreground sm:gap-1.5 sm:px-2 sm:py-1 sm:text-xs",
+        // Without the label there is nothing to space away from the icon, and
+        // the pill would otherwise sit lopsided around it.
+        iconOnlyOnMobile && "gap-0 px-1 sm:gap-1.5 sm:px-2",
         className,
       )}
+      // The words are still the accessible name when they are visually hidden.
+      title={iconOnlyOnMobile && typeof children === "string" ? children : undefined}
     >
       <Icon className="size-2.5 sm:size-3.5" />
-      {children}
+      {iconOnlyOnMobile ? (
+        <span className="hidden sm:inline">{children}</span>
+      ) : (
+        children
+      )}
     </span>
   );
 }
@@ -212,17 +233,31 @@ export function MemberCard({
   const isCard = variant === "card";
   const interactive = Boolean(onClick);
 
+  // Shown wherever a person is, not only on the full card: it is part of who
+  // someone is rather than a state that the surrounding screen already carries.
+  const gender = genderMeta(person.gender);
+  const genderChip = gender ? (
+    <PersonChip icon={gender.icon} iconOnlyOnMobile className={gender.chipClass}>
+      {gender.label}
+    </PersonChip>
+  ) : null;
+
   const derivedChips = showStatusChips ? (
     <>
       {person.status === "ACTIVE" ? (
         <PersonChip
           icon={CheckCircle2}
+          iconOnlyOnMobile
           className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
         >
           Active
         </PersonChip>
       ) : person.status ? (
-        <PersonChip icon={Ban} className="bg-amber-500/10 text-amber-600 dark:text-amber-400">
+        <PersonChip
+          icon={Ban}
+          iconOnlyOnMobile
+          className="bg-amber-500/10 text-amber-600 dark:text-amber-400"
+        >
           Inactive
         </PersonChip>
       ) : null}
@@ -238,10 +273,12 @@ export function MemberCard({
     </>
   ) : null;
 
-  const hasChips = Boolean(derivedChips || chips);
+  const hasChips = Boolean(genderChip || derivedChips || chips);
 
   const body = (
-    <div className={cn("flex items-stretch", s.row)}>
+    // `relative` anchors the actions, which are pinned to the bottom row on a
+    // phone rather than sitting beside the name.
+    <div className={cn("relative flex items-stretch", s.row)}>
       <div
         className={cn("flex min-w-0 flex-1 items-stretch", interactive && "cursor-pointer")}
         onClick={onClick}
@@ -251,6 +288,7 @@ export function MemberCard({
         <div className={cn("min-w-0 flex-1 self-center", s.body)}>
           {hasChips && (
             <div className="flex min-w-0 flex-nowrap items-center gap-1.5 overflow-hidden sm:gap-2">
+              {genderChip}
               {derivedChips}
               {chips}
             </div>
@@ -268,6 +306,9 @@ export function MemberCard({
               className={cn(
                 "mt-1 min-w-0 text-muted-foreground",
                 truncateSubtitle && "truncate",
+                // Keeps a long phone number from running under the buttons
+                // that sit on this line on a phone.
+                actions && "pr-24 sm:pr-0",
                 s.subtitle,
               )}
             >
@@ -278,7 +319,18 @@ export function MemberCard({
       </div>
 
       {actions && (
-        <div className="flex shrink-0 items-center justify-end gap-2 pr-3 sm:pr-4">{actions}</div>
+        <div
+          className={cn(
+            "flex shrink-0 items-center gap-1 sm:gap-2",
+            // Phone: on the subtitle line at the bottom of the card, where
+            // there is room the name row does not have.
+            "absolute right-2 bottom-1",
+            // Anything wider: back in the row, centred against the whole card.
+            "sm:static sm:justify-end sm:pr-4",
+          )}
+        >
+          {actions}
+        </div>
       )}
     </div>
   );

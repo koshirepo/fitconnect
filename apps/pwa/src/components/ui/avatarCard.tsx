@@ -39,6 +39,8 @@ type UserRole = "ADMIN" | "COACH" | "TRAINER" | "MEMBER";
 interface AvatarCardProps {
   name: string;
   avatarUrl?: string | null;
+  /** Drives the gender chip; omit for people the app has nothing on file for. */
+  gender?: string | null;
   variant?: Variant;
   /** Tenant-scoped sequential member number — renders as "#N – name". */
   memberId?: number;
@@ -57,6 +59,7 @@ interface AvatarCardProps {
 export default function AvatarCard({
   name,
   avatarUrl,
+  gender,
   variant = "lg",
   memberId,
   vertical = false,
@@ -73,6 +76,7 @@ export default function AvatarCard({
     () => ({
       name,
       avatarUrl,
+      gender,
       memberId,
       role,
       // `isActive` is the caller's vocabulary; the card reasons in status strings.
@@ -80,7 +84,7 @@ export default function AvatarCard({
       dueDate,
       isDue: Boolean(dueDate) && new Date(dueDate!) < new Date(),
     }),
-    [name, avatarUrl, memberId, role, isActive, dueDate],
+    [name, avatarUrl, gender, memberId, role, isActive, dueDate],
   );
 
   const size = SIZE_FOR_VARIANT[variant];

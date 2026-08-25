@@ -364,7 +364,6 @@ export type PaymentOrderByWithRelationInput = {
 
 export type PaymentWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  gatewayOrderId?: string
   AND?: Prisma.PaymentWhereInput | Prisma.PaymentWhereInput[]
   OR?: Prisma.PaymentWhereInput[]
   NOT?: Prisma.PaymentWhereInput | Prisma.PaymentWhereInput[]
@@ -381,6 +380,7 @@ export type PaymentWhereUniqueInput = Prisma.AtLeast<{
   validFrom?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
   validUntil?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
   gateway?: Prisma.StringNullableFilter<"Payment"> | string | null
+  gatewayOrderId?: Prisma.StringNullableFilter<"Payment"> | string | null
   gatewayPaymentId?: Prisma.StringNullableFilter<"Payment"> | string | null
   gatewayAccount?: Prisma.StringNullableFilter<"Payment"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
@@ -390,7 +390,7 @@ export type PaymentWhereUniqueInput = Prisma.AtLeast<{
   collectedBy?: Prisma.XOR<Prisma.TenantMembershipNullableScalarRelationFilter, Prisma.TenantMembershipWhereInput> | null
   subscription?: Prisma.XOR<Prisma.SubscriptionNullableScalarRelationFilter, Prisma.SubscriptionWhereInput> | null
   charge?: Prisma.XOR<Prisma.TenantChargeNullableScalarRelationFilter, Prisma.TenantChargeWhereInput> | null
-}, "id" | "gatewayOrderId">
+}, "id">
 
 export type PaymentOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -1826,7 +1826,7 @@ export type $PaymentPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
      */
     gateway: string | null
     /**
-     * Gateway order id. Unique so a replayed verify cannot settle twice.
+     * Gateway order id. Shared by every row a single checkout paid for.
      */
     gatewayOrderId: string | null
     /**

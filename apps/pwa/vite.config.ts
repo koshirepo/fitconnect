@@ -28,6 +28,10 @@ export default defineConfig(({ mode }) => {
       registerType: "autoUpdate",
       includeAssets: ["icons/icon.svg", "icons/*.png"],
       workbox: {
+        // A generated service worker has no push handling of its own; this
+        // adds the `push` and `notificationclick` listeners the admin
+        // notifications need.
+        importScripts: ["push-sw.js"],
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         runtimeCaching: [
           {

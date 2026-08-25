@@ -488,6 +488,7 @@ export default function BadgesPage() {
                     <AvatarCard
                       name={a.membership.name}
                       avatarUrl={a.membership.avatarUrl}
+                      gender={a.membership.gender}
                       memberId={a.membership.memberId}
                       variant="sm"
                     >

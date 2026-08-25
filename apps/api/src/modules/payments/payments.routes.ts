@@ -9,6 +9,7 @@
 import { Hono } from "hono";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { authenticate } from "../../middleware/authenticate";
+import { idempotency } from "../../middleware/idempotency";
 import { requireAnyTenantPermission, requireTenantPermissions } from "../../middleware/authorize";
 import { paymentController } from "./payments.controller";
 import { gatewayController } from "./gateway.controller";
@@ -73,6 +74,8 @@ paymentRoutes.get(
 paymentRoutes.post(
   "/:tenantId/payments",
   authenticate,
+  // A payment replayed after a lost response must not be collected twice.
+  idempotency,
   requireTenantPermissions(Permission.PAYMENTS_CREATE),
   paymentController.createPayment,
 );

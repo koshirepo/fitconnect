@@ -69,10 +69,12 @@ export default {
     await setD1(env.DB);
 
     try {
-      const { memberService } = await import("./modules/members/members.service");
+      // Imported here rather than at module scope so the cron path pulls in the
+      // reporting code only when a schedule actually fires.
+      const { reportService } = await import("./modules/members/reports.service");
 
       if (controller.cron === DAILY_TENANT_REPORT_CRON) {
-        const result = await memberService.runScheduledTenantReports((promise) =>
+        const result = await reportService.runScheduledTenantReports((promise) =>
           ctx.waitUntil(promise),
         );
 
@@ -83,7 +85,7 @@ export default {
         return;
       }
 
-      const result = await memberService.runScheduledOverdueEnforcement((promise) =>
+      const result = await reportService.runScheduledOverdueEnforcement((promise) =>
         ctx.waitUntil(promise),
       );
 

@@ -36,7 +36,7 @@ export const badgesApi = {
       ApiResponse<{
         assignments: {
           id: string;
-          membership?: Pick<TenantMember, "id" | "name" | "email" | "avatarUrl" | "memberId">;
+          membership?: Pick<TenantMember, "id" | "name" | "email" | "gender" | "avatarUrl" | "memberId">;
         }[];
       }>
     >(`/tenants/${tenantId}/badges/${badgeId}/assignments`),
@@ -46,7 +46,7 @@ export const badgesApi = {
       ApiResponse<{
         assignment: {
           badge: Pick<Badge, "id" | "name" | "color" | "icon">;
-          membership?: Pick<TenantMember, "id" | "name" | "email" | "avatarUrl" | "memberId">;
+          membership?: Pick<TenantMember, "id" | "name" | "email" | "gender" | "avatarUrl" | "memberId">;
         };
       }>
     >(

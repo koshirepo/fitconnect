@@ -4,7 +4,6 @@ import { Permission } from "@fitconnect/shared/types/permissions";
 import { useSearchParams } from "react-router-dom";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
-import { tenantsApi } from "@/api/tenants";
 import { useAllMembers, useRemoveMember } from "@/api/queries/members";
 import { useBadges, useTenantSettings } from "@/api/queries/catalog";
 import { Button } from "@/components/ui/button";
@@ -19,8 +18,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageLoader } from "@/components/ui/spinner";
+import { SwipePane } from "@/components/ui/swipe-pane";
 import { downloadCsv } from "@/lib/csv";
-import { formatDate, cn } from "@/lib/utils";
+import { formatDate, formatCurrency, cn } from "@/lib/utils";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import {
   getTenantWhatsAppTemplateBody,
@@ -39,15 +39,18 @@ import {
   Clock,
   Ban,
   CheckCircle2,
+  IndianRupee,
 } from "lucide-react";
 import type { TenantMember } from "@/types/api";
 import { usePendingMutations } from "@/lib/use-pending-mutations";
 import { getTenantDashboardPath } from "@/lib/subdomain";
+import { GENDER_OPTIONS } from "@/lib/gender";
 
 type PendingMemberMutationBody = {
   name?: string;
   email?: string;
   phone?: string | null;
+  gender?: TenantMember["gender"];
   role?: TenantMember["role"];
 };
 
@@ -59,8 +62,36 @@ const STATUS_TABS = [
   { value: "", label: "All", icon: Users, iconClass: "text-blue-600" },
   { value: "ACTIVE", label: "Active", icon: CheckCircle2, iconClass: "text-emerald-600" },
   { value: "INACTIVE", label: "Inactive", icon: Ban, iconClass: "text-muted-foreground" },
+  { value: "PENDING", label: "Pending", icon: Clock, iconClass: "text-amber-600" },
   { value: "DUE", label: "Due", icon: AlertCircle, iconClass: "text-red-600" },
 ];
+
+/**
+ * Whether a member belongs under one status tab.
+ *
+ * Shared by the list and the tab counts, so a number can never disagree with
+ * the rows it claims to count.
+ */
+function matchesStatusTab(member: DisplayMember, statusTab: string, now: Date) {
+  if (statusTab === "ACTIVE") return member.status === "ACTIVE";
+
+  if (statusTab === "INACTIVE") {
+    const statusValue = String(member.status).toUpperCase();
+    return statusValue === "SUSPENDED" || statusValue === "INACTIVE";
+  }
+
+  // A payment was started and never completed — a self-signup that closed
+  // the checkout window, or a row the desk recorded as pending.
+  if (statusTab === "PENDING") return Boolean(member.hasPendingPayment);
+
+  if (statusTab === "DUE") {
+    const due = member.isDue ?? (member.dueDate ? new Date(member.dueDate) <= now : false);
+    return due && member.status === "ACTIVE";
+  }
+
+  // The "All" tab.
+  return true;
+}
 
 export default function MembersPage() {
   const navigate = useAppNavigate();
@@ -72,7 +103,6 @@ export default function MembersPage() {
   const isAdmin = can(Permission.MEMBERS_STATUS_UPDATE);
   const canAddMember = can(Permission.MEMBERS_CREATE);
 
-  const [exporting, setExporting] = React.useState(false);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [pendingRemoveId, setPendingRemoveId] = React.useState<string | null>(null);
 
@@ -80,6 +110,7 @@ export default function MembersPage() {
   const roleFilter = searchParams.get("role") ?? "MEMBER";
   const statusFilter = searchParams.get("status") ?? "";
   const badgeFilter = searchParams.get("badge") ?? "";
+  const genderFilter = searchParams.get("gender") ?? "";
   const search = searchParams.get("search") ?? "";
 
   const updateParams = React.useCallback(
@@ -133,6 +164,26 @@ export default function MembersPage() {
     [paymentReminderTemplateBody, gymName],
   );
 
+  const pendingReminderTemplateBody = React.useMemo(
+    () => getTenantWhatsAppTemplateBody(tenantSettings, "pending_payment_reminder"),
+    [tenantSettings],
+  );
+
+  const getPendingPaymentReminderUrl = React.useCallback(
+    (member: TenantMember) => {
+      const text = renderWhatsAppTemplateBody(pendingReminderTemplateBody, {
+        memberName: member.name,
+        gymName,
+        amountLine:
+          member.pendingPaymentAmount !== undefined
+            ? ` The outstanding amount is ${formatCurrency(member.pendingPaymentAmount)}.`
+            : "",
+      });
+      return buildWhatsAppUrl(member.phone, text);
+    },
+    [pendingReminderTemplateBody, gymName],
+  );
+
   // Pending offline members
   const pendingMembers = usePendingMutations<PendingMemberMutationBody>("/members");
   const pendingMemberItems: DisplayMember[] = pendingMembers.map((m) => ({
@@ -142,6 +193,7 @@ export default function MembersPage() {
     name: m.body?.name ?? "New Member",
     email: m.body?.email ?? "",
     phone: m.body?.phone ?? null,
+    gender: m.body?.gender ?? null,
     avatarUrl: null,
     role: m.body?.role ?? "MEMBER",
     status: "ACTIVE" as const,
@@ -149,24 +201,19 @@ export default function MembersPage() {
     _pending: true as const,
   }));
 
-  // Merge and sort latest first
-  const filteredAllMembers: DisplayMember[] = React.useMemo(() => {
+  /**
+   * Everything matching the role, badge, and search filters — but not the
+   * status tab. The tab counts are taken from here, so each tab reports how
+   * many rows it would show under the filters already applied rather than a
+   * gym-wide total that does not match what clicking it produces.
+   */
+  const scopedMembers: DisplayMember[] = React.useMemo(() => {
     const trimmedSearch = search.trim().toLowerCase();
-    const now = new Date();
 
     return [...pendingMemberItems, ...members]
       .filter((member) => {
         if (roleFilter && member.role !== roleFilter) return false;
-
-        if (statusFilter === "ACTIVE") {
-          if (member.status !== "ACTIVE") return false;
-        } else if (statusFilter === "INACTIVE") {
-          const statusValue = String(member.status).toUpperCase();
-          if (statusValue !== "SUSPENDED" && statusValue !== "INACTIVE") return false;
-        } else if (statusFilter === "DUE") {
-          const due = member.isDue ?? (member.dueDate ? new Date(member.dueDate) <= now : false);
-          if (!due || member.status !== "ACTIVE") return false;
-        }
+        if (genderFilter && member.gender !== genderFilter) return false;
 
         if (badgeFilter) {
           const badgeIds = (member as DisplayMember & { badgeIds?: string[]; badges?: { id: string }[] })
@@ -188,10 +235,65 @@ export default function MembersPage() {
         return searchableText.includes(trimmedSearch);
       })
       .sort((a, b) => new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime());
-  }, [badgeFilter, members, pendingMemberItems, roleFilter, search, statusFilter]);
+  }, [badgeFilter, genderFilter, members, pendingMemberItems, roleFilter, search]);
+
+  /** How many rows each tab holds, for the numbers beside the tab labels. */
+  const statusCounts = React.useMemo(() => {
+    const now = new Date();
+    const counts: Record<string, number> = {};
+    for (const tab of STATUS_TABS) {
+      counts[tab.value] = scopedMembers.filter((member) =>
+        matchesStatusTab(member, tab.value, now),
+      ).length;
+    }
+    return counts;
+  }, [scopedMembers]);
+
+  const filteredAllMembers: DisplayMember[] = React.useMemo(() => {
+    const now = new Date();
+    return scopedMembers.filter((member) => matchesStatusTab(member, statusFilter, now));
+  }, [scopedMembers, statusFilter]);
+
+  // Swiping moves along the same tab strip the taps use, so the two can never
+  // disagree about what comes next.
+  const statusTabIndex = Math.max(
+    STATUS_TABS.findIndex((tab) => tab.value === statusFilter),
+    0,
+  );
+
+  const goToTab = React.useCallback(
+    (offset: number) => {
+      const next = STATUS_TABS[statusTabIndex + offset];
+      if (next) updateParams({ status: next.value });
+    },
+    [statusTabIndex, updateParams],
+  );
+
+  const hasActiveFilters = Boolean(
+    statusFilter || badgeFilter || genderFilter || search.trim() || roleFilter !== "MEMBER",
+  );
+
+  const clearFilters = () =>
+    updateParams({ status: "", badge: "", gender: "", search: "", role: "MEMBER" });
 
   const renderMemberActions = (m: DisplayMember) => (
     <>
+      {!m._pending && m.hasPendingPayment && m.phone && (
+        <a
+          href={getPendingPaymentReminderUrl(m) ?? undefined}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Remind about the pending payment via WhatsApp"
+        >
+          <Button
+            variant="ghost"
+            size="icon-lg"
+            className="size-8 rounded-full text-amber-600 hover:bg-amber-50 hover:text-amber-700 sm:size-9"
+          >
+            <IndianRupee className="size-4 sm:size-5" />
+          </Button>
+        </a>
+      )}
       {!m._pending && m.isDue && m.phone && (
         <a
           href={getPaymentReminderUrl(m) ?? undefined}
@@ -249,42 +351,52 @@ export default function MembersPage() {
     }
   };
 
-  const handleExportMembers = async () => {
-    if (!currentTenantId || !isAdmin) return;
+  /**
+   * Export exactly the rows on screen.
+   *
+   * The list is already filtered and already in memory, so the file always
+   * matches what the person looking at it can see — and it costs no requests,
+   * where this used to re-download the entire roster a page at a time and
+   * ignore every filter.
+   */
+  const handleExportMembers = () => {
+    if (!isAdmin) return;
 
-    setExporting(true);
-    try {
-      let exportPage = 1;
-      let totalExportPages = 1;
-      const allMembers: TenantMember[] = [];
-
-      do {
-        const res = await tenantsApi.listMembers(currentTenantId, exportPage, 100);
-        allMembers.push(...res.data.data.members);
-        totalExportPages = res.data.meta.totalPages;
-        exportPage += 1;
-      } while (exportPage <= totalExportPages);
-
-      const rows = allMembers.map((member) => ({
+    const rows = filteredAllMembers
+      // Offline rows have no server id yet; exporting a placeholder id would
+      // put a member in the file who does not exist anywhere else.
+      .filter((member) => !member._pending)
+      .map((member) => ({
         MemberId: member.id,
         UserId: member.userId,
         Name: member.name,
         Email: member.email,
         Phone: member.phone ?? "",
+        Gender: member.gender ?? "",
         Role: member.role,
+        Status: member.status,
         JoinedAt: member.joinedAt,
       }));
 
-      downloadCsv(
-        `members-${new Date().toISOString().slice(0, 10)}.csv`,
-        ["MemberId", "UserId", "Name", "Email", "Phone", "Role", "JoinedAt"],
-        rows,
-      );
-    } catch {
-      // silent
-    } finally {
-      setExporting(false);
-    }
+    if (rows.length === 0) return;
+
+    // Name the file after the filters, so two exports taken minutes apart are
+    // still tellable apart in a downloads folder.
+    const parts = [
+      "members",
+      roleFilter ? roleFilter.toLowerCase() : "",
+      statusFilter ? statusFilter.toLowerCase() : "",
+      genderFilter ? genderFilter.toLowerCase() : "",
+      badgeFilter ? badges.find((b) => b.id === badgeFilter)?.name : "",
+      search.trim() ? "search" : "",
+      new Date().toISOString().slice(0, 10),
+    ].filter(Boolean);
+
+    downloadCsv(
+      `${parts.join("-").replace(/\s+/g, "-").toLowerCase()}.csv`,
+      ["MemberId", "UserId", "Name", "Email", "Phone", "Gender", "Role", "Status", "JoinedAt"],
+      rows,
+    );
   };
 
   // if (loading && members.length === 0) return <PageLoader />;
@@ -298,7 +410,12 @@ export default function MembersPage() {
         </div>
         <div className="flex items-center gap-2">
           {isAdmin && (
-            <Button variant="outline" onClick={handleExportMembers} disabled={exporting}>
+            <Button
+              variant="outline"
+              onClick={handleExportMembers}
+              disabled={loading || filteredAllMembers.length === 0}
+              title="Download these members as CSV"
+            >
               <Download className="h-4 w-4" />
             </Button>
           )}
@@ -312,7 +429,9 @@ export default function MembersPage() {
 
       {/* Status Filter Tabs */}
       <div className="overflow-x-auto overflow-y-hidden border-b border-border">
-        <div className="flex min-w-max gap-6 sm:gap-8">
+        {/* Without labels the five tabs fit a phone, so they spread across the
+            full width instead of bunching at the left with dead space after. */}
+        <div className="flex justify-between gap-2 sm:min-w-max sm:justify-start sm:gap-8">
           {STATUS_TABS.map((tab) => {
             const active = statusFilter === tab.value;
             const Icon = tab.icon;
@@ -320,15 +439,29 @@ export default function MembersPage() {
               <button
                 key={tab.value}
                 onClick={() => updateParams({ status: tab.value })}
+                // The label is hidden on a phone, so the tab still needs a name.
+                title={tab.label}
+                aria-label={tab.label}
+                aria-pressed={active}
                 className={cn(
-                  "flex items-center gap-2 border-b-2 pt-1 pb-3 text-sm transition-colors",
+                  "flex items-center gap-1.5 border-b-2 pt-1 pb-3 text-sm transition-colors sm:gap-2",
                   active
                     ? "border-foreground font-semibold text-foreground"
                     : "border-transparent font-medium text-muted-foreground hover:text-foreground",
                 )}
               >
                 <Icon className={cn("h-4 w-4", active ? tab.iconClass : "text-muted-foreground")} />
-                {tab.label}
+                {/* Icon and count alone on mobile: five labelled tabs do not fit
+                    across a phone without scrolling past the last of them. */}
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span
+                  className={cn(
+                    "rounded-full px-1.5 py-0.5 text-xs tabular-nums",
+                    active ? "bg-foreground/10 text-foreground" : "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {statusCounts[tab.value] ?? 0}
+                </span>
               </button>
             );
           })}
@@ -356,7 +489,9 @@ export default function MembersPage() {
           )}
         </div>
 
-        <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
+        {/* One row at every width. Equal columns rather than auto-width so the
+            three stay aligned as their selected labels change length. */}
+        <div className="grid w-full grid-cols-3 gap-2 sm:gap-3">
           <Select value={roleFilter} onValueChange={(value) => updateParams({ role: value ?? "" })}>
             <SelectTrigger className="h-12 w-full rounded-lg">
               <SelectValue />
@@ -383,18 +518,50 @@ export default function MembersPage() {
               </SelectContent>
             </Select>
           )}
+
+          <Select
+            value={genderFilter}
+            onValueChange={(value) => updateParams({ gender: value ?? "" })}
+          >
+            <SelectTrigger className="h-12 w-full rounded-lg">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Genders</SelectItem>
+              {GENDER_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
+      <SwipePane
+        paneKey={statusFilter}
+        paneIndex={statusTabIndex}
+        onNext={() => goToTab(1)}
+        onPrevious={() => goToTab(-1)}
+      >
       {loading ? (
         <PageLoader />
       ) : filteredAllMembers.length === 0 ? (
         <EmptyState
           icon={Users}
-          title="No members found"
-          description="Add members to your gym to get started."
+          title={hasActiveFilters ? "No members match these filters" : "No members found"}
+          description={
+            hasActiveFilters
+              ? "Nobody on the roster matches every filter you have set. Clear them to see the full list."
+              : "Add members to your gym to get started."
+          }
           action={
-            canAddMember ? (
+            hasActiveFilters ? (
+              <Button variant="outline" onClick={clearFilters}>
+                <X className="h-4 w-4" />
+                Clear filters
+              </Button>
+            ) : canAddMember ? (
               <Button onClick={() => navigate(getTenantDashboardPath("/members/add"))}>
                 <Plus className="h-4 w-4" />
                 Add Member
@@ -418,9 +585,18 @@ export default function MembersPage() {
                   m._pending ? (
                     <PersonChip
                       icon={Clock}
+                      iconOnlyOnMobile
                       className="bg-amber-500/10 text-amber-600 dark:text-amber-400"
                     >
                       Pending sync
+                    </PersonChip>
+                  ) : m.hasPendingPayment ? (
+                    <PersonChip
+                      icon={IndianRupee}
+                      iconOnlyOnMobile
+                      className="bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                    >
+                      Payment pending
                     </PersonChip>
                   ) : null
                 }
@@ -433,6 +609,7 @@ export default function MembersPage() {
 
         </div>
       )}
+      </SwipePane>
 
       <ConfirmDialog
         open={confirmOpen}

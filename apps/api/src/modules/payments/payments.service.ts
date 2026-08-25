@@ -7,6 +7,7 @@
  */
 import type { PaymentStatus } from "@fitconnect/shared/types/enums";
 import { memberRepository } from "../members/members.repository";
+import { pushService } from "../push/push.service";
 import { paymentRepository } from "./payments.repository";
 import { flattenNestedMember } from "../../lib/flatten";
 import type {
@@ -16,8 +17,27 @@ import type {
   UpdateSubscriptionInput,
 } from "./payments.schema";
 
+type BackgroundTaskScheduler = (promise: Promise<unknown>) => void;
+
 function normalizeBadgeIds(badgeIds?: string[]) {
   return Array.from(new Set((badgeIds ?? []).map((id) => id.trim()).filter(Boolean)));
+}
+
+/**
+ * Run an admin notification without making the caller wait for it.
+ *
+ * Falls back to awaiting when there is no scheduler — a cron or a test — so the
+ * send still happens rather than being dropped on the floor.
+ */
+function notifyInBackground(
+  scheduleBackgroundTask: BackgroundTaskScheduler | undefined,
+  send: () => Promise<unknown>,
+) {
+  if (scheduleBackgroundTask) {
+    scheduleBackgroundTask(send());
+    return;
+  }
+  return send();
 }
 
 export const paymentService = {
@@ -123,7 +143,12 @@ export const paymentService = {
    * Execute the `create payment` workflow for the payments module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
-  async createPayment(tenantId: string, userId: string, input: CreatePaymentInput) {
+  async createPayment(
+    tenantId: string,
+    userId: string,
+    input: CreatePaymentInput,
+    scheduleBackgroundTask?: BackgroundTaskScheduler,
+  ) {
     // Run independent validation lookups in parallel
     const [targetMembership, subscription, collector] = await Promise.all([
       paymentRepository.findMembershipById(input.membershipId, tenantId),
@@ -153,6 +178,14 @@ export const paymentService = {
       };
     }
 
+    // A part payment: the member hands over less than the price now, and the
+    // rest is written as a second row they still owe. The membership still
+    // gets its validity window — the desk decided to let them train, and the
+    // balance is tracked rather than blocking them at the door.
+    const paidAmount = input.paidAmount ?? input.amount;
+    const balanceAmount =
+      input.status === "COMPLETED" ? input.amount - paidAmount : 0;
+
     const payment = await paymentRepository.createPayment({
       tenantId,
       membershipId: input.membershipId,
@@ -161,12 +194,31 @@ export const paymentService = {
       description: input.description,
       note: input.note,
       status: input.status,
-      amount: input.amount,
+      amount: input.status === "COMPLETED" ? paidAmount : input.amount,
       collectorId: collector?.id,
       paidAt: input.status === "COMPLETED" ? new Date() : undefined,
       validFrom: input.validFrom,
       validUntil: input.validUntil,
     });
+
+    // The balance carries no validity of its own — the row above already gave
+    // the membership its window, and paying the remainder must not extend it a
+    // second time.
+    const label = input.description ?? subscription?.title ?? null;
+    const balancePayment =
+      balanceAmount > 0
+        ? await paymentRepository.createPayment({
+            tenantId,
+            membershipId: input.membershipId,
+            subscriptionId: input.subscriptionId,
+            chargeId: input.chargeId,
+            description: label ? `Balance — ${label}` : "Balance",
+            note: input.note,
+            status: "PENDING",
+            amount: balanceAmount,
+            collectorId: collector?.id,
+          })
+        : null;
 
     // Keep membership.dueDate in sync
     if (input.validUntil) {
@@ -197,12 +249,31 @@ export const paymentService = {
       }
     }
 
+    // Only a completed row is money in hand; a PENDING one notifies when it
+    // is settled, not when it is written.
+    if (payment.status === "COMPLETED") {
+      notifyInBackground(scheduleBackgroundTask, () =>
+        pushService.notifyPaymentReceived(tenantId, {
+          amount: payment.amount,
+          memberId: payment.member?.memberId,
+          memberName: payment.member?.user?.name,
+          description: payment.description,
+          source: "DESK",
+          actorUserId: userId,
+        }),
+      );
+    }
+
     return {
       data: {
         payment: {
           ...payment,
           member: payment.member ? flattenNestedMember(payment.member as any) : undefined,
         },
+        /** The remainder still owed, when this was a part payment. */
+        balancePayment: balancePayment
+          ? { id: balancePayment.id, amount: balancePayment.amount }
+          : null,
       },
     };
   },
@@ -245,7 +316,13 @@ export const paymentService = {
    * Execute the `update payment status` workflow for the payments module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
-  async updatePaymentStatus(tenantId: string, paymentId: string, status: PaymentStatus) {
+  async updatePaymentStatus(
+    tenantId: string,
+    paymentId: string,
+    status: PaymentStatus,
+    actorUserId?: string,
+    scheduleBackgroundTask?: BackgroundTaskScheduler,
+  ) {
     const existing = await paymentRepository.findPayment(paymentId, tenantId);
     if (!existing) {
       return { error: "Payment not found.", status: 404 as const };
@@ -256,6 +333,21 @@ export const paymentService = {
     // Keep membership.dueDate in sync
     if (existing.membershipId) {
       await paymentRepository.refreshDueDate(existing.membershipId);
+    }
+
+    // The transition is what matters: re-saving an already-completed payment
+    // should not buzz every admin a second time.
+    if (status === "COMPLETED" && existing.status !== "COMPLETED") {
+      notifyInBackground(scheduleBackgroundTask, () =>
+        pushService.notifyPaymentReceived(tenantId, {
+          amount: payment.amount,
+          memberId: existing.member?.memberId,
+          memberName: existing.member?.user?.name,
+          description: existing.description,
+          source: "DESK",
+          actorUserId,
+        }),
+      );
     }
 
     return { data: { payment }, previousStatus: existing.status };
