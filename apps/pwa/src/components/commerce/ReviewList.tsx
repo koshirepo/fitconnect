@@ -126,6 +126,8 @@ export const ReviewList: React.FC<ReviewListProps> = ({
                         <img
                           src={resolveAssetUrl(review.user.avatarUrl) ?? review.user.avatarUrl}
                           alt={review.user.name}
+                          loading="lazy"
+                          decoding="async"
                           className="h-6 w-6 rounded-full"
                         />
                       ) : (

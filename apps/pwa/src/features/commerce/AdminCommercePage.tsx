@@ -92,6 +92,8 @@ export default function AdminCommercePage() {
                           <img
                             src={product.photos[0]}
                             alt={product.name}
+                            loading="lazy"
+                            decoding="async"
                             className="h-full w-full object-cover"
                           />
                         ) : (

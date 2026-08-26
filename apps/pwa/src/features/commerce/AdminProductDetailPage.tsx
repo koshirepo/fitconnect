@@ -173,6 +173,8 @@ export default function AdminProductDetailPage() {
                     <img
                       src={photo}
                       alt={`${product.name} ${index + 2}`}
+                      loading="lazy"
+                      decoding="async"
                       className="aspect-square w-full object-cover"
                     />
                   </div>

@@ -33,7 +33,22 @@ export default defineConfig(({ mode }) => {
         // notifications need.
         importScripts: ["push-sw.js"],
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        // Face detection and the charting library are ~1.1 MB between them and
+        // each serves a single screen. Precaching them made every first visit
+        // pay for both in the background; they are cached on first use instead.
+        globIgnores: ["**/assets/vendor-tf-*.js", "**/assets/FinanceReportsPage-*.js"],
         runtimeCaching: [
+          {
+            // Covers the chunks left out of the precache above, so a screen that
+            // pulls one keeps working offline afterwards.
+            urlPattern: /^\/assets\/.*\.js$/,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "lazy-chunks",
+              expiration: { maxEntries: 60, maxAgeSeconds: 30 * 24 * 3600 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
           {
             urlPattern: /^\/api\/(tenants|members|badges|payments|workouts|subscriptions|shifts)/,
             handler: "NetworkFirst",
@@ -165,12 +180,17 @@ export default defineConfig(({ mode }) => {
           ) {
             return "vendor-react";
           }
-          if (id.includes("react-markdown") || id.includes("remark-gfm")) {
-            return "vendor-markdown";
-          }
           if (id.includes("lucide-react")) {
             return "vendor-icons";
           }
+          // Named so the service worker can keep them out of the precache: both
+          // are large and only reached from one screen each.
+          if (id.includes("@tensorflow") || id.includes("blazeface")) {
+            return "vendor-tf";
+          }
+          // Deliberately NOT chunking recharts: a named manual chunk gets pulled
+          // into the entry's preload graph, so it would load on every page
+          // instead of only on the finance screen that imports it.
         },
       },
     },

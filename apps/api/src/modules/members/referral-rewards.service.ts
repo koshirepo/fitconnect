@@ -97,8 +97,10 @@ export const referralRewardService = {
       });
     }
 
-    for (const entry of entries) {
-      await prisma.coinLedgerEntry.create({ data: entry });
+    // One round trip rather than one per entry: D1 is remote, so the loop cost
+    // was latency, not database work.
+    if (entries.length > 0) {
+      await prisma.coinLedgerEntry.createMany({ data: entries });
     }
 
     // Telling the referrer is most of the point — an unannounced reward
