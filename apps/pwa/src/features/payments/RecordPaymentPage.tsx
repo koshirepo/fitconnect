@@ -95,9 +95,15 @@ export default function RecordPaymentPage() {
   const [fValidUntil, setFValidUntil] = React.useState("");
   const [fNote, setFNote] = React.useState("");
   const [fPaidAmount, setFPaidAmount] = React.useState("");
+  /** Whether the desk typed its own figure, which the prefill must not overwrite. */
+  const paidAmountEdited = React.useRef(false);
   const [fCouponCode, setFCouponCode] = React.useState("");
   const [fCoinsToSpend, setFCoinsToSpend] = React.useState("");
-  const [fStatus, setFStatus] = React.useState<"PENDING" | "COMPLETED">("COMPLETED");
+  // A desk entry records money that changed hands, so it is always completed.
+  // A short payment is not a pending payment: the service writes the received
+  // amount as completed and opens a separate PENDING "Balance —" row for the
+  // remainder, which is the only pending row a manual entry can produce.
+  const fStatus = "COMPLETED" as const;
 
   /** The priced result of the code currently applied, from the server. */
   const [quote, setQuote] = React.useState<CouponQuote | null>(null);
@@ -194,7 +200,11 @@ export default function RecordPaymentPage() {
     const sub = availableSubscriptions.find((s) => s.id === subId);
     if (sub) {
       setFAmount(String(sub.amount));
-      setFPaidAmount("");
+      // Prefilled with the plan's price so the common case — paying in full —
+      // needs no typing, and cleared of any earlier edit because that figure
+      // belonged to a different plan.
+      paidAmountEdited.current = false;
+      setFPaidAmount(String(sub.amount));
       const validUntil = new Date(today);
       validUntil.setDate(validUntil.getDate() + sub.durationDays);
       setFValidUntil(validUntil.toISOString().slice(0, 10));
@@ -247,6 +257,14 @@ export default function RecordPaymentPage() {
   // payment splits and what the receipt should name.
   const totalAmount = quote ? quote.netAmount : listAmount;
   const receivedAmount = fPaidAmount === "" ? totalAmount : Number(fPaidAmount) || 0;
+
+  // A coupon or spent coins move the total after the plan was picked, so the
+  // prefilled figure follows it. An edited field is left alone — that number is
+  // what the member actually handed over.
+  React.useEffect(() => {
+    if (paidAmountEdited.current) return;
+    setFPaidAmount(totalAmount > 0 ? String(totalAmount) : "");
+  }, [totalAmount]);
   const balanceAmount =
     fStatus === "COMPLETED" ? Math.max(totalAmount - receivedAmount, 0) : 0;
 
@@ -572,7 +590,10 @@ export default function RecordPaymentPage() {
                   id="paidAmount"
                   type="number"
                   value={fPaidAmount}
-                  onChange={(e) => setFPaidAmount(e.target.value)}
+                  onChange={(e) => {
+                    paidAmountEdited.current = true;
+                    setFPaidAmount(e.target.value);
+                  }}
                   min={1}
                   max={totalAmount || undefined}
                   step={1}
@@ -588,7 +609,8 @@ export default function RecordPaymentPage() {
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    Leave blank for a payment in full. Enter less to take a part payment.
+                    Prefilled with the full amount. Enter less to take a part payment — the
+                    rest is logged as a pending balance.
                   </p>
                 )}
               </div>
@@ -608,23 +630,6 @@ export default function RecordPaymentPage() {
               {!fValidUntil && error.includes("valid until") && (
                 <p className="text-sm text-destructive-foreground">{error}</p>
               )}
-            </div>
-
-            {/* Payment Status */}
-            <div className="space-y-2">
-              <Label htmlFor="status">Payment Status</Label>
-              <Select
-                value={fStatus}
-                onValueChange={(value) => setFStatus((value ?? "") as "PENDING" | "COMPLETED")}
-              >
-                <SelectTrigger id="status" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="COMPLETED">Completed</SelectItem>
-                  <SelectItem value="PENDING">Pending</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             {/* Note */}

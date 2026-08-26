@@ -701,8 +701,11 @@ export const paymentRepository = {
   },
 
   async refreshDueDate(membershipId: string) {
+    // Only a completed row buys time. A pending one is money not yet in hand —
+    // an unsettled gateway checkout or an unpaid balance — and letting it set
+    // the due date would hand out membership nobody paid for.
     const latest = await prisma.payment.findFirst({
-      where: { membershipId, validUntil: { not: null } },
+      where: { membershipId, status: "COMPLETED", validUntil: { not: null } },
       orderBy: { validUntil: "desc" },
       select: { validUntil: true },
     });
