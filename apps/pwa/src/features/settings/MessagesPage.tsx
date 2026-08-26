@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { PageLoader } from "@/components/ui/spinner";
+import { FormPageSkeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, MessageSquare, RotateCcw } from "lucide-react";
 
 function toTemplateBodyMap(
@@ -79,7 +79,7 @@ export default function MessagesPage() {
   };
 
   if (loading) {
-    return <PageLoader />;
+    return <FormPageSkeleton fields={4} />;
   }
 
   return (

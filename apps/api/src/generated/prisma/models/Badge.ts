@@ -217,6 +217,7 @@ export type BadgeWhereInput = {
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
   users?: Prisma.TenantMembershipListRelationFilter
   subscriptions?: Prisma.SubscriptionListRelationFilter
+  coupons?: Prisma.CouponListRelationFilter
 }
 
 export type BadgeOrderByWithRelationInput = {
@@ -232,6 +233,7 @@ export type BadgeOrderByWithRelationInput = {
   tenant?: Prisma.TenantOrderByWithRelationInput
   users?: Prisma.TenantMembershipOrderByRelationAggregateInput
   subscriptions?: Prisma.SubscriptionOrderByRelationAggregateInput
+  coupons?: Prisma.CouponOrderByRelationAggregateInput
 }
 
 export type BadgeWhereUniqueInput = Prisma.AtLeast<{
@@ -251,6 +253,7 @@ export type BadgeWhereUniqueInput = Prisma.AtLeast<{
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
   users?: Prisma.TenantMembershipListRelationFilter
   subscriptions?: Prisma.SubscriptionListRelationFilter
+  coupons?: Prisma.CouponListRelationFilter
 }, "id" | "tenantId_name">
 
 export type BadgeOrderByWithAggregationInput = {
@@ -295,6 +298,7 @@ export type BadgeCreateInput = {
   tenant: Prisma.TenantCreateNestedOneWithoutBadgesInput
   users?: Prisma.TenantMembershipCreateNestedManyWithoutBadgesInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutBadgesInput
+  coupons?: Prisma.CouponCreateNestedManyWithoutBadgesInput
 }
 
 export type BadgeUncheckedCreateInput = {
@@ -309,6 +313,7 @@ export type BadgeUncheckedCreateInput = {
   updatedAt?: Date | string
   users?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutBadgesInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutBadgesInput
+  coupons?: Prisma.CouponUncheckedCreateNestedManyWithoutBadgesInput
 }
 
 export type BadgeUpdateInput = {
@@ -323,6 +328,7 @@ export type BadgeUpdateInput = {
   tenant?: Prisma.TenantUpdateOneRequiredWithoutBadgesNestedInput
   users?: Prisma.TenantMembershipUpdateManyWithoutBadgesNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutBadgesNestedInput
+  coupons?: Prisma.CouponUpdateManyWithoutBadgesNestedInput
 }
 
 export type BadgeUncheckedUpdateInput = {
@@ -337,6 +343,7 @@ export type BadgeUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.TenantMembershipUncheckedUpdateManyWithoutBadgesNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutBadgesNestedInput
+  coupons?: Prisma.CouponUncheckedUpdateManyWithoutBadgesNestedInput
 }
 
 export type BadgeCreateManyInput = {
@@ -543,6 +550,44 @@ export type BadgeUncheckedUpdateManyWithoutSubscriptionsNestedInput = {
   deleteMany?: Prisma.BadgeScalarWhereInput | Prisma.BadgeScalarWhereInput[]
 }
 
+export type BadgeCreateNestedManyWithoutCouponsInput = {
+  create?: Prisma.XOR<Prisma.BadgeCreateWithoutCouponsInput, Prisma.BadgeUncheckedCreateWithoutCouponsInput> | Prisma.BadgeCreateWithoutCouponsInput[] | Prisma.BadgeUncheckedCreateWithoutCouponsInput[]
+  connectOrCreate?: Prisma.BadgeCreateOrConnectWithoutCouponsInput | Prisma.BadgeCreateOrConnectWithoutCouponsInput[]
+  connect?: Prisma.BadgeWhereUniqueInput | Prisma.BadgeWhereUniqueInput[]
+}
+
+export type BadgeUncheckedCreateNestedManyWithoutCouponsInput = {
+  create?: Prisma.XOR<Prisma.BadgeCreateWithoutCouponsInput, Prisma.BadgeUncheckedCreateWithoutCouponsInput> | Prisma.BadgeCreateWithoutCouponsInput[] | Prisma.BadgeUncheckedCreateWithoutCouponsInput[]
+  connectOrCreate?: Prisma.BadgeCreateOrConnectWithoutCouponsInput | Prisma.BadgeCreateOrConnectWithoutCouponsInput[]
+  connect?: Prisma.BadgeWhereUniqueInput | Prisma.BadgeWhereUniqueInput[]
+}
+
+export type BadgeUpdateManyWithoutCouponsNestedInput = {
+  create?: Prisma.XOR<Prisma.BadgeCreateWithoutCouponsInput, Prisma.BadgeUncheckedCreateWithoutCouponsInput> | Prisma.BadgeCreateWithoutCouponsInput[] | Prisma.BadgeUncheckedCreateWithoutCouponsInput[]
+  connectOrCreate?: Prisma.BadgeCreateOrConnectWithoutCouponsInput | Prisma.BadgeCreateOrConnectWithoutCouponsInput[]
+  upsert?: Prisma.BadgeUpsertWithWhereUniqueWithoutCouponsInput | Prisma.BadgeUpsertWithWhereUniqueWithoutCouponsInput[]
+  set?: Prisma.BadgeWhereUniqueInput | Prisma.BadgeWhereUniqueInput[]
+  disconnect?: Prisma.BadgeWhereUniqueInput | Prisma.BadgeWhereUniqueInput[]
+  delete?: Prisma.BadgeWhereUniqueInput | Prisma.BadgeWhereUniqueInput[]
+  connect?: Prisma.BadgeWhereUniqueInput | Prisma.BadgeWhereUniqueInput[]
+  update?: Prisma.BadgeUpdateWithWhereUniqueWithoutCouponsInput | Prisma.BadgeUpdateWithWhereUniqueWithoutCouponsInput[]
+  updateMany?: Prisma.BadgeUpdateManyWithWhereWithoutCouponsInput | Prisma.BadgeUpdateManyWithWhereWithoutCouponsInput[]
+  deleteMany?: Prisma.BadgeScalarWhereInput | Prisma.BadgeScalarWhereInput[]
+}
+
+export type BadgeUncheckedUpdateManyWithoutCouponsNestedInput = {
+  create?: Prisma.XOR<Prisma.BadgeCreateWithoutCouponsInput, Prisma.BadgeUncheckedCreateWithoutCouponsInput> | Prisma.BadgeCreateWithoutCouponsInput[] | Prisma.BadgeUncheckedCreateWithoutCouponsInput[]
+  connectOrCreate?: Prisma.BadgeCreateOrConnectWithoutCouponsInput | Prisma.BadgeCreateOrConnectWithoutCouponsInput[]
+  upsert?: Prisma.BadgeUpsertWithWhereUniqueWithoutCouponsInput | Prisma.BadgeUpsertWithWhereUniqueWithoutCouponsInput[]
+  set?: Prisma.BadgeWhereUniqueInput | Prisma.BadgeWhereUniqueInput[]
+  disconnect?: Prisma.BadgeWhereUniqueInput | Prisma.BadgeWhereUniqueInput[]
+  delete?: Prisma.BadgeWhereUniqueInput | Prisma.BadgeWhereUniqueInput[]
+  connect?: Prisma.BadgeWhereUniqueInput | Prisma.BadgeWhereUniqueInput[]
+  update?: Prisma.BadgeUpdateWithWhereUniqueWithoutCouponsInput | Prisma.BadgeUpdateWithWhereUniqueWithoutCouponsInput[]
+  updateMany?: Prisma.BadgeUpdateManyWithWhereWithoutCouponsInput | Prisma.BadgeUpdateManyWithWhereWithoutCouponsInput[]
+  deleteMany?: Prisma.BadgeScalarWhereInput | Prisma.BadgeScalarWhereInput[]
+}
+
 export type BadgeCreateWithoutTenantInput = {
   id?: string
   name: string
@@ -554,6 +599,7 @@ export type BadgeCreateWithoutTenantInput = {
   updatedAt?: Date | string
   users?: Prisma.TenantMembershipCreateNestedManyWithoutBadgesInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutBadgesInput
+  coupons?: Prisma.CouponCreateNestedManyWithoutBadgesInput
 }
 
 export type BadgeUncheckedCreateWithoutTenantInput = {
@@ -567,6 +613,7 @@ export type BadgeUncheckedCreateWithoutTenantInput = {
   updatedAt?: Date | string
   users?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutBadgesInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutBadgesInput
+  coupons?: Prisma.CouponUncheckedCreateNestedManyWithoutBadgesInput
 }
 
 export type BadgeCreateOrConnectWithoutTenantInput = {
@@ -620,6 +667,7 @@ export type BadgeCreateWithoutUsersInput = {
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutBadgesInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutBadgesInput
+  coupons?: Prisma.CouponCreateNestedManyWithoutBadgesInput
 }
 
 export type BadgeUncheckedCreateWithoutUsersInput = {
@@ -633,6 +681,7 @@ export type BadgeUncheckedCreateWithoutUsersInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutBadgesInput
+  coupons?: Prisma.CouponUncheckedCreateNestedManyWithoutBadgesInput
 }
 
 export type BadgeCreateOrConnectWithoutUsersInput = {
@@ -667,6 +716,7 @@ export type BadgeCreateWithoutSubscriptionsInput = {
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutBadgesInput
   users?: Prisma.TenantMembershipCreateNestedManyWithoutBadgesInput
+  coupons?: Prisma.CouponCreateNestedManyWithoutBadgesInput
 }
 
 export type BadgeUncheckedCreateWithoutSubscriptionsInput = {
@@ -680,6 +730,7 @@ export type BadgeUncheckedCreateWithoutSubscriptionsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutBadgesInput
+  coupons?: Prisma.CouponUncheckedCreateNestedManyWithoutBadgesInput
 }
 
 export type BadgeCreateOrConnectWithoutSubscriptionsInput = {
@@ -701,6 +752,55 @@ export type BadgeUpdateWithWhereUniqueWithoutSubscriptionsInput = {
 export type BadgeUpdateManyWithWhereWithoutSubscriptionsInput = {
   where: Prisma.BadgeScalarWhereInput
   data: Prisma.XOR<Prisma.BadgeUpdateManyMutationInput, Prisma.BadgeUncheckedUpdateManyWithoutSubscriptionsInput>
+}
+
+export type BadgeCreateWithoutCouponsInput = {
+  id?: string
+  name: string
+  description?: string | null
+  color?: string
+  icon?: string | null
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tenant: Prisma.TenantCreateNestedOneWithoutBadgesInput
+  users?: Prisma.TenantMembershipCreateNestedManyWithoutBadgesInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutBadgesInput
+}
+
+export type BadgeUncheckedCreateWithoutCouponsInput = {
+  id?: string
+  tenantId: string
+  name: string
+  description?: string | null
+  color?: string
+  icon?: string | null
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutBadgesInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutBadgesInput
+}
+
+export type BadgeCreateOrConnectWithoutCouponsInput = {
+  where: Prisma.BadgeWhereUniqueInput
+  create: Prisma.XOR<Prisma.BadgeCreateWithoutCouponsInput, Prisma.BadgeUncheckedCreateWithoutCouponsInput>
+}
+
+export type BadgeUpsertWithWhereUniqueWithoutCouponsInput = {
+  where: Prisma.BadgeWhereUniqueInput
+  update: Prisma.XOR<Prisma.BadgeUpdateWithoutCouponsInput, Prisma.BadgeUncheckedUpdateWithoutCouponsInput>
+  create: Prisma.XOR<Prisma.BadgeCreateWithoutCouponsInput, Prisma.BadgeUncheckedCreateWithoutCouponsInput>
+}
+
+export type BadgeUpdateWithWhereUniqueWithoutCouponsInput = {
+  where: Prisma.BadgeWhereUniqueInput
+  data: Prisma.XOR<Prisma.BadgeUpdateWithoutCouponsInput, Prisma.BadgeUncheckedUpdateWithoutCouponsInput>
+}
+
+export type BadgeUpdateManyWithWhereWithoutCouponsInput = {
+  where: Prisma.BadgeScalarWhereInput
+  data: Prisma.XOR<Prisma.BadgeUpdateManyMutationInput, Prisma.BadgeUncheckedUpdateManyWithoutCouponsInput>
 }
 
 export type BadgeCreateManyTenantInput = {
@@ -725,6 +825,7 @@ export type BadgeUpdateWithoutTenantInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.TenantMembershipUpdateManyWithoutBadgesNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutBadgesNestedInput
+  coupons?: Prisma.CouponUpdateManyWithoutBadgesNestedInput
 }
 
 export type BadgeUncheckedUpdateWithoutTenantInput = {
@@ -738,6 +839,7 @@ export type BadgeUncheckedUpdateWithoutTenantInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.TenantMembershipUncheckedUpdateManyWithoutBadgesNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutBadgesNestedInput
+  coupons?: Prisma.CouponUncheckedUpdateManyWithoutBadgesNestedInput
 }
 
 export type BadgeUncheckedUpdateManyWithoutTenantInput = {
@@ -762,6 +864,7 @@ export type BadgeUpdateWithoutUsersInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutBadgesNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutBadgesNestedInput
+  coupons?: Prisma.CouponUpdateManyWithoutBadgesNestedInput
 }
 
 export type BadgeUncheckedUpdateWithoutUsersInput = {
@@ -775,6 +878,7 @@ export type BadgeUncheckedUpdateWithoutUsersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutBadgesNestedInput
+  coupons?: Prisma.CouponUncheckedUpdateManyWithoutBadgesNestedInput
 }
 
 export type BadgeUncheckedUpdateManyWithoutUsersInput = {
@@ -800,6 +904,7 @@ export type BadgeUpdateWithoutSubscriptionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutBadgesNestedInput
   users?: Prisma.TenantMembershipUpdateManyWithoutBadgesNestedInput
+  coupons?: Prisma.CouponUpdateManyWithoutBadgesNestedInput
 }
 
 export type BadgeUncheckedUpdateWithoutSubscriptionsInput = {
@@ -813,9 +918,50 @@ export type BadgeUncheckedUpdateWithoutSubscriptionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.TenantMembershipUncheckedUpdateManyWithoutBadgesNestedInput
+  coupons?: Prisma.CouponUncheckedUpdateManyWithoutBadgesNestedInput
 }
 
 export type BadgeUncheckedUpdateManyWithoutSubscriptionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type BadgeUpdateWithoutCouponsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tenant?: Prisma.TenantUpdateOneRequiredWithoutBadgesNestedInput
+  users?: Prisma.TenantMembershipUpdateManyWithoutBadgesNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutBadgesNestedInput
+}
+
+export type BadgeUncheckedUpdateWithoutCouponsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.TenantMembershipUncheckedUpdateManyWithoutBadgesNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutBadgesNestedInput
+}
+
+export type BadgeUncheckedUpdateManyWithoutCouponsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
@@ -835,11 +981,13 @@ export type BadgeUncheckedUpdateManyWithoutSubscriptionsInput = {
 export type BadgeCountOutputType = {
   users: number
   subscriptions: number
+  coupons: number
 }
 
 export type BadgeCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   users?: boolean | BadgeCountOutputTypeCountUsersArgs
   subscriptions?: boolean | BadgeCountOutputTypeCountSubscriptionsArgs
+  coupons?: boolean | BadgeCountOutputTypeCountCouponsArgs
 }
 
 /**
@@ -866,6 +1014,13 @@ export type BadgeCountOutputTypeCountSubscriptionsArgs<ExtArgs extends runtime.T
   where?: Prisma.SubscriptionWhereInput
 }
 
+/**
+ * BadgeCountOutputType without action
+ */
+export type BadgeCountOutputTypeCountCouponsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CouponWhereInput
+}
+
 
 export type BadgeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -880,6 +1035,7 @@ export type BadgeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
   users?: boolean | Prisma.Badge$usersArgs<ExtArgs>
   subscriptions?: boolean | Prisma.Badge$subscriptionsArgs<ExtArgs>
+  coupons?: boolean | Prisma.Badge$couponsArgs<ExtArgs>
   _count?: boolean | Prisma.BadgeCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["badge"]>
 
@@ -926,6 +1082,7 @@ export type BadgeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
   users?: boolean | Prisma.Badge$usersArgs<ExtArgs>
   subscriptions?: boolean | Prisma.Badge$subscriptionsArgs<ExtArgs>
+  coupons?: boolean | Prisma.Badge$couponsArgs<ExtArgs>
   _count?: boolean | Prisma.BadgeCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type BadgeIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -941,6 +1098,10 @@ export type $BadgePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     tenant: Prisma.$TenantPayload<ExtArgs>
     users: Prisma.$TenantMembershipPayload<ExtArgs>[]
     subscriptions: Prisma.$SubscriptionPayload<ExtArgs>[]
+    /**
+     * Coupons that require this badge.
+     */
+    coupons: Prisma.$CouponPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1355,6 +1516,7 @@ export interface Prisma__BadgeClient<T, Null = never, ExtArgs extends runtime.Ty
   tenant<T extends Prisma.TenantDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantDefaultArgs<ExtArgs>>): Prisma.Prisma__TenantClient<runtime.Types.Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   users<T extends Prisma.Badge$usersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Badge$usersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TenantMembershipPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   subscriptions<T extends Prisma.Badge$subscriptionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Badge$subscriptionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SubscriptionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  coupons<T extends Prisma.Badge$couponsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Badge$couponsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CouponPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1837,6 +1999,30 @@ export type Badge$subscriptionsArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.SubscriptionScalarFieldEnum | Prisma.SubscriptionScalarFieldEnum[]
+}
+
+/**
+ * Badge.coupons
+ */
+export type Badge$couponsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Coupon
+   */
+  select?: Prisma.CouponSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Coupon
+   */
+  omit?: Prisma.CouponOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CouponInclude<ExtArgs> | null
+  where?: Prisma.CouponWhereInput
+  orderBy?: Prisma.CouponOrderByWithRelationInput | Prisma.CouponOrderByWithRelationInput[]
+  cursor?: Prisma.CouponWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CouponScalarFieldEnum | Prisma.CouponScalarFieldEnum[]
 }
 
 /**

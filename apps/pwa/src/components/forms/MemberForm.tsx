@@ -7,38 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import MemberSelector from "@/components/ui/memberSelector";
 import { PhotoCapture } from "@/components/ui/photo-capture";
+import { useTenantRoleMatrix } from "@/api/queries/roles";
+import { useAuthStore } from "@/stores/auth";
 import { formatShiftLabel } from "@/lib/shifts";
 import { AlertCircle, CircleSlash, Clock } from "lucide-react";
-import type { Gender, Shift, TenantMember, TenantRole } from "@/types/api";
+import type { Gender, Shift, TenantMember } from "@/types/api";
 import { DEFAULT_GENDER, GENDER_OPTIONS } from "@/lib/gender";
-
-// ─── Role options per caller role ─────────────────────────────────────────────
-const ROLE_OPTIONS: Record<string, { value: TenantRole; label: string; description: string }[]> = {
-  ADMIN: [
-    {
-      value: "MEMBER",
-      label: "Member",
-      description: "Can view schedules, enroll in classes, and manage their own profile",
-    },
-    {
-      value: "COACH",
-      label: "Trainer / Coach",
-      description: "Can manage workout plans, view members, and add new members",
-    },
-    {
-      value: "ADMIN",
-      label: "Admin",
-      description: "Full management access including members, billing, and settings",
-    },
-  ],
-  COACH: [
-    {
-      value: "MEMBER",
-      label: "Member",
-      description: "Can view schedules, enroll in classes, and manage their own profile",
-    },
-  ],
-};
 
 /**
  * One selectable chip. Chips are used wherever the choices are few and worth
@@ -81,7 +55,8 @@ export interface MemberFormData {
   email: string;
   phone: string;
   gender: Gender;
-  role: TenantRole;
+  /** Built-in (MEMBER/COACH/ADMIN) or a custom role key. */
+  role: string;
   shiftId: string;
   referredByMembershipId: string;
   photoFile: File | null;
@@ -121,15 +96,29 @@ export default function MemberForm({
   submitLabel,
 }: MemberFormProps) {
   const { can } = usePermissions();
+  const { currentTenantId } = useAuthStore();
   // Assigning a role to another member is its own capability.
   const canAssignRoles = can(Permission.MEMBERS_ROLE_UPDATE);
+
+  // Built-in tenant roles plus any custom roles the gym has defined. Only the
+  // ADMIN/COACH/MEMBER built-ins and custom roles are assignable; SUPER_ADMIN
+  // never appears in a tenant matrix.
+  const matrixQuery = useTenantRoleMatrix(currentTenantId);
+  const roleOptions = React.useMemo(() => {
+    const rows = matrixQuery.data?.roles ?? [];
+    return rows.map((entry) => ({
+      value: entry.role,
+      label: entry.label,
+      description: entry.description ?? "",
+    }));
+  }, [matrixQuery.data]);
 
   // Form state
   const [name, setName] = React.useState(initialData.name ?? "");
   const [email, setEmail] = React.useState(initialData.email ?? "");
   const [phone, setPhone] = React.useState(initialData.phone ?? "");
   const [gender, setGender] = React.useState<Gender>(initialData.gender ?? DEFAULT_GENDER);
-  const [role, setRole] = React.useState<TenantRole>(initialData.role ?? ("MEMBER" as TenantRole));
+  const [role, setRole] = React.useState<string>(initialData.role ?? "MEMBER");
   const [shiftId, setShiftId] = React.useState(initialData.shiftId ?? "");
   const [referredByMembershipId, setReferredByMembershipId] = React.useState(
     initialData.referredByMembershipId ?? "",
@@ -141,7 +130,6 @@ export default function MemberForm({
   const [internalError, setInternalError] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const availableRoles = canAssignRoles ? ROLE_OPTIONS.ADMIN : ROLE_OPTIONS.COACH;
   const selectedReferrer =
     referralOptions?.find((member) => member.id === referredByMembershipId) ?? null;
 
@@ -339,32 +327,36 @@ export default function MemberForm({
       {canAssignRoles && (
         <div className="space-y-3">
           <Label>Role</Label>
-          <div className="grid gap-3">
-            {availableRoles.map((opt) => (
-              <label
-                key={opt.value}
-                className={`flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors hover:bg-accent/50 ${
-                  role === opt.value
-                    ? "border-primary bg-primary/5 ring-1 ring-primary"
-                    : "border-border"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="role"
-                  value={opt.value}
-                  checked={role === opt.value}
-                  onChange={() => setRole(opt.value)}
-                  className="mt-0.5"
-                  disabled={isSubmitting || submitting}
-                />
-                <div>
-                  <p className="text-sm font-medium">{opt.label}</p>
-                  <p className="text-xs text-muted-foreground">{opt.description}</p>
-                </div>
-              </label>
-            ))}
-          </div>
+          {matrixQuery.isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading roles...</p>
+          ) : (
+            <div className="grid gap-3">
+              {roleOptions.map((opt) => (
+                <label
+                  key={opt.value}
+                  className={`flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors hover:bg-accent/50 ${
+                    role === opt.value
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "border-border"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="role"
+                    value={opt.value}
+                    checked={role === opt.value}
+                    onChange={() => setRole(opt.value)}
+                    className="mt-0.5"
+                    disabled={isSubmitting || submitting}
+                  />
+                  <div>
+                    <p className="text-sm font-medium">{opt.label}</p>
+                    <p className="text-xs text-muted-foreground">{opt.description}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

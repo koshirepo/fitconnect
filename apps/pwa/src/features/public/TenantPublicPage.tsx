@@ -9,7 +9,7 @@ import { useAuthStore } from "@/stores/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge as BadgeUI } from "@/components/ui/badge";
-import { PageLoader } from "@/components/ui/spinner";
+import { CardSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { resolveAssetUrl } from "@/lib/assets";
 import { formatShiftWindow } from "@/lib/shifts";
@@ -72,7 +72,7 @@ export default function TenantPublicPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <PageLoader />;
+  if (loading) return <CardSkeleton />;
 
   if (error || !tenant) {
     return (

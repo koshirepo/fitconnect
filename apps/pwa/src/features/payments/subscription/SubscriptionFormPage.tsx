@@ -1,10 +1,23 @@
+/**
+ * Documentation: Create or edit one subscription plan.
+ *
+ * - A page rather than a dialog: price, duration, badge eligibility, and the freeze allowance do not fit a modal, and the edit dialog this replaced had quietly fallen a whole feature behind the create form.
+ * - A `subscriptionId` in the route means edit and seeds the form from the plans list, which the API returns whole; without one it is a create.
+ * - Retiring or deleting a plan stays on the list page, because those are decisions about a plan rather than edits to it.
+ * - Primary exports: SubscriptionFormPage.
+ */
 import * as React from "react";
+import { useParams } from "react-router-dom";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
 import { useBadges } from "@/api/queries/catalog";
-import { useCreateSubscription } from "@/api/queries/payments";
+import {
+  useCreateSubscription,
+  useSubscriptions,
+  useUpdateSubscription,
+} from "@/api/queries/payments";
 import { getApiError } from "@/api/client";
 import { formatCurrency } from "@/lib/utils";
 import { Badge as UiBadge } from "@/components/ui/badge";
@@ -14,8 +27,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageLoader } from "@/components/ui/spinner";
 import { ArrowLeft, Package, AlertCircle, CheckCircle2 } from "lucide-react";
-import type { Badge as BadgeModel } from "@/types/api";
+import type { Badge as BadgeModel, Subscription } from "@/types/api";
 
 // ─── Preset duration options ──────────────────────────────────────────────────
 const DURATION_PRESETS = [
@@ -26,18 +40,26 @@ const DURATION_PRESETS = [
   { value: 365, label: "1 Year" },
 ];
 
-export default function CreateSubscriptionPage() {
+export default function SubscriptionFormPage() {
   const navigate = useAppNavigate();
+  const { subscriptionId } = useParams<{ subscriptionId?: string }>();
+  const isEdit = Boolean(subscriptionId);
   const { currentTenantId } = useAuthStore();
   const { can } = usePermissions();
   const createSubscription = useCreateSubscription();
-  const canManagePlans = can(Permission.SUBSCRIPTIONS_CREATE);
+  const updateSubscription = useUpdateSubscription();
+  const canManagePlans = isEdit
+    ? can(Permission.SUBSCRIPTIONS_UPDATE)
+    : can(Permission.SUBSCRIPTIONS_CREATE);
 
   // ─── Form state ─────────────────────────────────────────────────────────────
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
   const [amount, setAmount] = React.useState("");
   const [durationDays, setDurationDays] = React.useState("30");
+  // Zero means this plan cannot be frozen, which is where every plan starts.
+  const [freezeDays, setFreezeDays] = React.useState("0");
+  const [freezeCount, setFreezeCount] = React.useState("0");
   const [customDuration, setCustomDuration] = React.useState(false);
   const [selectedBadgeIds, setSelectedBadgeIds] = React.useState<string[]>([]);
 
@@ -53,10 +75,35 @@ export default function CreateSubscriptionPage() {
   );
   const loadingBadges = badgesQuery.isLoading;
   const badgeLoadError = badgesQuery.isError
-    ? "Failed to load badges. You can still create a plan for all members."
+    ? "Failed to load badges. You can still save the plan for all members."
     : "";
 
-  // Only admins can create subscriptions
+  // The plans endpoint returns every plan in one response, so the record being
+  // edited is already in hand — there is no per-plan fetch to make.
+  const subscriptionsQuery = useSubscriptions(true, { enabled: isEdit && canManagePlans });
+  const editingPlan = React.useMemo<Subscription | undefined>(
+    () => subscriptionsQuery.data?.find((plan) => plan.id === subscriptionId),
+    [subscriptionsQuery.data, subscriptionId],
+  );
+
+  // Seeded once: re-seeding on a refetch would discard edits in progress.
+  const [seeded, setSeeded] = React.useState(false);
+  React.useEffect(() => {
+    if (!isEdit || seeded || !editingPlan) return;
+    setTitle(editingPlan.title);
+    setDescription(editingPlan.description ?? "");
+    setAmount(String(editingPlan.amount));
+    setDurationDays(String(editingPlan.durationDays));
+    setCustomDuration(
+      !DURATION_PRESETS.some((preset) => preset.value === editingPlan.durationDays),
+    );
+    setFreezeDays(String(editingPlan.freezeDays ?? 0));
+    setFreezeCount(String(editingPlan.freezeCount ?? 0));
+    setSelectedBadgeIds(editingPlan.badges.map((badge) => badge.id));
+    setSeeded(true);
+  }, [isEdit, seeded, editingPlan]);
+
+  // Only admins can author subscriptions
   if (!canManagePlans) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -64,7 +111,31 @@ export default function CreateSubscriptionPage() {
           <CardHeader className="text-center">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-2" />
             <CardTitle>Access Denied</CardTitle>
-            <CardDescription>Only administrators can create subscription plans.</CardDescription>
+            <CardDescription>
+              Only administrators can {isEdit ? "edit" : "create"} subscription plans.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center">
+            <Button variant="outline" onClick={() => navigate("/subscriptions")}>
+              <ArrowLeft className="h-4 w-4" />
+              Back to Subscriptions
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isEdit && subscriptionsQuery.isLoading) return <PageLoader />;
+
+  if (isEdit && !subscriptionsQuery.isLoading && !editingPlan) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-2" />
+            <CardTitle>Plan not found</CardTitle>
+            <CardDescription>This subscription plan is no longer in this gym.</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
             <Button variant="outline" onClick={() => navigate("/subscriptions")}>
@@ -97,11 +168,32 @@ export default function CreateSubscriptionPage() {
     setSubmitting(true);
 
     try {
+      if (isEdit && subscriptionId) {
+        // The mutation invalidates the subscriptions key, so the list refreshes
+        // itself rather than being patched in place.
+        await updateSubscription.mutateAsync({
+          subscriptionId,
+          data: {
+            title: title.trim(),
+            description: description.trim() || null,
+            amount: parsedAmount,
+            durationDays: parsedDuration,
+            freezeDays: parseInt(freezeDays, 10) || 0,
+            freezeCount: parseInt(freezeCount, 10) || 0,
+            badgeIds: selectedBadgeIds,
+          },
+        });
+        navigate("/subscriptions");
+        return;
+      }
+
       await createSubscription.mutateAsync({
         title: title.trim(),
         description: description.trim() || undefined,
         amount: parsedAmount,
         durationDays: parsedDuration,
+        freezeDays: parseInt(freezeDays, 10) || 0,
+        freezeCount: parseInt(freezeCount, 10) || 0,
         badgeIds: selectedBadgeIds,
       });
       setSuccess(true);
@@ -162,18 +254,14 @@ export default function CreateSubscriptionPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate("/subscriptions")}
-          aria-label="Back to subscriptions"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Create Subscription Plan</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            {isEdit ? `Edit ${editingPlan?.title ?? "plan"}` : "Create Subscription Plan"}
+          </h1>
           <p className="text-muted-foreground">
-            Set up a new subscription plan for your gym members.
+            {isEdit
+              ? "Change the price, duration, eligibility, or freeze allowance for this plan."
+              : "Set up a new subscription plan for your gym members."}
           </p>
         </div>
       </div>
@@ -374,6 +462,47 @@ export default function CreateSubscriptionPage() {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle>Freezing</CardTitle>
+            <CardDescription>
+              How long a member on this plan may pause, and how many times. Leave
+              at zero and this plan cannot be frozen.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="sub-freeze-days">Freeze days per term</Label>
+              <Input
+                id="sub-freeze-days"
+                type="number"
+                min={0}
+                max={365}
+                value={freezeDays}
+                onChange={(ev) => setFreezeDays(ev.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Around 15–25% of the plan's length works well.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sub-freeze-count">Freezes per term</Label>
+              <Input
+                id="sub-freeze-count"
+                type="number"
+                min={0}
+                max={12}
+                value={freezeCount}
+                onChange={(ev) => setFreezeCount(ev.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                How many separate breaks that budget splits across. Each one is
+                at least 3 days.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Error */}
         {error && (
           <div className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
@@ -393,7 +522,7 @@ export default function CreateSubscriptionPage() {
             Cancel
           </Button>
           <Button type="submit" disabled={submitting || !title.trim() || !amount}>
-            {submitting ? "Creating..." : "Create Plan"}
+            {submitting ? "Saving..." : isEdit ? "Save Changes" : "Create Plan"}
           </Button>
         </div>
       </form>

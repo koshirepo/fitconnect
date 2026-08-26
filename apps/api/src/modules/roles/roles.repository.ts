@@ -90,4 +90,114 @@ export const rolePermissionRepository = {
       where: { tenantId: input.tenantId ?? null, scope: input.scope, role: input.role },
     });
   },
+
+  // ─── Custom role registry ───────────────────────────────────────────────────
+
+  /**
+   * Custom (non-system) roles for a scope container. `tenantId: null` reads
+   * platform-wide custom roles; a tenantId reads that gym's custom roles.
+   */
+  async listCustomRoles(tenantId: string | null) {
+    return prisma.role.findMany({
+      where: {
+        scope: tenantId ? "TENANT" : "PLATFORM",
+        ...(tenantId ? { tenantId } : { tenantId: null }),
+        isSystem: false,
+        isActive: true,
+      },
+      select: { scope: true, key: true, name: true, description: true },
+      orderBy: { createdAt: "asc" },
+    });
+  },
+
+  /** Look up one custom role in a scope container. */
+  async findCustomRole(tenantId: string | null, scope: PermissionScope, key: string) {
+    return prisma.role.findFirst({
+      where: {
+        scope,
+        key,
+        isSystem: false,
+        ...(tenantId ? { tenantId } : { tenantId: null }),
+      },
+      select: { id: true, scope: true, key: true, name: true, description: true },
+    });
+  },
+
+  /** Create a custom role with its initial permission rows. */
+  async createRole(input: {
+    tenantId: string | null;
+    scope: PermissionScope;
+    key: string;
+    name: string;
+    description?: string;
+    permissions: string[];
+    createdBy?: string;
+  }) {
+    await prisma.role.create({
+      data: {
+        scope: input.scope,
+        key: input.key,
+        name: input.name,
+        description: input.description ?? null,
+        tenantId: input.tenantId ?? null,
+        isSystem: false,
+        createdBy: input.createdBy ?? null,
+      },
+    });
+
+    if (input.permissions.length > 0) {
+      await prisma.rolePermissionOverride.createMany({
+        data: input.permissions.map((permission) => ({
+          tenantId: input.tenantId ?? null,
+          scope: input.scope,
+          role: input.key,
+          permission,
+          allowed: true,
+          updatedBy: input.createdBy ?? null,
+          updatedAt: new Date(),
+        })),
+      });
+    }
+  },
+
+  /** Delete a custom role definition (callers guard against assigned members). */
+  async deleteRole(input: { tenantId: string | null; scope: PermissionScope; role: string }) {
+    await prisma.rolePermissionOverride.deleteMany({
+      where: { tenantId: input.tenantId ?? null, scope: input.scope, role: input.role },
+    });
+    await prisma.role.deleteMany({
+      where: {
+        scope: input.scope,
+        key: input.role,
+        isSystem: false,
+        ...(input.tenantId ? { tenantId: input.tenantId } : { tenantId: null }),
+      },
+    });
+  },
+
+  /** Update a custom role's label/description. */
+  async updateRole(
+    tenantId: string | null,
+    scope: PermissionScope,
+    key: string,
+    data: { name?: string; description?: string | null },
+  ) {
+    await prisma.role.updateMany({
+      where: {
+        scope,
+        key,
+        isSystem: false,
+        ...(tenantId ? { tenantId } : { tenantId: null }),
+      },
+      data,
+    });
+  },
+
+  /** How many active memberships currently hold this role. */
+  async countMembersWithRole(tenantId: string | null, role: string) {
+    if (!tenantId) return 0;
+    return prisma.tenantMembership.count({
+      where: { tenantId, role, status: { not: "DELETED" } },
+    });
+  },
 };

@@ -24,7 +24,21 @@ tenantRoleRoutes.get(
   roleController.getTenantMatrix,
 );
 
+tenantRoleRoutes.post(
+  "/:tenantId/roles",
+  authenticate,
+  requireTenantPermissions(Permission.ROLES_UPDATE),
+  roleController.createTenantRole,
+);
+
 tenantRoleRoutes.put(
+  "/:tenantId/roles/:role",
+  authenticate,
+  requireTenantPermissions(Permission.ROLES_UPDATE),
+  roleController.updateTenantRolePermissions,
+);
+
+tenantRoleRoutes.patch(
   "/:tenantId/roles/:role",
   authenticate,
   requireTenantPermissions(Permission.ROLES_UPDATE),
@@ -38,6 +52,13 @@ tenantRoleRoutes.delete(
   roleController.resetTenantRole,
 );
 
+tenantRoleRoutes.delete(
+  "/:tenantId/roles/:role/definition",
+  authenticate,
+  requireTenantPermissions(Permission.ROLES_UPDATE),
+  roleController.deleteTenantRole,
+);
+
 // ─── Platform scope (mounted at /platform) ────────────────────────────────────
 
 export const platformRoleRoutes = new Hono<AppBindings>();
@@ -49,7 +70,21 @@ platformRoleRoutes.get(
   roleController.getPlatformMatrix,
 );
 
+platformRoleRoutes.post(
+  "/roles",
+  authenticate,
+  requirePermissions(Permission.PLATFORM_ROLES_UPDATE),
+  roleController.createPlatformRole,
+);
+
 platformRoleRoutes.put(
+  "/roles/:scope/:role",
+  authenticate,
+  requirePermissions(Permission.PLATFORM_ROLES_UPDATE),
+  roleController.updatePlatformRolePermissions,
+);
+
+platformRoleRoutes.patch(
   "/roles/:scope/:role",
   authenticate,
   requirePermissions(Permission.PLATFORM_ROLES_UPDATE),
@@ -61,4 +96,11 @@ platformRoleRoutes.delete(
   authenticate,
   requirePermissions(Permission.PLATFORM_ROLES_UPDATE),
   roleController.resetPlatformRole,
+);
+
+platformRoleRoutes.delete(
+  "/roles/:scope/:role/definition",
+  authenticate,
+  requirePermissions(Permission.PLATFORM_ROLES_UPDATE),
+  roleController.deletePlatformRole,
 );

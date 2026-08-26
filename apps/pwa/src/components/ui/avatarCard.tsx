@@ -34,7 +34,8 @@ const STACKED_NAME_CLASS: Record<Variant, string> = {
 
 type Variant = "sm" | "md" | "lg" | "xl";
 
-type UserRole = "ADMIN" | "COACH" | "TRAINER" | "MEMBER";
+/** Built-in roles plus custom role keys, all rendered as a badge. */
+type UserRole = string;
 
 interface AvatarCardProps {
   name: string;

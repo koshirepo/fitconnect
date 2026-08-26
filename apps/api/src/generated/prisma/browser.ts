@@ -45,11 +45,22 @@ export type RefreshToken = Prisma.RefreshTokenModel
  */
 export type Tenant = Prisma.TenantModel
 /**
+ * Model Role
+ * A role definition. Built-in roles (MEMBER, COACH, ADMIN, USER, SUPPORT,
+ * SUPER_ADMIN) are seeded here so custom roles share one registry; they have
+ * `isSystem = true` and cannot be edited or deleted. Custom roles are created
+ * by gym admins (`scope = "TENANT"` with a tenantId) or platform staff
+ * (`scope = "PLATFORM"` with a null tenantId) and hold their permissions as
+ * `RolePermissionOverride` rows with `allowed = true`.
+ */
+export type Role = Prisma.RoleModel
+/**
  * Model RolePermissionOverride
  * Per-role permission overrides layered on top of the static catalog in
  * `src/shared/types/permissions.ts`. A row with `allowed = true` grants a
  * permission the baseline role does not have; `allowed = false` revokes one it
- * does. Rows with a null tenantId are platform-wide defaults.
+ * does. Rows with a null tenantId are platform-wide defaults. For custom roles
+ * the baseline is empty, so every granted permission is an `allowed = true` row.
  */
 export type RolePermissionOverride = Prisma.RolePermissionOverrideModel
 /**
@@ -88,6 +99,36 @@ export type Todo = Prisma.TodoModel
  * 
  */
 export type Payment = Prisma.PaymentModel
+/**
+ * Model Coupon
+ * A coupon grants exactly one kind of benefit, named by `type`: money off,
+ * coins to spend later, or extra days of validity. The conditions below
+ * narrow who may use it, and are always evaluated server-side — a client
+ * only ever sends a code.
+ */
+export type Coupon = Prisma.CouponModel
+/**
+ * Model CouponRedemption
+ * One use of a coupon. The benefit is frozen here at redemption time, so
+ * editing the coupon later cannot rewrite what a member already received.
+ */
+export type CouponRedemption = Prisma.CouponRedemptionModel
+/**
+ * Model CoinLedgerEntry
+ * Coins are money owed, so they are kept as a ledger rather than a balance:
+ * one row per earn, spend, or reversal, with the balance as their sum. A
+ * single counter could not explain itself or survive a refund.
+ */
+export type CoinLedgerEntry = Prisma.CoinLedgerEntryModel
+/**
+ * Model MembershipFreeze
+ * One freeze of one term.
+ * 
+ * Attached to the payment whose validity it extends rather than to the
+ * membership: that is what makes the budget belong to the term, and what lets
+ * a reversal know which `validUntil` to put back.
+ */
+export type MembershipFreeze = Prisma.MembershipFreezeModel
 /**
  * Model Product
  * 

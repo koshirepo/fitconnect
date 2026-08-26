@@ -7,8 +7,11 @@
  */
 import * as React from "react";
 import { useAuthStore } from "@/stores/auth";
+import { useAppNavigate } from "@/lib/use-app-navigate";
 import { getApiError } from "@/api/client";
 import {
+  useDeletePlatformRole,
+  useDeleteTenantRole,
   usePlatformRoleMatrix,
   useResetPlatformRole,
   useResetTenantRole,
@@ -27,10 +30,10 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PageLoader } from "@/components/ui/spinner";
+import { FormPageSkeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { ShieldCheck, RotateCcw, Save, Users } from "lucide-react";
+import { ShieldCheck, RotateCcw, Save, Users, Plus, Trash2, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RolePermissionEditor } from "./RolePermissionEditor";
 
@@ -43,8 +46,10 @@ function roleKey(role: RoleMatrixEntry) {
 }
 
 export default function RolesPage({ scope }: Props) {
+  const navigate = useAppNavigate();
   const { currentTenantId } = useAuthStore();
   const isPlatform = scope === "platform";
+  const newRolePath = isPlatform ? "/platform-roles/new" : "/settings/roles/new";
 
   const tenantQuery = useTenantRoleMatrix(isPlatform ? null : currentTenantId);
   const platformQuery = usePlatformRoleMatrix(isPlatform);
@@ -52,14 +57,17 @@ export default function RolesPage({ scope }: Props) {
 
   const updateTenant = useUpdateTenantRole(currentTenantId);
   const resetTenant = useResetTenantRole(currentTenantId);
+  const deleteTenant = useDeleteTenantRole(currentTenantId);
   const updatePlatform = useUpdatePlatformRole();
   const resetPlatform = useResetPlatformRole();
+  const deletePlatform = useDeletePlatformRole();
 
   const [activeKey, setActiveKey] = React.useState<string | null>(null);
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [error, setError] = React.useState("");
   const [successMsg, setSuccessMsg] = React.useState("");
   const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = React.useState(false);
 
   const matrix = query.data;
   const roles = React.useMemo(() => matrix?.roles ?? [], [matrix]);
@@ -159,6 +167,30 @@ export default function RolesPage({ scope }: Props) {
     }
   }
 
+  async function handleDelete() {
+    if (!activeRole) return;
+    setConfirmDeleteOpen(false);
+    setError("");
+    setSuccessMsg("");
+
+    try {
+      if (isPlatform) {
+        await deletePlatform.mutateAsync({
+          scope: activeRole.scope as PermissionScope,
+          role: activeRole.role,
+        });
+      } else {
+        await deleteTenant.mutateAsync(activeRole.role);
+      }
+      setActiveKey(null);
+      setSuccessMsg(`Role "${activeRole.label}" deleted.`);
+    } catch (err) {
+      setError(getApiError(err));
+    }
+  }
+
+  const deleting = deleteTenant.isPending || deletePlatform.isPending;
+
   if (!isPlatform && !currentTenantId) {
     return (
       <EmptyState
@@ -169,7 +201,7 @@ export default function RolesPage({ scope }: Props) {
     );
   }
 
-  if (query.isLoading) return <PageLoader />;
+  if (query.isLoading) return <FormPageSkeleton fields={3} />;
 
   if (query.isError) {
     return (
@@ -195,6 +227,10 @@ export default function RolesPage({ scope }: Props) {
               : "Choose what each role can do inside your gym. Changes apply to everyone holding that role."}
           </p>
         </div>
+        <Button type="button" onClick={() => navigate(newRolePath)}>
+          <Plus className="h-4 w-4" />
+          New Role
+        </Button>
       </div>
 
       {error && (
@@ -217,29 +253,73 @@ export default function RolesPage({ scope }: Props) {
             {roles.map((role) => {
               const isActive = activeRole && roleKey(role) === roleKey(activeRole);
               return (
-                <button
+                <div
                   key={roleKey(role)}
-                  type="button"
-                  onClick={() => {
-                    setActiveKey(roleKey(role));
-                    setError("");
-                    setSuccessMsg("");
-                  }}
                   className={cn(
-                    "flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-muted",
-                    isActive && "bg-primary/10 text-primary",
+                    "group flex w-full items-center gap-1 rounded-md transition-colors",
+                    isActive && "bg-primary/10",
                   )}
                 >
-                  <span className="min-w-0">
-                    <span className="block truncate font-medium">{role.label}</span>
-                    <span className="block text-xs text-muted-foreground">
-                      {isPlatform ? `${role.scope.toLowerCase()} · ` : ""}
-                      {role.permissions.length} permissions
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveKey(roleKey(role));
+                      setError("");
+                      setSuccessMsg("");
+                    }}
+                    className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium">{role.label}</span>
+                      <span className="block text-xs text-muted-foreground">
+                        {isPlatform ? `${role.scope.toLowerCase()} · ` : ""}
+                        {role.permissions.length} permissions
+                        {!role.isSystem ? " · custom" : ""}
+                      </span>
+                      {role.description && (
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {role.description}
+                        </span>
+                      )}
                     </span>
-                  </span>
-                  {role.customized && <Badge variant="warning">custom</Badge>}
-                  {!role.editable && <Badge variant="secondary">fixed</Badge>}
-                </button>
+                    <span className="flex shrink-0 items-center gap-1">
+                      {role.customized && <Badge variant="warning">custom</Badge>}
+                      {!role.editable && <Badge variant="secondary">fixed</Badge>}
+                      {!role.isSystem && (
+                        <>
+                          <button
+                            type="button"
+                            title={`Edit ${role.label}`}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              navigate(
+                                isPlatform
+                                  ? `/platform-roles/${role.role}/edit`
+                                  : `/settings/roles/${role.role}/edit`,
+                              );
+                            }}
+                            className="rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground group-hover:opacity-100"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            title={`Delete ${role.label}`}
+                            disabled={deleting}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setActiveKey(roleKey(role));
+                              setConfirmDeleteOpen(true);
+                            }}
+                            className="rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </>
+                      )}
+                    </span>
+                  </button>
+                </div>
               );
             })}
           </CardContent>
@@ -258,6 +338,37 @@ export default function RolesPage({ scope }: Props) {
             </div>
             {activeRole?.editable && (
               <div className="flex shrink-0 items-center gap-2">
+                {!activeRole.isSystem && (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={saving || deleting}
+                      onClick={() =>
+                        navigate(
+                          isPlatform
+                            ? `/platform-roles/${activeRole.role}/edit`
+                            : `/settings/roles/${activeRole.role}/edit`,
+                        )
+                      }
+                    >
+                      <Pencil className="h-4 w-4" />
+                      Edit
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={saving || deleting}
+                      onClick={() => setConfirmDeleteOpen(true)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete
+                    </Button>
+                  </>
+                )}
                 <Button
                   type="button"
                   variant="outline"
@@ -299,6 +410,16 @@ export default function RolesPage({ scope }: Props) {
         description="This drops every customization and restores the built-in defaults for this role."
         confirmLabel="Reset to defaults"
         onConfirm={handleReset}
+      />
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        title={`Delete ${activeRole?.label ?? "role"}?`}
+        description="This permanently removes the role and its permission set. Roles still held by members cannot be deleted."
+        confirmLabel="Delete role"
+        loading={deleting}
+        onConfirm={handleDelete}
       />
     </div>
   );

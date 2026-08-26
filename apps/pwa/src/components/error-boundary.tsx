@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardSkeleton } from "@/components/ui/skeleton";
 import { AlertTriangle } from "lucide-react";
 
 interface ErrorBoundaryProps {
@@ -60,13 +61,13 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 }
 
-/** Suspense fallback spinner for lazy-loaded routes */
+/** Suspense fallback placeholder for lazy-loaded routes */
 export function PageSuspense({ children }: { children: React.ReactNode }) {
   return (
     <React.Suspense
       fallback={
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <div className="min-h-[50vh] p-4 md:p-6">
+          <CardSkeleton />
         </div>
       }
     >

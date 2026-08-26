@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PageLoader } from "@/components/ui/spinner";
+import { FormPageSkeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, ShoppingBag, AlertTriangle, Trash2 } from "lucide-react";
 import type { PlaceOrderPayload, Product } from "@/types/api";
 import { calculateTotals, formatCurrency } from "./pricing";
@@ -178,7 +178,7 @@ export default function PublicCheckoutPage() {
     }
   };
 
-  if (loading) return <PageLoader />;
+  if (loading) return <FormPageSkeleton fields={4} />;
 
   if (cart.length === 0 || lines.length === 0) {
     return (

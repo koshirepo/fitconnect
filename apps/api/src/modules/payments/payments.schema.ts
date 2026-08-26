@@ -30,6 +30,13 @@ export const createPaymentSchema = z
      * still owe. Omit it for a payment made in full.
      */
     paidAmount: z.number().int().min(1).optional(),
+    /**
+     * A coupon code, never a discounted amount. The server prices it — a
+     * request that could name its own discount could buy a year for a rupee.
+     */
+    couponCode: z.string().max(32).optional(),
+    /** Coins to spend. Clamped to the balance and to what is owed. */
+    coinsToSpend: z.number().int().min(0).optional(),
     validFrom: z.coerce.date().optional(),
     validUntil: z.coerce.date().optional(),
   })
@@ -111,6 +118,10 @@ export const createSubscriptionSchema = z.object({
   description: z.string().max(1000).optional(),
   amount: z.number().int().min(0),
   durationDays: z.number().int().min(1).default(30),
+  /** Days a term on this plan may be frozen for. 0 means it cannot be frozen. */
+  freezeDays: z.number().int().min(0).max(365).optional(),
+  /** How many separate freezes that budget may be split across. */
+  freezeCount: z.number().int().min(0).max(12).optional(),
   badgeIds: z.array(z.string()).max(100).optional().default([]),
 });
 
@@ -120,6 +131,8 @@ export const updateSubscriptionSchema = z
     description: z.string().max(1000).optional().nullable(),
     amount: z.number().int().min(0).optional(),
     durationDays: z.number().int().min(1).optional(),
+    freezeDays: z.number().int().min(0).max(365).optional(),
+    freezeCount: z.number().int().min(0).max(12).optional(),
     isActive: z.boolean().optional(),
     badgeIds: z.array(z.string()).max(100).optional(),
   })

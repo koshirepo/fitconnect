@@ -124,14 +124,50 @@ model Tenant {
   attendances      Attendance[]
   todos            Todo[]
   rolePermissions  RolePermissionOverride[]
+  roles            Role[]
+  coupons          Coupon[]
+  couponRedemptions CouponRedemption[]
+  coinLedger       CoinLedgerEntry[]
+  membershipFreezes MembershipFreeze[]
 
   @@index([slug])
+}
+
+/// A role definition. Built-in roles (MEMBER, COACH, ADMIN, USER, SUPPORT,
+/// SUPER_ADMIN) are seeded here so custom roles share one registry; they have
+/// `isSystem = true` and cannot be edited or deleted. Custom roles are created
+/// by gym admins (`scope = "TENANT"` with a tenantId) or platform staff
+/// (`scope = "PLATFORM"` with a null tenantId) and hold their permissions as
+/// `RolePermissionOverride` rows with `allowed = true`.
+model Role {
+  id          String   @id @default(cuid())
+  /// "PLATFORM" for platform-scoped roles, "TENANT" for gym-scoped roles.
+  scope       String
+  /// Stable identifier stored in memberships and override rows, e.g. "FRONT_DESK".
+  key         String
+  /// Human-readable label shown in the UI.
+  name        String
+  description String?
+  /// Null for platform-wide roles and for the seeded built-ins; set for
+  /// custom roles that belong to a single gym.
+  tenantId    String?
+  tenant      Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  /// True for the built-in MEMBER/COACH/ADMIN (and platform) roles.
+  isSystem    Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([tenantId, scope, key])
+  @@index([scope, tenantId])
 }
 
 /// Per-role permission overrides layered on top of the static catalog in
 /// `src/shared/types/permissions.ts`. A row with `allowed = true` grants a
 /// permission the baseline role does not have; `allowed = false` revokes one it
-/// does. Rows with a null tenantId are platform-wide defaults.
+/// does. Rows with a null tenantId are platform-wide defaults. For custom roles
+/// the baseline is empty, so every granted permission is an `allowed = true` row.
 model RolePermissionOverride {
   id         String   @id @default(cuid())
   /// "PLATFORM" for PlatformRole rows, "TENANT" for TenantRole rows.
@@ -158,6 +194,12 @@ model TenantSettings {
   tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   overdueDays  Int      @default(30) /// Days after subscription expiry to auto-inactivate member
   whatsappTemplates Json @default("{}") /// Tenant-level WhatsApp template overrides keyed by message purpose
+
+  /// Coins the referrer earns when the member they brought in first pays for a
+  /// subscription. Zero turns referral rewards off.
+  referralRewardCoins  Int @default(0)
+  /// Coins the referred member earns at the same moment. Zero for none.
+  referralRefereeCoins Int @default(0)
 
   /// Razorpay key id for this gym's own account. Null means online payments
   /// fall back to the platform account configured in the Worker environment.
@@ -204,6 +246,9 @@ model TenantMembership {
   shift             Shift?                  @relation(fields: [shiftId], references: [id], onDelete: SetNull)
   referredByMembershipId String?
   referredBy        TenantMembership?       @relation("MemberReferrals", fields: [referredByMembershipId], references: [id], onDelete: SetNull)
+  /// Unguessable key for this member's public ID-card URL. Null until the
+  /// card is first issued for a membership that predates the feature.
+  idCardToken       String?                 @unique
   joinedAt          DateTime                @default(now())
   createdAt         DateTime                @default(now())
   updatedAt         DateTime                @updatedAt
@@ -218,6 +263,9 @@ model TenantMembership {
   createdTodos      Todo[]                  @relation("TodoCreatedBy")
   updatedTodos      Todo[]                  @relation("TodoUpdatedBy")
   completedTodos    Todo[]                  @relation("TodoCompletedBy")
+  couponRedemptions CouponRedemption[]
+  coinLedger        CoinLedgerEntry[]
+  freezes           MembershipFreeze[]
 
   @@unique([tenantId, userId])
   @@unique([tenantId, memberId])
@@ -235,14 +283,21 @@ model Subscription {
   tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   title        String
   description  String?
-  amount       Int /// Amount in smallest currency unit (e.g. paise/cents)
+  amount       Int /// Rupees. Converted to paise only at the Razorpay boundary.
   durationDays Int      @default(30)
+  /// Days a term on this plan may be frozen for. 0 means it cannot be frozen,
+  /// which is what every plan that predates freezing gets.
+  freezeDays   Int      @default(0)
+  /// How many separate freezes that budget may be split across.
+  freezeCount  Int      @default(0)
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   payments Payment[]
-  badges   Badge[]
+  badges   Badge[]
+  /// Coupons restricted to this plan.
+  coupons      Coupon[]
 
   @@index([tenantId])
 }
@@ -304,6 +359,13 @@ model Payment {
   chargeId       String?
   charge         TenantCharge?     @relation(fields: [chargeId], references: [id])
   description    String? /// Label for charge payments, e.g. "Admission Fee"
+  /// What this cost before any coupon or coins. Null on rows written before
+  /// coupons existed, and on rows where nothing was taken off.
+  listAmount     Int?
+  /// Taken off by a coupon. `amount` is already net of this.
+  discountAmount Int     @default(0)
+  /// Coins spent against this payment. `amount` is already net of these too.
+  coinsRedeemed  Int     @default(0)
   note           String?
   paidAt         DateTime?
   validFrom      DateTime?
@@ -317,6 +379,8 @@ model Payment {
   gatewayPaymentId String?
   /// Whether this gym's own gateway account collected it, or the platform's.
   gatewayAccount   String?
+
+  freezes        MembershipFreeze[]
 
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
@@ -332,6 +396,139 @@ model Payment {
   @@index([tenantId, createdAt])
 }
 
+
+/// A coupon grants exactly one kind of benefit, named by `type`: money off,
+/// coins to spend later, or extra days of validity. The conditions below
+/// narrow who may use it, and are always evaluated server-side — a client
+/// only ever sends a code.
+model Coupon {
+  id          String  @id @default(cuid())
+  tenantId    String
+  tenant      Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  /// Stored uppercase; unique per gym rather than globally.
+  code        String
+  description String?
+  /// "DISCOUNT" | "COINS" | "VALIDITY"
+  type        String
+
+  /// DISCOUNT: percentage or flat rupees, with an optional cap on the former.
+  percentOff  Int?
+  amountOff   Int?
+  maxDiscount Int?
+  /// COINS: coins granted by a redemption, spendable on a later subscription.
+  coinsGranted Int?
+  /// VALIDITY: days added on top of the plan's own duration.
+  bonusDays   Int?
+
+  /// Only for a member with no completed subscription payment ever.
+  firstTimeOnly Boolean @default(false)
+  /// "MALE" | "FEMALE" | "OTHER", or null for any.
+  gender        String?
+  /// Minimum list price before the coupon applies.
+  minAmount     Int?
+  /// The member must hold one of these. Empty means no badge requirement.
+  badges        Badge[]
+  /// Plans it applies to. Empty means every plan.
+  subscriptions Subscription[]
+
+  maxRedemptions  Int?
+  /// Incremented with a conditional update so a race cannot oversell it.
+  redemptionCount Int      @default(0)
+  maxPerMember    Int      @default(1)
+  startsAt        DateTime?
+  endsAt          DateTime?
+  isActive        Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  redemptions CouponRedemption[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId, isActive])
+}
+
+/// One use of a coupon. The benefit is frozen here at redemption time, so
+/// editing the coupon later cannot rewrite what a member already received.
+model CouponRedemption {
+  id             String           @id @default(cuid())
+  couponId       String
+  coupon         Coupon           @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  tenantId       String
+  tenant         Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  membershipId   String
+  membership     TenantMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  paymentId      String?
+  discountAmount Int              @default(0)
+  coinsGranted   Int              @default(0)
+  bonusDays      Int              @default(0)
+  /// The staff member who applied it, for the audit trail.
+  appliedById    String?
+  /// Set when a refund reverses it, which frees the redemption slot.
+  reversedAt     DateTime?
+  createdAt      DateTime         @default(now())
+
+  @@index([couponId])
+  @@index([membershipId])
+  @@index([tenantId])
+  @@index([couponId, membershipId])
+}
+
+/// Coins are money owed, so they are kept as a ledger rather than a balance:
+/// one row per earn, spend, or reversal, with the balance as their sum. A
+/// single counter could not explain itself or survive a refund.
+model CoinLedgerEntry {
+  id                 String           @id @default(cuid())
+  tenantId           String
+  tenant             Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  membershipId       String
+  membership         TenantMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  /// Positive earns, negative spends.
+  amount             Int
+  /// "COUPON" | "REDEEMED" | "REVERSAL" | "ADJUSTMENT"
+  reason             String
+  note               String?
+  couponRedemptionId String?
+  paymentId          String?
+  createdById        String?
+  createdAt          DateTime         @default(now())
+
+  @@index([membershipId])
+  @@index([tenantId])
+}
+
+/// One freeze of one term.
+///
+/// Attached to the payment whose validity it extends rather than to the
+/// membership: that is what makes the budget belong to the term, and what lets
+/// a reversal know which `validUntil` to put back.
+model MembershipFreeze {
+  id            String           @id @default(cuid())
+  tenantId      String
+  tenant        Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  membershipId  String
+  membership    TenantMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  /// The payment this extends. Its plan supplies the budget.
+  paymentId     String
+  payment       Payment          @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  startsOn      DateTime
+  /// What was booked.
+  plannedEndsOn DateTime
+  /// What was actually used. Null while the freeze is still running.
+  endedOn       DateTime?
+  /// Days charged against the budget: the booked count until it ends, then the
+  /// real one.
+  daysUsed      Int
+  reason        String?
+  /// "ENDED_EARLY" | "ATTENDED", or null when it simply ran its course.
+  endedBy       String?
+  createdById   String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([membershipId])
+  @@index([paymentId])
+  @@index([tenantId])
+}
 // Commerce
 
 model Product {
@@ -496,7 +693,9 @@ model Badge {
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
   users       TenantMembership[]
-  subscriptions Subscription[]
+  subscriptions Subscription[]
+  /// Coupons that require this badge.
+  coupons     Coupon[]
 
   @@unique([tenantId, name])
   @@index([tenantId])

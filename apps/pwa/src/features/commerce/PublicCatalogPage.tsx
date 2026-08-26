@@ -5,7 +5,7 @@ import { getApiError } from "@/api/client";
 import { useAuthStore } from "@/stores/auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PageLoader } from "@/components/ui/spinner";
+import { CardsGridSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ArrowLeft, PackageOpen, ShoppingCart, Search, Plus, Minus, Trash2 } from "lucide-react";
 import type { Product } from "@/types/api";
@@ -82,7 +82,7 @@ export default function PublicCatalogPage() {
     }
   };
 
-  if (loading) return <PageLoader />;
+  if (loading) return <CardsGridSkeleton count={6} />;
 
   return (
     <div className="min-h-screen bg-background">

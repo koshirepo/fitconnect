@@ -145,7 +145,8 @@ export interface TenantMember {
   gender?: Gender | null;
   phone?: string | null;
   avatarUrl?: string | null;
-  role: TenantRole;
+  /** Built-in (MEMBER/COACH/ADMIN) or a custom role key. */
+  role: string;
   status: AccountStatus;
   joinedAt: string;
   isDue?: boolean;
@@ -168,7 +169,7 @@ export interface MemberReferral {
   gender?: Gender | null;
   phone?: string | null;
   avatarUrl?: string | null;
-  role: TenantRole;
+  role: string;
   status: AccountStatus;
   joinedAt: string;
 }
@@ -180,6 +181,8 @@ export interface MemberReferralLeader extends MemberReferral {
 
 export interface TenantProfile {
   id: string;
+  /** Stable link to this member's card; contents render live. */
+  idCardUrl?: string | null;
   memberId: number;
   userId: string;
   name: string;
@@ -188,7 +191,7 @@ export interface TenantProfile {
   phone?: string | null;
   avatarUrl?: string | null;
   userCreatedAt: string;
-  role: TenantRole;
+  role: string;
   status: AccountStatus;
   joinedAt: string;
   dueDate?: string | null;
@@ -201,7 +204,8 @@ export interface AddMemberPayload {
   email: string;
   phone: string;
   gender?: Gender;
-  role?: TenantRole;
+  /** Built-in (MEMBER/COACH/ADMIN) or a custom role key. */
+  role?: string;
   avatarUrl?: string;
   subscriptionId?: string;
   chargeIds?: string[];
@@ -229,6 +233,8 @@ export interface UpdateMemberPayload {
 
 export interface MemberDetail {
   id: string;
+  /** Stable link to this member's card; contents render live. */
+  idCardUrl?: string | null;
   memberId: number;
   userId: string;
   name: string;
@@ -237,7 +243,7 @@ export interface MemberDetail {
   phone?: string | null;
   avatarUrl?: string | null;
   userCreatedAt: string;
-  role: TenantRole;
+  role: string;
   status: AccountStatus;
   joinedAt: string;
   dueDate?: string | null;
@@ -272,6 +278,29 @@ export interface MemberDetail {
       description?: string | null;
     };
   }[];
+}
+
+/** What a member ID card prints. Re-read on every open, never stored. */
+export interface MemberIdCard {
+  member: {
+    name: string;
+    memberId: number;
+    avatarUrl?: string | null;
+    gender?: Gender | null;
+    role: string;
+    status: AccountStatus;
+    joinedAt: string;
+    validUntil?: string | null;
+    shift?: { name: string; startTime: string; endTime: string } | null;
+  };
+  gym: {
+    name: string;
+    slug: string;
+    logoUrl?: string | null;
+    address?: string | null;
+    phone?: string | null;
+  };
+  issuedAt: string;
 }
 
 export interface Shift {
@@ -310,6 +339,10 @@ export interface Subscription {
   description?: string | null;
   amount: number;
   durationDays: number;
+  /** Days a term on this plan may be frozen for. 0 means it cannot be frozen. */
+  freezeDays?: number;
+  /** How many separate freezes that budget may be split across. */
+  freezeCount?: number;
   isActive: boolean;
   badges: Pick<Badge, "id" | "name" | "color" | "icon" | "isActive">[];
 }
@@ -319,6 +352,8 @@ export interface CreateSubscriptionPayload {
   description?: string;
   amount: number;
   durationDays?: number;
+  freezeDays?: number;
+  freezeCount?: number;
   badgeIds?: string[];
 }
 
@@ -327,6 +362,8 @@ export interface UpdateSubscriptionPayload {
   description?: string | null;
   amount?: number;
   durationDays?: number;
+  freezeDays?: number;
+  freezeCount?: number;
   isActive?: boolean;
   badgeIds?: string[];
 }
@@ -729,6 +766,10 @@ export interface WhatsAppTemplate {
 
 export interface TenantSettings {
   overdueDays: number;
+  /** Coins the referrer earns on a referee's first subscription. 0 is off. */
+  referralRewardCoins?: number;
+  /** Coins the referred member earns at the same moment. */
+  referralRefereeCoins?: number;
   whatsappTemplates: WhatsAppTemplate[];
   /**
    * Whether members can pay online, from either the gym's own gateway account
@@ -740,6 +781,8 @@ export interface TenantSettings {
 
 export interface UpdateTenantSettingsPayload {
   overdueDays?: number;
+  referralRewardCoins?: number;
+  referralRefereeCoins?: number;
   whatsappTemplates?: Partial<Record<WhatsAppTemplateKey, string>>;
 }
 
@@ -775,7 +818,7 @@ export interface TodoActor {
   memberId: number;
   name: string;
   avatarUrl?: string | null;
-  role: TenantRole;
+  role: string;
 }
 
 export interface Todo {
@@ -832,4 +875,122 @@ export interface MarkAttendancePayload {
 export interface MarkAllAttendancePayload {
   membershipIds: string[];
   date?: string;
+}
+
+// ─── Coupons & coins ──────────────────────────────────────────────────────────
+
+/** What a coupon gives. Only the fields for its own type are ever read. */
+export type CouponType = "DISCOUNT" | "COINS" | "VALIDITY";
+
+export interface Coupon {
+  id: string;
+  code: string;
+  description?: string | null;
+  type: CouponType;
+
+  percentOff?: number | null;
+  amountOff?: number | null;
+  maxDiscount?: number | null;
+  coinsGranted?: number | null;
+  bonusDays?: number | null;
+
+  firstTimeOnly: boolean;
+  gender?: Gender | null;
+  minAmount?: number | null;
+  badges: { id: string; name: string; color: string; icon?: string | null }[];
+  subscriptions: { id: string; title: string }[];
+
+  maxRedemptions?: number | null;
+  redemptionCount: number;
+  maxPerMember: number;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  _count: { redemptions: number };
+}
+
+export interface CouponPayload {
+  code: string;
+  description?: string;
+  type: CouponType;
+  percentOff?: number | null;
+  amountOff?: number | null;
+  maxDiscount?: number | null;
+  coinsGranted?: number | null;
+  bonusDays?: number | null;
+  firstTimeOnly?: boolean;
+  gender?: Gender | null;
+  minAmount?: number | null;
+  badgeIds?: string[];
+  subscriptionIds?: string[];
+  maxRedemptions?: number | null;
+  maxPerMember?: number;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  isActive?: boolean;
+}
+
+export interface CouponRedemption {
+  id: string;
+  discountAmount: number;
+  coinsGranted: number;
+  bonusDays: number;
+  reversedAt?: string | null;
+  createdAt: string;
+  membership: { id: string; memberId: number; user: { name: string } };
+}
+
+/** What a purchase costs once a coupon and any coins are applied. */
+export interface CouponQuote {
+  listAmount: number;
+  discountAmount: number;
+  coinsRedeemed: number;
+  netAmount: number;
+  bonusDays: number;
+  coinsGranted: number;
+  coupon: {
+    id: string;
+    code: string;
+    type: CouponType;
+    description?: string | null;
+  } | null;
+}
+
+export interface CoinEntry {
+  id: string;
+  amount: number;
+  reason: string;
+  note?: string | null;
+  createdAt: string;
+}
+
+
+// ─── Membership freezes ───────────────────────────────────────────────────────
+
+export interface MembershipFreeze {
+  id: string;
+  startsOn: string;
+  plannedEndsOn: string;
+  endedOn?: string | null;
+  daysUsed: number;
+  reason?: string | null;
+  /** "ENDED_EARLY" | "ATTENDED", or null when it ran its course. */
+  endedBy?: string | null;
+  createdAt: string;
+}
+
+/** Everything a screen needs to decide whether to offer a freeze. */
+export interface FreezeStatus {
+  canFreeze: boolean;
+  reason?: string | null;
+  planTitle?: string;
+  allowanceDays: number;
+  usedDays: number;
+  remainingDays: number;
+  allowedFreezes: number;
+  usedFreezes: number;
+  currentFreeze: MembershipFreeze | null;
+  history: MembershipFreeze[];
+  termEndsOn?: string | null;
 }

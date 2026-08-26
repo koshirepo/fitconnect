@@ -6,6 +6,7 @@ import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
 import { useAllMembers, useRemoveMember } from "@/api/queries/members";
 import { useBadges, useTenantSettings } from "@/api/queries/catalog";
+import { useTenantRoleMatrix } from "@/api/queries/roles";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -17,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PageLoader } from "@/components/ui/spinner";
+import { SkeletonRow } from "@/components/ui/skeleton";
 import { SwipePane } from "@/components/ui/swipe-pane";
 import { downloadCsv } from "@/lib/csv";
 import { formatDate, formatCurrency, cn } from "@/lib/utils";
@@ -102,6 +103,13 @@ export default function MembersPage() {
   // Gates the admin-only member operations (status, role, delete, reports).
   const isAdmin = can(Permission.MEMBERS_STATUS_UPDATE);
   const canAddMember = can(Permission.MEMBERS_CREATE);
+
+  // All assignable roles — the built-ins plus any custom roles the gym created.
+  const roleMatrix = useTenantRoleMatrix(currentTenantId).data;
+  const assignableRoles = React.useMemo(
+    () => (roleMatrix?.roles ?? []).filter((role) => !role.isSystem || ["MEMBER", "COACH", "ADMIN"].includes(role.role)),
+    [roleMatrix],
+  );
 
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [pendingRemoveId, setPendingRemoveId] = React.useState<string | null>(null);
@@ -498,8 +506,12 @@ export default function MembersPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="">All Roles</SelectItem>
-              <SelectItem value="MEMBER">Members</SelectItem>
-              {isAdmin && <SelectItem value="COACH">Trainers</SelectItem>}
+              {assignableRoles.map((role) => (
+                <SelectItem key={role.role} value={role.role}>
+                  {role.label}
+                  {role.isSystem && role.role === "COACH" ? "s" : ""}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
@@ -545,7 +557,11 @@ export default function MembersPage() {
         onPrevious={() => goToTab(-1)}
       >
       {loading ? (
-        <PageLoader />
+        <div className="space-y-3">
+          {[0,1,2,3,4].map((i) => (
+            <div key={i} className="rounded-lg ring-1 ring-foreground/10"><SkeletonRow className="p-3" /></div>
+          ))}
+        </div>
       ) : filteredAllMembers.length === 0 ? (
         <EmptyState
           icon={Users}

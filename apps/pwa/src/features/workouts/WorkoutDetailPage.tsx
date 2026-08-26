@@ -10,6 +10,7 @@ import {
   useUpdateWorkoutPlan,
   useWorkoutPlan,
 } from "@/api/queries/catalog";
+import { useAllMembers } from "@/api/queries/members";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,13 +20,12 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { PageLoader } from "@/components/ui/spinner";
+import { DetailPageSkeleton } from "@/components/ui/skeleton";
 import { formatDate } from "@/lib/utils";
-import { ArrowLeft, Dumbbell, Pencil, Plus, Trash2, UserPlus, Users, X } from "lucide-react";
+import { Dumbbell, Pencil, Plus, Trash2, UserPlus, Users, X } from "lucide-react";
 import type { Exercise, TenantMember } from "@/types/api";
 import AvatarCard from "@/components/ui/avatarCard";
 import MemberSelector from "@/components/ui/memberSelector";
-import { loadAllTenantMembers } from "@/lib/tenant-members";
 
 export default function WorkoutDetailPage() {
   const { planId } = useParams<{ planId: string }>();
@@ -59,7 +59,6 @@ export default function WorkoutDetailPage() {
 
   // Assign
   const [assignOpen, setAssignOpen] = React.useState(false);
-  const [members, setMembers] = React.useState<TenantMember[]>([]);
   const [selectedMember, setSelectedMember] = React.useState<TenantMember | null>(null);
   const [selectedMemberId, setSelectedMemberId] = React.useState("");
   const [assigning, setAssigning] = React.useState(false);
@@ -103,14 +102,16 @@ export default function WorkoutDetailPage() {
     }
   };
 
-  const openAssign = async () => {
+  // Same shared roster query the list screens read, so opening this picker
+  // after visiting members or attendance costs no extra request.
+  const rosterQuery = useAllMembers({ enabled: assignOpen });
+  const members = React.useMemo(
+    () => (rosterQuery.data ?? []).filter((member) => member.status === "ACTIVE"),
+    [rosterQuery.data],
+  );
+
+  const openAssign = () => {
     if (!currentTenantId) return;
-    try {
-      const allMembers = await loadAllTenantMembers(currentTenantId, { status: "ACTIVE" });
-      setMembers(allMembers);
-    } catch {
-      //
-    }
     setSelectedMember(null);
     setSelectedMemberId("");
     setAssignOpen(true);
@@ -146,7 +147,7 @@ export default function WorkoutDetailPage() {
     setFormExercises(formExercises.filter((_, i) => i !== idx));
   };
 
-  if (loading) return <PageLoader />;
+  if (loading) return <DetailPageSkeleton />;
 
   if (!plan) {
     return (
@@ -170,14 +171,6 @@ export default function WorkoutDetailPage() {
     <div className="space-y-5">
       {/* ── Header ─────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="shrink-0"
-          onClick={() => navigate("/workouts")}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-bold tracking-tight truncate">{plan.title}</h1>
           <p className="text-xs text-muted-foreground mt-0.5">

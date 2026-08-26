@@ -116,3 +116,120 @@ export function useResetPlatformRole() {
     },
   });
 }
+
+export function useCreateTenantRole(tenantId: string | null | undefined) {
+  const queryClient = useQueryClient();
+  const refreshSession = useRefreshSession();
+
+  return useMutation({
+    mutationFn: async (input: {
+      name: string;
+      description?: string;
+      permissions: string[];
+    }) => {
+      const res = await rolesApi.createTenantRole(tenantId!, input);
+      return res.data.data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.roles.tenant(tenantId ?? "none"),
+      });
+      await refreshSession();
+    },
+  });
+}
+
+export function useDeleteTenantRole(tenantId: string | null | undefined) {
+  const queryClient = useQueryClient();
+  const refreshSession = useRefreshSession();
+
+  return useMutation({
+    mutationFn: async (role: string) => {
+      const res = await rolesApi.deleteTenantRole(tenantId!, role);
+      return res.data.data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.roles.tenant(tenantId ?? "none"),
+      });
+      await refreshSession();
+    },
+  });
+}
+
+export function useCreatePlatformRole() {
+  const queryClient = useQueryClient();
+  const refreshSession = useRefreshSession();
+
+  return useMutation({
+    mutationFn: async (input: { name: string; description?: string; permissions: string[] }) => {
+      const res = await rolesApi.createPlatformRole(input);
+      return res.data.data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["roles"] });
+      await refreshSession();
+    },
+  });
+}
+
+export function useUpdateTenantRoleDetails(tenantId: string | null | undefined) {
+  const queryClient = useQueryClient();
+  const refreshSession = useRefreshSession();
+
+  return useMutation({
+    mutationFn: async (input: { role: string; name?: string; description?: string | null }) => {
+      const res = await rolesApi.updateTenantRoleDetails(tenantId!, input.role, {
+        name: input.name,
+        description: input.description,
+      });
+      return res.data.data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.roles.tenant(tenantId ?? "none"),
+      });
+      await refreshSession();
+    },
+  });
+}
+
+export function useUpdatePlatformRoleDetails() {
+  const queryClient = useQueryClient();
+  const refreshSession = useRefreshSession();
+
+  return useMutation({
+    mutationFn: async (input: {
+      scope: PermissionScope;
+      role: string;
+      name?: string;
+      description?: string | null;
+    }) => {
+      const res = await rolesApi.updatePlatformRoleDetails(input.scope, input.role, {
+        name: input.name,
+        description: input.description,
+      });
+      return res.data.data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["roles"] });
+      await refreshSession();
+    },
+  });
+}
+
+export function useDeletePlatformRole() {
+  const queryClient = useQueryClient();
+  const refreshSession = useRefreshSession();
+
+  return useMutation({
+    mutationFn: async (input: { scope: PermissionScope; role: string }) => {
+      const res = await rolesApi.deletePlatformRole(input.scope, input.role);
+      return res.data.data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["roles"] });
+      await refreshSession();
+    },
+  });
+}

@@ -8,8 +8,8 @@ import {
   useBadgeAssignments,
   useBadgesInfinite,
   useDeleteBadge,
-  useUpdateBadge,
 } from "@/api/queries/catalog";
+import { useAllMembers } from "@/api/queries/members";
 import { flattenPages } from "@/api/queries/shared";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
@@ -26,12 +26,12 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { PageLoader, Spinner } from "@/components/ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
+import { CardsGridSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Plus, Award, Trash2, UserPlus, Edit, Users } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useInfiniteScroll } from "@/lib/use-infinite-scroll";
-import { loadAllTenantMembers } from "@/lib/tenant-members";
 import type { Badge, TenantMember } from "@/types/api";
 
 export default function BadgesPage() {
@@ -54,26 +54,13 @@ export default function BadgesPage() {
   const loadingMore = badgesQuery.isFetchingNextPage;
   const hasMore = Boolean(badgesQuery.hasNextPage);
 
-  const updateBadge = useUpdateBadge();
   const deleteBadge = useDeleteBadge();
   const assignBadge = useAssignBadge();
-
-  // ─── Edit dialog state ──────────────────────────────────────────────────────
-  const [editDialog, setEditDialog] = React.useState(false);
-  const [editingBadge, setEditingBadge] = React.useState<Badge | null>(null);
-  const [editName, setEditName] = React.useState("");
-  const [editDescription, setEditDescription] = React.useState("");
-  const [editColor, setEditColor] = React.useState("#6366f1");
-  const [editIcon, setEditIcon] = React.useState("");
-  const [editActive, setEditActive] = React.useState(true);
-  const [editError, setEditError] = React.useState("");
-  const [editSubmitting, setEditSubmitting] = React.useState(false);
 
   // ─── Assign dialog state ────────────────────────────────────────────────────
   const [assignDialog, setAssignDialog] = React.useState(false);
   const [assignBadgeId, setAssignBadgeId] = React.useState<string | null>(null);
   const [assignBadgeName, setAssignBadgeName] = React.useState("");
-  const [members, setMembers] = React.useState<TenantMember[]>([]);
   const [selectedMember, setSelectedMember] = React.useState<TenantMember | null>(null);
   const [selectedMemberId, setSelectedMemberId] = React.useState("");
   const [assignNote, setAssignNote] = React.useState("");
@@ -102,42 +89,6 @@ export default function BadgesPage() {
     },
   });
 
-  // ─── Edit handlers ──────────────────────────────────────────────────────────
-  const openEdit = (badge: Badge) => {
-    setEditingBadge(badge);
-    setEditName(badge.name);
-    setEditDescription(badge.description ?? "");
-    setEditColor(badge.color);
-    setEditIcon(badge.icon ?? "");
-    setEditActive(badge.isActive);
-    setEditError("");
-    setEditDialog(true);
-  };
-
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentTenantId || !editingBadge) return;
-    setEditError("");
-    setEditSubmitting(true);
-    try {
-      await updateBadge.mutateAsync({
-        badgeId: editingBadge.id,
-        data: {
-          name: editName.trim(),
-          description: editDescription.trim() || undefined,
-          color: editColor,
-          icon: editIcon.trim() || undefined,
-          isActive: editActive,
-        },
-      });
-      setEditDialog(false);
-    } catch (err) {
-      setEditError(getApiError(err));
-    } finally {
-      setEditSubmitting(false);
-    }
-  };
-
   // ─── Delete handler ─────────────────────────────────────────────────────────
   const handleDelete = (badgeId: string) => {
     if (!currentTenantId) return;
@@ -156,8 +107,17 @@ export default function BadgesPage() {
     }
   };
 
+  // The roster the picker chooses from. Fetched only once the dialog is opened,
+  // and shared with every other screen that reads the same query, so a second
+  // assignment costs nothing.
+  const rosterQuery = useAllMembers({ enabled: assignDialog });
+  const members = React.useMemo(
+    () => (rosterQuery.data ?? []).filter((member) => member.status === "ACTIVE"),
+    [rosterQuery.data],
+  );
+
   // ─── Assign handlers ───────────────────────────────────────────────────────
-  const openAssign = async (badgeId: string, badgeName: string) => {
+  const openAssign = (badgeId: string, badgeName: string) => {
     if (!currentTenantId) return;
     setAssignBadgeId(badgeId);
     setAssignBadgeName(badgeName);
@@ -165,14 +125,6 @@ export default function BadgesPage() {
     setSelectedMemberId("");
     setAssignNote("");
     setAssignError("");
-    try {
-      const allMembers = await loadAllTenantMembers(currentTenantId, {
-        status: "ACTIVE",
-      });
-      setMembers(allMembers);
-    } catch {
-      //
-    }
     setAssignDialog(true);
   };
 
@@ -224,7 +176,7 @@ export default function BadgesPage() {
 
       {/* Badge Grid */}
       {loading ? (
-        <PageLoader />
+        <CardsGridSkeleton count={6} />
       ) : badges.length === 0 ? (
         <EmptyState
           icon={Award}
@@ -291,7 +243,11 @@ export default function BadgesPage() {
                   {(isAdmin || canAssignBadges) && (
                     <div className="flex gap-2 flex-wrap">
                       {can(Permission.BADGES_UPDATE) && (
-                        <Button variant="outline" size="sm" onClick={() => openEdit(badge)}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/badges/${badge.id}/edit`)}
+                        >
                           <Edit className="h-3 w-3" />
                           Edit
                         </Button>
@@ -344,85 +300,6 @@ export default function BadgesPage() {
           )}
         </>
       )}
-
-      {/* ─── Edit Dialog ─────────────────────────────────────────────────────── */}
-      <Dialog open={editDialog} onOpenChange={setEditDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit Badge</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleUpdate} className="space-y-4">
-            <div className="space-y-2">
-              <Label>Name</Label>
-              <Input
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                placeholder="Badge name"
-                required
-                minLength={2}
-                maxLength={100}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Input
-                value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
-                placeholder="Optional description"
-                maxLength={500}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Color</Label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={editColor}
-                    onChange={(e) => setEditColor(e.target.value)}
-                    className="h-9 w-12 cursor-pointer rounded border p-0.5"
-                  />
-                  <Input
-                    value={editColor}
-                    onChange={(e) => setEditColor(e.target.value)}
-                    placeholder="#6366f1"
-                    className="font-mono text-sm"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Icon ID</Label>
-                <Input
-                  value={editIcon}
-                  onChange={(e) => setEditIcon(e.target.value)}
-                  placeholder="Optional"
-                  maxLength={50}
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="edit-active"
-                checked={editActive}
-                onChange={(e) => setEditActive(e.target.checked)}
-              />
-              <Label htmlFor="edit-active">Active</Label>
-            </div>
-
-            {editError && <p className="text-sm text-destructive">{editError}</p>}
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setEditDialog(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={editSubmitting}>
-                {editSubmitting ? "Saving..." : "Update Badge"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       {/* ─── Assign Dialog ───────────────────────────────────────────────────── */}
       <Dialog open={assignDialog} onOpenChange={setAssignDialog}>

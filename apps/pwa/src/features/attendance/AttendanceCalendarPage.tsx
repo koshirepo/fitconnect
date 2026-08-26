@@ -5,7 +5,7 @@ import { useAttendanceCalendar } from "@/api/queries/attendance";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { PageLoader } from "@/components/ui/spinner";
+import { CardSkeleton } from "@/components/ui/skeleton";
 import { ChevronLeft, ChevronRight, CalendarDays, Users, List, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getTenantDashboardPath } from "@/lib/subdomain";
@@ -99,7 +99,7 @@ export default function AttendanceCalendarPage() {
       )}
 
       {loading ? (
-        <PageLoader />
+        <CardSkeleton />
       ) : (
         <Card>
           <CardContent className="p-4 sm:p-5">

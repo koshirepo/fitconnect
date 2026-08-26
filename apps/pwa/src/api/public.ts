@@ -8,6 +8,7 @@ import type {
   SelfSignupPayload,
   SelfSignupResult,
   SignupVerifyResult,
+  MemberIdCard,
   VerifyCheckoutPayload,
 } from "@/types/api";
 
@@ -60,6 +61,17 @@ export const publicApi = {
   selfSignup: (payload: SelfSignupPayload, host = currentHost()) =>
     api.post<ApiResponse<SelfSignupResult>>("/public/signup", payload, {
       params: { host },
+    }),
+
+  /**
+   * A member ID card, re-read on every call.
+   *
+   * Cache-busted deliberately: the point of the link is that it shows the
+   * record as it stands now, so a stale copy would defeat it.
+   */
+  getIdCard: (token: string) =>
+    api.get<ApiResponse<{ card: MemberIdCard }>>(`/public/id-card/${token}`, {
+      params: { _: Date.now() },
     }),
 
   verifySignup: (payload: VerifyCheckoutPayload, host = currentHost()) =>

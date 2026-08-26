@@ -11,17 +11,18 @@ import {
   useRemoveAttendance,
   useSelfCheckIn,
 } from "@/api/queries/attendance";
+import { useAllMembers } from "@/api/queries/members";
 import { flattenPages } from "@/api/queries/shared";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageLoader, Spinner } from "@/components/ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
+import { SkeletonRow } from "@/components/ui/skeleton";
 import AvatarCard from "@/components/ui/avatarCard";
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { getTenantDashboardPath } from "@/lib/subdomain";
-import { loadAllTenantMembers } from "@/lib/tenant-members";
 import { useInfiniteScroll } from "@/lib/use-infinite-scroll";
 import {
   CalendarCheck,
@@ -38,7 +39,7 @@ import {
   QrCode,
   Clock3,
 } from "lucide-react";
-import type { AttendanceRecord, TenantMember } from "@/types/api";
+import type { AttendanceRecord } from "@/types/api";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -77,7 +78,6 @@ export default function AttendancePage() {
   const [copiedQrLink, setCopiedQrLink] = React.useState(false);
 
   // Bulk marking state
-  const [members, setMembers] = React.useState<TenantMember[]>([]);
   const [showBulk, setShowBulk] = React.useState(false);
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = React.useState(false);
@@ -150,15 +150,14 @@ export default function AttendancePage() {
     },
   });
 
-  // Load members for bulk marking
-  React.useEffect(() => {
-    if (!showBulk || !currentTenantId) return;
-    loadAllTenantMembers(currentTenantId, { status: "ACTIVE" })
-      .then((allMembers) => {
-        setMembers(allMembers);
-      })
-      .catch(() => {});
-  }, [showBulk, currentTenantId]);
+  // The roster for bulk marking. This is the same cached query the member list
+  // and the assignment pickers read, so opening the panel a second time — or
+  // arriving from a screen that already loaded it — costs no request at all.
+  const rosterQuery = useAllMembers({ enabled: showBulk && isStaff });
+  const members = React.useMemo(
+    () => (rosterQuery.data ?? []).filter((member) => member.status === "ACTIVE"),
+    [rosterQuery.data],
+  );
 
   const handleSelfCheckIn = async () => {
     setCheckingIn(true);
@@ -462,7 +461,11 @@ export default function AttendancePage() {
       {isStaff && (
         <>
           {loading ? (
-            <PageLoader />
+            <div className="space-y-3">
+              {[0,1,2,3].map((i) => (
+                <div key={i} className="rounded-lg ring-1 ring-foreground/10"><SkeletonRow className="p-3" /></div>
+              ))}
+            </div>
           ) : records.length === 0 ? (
             <EmptyState
               icon={CalendarCheck}
@@ -647,7 +650,11 @@ export default function AttendancePage() {
           </Card>
 
           {loading ? (
-            <PageLoader />
+            <div className="space-y-3">
+              {[0,1,2,3].map((i) => (
+                <div key={i} className="rounded-lg ring-1 ring-foreground/10"><SkeletonRow className="p-3" /></div>
+              ))}
+            </div>
           ) : records.length === 0 ? (
             <EmptyState
               icon={CalendarCheck}

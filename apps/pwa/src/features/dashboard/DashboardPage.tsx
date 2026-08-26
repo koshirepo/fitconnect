@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageLoader } from "@/components/ui/spinner";
+import { StatGridSkeleton, CardsGridSkeleton } from "@/components/ui/skeleton";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import { getTenantDashboardPath } from "@/lib/subdomain";
 import {
@@ -147,7 +147,7 @@ export default function DashboardPage() {
   const subscriptionStatus = getSubscriptionStatus(profile);
   const latestSubscriptionPayment = profile?.payments?.find((payment) => payment.validUntil);
 
-  if (loading) return <PageLoader />;
+  if (loading) return (<div className="space-y-6"><StatGridSkeleton /><CardsGridSkeleton /></div>);
 
   if (showPlatformDashboard) {
     return (

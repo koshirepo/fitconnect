@@ -16,7 +16,8 @@ import { OfflineBanner } from "@/components/ui/offline-banner";
 import { InstallPrompt } from "@/components/ui/install-prompt";
 import { SyncStatus } from "@/components/ui/sync-status";
 import { ThemeProvider } from "@/components/theme-provider";
-import { PageLoader } from "@/components/ui/spinner";
+import { ToastProvider } from "@/components/ui/toast";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { isTenantSubdomain } from "@/lib/subdomain";
 import { TenantPathNormalizer } from "@/features/auth/tenant-path-normalizer";
 import { Permission } from "@fitconnect/shared/types/permissions";
@@ -34,16 +35,18 @@ import PaymentsPage from "@/features/payments/PaymentsPage";
 const PaymentDetailPage = React.lazy(() => import("@/features/payments/PaymentDetailPage"));
 const RecordPaymentPage = React.lazy(() => import("@/features/payments/RecordPaymentPage"));
 const BadgesPage = React.lazy(() => import("@/features/badges/BadgesPage"));
-const CreateBadgePage = React.lazy(() => import("@/features/badges/CreateBadgePage"));
+const BadgeFormPage = React.lazy(() => import("@/features/badges/BadgeFormPage"));
 const AttendancePage = React.lazy(() => import("@/features/attendance/AttendancePage"));
 const AttendanceCalendarPage = React.lazy(() => import("@/features/attendance/AttendanceCalendarPage"));
 const AttendanceQrPage = React.lazy(() => import("@/features/attendance/AttendanceQrPage"));
 const WorkoutsPage = React.lazy(() => import("@/features/workouts/WorkoutsPage"));
+const WorkoutFormPage = React.lazy(() => import("@/features/workouts/WorkoutFormPage"));
 const WorkoutDetailPage = React.lazy(() => import("@/features/workouts/WorkoutDetailPage"));
 const TodosPage = React.lazy(() => import("@/features/todos/TodosPage"));
+const TodoFormPage = React.lazy(() => import("@/features/todos/TodoFormPage"));
 const ProfilePage = React.lazy(() => import("@/features/profile/ProfilePage"));
 const SubscriptionsPage = React.lazy(() => import("@/features/payments/subscription"));
-const CreateSubscriptionPage = React.lazy(() => import("@/features/payments/subscription/CreateSubscriptionPage"));
+const SubscriptionFormPage = React.lazy(() => import("@/features/payments/subscription/SubscriptionFormPage"));
 const GymSettingsPage = React.lazy(() => import("@/features/settings/GymSettingsPage"));
 const MessagesPage = React.lazy(() => import("@/features/settings/MessagesPage"));
 const FinanceReportsPage = React.lazy(() => import("@/features/finance/FinanceReportsPage"));
@@ -54,6 +57,9 @@ const UserOrderHistoryPage = React.lazy(() => import("@/features/commerce/UserOr
 // Lazy loaded pages for public and admin flows that are not critical offline
 const TenantDetails = React.lazy(() => import("./features/tenants/details"));
 const NewTenant = React.lazy(() => import("./features/tenants/new"));
+const RecordPlatformPaymentPage = React.lazy(
+  () => import("./features/tenants/RecordPlatformPaymentPage"),
+);
 const ForgotPasswordPage = React.lazy(
   () => import("@/features/auth/ForgotPasswordPage"),
 );
@@ -65,6 +71,9 @@ const ResetPasswordPage = React.lazy(
 );
 const LandingPage = React.lazy(() => import("@/features/public/LandingPage"));
 const SignupPage = React.lazy(() => import("@/features/public/SignupPage"));
+const CouponsPage = React.lazy(() => import("@/features/coupons/CouponsPage"));
+const CouponFormPage = React.lazy(() => import("@/features/coupons/CouponFormPage"));
+const IdCardPage = React.lazy(() => import("@/features/public/IdCardPage"));
 const TenantPublicPage = React.lazy(
   () => import("@/features/public/TenantPublicPage"),
 );
@@ -107,6 +116,7 @@ const AdminOrderDetailPage = React.lazy(
   () => import("@/features/commerce/AdminOrderDetailPage"),
 );
 const RolesPage = React.lazy(() => import("@/features/roles/RolesPage"));
+const RoleFormPage = React.lazy(() => import("@/features/roles/RoleFormPage"));
 
 export default function App() {
   const { isAuthenticated, accessToken, fetchMe } = useAuthStore();
@@ -143,6 +153,9 @@ export default function App() {
             sent to their dashboard instead. */}
         <Route path="/signup" element={<SignupPage />} />
       </Route>
+      {/* Opened from a WhatsApp message or an email; the token is the
+          credential, so this sits outside every auth guard. */}
+      <Route path="/id-card/:token" element={<IdCardPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
 
@@ -169,8 +182,20 @@ export default function App() {
               <Route path="/dashboard/workouts" element={<WorkoutsPage />} />
               <Route path="/dashboard/workouts/:planId" element={<WorkoutDetailPage />} />
             </Route>
+            <Route element={<RequirePermission anyOf={[Permission.WORKOUTS_CREATE]} />}>
+              <Route path="/dashboard/workouts/new" element={<WorkoutFormPage />} />
+            </Route>
+            <Route element={<RequirePermission anyOf={[Permission.WORKOUTS_UPDATE]} />}>
+              <Route path="/dashboard/workouts/:planId/edit" element={<WorkoutFormPage />} />
+            </Route>
             <Route element={<RequirePermission anyOf={[Permission.TODOS_READ]} />}>
               <Route path="/dashboard/todos" element={<TodosPage />} />
+            </Route>
+            <Route element={<RequirePermission anyOf={[Permission.TODOS_CREATE]} />}>
+              <Route path="/dashboard/todos/new" element={<TodoFormPage />} />
+            </Route>
+            <Route element={<RequirePermission anyOf={[Permission.TODOS_UPDATE]} />}>
+              <Route path="/dashboard/todos/:todoId/edit" element={<TodoFormPage />} />
             </Route>
 
             <Route
@@ -193,15 +218,36 @@ export default function App() {
             <Route element={<RequirePermission anyOf={[Permission.SUBSCRIPTIONS_READ]} />}>
               <Route path="/dashboard/subscriptions" element={<SubscriptionsPage />} />
             </Route>
+            <Route element={<RequirePermission anyOf={[Permission.COUPONS_READ]} />}>
+              <Route path="/dashboard/coupons" element={<CouponsPage />} />
+            </Route>
+            <Route element={<RequirePermission anyOf={[Permission.COUPONS_CREATE]} />}>
+              <Route path="/dashboard/coupons/new" element={<CouponFormPage />} />
+            </Route>
+            <Route element={<RequirePermission anyOf={[Permission.COUPONS_UPDATE]} />}>
+              <Route
+                path="/dashboard/coupons/:couponId/edit"
+                element={<CouponFormPage />}
+              />
+            </Route>
             <Route element={<RequirePermission anyOf={[Permission.SUBSCRIPTIONS_CREATE]} />}>
-              <Route path="/dashboard/subscriptions/create" element={<CreateSubscriptionPage />} />
+              <Route path="/dashboard/subscriptions/create" element={<SubscriptionFormPage />} />
+            </Route>
+            <Route element={<RequirePermission anyOf={[Permission.SUBSCRIPTIONS_UPDATE]} />}>
+              <Route
+                path="/dashboard/subscriptions/:subscriptionId/edit"
+                element={<SubscriptionFormPage />}
+              />
             </Route>
 
             <Route element={<RequirePermission anyOf={[Permission.BADGES_READ]} />}>
               <Route path="/dashboard/badges" element={<BadgesPage />} />
             </Route>
             <Route element={<RequirePermission anyOf={[Permission.BADGES_CREATE]} />}>
-              <Route path="/dashboard/badges/create" element={<CreateBadgePage />} />
+              <Route path="/dashboard/badges/create" element={<BadgeFormPage />} />
+            </Route>
+            <Route element={<RequirePermission anyOf={[Permission.BADGES_UPDATE]} />}>
+              <Route path="/dashboard/badges/:badgeId/edit" element={<BadgeFormPage />} />
             </Route>
 
             <Route
@@ -231,6 +277,14 @@ export default function App() {
             </Route>
             <Route element={<RequirePermission anyOf={[Permission.ROLES_READ]} />}>
               <Route path="/dashboard/settings/roles" element={<RolesPage scope="tenant" />} />
+              <Route
+                path="/dashboard/settings/roles/new"
+                element={<RoleFormPage scope="tenant" />}
+              />
+              <Route
+                path="/dashboard/settings/roles/:roleKey/edit"
+                element={<RoleFormPage scope="tenant" />}
+              />
             </Route>
           </Route>
         </Route>
@@ -242,13 +296,16 @@ export default function App() {
 
   return (
     <ThemeProvider>
+      <ToastProvider>
       <ErrorBoundary>
         <OfflineBanner />
         <UpdatePrompt />
         <InstallPrompt />
         <SyncStatus />
         {authSyncing ? (
-          <PageLoader />
+          <div className="p-4 md:p-6">
+            <ListPageSkeleton />
+          </div>
         ) : (
         <PageSuspense>
           {isTenantHostView ? tenantRoutes : (
@@ -330,8 +387,20 @@ export default function App() {
                       element={<WorkoutDetailPage />}
                     />
                   </Route>
+                  <Route element={<RequirePermission anyOf={[Permission.WORKOUTS_CREATE]} />}>
+                    <Route path="/workouts/new" element={<WorkoutFormPage />} />
+                  </Route>
+                  <Route element={<RequirePermission anyOf={[Permission.WORKOUTS_UPDATE]} />}>
+                    <Route path="/workouts/:planId/edit" element={<WorkoutFormPage />} />
+                  </Route>
                   <Route element={<RequirePermission anyOf={[Permission.TODOS_READ]} />}>
                     <Route path="/todos" element={<TodosPage />} />
+                  </Route>
+                  <Route element={<RequirePermission anyOf={[Permission.TODOS_CREATE]} />}>
+                    <Route path="/todos/new" element={<TodoFormPage />} />
+                  </Route>
+                  <Route element={<RequirePermission anyOf={[Permission.TODOS_UPDATE]} />}>
+                    <Route path="/todos/:todoId/edit" element={<TodoFormPage />} />
                   </Route>
 
                   <Route
@@ -360,10 +429,25 @@ export default function App() {
                   <Route element={<RequirePermission anyOf={[Permission.SUBSCRIPTIONS_READ]} />}>
                     <Route path="/subscriptions" element={<SubscriptionsPage />} />
                   </Route>
+                  <Route element={<RequirePermission anyOf={[Permission.COUPONS_READ]} />}>
+                    <Route path="/coupons" element={<CouponsPage />} />
+                  </Route>
+                  <Route element={<RequirePermission anyOf={[Permission.COUPONS_CREATE]} />}>
+                    <Route path="/coupons/new" element={<CouponFormPage />} />
+                  </Route>
+                  <Route element={<RequirePermission anyOf={[Permission.COUPONS_UPDATE]} />}>
+                    <Route path="/coupons/:couponId/edit" element={<CouponFormPage />} />
+                  </Route>
                   <Route element={<RequirePermission anyOf={[Permission.SUBSCRIPTIONS_CREATE]} />}>
                     <Route
                       path="/subscriptions/create"
-                      element={<CreateSubscriptionPage />}
+                      element={<SubscriptionFormPage />}
+                    />
+                  </Route>
+                  <Route element={<RequirePermission anyOf={[Permission.SUBSCRIPTIONS_UPDATE]} />}>
+                    <Route
+                      path="/subscriptions/:subscriptionId/edit"
+                      element={<SubscriptionFormPage />}
                     />
                   </Route>
 
@@ -371,7 +455,10 @@ export default function App() {
                     <Route path="/badges" element={<BadgesPage />} />
                   </Route>
                   <Route element={<RequirePermission anyOf={[Permission.BADGES_CREATE]} />}>
-                    <Route path="/badges/create" element={<CreateBadgePage />} />
+                    <Route path="/badges/create" element={<BadgeFormPage />} />
+                  </Route>
+                  <Route element={<RequirePermission anyOf={[Permission.BADGES_UPDATE]} />}>
+                    <Route path="/badges/:badgeId/edit" element={<BadgeFormPage />} />
                   </Route>
 
                   <Route
@@ -405,6 +492,14 @@ export default function App() {
                   </Route>
                   <Route element={<RequirePermission anyOf={[Permission.ROLES_READ]} />}>
                     <Route path="/settings/roles" element={<RolesPage scope="tenant" />} />
+                    <Route
+                      path="/settings/roles/new"
+                      element={<RoleFormPage scope="tenant" />}
+                    />
+                    <Route
+                      path="/settings/roles/:roleKey/edit"
+                      element={<RoleFormPage scope="tenant" />}
+                    />
                   </Route>
 
                   <Route
@@ -436,6 +531,10 @@ export default function App() {
                       element={<RequirePermission anyOf={[Permission.PLATFORM_TENANTS_CREATE]} />}
                     >
                       <Route path="/tenants/add" element={<NewTenant />} />
+                      <Route
+                        path="/tenants/:tenantId/payments/record"
+                        element={<RecordPlatformPaymentPage />}
+                      />
                     </Route>
 
                     <Route
@@ -482,6 +581,14 @@ export default function App() {
                         path="/platform-roles"
                         element={<RolesPage scope="platform" />}
                       />
+                      <Route
+                        path="/platform-roles/new"
+                        element={<RoleFormPage scope="platform" />}
+                      />
+                      <Route
+                        path="/platform-roles/:roleKey/edit"
+                        element={<RoleFormPage scope="platform" />}
+                      />
                     </Route>
                     <Route
                       element={<RequirePermission anyOf={[Permission.AUDIT_PLATFORM_READ]} />}
@@ -502,6 +609,7 @@ export default function App() {
         </PageSuspense>
         )}
       </ErrorBoundary>
+      </ToastProvider>
     </ThemeProvider>
   );
 }

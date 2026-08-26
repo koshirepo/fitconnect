@@ -4,6 +4,7 @@ import { Permission } from "@fitconnect/shared/types/permissions";
 import { useParams, useLocation, Link } from "react-router-dom";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
+import { useTenantRoleMatrix } from "@/api/queries/roles";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useMember,
@@ -27,7 +28,10 @@ import { formatDate, getInitials } from "@fitconnect/shared";
 import { getDueDateState } from "@/lib/member-due";
 import { genderMeta } from "@/lib/gender";
 import { useAdjacentRecord } from "@/lib/use-adjacent-record";
+import { useCoinBalance } from "@/api/queries/coupons";
+import { FreezeCard } from "@/components/ui/freeze-card";
 import { SwipePane } from "@/components/ui/swipe-pane";
+import { useToast } from "@/components/ui/toast";
 import { formatShiftLabel, formatShiftWindow } from "@/lib/shifts";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { getTenantDashboardPath } from "@/lib/subdomain";
@@ -55,7 +59,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PageLoader } from "@/components/ui/spinner";
+import { DetailPageSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   Shield,
@@ -63,6 +67,7 @@ import {
   Dumbbell,
   Clock,
   CreditCard,
+  Coins,
   Mail,
   Phone,
   Calendar,
@@ -128,6 +133,8 @@ export default function MemberDetailPage() {
 
   const isEditMode = location.pathname.endsWith("/edit");
 
+  const toast = useToast();
+
   const [actionError, setActionError] = React.useState("");
 
   const [editSubmitting, setEditSubmitting] = React.useState(false);
@@ -147,6 +154,7 @@ export default function MemberDetailPage() {
   const loading = memberQuery.isLoading;
   const error = actionError || (memberQuery.isError ? getApiError(memberQuery.error) : "");
   const isMemberProfile = member?.role === "MEMBER";
+  const roleMatrix = useTenantRoleMatrix(currentTenantId).data;
 
   /**
    * The members either side of this one, taken from the list cache so a swipe
@@ -164,6 +172,10 @@ export default function MemberDetailPage() {
     // entries deep in the back stack.
     if (id) navigate(getTenantDashboardPath(`/members/${id}`), { replace: true });
   };
+
+  // Only worth showing when they actually have some.
+  const coinsQuery = useCoinBalance(membershipId);
+  const coinBalance = coinsQuery.data?.balance ?? 0;
 
   const settingsQuery = useTenantSettings();
   const tenantSettings = settingsQuery.data ?? null;
@@ -227,8 +239,15 @@ export default function MemberDetailPage() {
       // No optimistic patch needed: the mutation invalidates the member query,
       // so the refetched record is the source of truth for the new status.
       await updateMemberStatus.mutateAsync({ membershipId, status: newStatus });
+      toast.success(
+        newStatus === "ACTIVE" ? "Member activated." : "Member deactivated.",
+      );
     } catch (err: unknown) {
       setActionError(getApiError(err));
+      toast.error({
+        message: "Could not change this member's status.",
+        description: getApiError(err),
+      });
     } finally {
       setStatusLoading(false);
     }
@@ -241,6 +260,8 @@ export default function MemberDetailPage() {
     setActionError("");
     try {
       await removeMember.mutateAsync(membershipId);
+      // Fired before navigating; the toast outlives the page it came from.
+      toast.success(`${member?.name ?? "Member"} was deleted.`);
       navigate(getTenantDashboardPath("/members"), { replace: true });
     } catch (err: unknown) {
       setActionError(getApiError(err));
@@ -392,7 +413,7 @@ export default function MemberDetailPage() {
     return buildWhatsAppUrl(member.phone, text);
   }, [isDue, isMemberProfile, member, paymentReminderTemplateBody, gymName, lastExpiry]);
 
-  if (loading) return <PageLoader />;
+  if (loading) return <DetailPageSkeleton />;
 
   if (!member) {
     const isNotFound = error.toLowerCase().includes("not found");
@@ -483,6 +504,27 @@ export default function MemberDetailPage() {
           </span>
         )}
       </div>
+
+      {coinBalance > 0 && (
+        <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+          <Coins className="h-3.5 w-3.5" />
+          {coinBalance} coins to spend
+        </div>
+      )}
+
+      {member.idCardUrl && (
+        <div className="mt-3">
+          <a
+            href={member.idCardUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent"
+          >
+            <CreditCard className="h-3.5 w-3.5" />
+            Membership card
+          </a>
+        </div>
+      )}
 
       {/* Badges row */}
       <div className="flex flex-wrap items-center gap-2 mt-3">
@@ -577,7 +619,12 @@ export default function MemberDetailPage() {
           ? "ring-4 ring-blue-500"
           : "ring-4 ring-yellow-500";
   const viewedRoleLabel =
-    member.role === "ADMIN" ? "admin" : member.role === "COACH" ? "trainer / coach" : "member";
+    member.role === "ADMIN"
+      ? "admin"
+      : member.role === "COACH"
+        ? "trainer / coach"
+        : roleMatrix?.roles.find((role) => role.role === member.role)?.label?.toLowerCase() ??
+          "member";
   const deleteDialogTitle = isMemberProfile ? "Delete member?" : `Delete ${viewedRoleLabel}?`;
   const deleteDialogDescription = isMemberProfile
     ? "This will permanently delete the member along with their payments, assigned workout plans, and plans they created. This action cannot be undone."
@@ -813,6 +860,10 @@ export default function MemberDetailPage() {
           )}
         </div>
       </div>
+
+      {isMemberProfile && membershipId && (
+        <FreezeCard membershipId={membershipId} isStaff />
+      )}
 
       <div
         className={cn(

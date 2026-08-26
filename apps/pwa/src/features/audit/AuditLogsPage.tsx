@@ -21,7 +21,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { PageLoader, Spinner } from "@/components/ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatDateTime } from "@/lib/utils";
 import { useInfiniteScroll } from "@/lib/use-infinite-scroll";
@@ -143,7 +144,7 @@ export default function AuditLogsPage({ scope = "tenant" }: Props) {
 
       {/* Logs Table */}
       {loading ? (
-        <PageLoader />
+        <ListPageSkeleton />
       ) : (
         <Card>
           <CardContent className="p-0">

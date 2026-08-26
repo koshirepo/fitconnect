@@ -44,6 +44,23 @@ export const todoController = {
     return okPaginated(c, data, { page, limit, total });
   },
 
+  async getById(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    const todoId = c.req.param("todoId")!;
+    const role = c.get("tenantAccess")?.role;
+
+    if (!role) {
+      return forbidden(c, "Missing tenant role context.");
+    }
+
+    const result = await todoService.get(tenantId, todoId, role);
+    if ("error" in result) {
+      return notFound(c, result.error!);
+    }
+
+    return ok(c, result.data);
+  },
+
   async create(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const role = c.get("tenantAccess")?.role;

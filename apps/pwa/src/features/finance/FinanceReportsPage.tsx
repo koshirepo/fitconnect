@@ -6,7 +6,7 @@ import { usePaymentAnalytics } from "@/api/queries/payments";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PageLoader } from "@/components/ui/spinner";
+import { StatGridSkeleton, CardSkeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
 import { getApiError } from "@/api/client";
 import {
@@ -121,7 +121,7 @@ export default function FinanceReportsPage() {
       ? getApiError(analyticsQuery.error)
       : "";
 
-  if (loading && !report) return <PageLoader />;
+  if (loading && !report) return (<div className="space-y-6"><StatGridSkeleton count={3} /><CardSkeleton /></div>);
 
   // Derived chart data
   const revenueChartData = analytics?.dailyBreakdown.map((d) => {

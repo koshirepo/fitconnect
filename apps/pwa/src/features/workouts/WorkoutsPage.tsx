@@ -5,17 +5,13 @@ import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
 import {
   useAssignWorkoutPlan,
-  useCreateWorkoutPlan,
   useDeleteWorkoutPlan,
-  useUpdateWorkoutPlan,
   useWorkoutPlansInfinite,
 } from "@/api/queries/catalog";
+import { useAllMembers } from "@/api/queries/members";
 import { flattenPages } from "@/api/queries/shared";
-import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -25,17 +21,15 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { PageLoader, Spinner } from "@/components/ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/utils";
 import { useInfiniteScroll } from "@/lib/use-infinite-scroll";
-import { Plus, Dumbbell, Trash2, UserPlus, X } from "lucide-react";
+import { Plus, Dumbbell, Trash2, UserPlus } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import MemberSelector from "@/components/ui/memberSelector";
-import { loadAllTenantMembers } from "@/lib/tenant-members";
-import type { WorkoutPlan, Exercise, TenantMember } from "@/types/api";
-
-type ExerciseField = keyof Exercise;
+import type { WorkoutPlan, TenantMember } from "@/types/api";
 
 export default function WorkoutsPage() {
   const navigate = useAppNavigate();
@@ -55,24 +49,12 @@ export default function WorkoutsPage() {
   const loadingMore = plansQuery.isFetchingNextPage;
   const hasMore = Boolean(plansQuery.hasNextPage);
 
-  const createPlan = useCreateWorkoutPlan();
-  const updatePlan = useUpdateWorkoutPlan();
   const deletePlan = useDeleteWorkoutPlan();
   const assignPlan = useAssignWorkoutPlan();
-
-  // Create/Update dialog
-  const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [editingPlan, setEditingPlan] = React.useState<WorkoutPlan | null>(null);
-  const [formTitle, setFormTitle] = React.useState("");
-  const [formDesc, setFormDesc] = React.useState("");
-  const [formExercises, setFormExercises] = React.useState<Exercise[]>([]);
-  const [formError, setFormError] = React.useState("");
-  const [submitting, setSubmitting] = React.useState(false);
 
   // Assign dialog
   const [assignDialogOpen, setAssignDialogOpen] = React.useState(false);
   const [assignPlanId, setAssignPlanId] = React.useState<string | null>(null);
-  const [members, setMembers] = React.useState<TenantMember[]>([]);
   const [selectedMember, setSelectedMember] = React.useState<TenantMember | null>(null);
   const [selectedMemberId, setSelectedMemberId] = React.useState("");
 
@@ -89,48 +71,6 @@ export default function WorkoutsPage() {
       }
     },
   });
-
-  const openCreate = () => {
-    setEditingPlan(null);
-    setFormTitle("");
-    setFormDesc("");
-    setFormExercises([]);
-    setFormError("");
-    setDialogOpen(true);
-  };
-
-  const openEdit = (plan: WorkoutPlan) => {
-    setEditingPlan(plan);
-    setFormTitle(plan.title);
-    setFormDesc(plan.description ?? "");
-    setFormExercises(plan.exercises ?? []);
-    setFormError("");
-    setDialogOpen(true);
-  };
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentTenantId) return;
-    setFormError("");
-    setSubmitting(true);
-    try {
-      const payload = {
-        title: formTitle,
-        description: formDesc || undefined,
-        exercises: formExercises.length > 0 ? formExercises : undefined,
-      };
-      if (editingPlan) {
-        await updatePlan.mutateAsync({ planId: editingPlan.id, data: payload });
-      } else {
-        await createPlan.mutateAsync(payload);
-      }
-      setDialogOpen(false);
-    } catch (err) {
-      setFormError(getApiError(err));
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const handleDelete = (planId: string) => {
     if (!currentTenantId) return;
@@ -149,19 +89,19 @@ export default function WorkoutsPage() {
     }
   };
 
-  const openAssign = async (planId: string) => {
+  // The roster the picker chooses from, fetched only once a dialog is opened
+  // and shared with every other screen reading the same query.
+  const rosterQuery = useAllMembers({ enabled: assignDialogOpen });
+  const members = React.useMemo(
+    () => (rosterQuery.data ?? []).filter((member) => member.status === "ACTIVE"),
+    [rosterQuery.data],
+  );
+
+  const openAssign = (planId: string) => {
     if (!currentTenantId) return;
     setAssignPlanId(planId);
     setSelectedMember(null);
     setSelectedMemberId("");
-    try {
-      const allMembers = await loadAllTenantMembers(currentTenantId, {
-        status: "ACTIVE",
-      });
-      setMembers(allMembers);
-    } catch {
-      //
-    }
     setAssignDialogOpen(true);
   };
 
@@ -177,23 +117,6 @@ export default function WorkoutsPage() {
     }
   };
 
-  // Exercise helpers
-  const addExercise = () => {
-    setFormExercises([...formExercises, { name: "", sets: 3, reps: 10 }]);
-  };
-
-  const updateExercise = <K extends ExerciseField>(idx: number, field: K, value: Exercise[K]) => {
-    setFormExercises((prev) =>
-      prev.map((exercise, index) =>
-        index === idx ? ({ ...exercise, [field]: value } as Exercise) : exercise,
-      ),
-    );
-  };
-
-  const removeExercise = (idx: number) => {
-    setFormExercises(formExercises.filter((_, i) => i !== idx));
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -204,7 +127,7 @@ export default function WorkoutsPage() {
           </p>
         </div>
         {canCreate && (
-          <Button onClick={openCreate}>
+          <Button onClick={() => navigate("/workouts/new")}>
             <Plus className="h-4 w-4" />
             New Plan
           </Button>
@@ -212,7 +135,7 @@ export default function WorkoutsPage() {
       </div>
 
       {loading ? (
-        <PageLoader />
+        <ListPageSkeleton />
       ) : plans.length === 0 ? (
         <EmptyState
           icon={Dumbbell}
@@ -222,7 +145,7 @@ export default function WorkoutsPage() {
           }
           action={
             canCreate ? (
-              <Button onClick={openCreate}>
+              <Button onClick={() => navigate("/workouts/new")}>
                 <Plus className="h-4 w-4" />
                 Create Plan
               </Button>
@@ -258,7 +181,11 @@ export default function WorkoutsPage() {
                   <div className="flex gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
                     {canCreate && (
                       <>
-                        <Button variant="outline" size="sm" onClick={() => openEdit(plan)}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/workouts/${plan.id}/edit`)}
+                        >
                           Edit
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => openAssign(plan.id)}>
@@ -294,106 +221,6 @@ export default function WorkoutsPage() {
           )}
         </>
       )}
-
-      {/* Create/Edit Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingPlan ? "Edit Workout Plan" : "Create Workout Plan"}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSave} className="space-y-4">
-            <div className="space-y-2">
-              <Label>Title</Label>
-              <Input
-                value={formTitle}
-                onChange={(e) => setFormTitle(e.target.value)}
-                placeholder="Push Day - Chest & Shoulders"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea
-                value={formDesc}
-                onChange={(e) => setFormDesc(e.target.value)}
-                placeholder="Workout description..."
-                rows={3}
-              />
-            </div>
-
-            {/* Exercises */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>Exercises</Label>
-                <Button type="button" variant="outline" size="sm" onClick={addExercise}>
-                  <Plus className="h-3 w-3" />
-                  Add Exercise
-                </Button>
-              </div>
-              {formExercises.map((ex, idx) => (
-                <div key={idx} className="grid grid-cols-12 gap-2 items-end rounded-md border p-3">
-                  <div className="col-span-4">
-                    <Label className="text-xs">Name</Label>
-                    <Input
-                      value={ex.name}
-                      onChange={(e) => updateExercise(idx, "name", e.target.value)}
-                      placeholder="Bench Press"
-                      required
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Label className="text-xs">Sets</Label>
-                    <Input
-                      type="number"
-                      value={ex.sets ?? ""}
-                      onChange={(e) => updateExercise(idx, "sets", parseInt(e.target.value) || 0)}
-                      min={1}
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Label className="text-xs">Reps</Label>
-                    <Input
-                      type="number"
-                      value={ex.reps ?? ""}
-                      onChange={(e) => updateExercise(idx, "reps", parseInt(e.target.value) || 0)}
-                      min={1}
-                    />
-                  </div>
-                  <div className="col-span-3">
-                    <Label className="text-xs">Notes</Label>
-                    <Input
-                      value={ex.notes ?? ""}
-                      onChange={(e) => updateExercise(idx, "notes", e.target.value)}
-                      placeholder="Optional"
-                    />
-                  </div>
-                  <div className="col-span-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeExercise(idx)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {formError && <p className="text-sm text-destructive-foreground">{formError}</p>}
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={submitting}>
-                {submitting ? "Saving..." : editingPlan ? "Update" : "Create"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       {/* Assign Dialog */}
       <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>

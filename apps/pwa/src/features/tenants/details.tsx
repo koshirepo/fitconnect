@@ -1,12 +1,10 @@
 import * as React from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import { tenantsApi } from "@/api/tenants";
-import { useQueryClient } from "@tanstack/react-query";
 import { useUpdateTenantStatus } from "@/api/queries/platform";
-import { queryKeys } from "@/lib/query-keys";
 import { getApiError } from "@/api/client";
 import { useAuthStore } from "@/stores/auth";
 import { Badge } from "@/components/ui/badge";
@@ -14,17 +12,8 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { TenantPublicProfileCard } from "@/components/tenants/TenantPublicProfileCard";
 import AvatarCard from "@/components/ui/avatarCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { PageLoader, Spinner } from "@/components/ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
+import { DetailPageSkeleton } from "@/components/ui/skeleton";
 import { resolveAssetUrl } from "@/lib/assets";
 import { buildTenantPublicUrl } from "@/lib/subdomain";
 import { cn, formatDate } from "@/lib/utils";
@@ -52,8 +41,8 @@ type MemberSummary = {
 
 export default function TenantDetails() {
   const { tenantId } = useParams<{ tenantId: string }>();
+  const navigate = useNavigate();
   const canManageStatus = useAuthStore((s) => s.user?.platformRole === "SUPER_ADMIN");
-  const queryClient = useQueryClient();
   const updateTenantStatus = useUpdateTenantStatus();
 
   const [loading, setLoading] = React.useState(true);
@@ -69,12 +58,6 @@ export default function TenantDetails() {
   const [paymentsLoadingMore, setPaymentsLoadingMore] = React.useState(false);
   const [paymentsHasMore, setPaymentsHasMore] = React.useState(true);
   const [paymentsPage, setPaymentsPage] = React.useState(1);
-  const [recordDialogOpen, setRecordDialogOpen] = React.useState(false);
-  const [formAmount, setFormAmount] = React.useState("");
-  const [formNote, setFormNote] = React.useState("");
-  const [formExtendsUntil, setFormExtendsUntil] = React.useState("");
-  const [submitting, setSubmitting] = React.useState(false);
-  const [submitError, setSubmitError] = React.useState("");
 
   const loadTenant = React.useCallback(async () => {
     if (!tenantId) {
@@ -196,44 +179,7 @@ export default function TenantDetails() {
     onLoadMore: loadMorePayments,
   });
 
-  const handleRecordPayment = async () => {
-    if (!tenantId) return;
-    const amount = Number(formAmount);
-    if (!Number.isInteger(amount) || amount <= 0) {
-      setSubmitError("Enter a valid amount in whole rupees.");
-      return;
-    }
-    if (!formExtendsUntil) {
-      setSubmitError("Select an expiry date.");
-      return;
-    }
-    setSubmitting(true);
-    setSubmitError("");
-    try {
-      await tenantsApi.recordPlatformPayment(tenantId, {
-        amount,
-        note: formNote || undefined,
-        extendsUntil: new Date(formExtendsUntil).toISOString(),
-      });
-      // Refresh tenant (to get updated platformExpiresAt) and payments
-      const tenantRes = await tenantsApi.get(tenantId);
-      setTenant(tenantRes.data.data.tenant);
-      // The expiry drives the platform table's badge, so clear that cache too.
-      await queryClient.invalidateQueries({ queryKey: queryKeys.tenants.all() });
-      setPaymentsHasMore(true);
-      void loadPlatformPayments(tenantId, 1, "replace");
-      setRecordDialogOpen(false);
-      setFormAmount("");
-      setFormNote("");
-      setFormExtendsUntil("");
-    } catch (err) {
-      setSubmitError(getApiError(err));
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  if (loading) return <PageLoader />;
+  if (loading) return <DetailPageSkeleton />;
 
   if (!tenant) {
     return (
@@ -437,10 +383,7 @@ export default function TenantDetails() {
               </CardTitle>
               <Button
                 size="sm"
-                onClick={() => {
-                  setSubmitError("");
-                  setRecordDialogOpen(true);
-                }}
+                onClick={() => navigate(`/tenants/${tenantId}/payments/record`)}
               >
                 Record Payment
               </Button>
@@ -523,66 +466,6 @@ export default function TenantDetails() {
         </Card>
       )}
 
-      {/* Record Platform Payment dialog */}
-      <Dialog open={recordDialogOpen} onOpenChange={setRecordDialogOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Record Platform Payment</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="pp-amount">Amount (₹)</Label>
-              <Input
-                id="pp-amount"
-                type="number"
-                min="1"
-                step="1"
-                placeholder="e.g. 1200"
-                value={formAmount}
-                onChange={(e) => setFormAmount(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">Enter amount in rupees (₹)</p>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="pp-expiry">Extends Access Until</Label>
-              <Input
-                id="pp-expiry"
-                type="date"
-                value={formExtendsUntil}
-                min={new Date().toISOString().split("T")[0]}
-                onChange={(e) => setFormExtendsUntil(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="pp-note">Note (optional)</Label>
-              <Textarea
-                id="pp-note"
-                placeholder="e.g. Annual subscription payment"
-                rows={2}
-                value={formNote}
-                onChange={(e) => setFormNote(e.target.value)}
-              />
-            </div>
-            {submitError && (
-              <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {submitError}
-              </p>
-            )}
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setRecordDialogOpen(false)}
-              disabled={submitting}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleRecordPayment} disabled={submitting}>
-              {submitting ? "Saving…" : "Record Payment"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

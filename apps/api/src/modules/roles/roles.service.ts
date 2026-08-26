@@ -26,6 +26,15 @@ import { invalidateCached } from "../../lib/request-cache";
 const PLATFORM_ROLES = Object.values(PlatformRole) as string[];
 const TENANT_ROLES = Object.values(TenantRole) as string[];
 
+/** "Front Desk" → "FRONT_DESK". Non-letters collapse to underscores. */
+export function slugifyRoleKey(name: string) {
+  const key = name
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  return key;
+}
+
 function roleLabel(scope: PermissionScope, role: string) {
   return scope === "PLATFORM"
     ? (PLATFORM_ROLE_LABELS[role] ?? role)
@@ -57,11 +66,13 @@ async function buildMatrix(input: {
   // Platform-wide defaults first, then gym-specific rows, so the gym wins.
   const overrides = await rolePermissionRepository.listApplicableOverrides(input.tenantId);
   const manageableSet = new Set(input.manageable);
+  const customRoles = await rolePermissionRepository.listCustomRoles(input.tenantId);
 
   const roles = input.scopes.flatMap((scope) => {
     const roleNames = scope === "PLATFORM" ? PLATFORM_ROLES : TENANT_ROLES;
+    const scopeCustom = customRoles.filter((role) => role.scope === scope);
 
-    return roleNames.map((role) => {
+    const builtIn = roleNames.map((role) => {
       const baseline = baselinePermissions(scope, role);
       const effective = applyOverrides(scope, role, baseline, overrides);
       const locked = LOCKED_ROLE_PERMISSIONS[role] ?? [];
@@ -71,6 +82,7 @@ async function buildMatrix(input: {
         role,
         label: roleLabel(scope, role),
         editable: !IMMUTABLE_ROLES.includes(role),
+        isSystem: true,
         baselinePermissions: [...baseline].sort(),
         permissions: [...effective].sort(),
         lockedPermissions: [...locked],
@@ -81,6 +93,32 @@ async function buildMatrix(input: {
         ).length,
       };
     });
+
+    // Custom roles have no catalog baseline; everything they hold is stored as
+    // `allowed = true` override rows, so their effective set is exactly what
+    // applyOverrides produces from an empty baseline.
+    const custom = scopeCustom.map((role) => {
+      const effective = applyOverrides(scope, role.key, [], overrides);
+      const manageableCount = effective.filter((permission) =>
+        manageableSet.has(permission),
+      ).length;
+
+      return {
+        scope,
+        role: role.key,
+        label: role.name,
+        editable: true,
+        isSystem: false,
+        description: role.description,
+        baselinePermissions: [] as string[],
+        permissions: [...effective].sort(),
+        lockedPermissions: [] as string[],
+        customized: effective.length > 0,
+        manageablePermissions: manageableCount,
+      };
+    });
+
+    return [...builtIn, ...custom];
   });
 
   return { roles, catalog: permissionCatalog(input.manageable) };
@@ -116,6 +154,8 @@ export const roleService = {
    * Replace a role's permission list.
    * The submitted list is diffed against the catalog baseline so only genuine
    * deviations are persisted — resetting a role to its defaults clears its rows.
+   * Custom roles have an empty baseline, so every granted permission is stored
+   * as an `allowed = true` row.
    */
   async updateRolePermissions(input: {
     tenantId: string | null;
@@ -125,16 +165,21 @@ export const roleService = {
     actorId?: string;
   }) {
     const roleNames = input.scope === "PLATFORM" ? PLATFORM_ROLES : TENANT_ROLES;
+    const isCustom = !roleNames.includes(input.role);
 
-    if (!roleNames.includes(input.role)) {
-      return { error: `Unknown ${input.scope.toLowerCase()} role: ${input.role}.`, status: 400 as const };
-    }
-
-    if (IMMUTABLE_ROLES.includes(input.role)) {
-      return {
-        error: `${roleLabel(input.scope, input.role)} always holds every permission and cannot be edited.`,
-        status: 400 as const,
-      };
+    if (!isCustom) {
+      if (IMMUTABLE_ROLES.includes(input.role)) {
+        return {
+          error: `${roleLabel(input.scope, input.role)} always holds every permission and cannot be edited.`,
+          status: 400 as const,
+        };
+      }
+    } else {
+      // The role must exist in the registry and belong to this scope container.
+      const exists = await rolePermissionRepository.findCustomRole(input.tenantId, input.scope, input.role);
+      if (!exists) {
+        return { error: `Unknown ${input.scope.toLowerCase()} role: ${input.role}.`, status: 400 as const };
+      }
     }
 
     // A gym may only tune tenant-scoped roles, and only with tenant-scoped
@@ -198,7 +243,10 @@ export const roleService = {
     const roleNames = input.scope === "PLATFORM" ? PLATFORM_ROLES : TENANT_ROLES;
 
     if (!roleNames.includes(input.role)) {
-      return { error: `Unknown ${input.scope.toLowerCase()} role: ${input.role}.`, status: 400 as const };
+      const exists = await rolePermissionRepository.findCustomRole(input.tenantId, input.scope, input.role);
+      if (!exists) {
+        return { error: `Unknown ${input.scope.toLowerCase()} role: ${input.role}.`, status: 400 as const };
+      }
     }
 
     if (input.tenantId && input.scope !== "TENANT") {
@@ -217,5 +265,141 @@ export const roleService = {
         permissions: [...baselinePermissions(input.scope, input.role)].sort(),
       },
     };
+  },
+
+  /**
+   * Create a custom role. The key is derived from the name (upper-snake), and
+   * must not collide with a built-in role or an existing custom role in the
+   * same scope container.
+   */
+  async createRole(input: {
+    tenantId: string | null;
+    scope: PermissionScope;
+    name: string;
+    description?: string;
+    permissions: string[];
+    actorId?: string;
+  }) {
+    if (input.tenantId && input.scope !== "TENANT") {
+      return { error: "A gym can only create its own tenant roles.", status: 403 as const };
+    }
+
+    const manageable = input.tenantId ? TENANT_MANAGEABLE_PERMISSIONS : ALL_PERMISSIONS;
+    const requested = new Set(input.permissions as Permission[]);
+    const outOfScope = [...requested].filter((permission) => !manageable.includes(permission));
+
+    if (outOfScope.length > 0) {
+      return {
+        error: `These permissions cannot be granted here: ${outOfScope.join(", ")}.`,
+        status: 403 as const,
+      };
+    }
+
+    const key = slugifyRoleKey(input.name);
+    if (!key) {
+      return { error: "Role name must include letters.", status: 400 as const };
+    }
+
+    const builtIn = input.scope === "PLATFORM" ? PLATFORM_ROLES : TENANT_ROLES;
+    if (builtIn.includes(key)) {
+      return {
+        error: `A built-in role named "${key}" already exists. Choose a different name.`,
+        status: 409 as const,
+      };
+    }
+
+    const clash = await rolePermissionRepository.findCustomRole(input.tenantId, input.scope, key);
+    if (clash) {
+      return {
+        error: `A role named "${input.name}" already exists in this ${input.scope.toLowerCase()}.`,
+        status: 409 as const,
+      };
+    }
+
+    await rolePermissionRepository.createRole({
+      tenantId: input.tenantId,
+      scope: input.scope,
+      key,
+      name: input.name,
+      description: input.description,
+      permissions: input.permissions,
+      createdBy: input.actorId,
+    });
+
+    return { data: { scope: input.scope, role: key, name: input.name } };
+  },
+
+  /**
+   * Rename a custom role (or update its description). The key stays stable —
+   * memberships and override rows reference it, so a name change only alters
+   * the label.
+   */
+  async updateRole(input: {
+    tenantId: string | null;
+    scope: PermissionScope;
+    role: string;
+    name?: string;
+    description?: string | null;
+    actorId?: string;
+  }) {
+    const builtIn = input.scope === "PLATFORM" ? PLATFORM_ROLES : TENANT_ROLES;
+    if (builtIn.includes(input.role)) {
+      return { error: "Built-in roles cannot be edited.", status: 400 as const };
+    }
+
+    if (input.tenantId && input.scope !== "TENANT") {
+      return { error: "A gym can only manage its own tenant roles.", status: 403 as const };
+    }
+
+    const existing = await rolePermissionRepository.findCustomRole(input.tenantId, input.scope, input.role);
+    if (!existing) {
+      return { error: `Unknown ${input.scope.toLowerCase()} role: ${input.role}.`, status: 404 as const };
+    }
+
+    // A renamed role keeps its key; only the label/description change.
+    const data: { name?: string; description?: string | null } = {};
+    if (input.name !== undefined) data.name = input.name;
+    if (input.description !== undefined) data.description = input.description;
+
+    await rolePermissionRepository.updateRole(input.tenantId, input.scope, input.role, data);
+
+    return { data: { scope: input.scope, role: input.role, name: data.name ?? existing.name } };
+  },
+
+  /**
+   * Delete a custom role. System roles can never be deleted, and a role that
+   * members still hold is kept so nobody silently loses access.
+   */
+  async deleteRole(input: {
+    tenantId: string | null;
+    scope: PermissionScope;
+    role: string;
+  }) {
+    const builtIn = input.scope === "PLATFORM" ? PLATFORM_ROLES : TENANT_ROLES;
+    if (builtIn.includes(input.role)) {
+      return { error: "Built-in roles cannot be deleted.", status: 400 as const };
+    }
+
+    if (input.tenantId && input.scope !== "TENANT") {
+      return { error: "A gym can only manage its own tenant roles.", status: 403 as const };
+    }
+
+    const role = await rolePermissionRepository.findCustomRole(input.tenantId, input.scope, input.role);
+    if (!role) {
+      return { error: `Unknown ${input.scope.toLowerCase()} role: ${input.role}.`, status: 404 as const };
+    }
+
+    const assigned = await rolePermissionRepository.countMembersWithRole(input.tenantId, input.role);
+    if (assigned > 0) {
+      return {
+        error: `Cannot delete "${role.name}": ${assigned} member${assigned === 1 ? "" : "s"} still hold${assigned === 1 ? "s" : ""} this role. Reassign them first.`,
+        status: 409 as const,
+      };
+    }
+
+    await rolePermissionRepository.deleteRole(input);
+    invalidateCached(`role-overrides:${input.tenantId ?? "platform"}`);
+
+    return { data: { scope: input.scope, role: input.role, deleted: true } };
   },
 };

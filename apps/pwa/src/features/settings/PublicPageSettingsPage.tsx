@@ -5,7 +5,7 @@ import { getApiError } from "@/api/client";
 import { TenantPublicProfileCard } from "@/components/tenants/TenantPublicProfileCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { PageLoader } from "@/components/ui/spinner";
+import { FormPageSkeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/stores/auth";
 import type { Tenant } from "@/types/api";
 import { ArrowLeft } from "lucide-react";
@@ -41,7 +41,7 @@ export default function PublicPageSettingsPage() {
       });
   }, [currentTenantId]);
 
-  if (loading) return <PageLoader />;
+  if (loading) return <FormPageSkeleton fields={4} />;
 
   if (!tenant) {
     return (

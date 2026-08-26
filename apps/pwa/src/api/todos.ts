@@ -25,6 +25,9 @@ export const todosApi = {
       },
     }),
 
+  getById: (tenantId: string, todoId: string) =>
+    api.get<ApiResponse<{ todo: Todo }>>(`/tenants/${tenantId}/todos/${todoId}`),
+
   create: (tenantId: string, data: CreateTodoPayload) =>
     api.post<ApiResponse<{ todo: Todo }>>(`/tenants/${tenantId}/todos`, data),
 

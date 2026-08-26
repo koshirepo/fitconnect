@@ -18,6 +18,7 @@ import {
 } from "../../lib/razorpay";
 import { paymentRepository } from "./payments.repository";
 import { pushService } from "../push/push.service";
+import { referralRewardService } from "../members/referral-rewards.service";
 import type {
   UpdateGatewayInput,
   CheckoutInput,

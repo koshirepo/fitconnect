@@ -8,6 +8,9 @@
 import type { PaymentStatus } from "@fitconnect/shared/types/enums";
 import { memberRepository } from "../members/members.repository";
 import { pushService } from "../push/push.service";
+import { couponService, type Quote } from "../coupons/coupons.service";
+import { freezeService } from "../freezes/freezes.service";
+import { referralRewardService } from "../members/referral-rewards.service";
 import { paymentRepository } from "./payments.repository";
 import { flattenNestedMember } from "../../lib/flatten";
 import type {
@@ -166,6 +169,15 @@ export const paymentService = {
       return { error: "Subscription not found in this tenant.", status: 404 as const };
     }
 
+    // A frozen membership's end date is still moving, and every start-date rule
+    // is computed from it. Unfreeze first.
+    if (input.subscriptionId && (await freezeService.isFrozen(tenantId, input.membershipId))) {
+      return {
+        error: "This membership is frozen. Unfreeze it before selling a new term.",
+        status: 400 as const,
+      };
+    }
+
     if (
       subscription?.badges.length &&
       !subscription.badges.some((badge) =>
@@ -178,13 +190,46 @@ export const paymentService = {
       };
     }
 
+    // Coupons and coins are priced here, not by the caller. `quote` is the
+    // same function the preview screen and the online flows use, so a code
+    // can never be worth one thing on one screen and another elsewhere.
+    let quote: Quote | null = null;
+    if (input.couponCode?.trim() || (input.coinsToSpend ?? 0) > 0) {
+      const priced = await couponService.quote({
+        tenantId,
+        membershipId: input.membershipId,
+        subscriptionId: input.subscriptionId ?? null,
+        amount: input.amount,
+        code: input.couponCode ?? null,
+        coinsToSpend: input.coinsToSpend ?? 0,
+      });
+
+      if ("error" in priced) {
+        return { error: priced.error, status: priced.status as 400 | 404 };
+      }
+      quote = priced.data;
+    }
+
+    // What the member owes after any coupon and coins.
+    const payableAmount = quote ? quote.netAmount : input.amount;
+
+    // A validity coupon's extra days go onto this payment's own window.
+    // `refreshDueDate` derives the membership's due date from payment rows,
+    // so days written anywhere else would vanish on the next recompute.
+    const validUntilWithBonus =
+      input.validUntil && quote && quote.bonusDays > 0
+        ? new Date(
+            input.validUntil.getTime() + quote.bonusDays * 24 * 60 * 60 * 1000,
+          )
+        : input.validUntil;
+
     // A part payment: the member hands over less than the price now, and the
     // rest is written as a second row they still owe. The membership still
     // gets its validity window — the desk decided to let them train, and the
     // balance is tracked rather than blocking them at the door.
-    const paidAmount = input.paidAmount ?? input.amount;
+    const paidAmount = Math.min(input.paidAmount ?? payableAmount, payableAmount);
     const balanceAmount =
-      input.status === "COMPLETED" ? input.amount - paidAmount : 0;
+      input.status === "COMPLETED" ? payableAmount - paidAmount : 0;
 
     const payment = await paymentRepository.createPayment({
       tenantId,
@@ -194,11 +239,20 @@ export const paymentService = {
       description: input.description,
       note: input.note,
       status: input.status,
-      amount: input.status === "COMPLETED" ? paidAmount : input.amount,
+      // `amount` is always what was collected, so every revenue query keeps
+      // working; the list price and what came off it sit beside it.
+      amount: input.status === "COMPLETED" ? paidAmount : payableAmount,
+      ...(quote
+        ? {
+            listAmount: quote.listAmount,
+            discountAmount: quote.discountAmount,
+            coinsRedeemed: quote.coinsRedeemed,
+          }
+        : {}),
       collectorId: collector?.id,
       paidAt: input.status === "COMPLETED" ? new Date() : undefined,
       validFrom: input.validFrom,
-      validUntil: input.validUntil,
+      validUntil: validUntilWithBonus,
     });
 
     // The balance carries no validity of its own — the row above already gave
@@ -220,8 +274,28 @@ export const paymentService = {
           })
         : null;
 
+    // Recorded only now: a redemption must always be traceable to the
+    // payment it affected. A coupon exhausted between the quote and here
+    // fails the redemption rather than the payment — the money was taken.
+    if (quote && (quote.coupon || quote.coinsRedeemed > 0)) {
+      const redeemed = await couponService.redeem({
+        tenantId,
+        membershipId: input.membershipId,
+        quote,
+        paymentId: payment.id,
+        appliedById: userId,
+      });
+
+      if (!redeemed.ok) {
+        console.warn("Coupon redemption failed after payment.", {
+          paymentId: payment.id,
+          reason: redeemed.reason,
+        });
+      }
+    }
+
     // Keep membership.dueDate in sync
-    if (input.validUntil) {
+    if (validUntilWithBonus) {
       await paymentRepository.refreshDueDate(input.membershipId);
     }
 
@@ -247,6 +321,17 @@ export const paymentService = {
           await memberRepository.updateMembershipStatus(input.membershipId, "ACTIVE");
         }
       }
+    }
+
+    // A first subscription payment is what pays a referrer, so this sits
+    // with the money rather than with the signup that preceded it.
+    if (payment.status === "COMPLETED" && input.subscriptionId) {
+      await referralRewardService.grantForFirstSubscription({
+        tenantId,
+        membershipId: input.membershipId,
+        paymentId: payment.id,
+        scheduleBackgroundTask,
+      });
     }
 
     // Only a completed row is money in hand; a PENDING one notifies when it
@@ -335,6 +420,12 @@ export const paymentService = {
       await paymentRepository.refreshDueDate(existing.membershipId);
     }
 
+    // Money coming back takes the coupon with it: the redemption slot is
+    // freed, granted coins are clawed back, and spent coins are returned.
+    if (status === "REFUNDED" || status === "FAILED") {
+      await couponService.reverseForPayment(tenantId, paymentId, actorUserId);
+    }
+
     // The transition is what matters: re-saving an already-completed payment
     // should not buzz every admin a second time.
     if (status === "COMPLETED" && existing.status !== "COMPLETED") {
@@ -363,6 +454,9 @@ export const paymentService = {
       return { error: "Payment not found.", status: 404 as const };
     }
 
+    // Deleting removes the money this recorded, so anything the coupon gave
+    // for it goes back too.
+    await couponService.reverseForPayment(tenantId, paymentId);
     await paymentRepository.deletePayment(paymentId);
     await paymentRepository.refreshDueDate(existing.membershipId);
 

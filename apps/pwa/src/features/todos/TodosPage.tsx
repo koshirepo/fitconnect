@@ -2,20 +2,13 @@ import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { Navigate } from "react-router-dom";
-import {
-  useCreateTodo,
-  useDeleteTodo,
-  useTodosInfinite,
-  useUpdateTodo,
-} from "@/api/queries/catalog";
+import { useAppNavigate } from "@/lib/use-app-navigate";
+import { useDeleteTodo, useTodosInfinite, useUpdateTodo } from "@/api/queries/catalog";
 import { flattenPages } from "@/api/queries/shared";
 import { getApiError } from "@/api/client";
-import { useAuthStore } from "@/stores/auth";
 import type { Todo, TodoVisibility } from "@/types/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -26,16 +19,10 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageLoader, Spinner } from "@/components/ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { useInfiniteScroll } from "@/lib/use-infinite-scroll";
 import { formatDateTime } from "@/lib/utils";
 import { Edit, Lock, Plus, Search, Shield, Trash2 } from "lucide-react";
@@ -66,7 +53,7 @@ function visibilityMeta(visibility: TodoVisibility) {
 }
 
 export default function TodosPage() {
-  const { currentTenantId } = useAuthStore();
+  const navigate = useAppNavigate();
   const { can } = usePermissions();
   const canAccess = can(Permission.TODOS_READ);
   // Todo deletion is the narrower grant; everything else follows TODOS_UPDATE.
@@ -76,14 +63,6 @@ export default function TodosPage() {
   const [searchText, setSearchText] = React.useState("");
   const deferredSearch = React.useDeferredValue(searchText);
   const [error, setError] = React.useState("");
-
-  const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [editingTodo, setEditingTodo] = React.useState<Todo | null>(null);
-  const [formTitle, setFormTitle] = React.useState("");
-  const [formDescription, setFormDescription] = React.useState("");
-  const [formVisibility, setFormVisibility] = React.useState<TodoVisibility>("PUBLIC");
-  const [formError, setFormError] = React.useState("");
-  const [submitting, setSubmitting] = React.useState(false);
 
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [pendingDelete, setPendingDelete] = React.useState<Todo | null>(null);
@@ -100,7 +79,6 @@ export default function TodosPage() {
   const loadingMore = todosQuery.isFetchingNextPage;
   const hasMore = Boolean(todosQuery.hasNextPage);
 
-  const createTodo = useCreateTodo();
   const updateTodo = useUpdateTodo();
   const deleteTodo = useDeleteTodo();
 
@@ -118,56 +96,6 @@ export default function TodosPage() {
     (todo: Todo) => isAdmin || todo.visibility === "PUBLIC",
     [isAdmin],
   );
-
-  const openCreate = () => {
-    setEditingTodo(null);
-    setFormTitle("");
-    setFormDescription("");
-    setFormVisibility("PUBLIC");
-    setFormError("");
-    setDialogOpen(true);
-  };
-
-  const openEdit = (todo: Todo) => {
-    setEditingTodo(todo);
-    setFormTitle(todo.title);
-    setFormDescription(todo.description ?? "");
-    setFormVisibility(todo.visibility);
-    setFormError("");
-    setDialogOpen(true);
-  };
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentTenantId) return;
-
-    setSubmitting(true);
-    setFormError("");
-    try {
-      if (editingTodo) {
-        await updateTodo.mutateAsync({
-          todoId: editingTodo.id,
-          data: {
-            title: formTitle.trim(),
-            description: formDescription.trim() ? formDescription.trim() : null,
-            ...(isAdmin ? { visibility: formVisibility } : {}),
-          },
-        });
-      } else {
-        await createTodo.mutateAsync({
-          title: formTitle.trim(),
-          description: formDescription.trim() || undefined,
-          visibility: isAdmin ? formVisibility : "PUBLIC",
-        });
-      }
-
-      setDialogOpen(false);
-    } catch (err) {
-      setFormError(getApiError(err));
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const handleToggleCompleted = async (todo: Todo, nextValue: boolean) => {
     if (!canMutateTodo(todo)) return;
@@ -201,7 +129,7 @@ export default function TodosPage() {
   }
 
   if (loading) {
-    return <PageLoader />;
+    return <ListPageSkeleton />;
   }
 
   return (
@@ -214,7 +142,7 @@ export default function TodosPage() {
             protected ones.
           </p>
         </div>
-        <Button onClick={openCreate}>
+        <Button onClick={() => navigate("/todos/new")}>
           <Plus className="h-4 w-4" />
           New Todo
         </Button>
@@ -262,7 +190,7 @@ export default function TodosPage() {
           }
           action={
             !deferredSearch.trim() && statusFilter === "ALL" ? (
-              <Button onClick={openCreate}>
+              <Button onClick={() => navigate("/todos/new")}>
                 <Plus className="h-4 w-4" />
                 Create Todo
               </Button>
@@ -319,7 +247,7 @@ export default function TodosPage() {
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={() => openEdit(todo)}
+                            onClick={() => navigate(`/todos/${todo.id}/edit`)}
                           >
                             <Edit className="h-3 w-3" />
                             Edit
@@ -373,74 +301,6 @@ export default function TodosPage() {
           )}
         </>
       )}
-
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader>
-            <DialogTitle>{editingTodo ? "Edit Todo" : "Create Todo"}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSave} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="todo-title">Title</Label>
-              <Input
-                id="todo-title"
-                value={formTitle}
-                onChange={(e) => setFormTitle(e.target.value)}
-                placeholder="Enter todo title"
-                required
-                minLength={2}
-                maxLength={200}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="todo-description">Description</Label>
-              <Textarea
-                id="todo-description"
-                value={formDescription}
-                onChange={(e) => setFormDescription(e.target.value)}
-                placeholder="Add context, next steps, or notes"
-                className="min-h-32"
-                maxLength={2000}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="todo-visibility">Visibility</Label>
-              <Select
-                value={isAdmin ? formVisibility : "PUBLIC"}
-                disabled={!isAdmin}
-                onValueChange={(value) => setFormVisibility((value ?? "") as TodoVisibility)}
-              >
-                <SelectTrigger id="todo-visibility" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PUBLIC">Public</SelectItem>
-                  <SelectItem value="PROTECTED">Protected</SelectItem>
-                  <SelectItem value="PRIVATE">Private</SelectItem>
-                </SelectContent>
-              </Select>
-              {!isAdmin && (
-                <p className="text-xs text-muted-foreground">
-                  Coaches can only create public todos.
-                </p>
-              )}
-            </div>
-
-            {formError && <p className="text-sm text-destructive">{formError}</p>}
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={submitting}>
-                {submitting ? "Saving..." : editingTodo ? "Update Todo" : "Create Todo"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       <ConfirmDialog
         open={confirmOpen}

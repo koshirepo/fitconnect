@@ -22,8 +22,8 @@ import {
 } from "@/components/ui/select";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { PhotoCapture } from "@/components/ui/photo-capture";
-import { PageLoader } from "@/components/ui/spinner";
-import { AlertCircle, ArrowLeft, CheckCircle2, Plus, X } from "lucide-react";
+import { FormPageSkeleton } from "@/components/ui/skeleton";
+import { AlertCircle, CheckCircle2, Plus, X } from "lucide-react";
 import {
   PRODUCT_IMAGE_ASPECT_CLASS,
   PRODUCT_IMAGE_ASPECT_RATIO,
@@ -204,7 +204,7 @@ export default function CreateProductPage() {
   };
 
   if (loadingProduct) {
-    return <PageLoader />;
+    return <FormPageSkeleton fields={5} />;
   }
 
   if (success) {
@@ -253,14 +253,6 @@ export default function CreateProductPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate("/platform-commerce")}
-          aria-label="Back to products"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
             {isEditMode ? "Edit Product" : "Create Product"}

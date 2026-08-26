@@ -6,7 +6,7 @@ import { useAuthStore } from "@/stores/auth";
 import { resolveAssetUrl } from "@/lib/assets";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { PageLoader } from "@/components/ui/spinner";
+import { CardSkeleton } from "@/components/ui/skeleton";
 import { CheckCircle2, LogIn } from "lucide-react";
 
 export default function AttendanceQrPage() {
@@ -78,7 +78,7 @@ export default function AttendanceQrPage() {
           </div>
         </div>
 
-        {loading && !successName ? <PageLoader /> : null}
+        {loading && !successName ? <CardSkeleton /> : null}
 
         {error ? (
           <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">

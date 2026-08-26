@@ -6,6 +6,7 @@
  * - Primary exports: memberRepository.
  */
 import { prisma } from "../../lib/prisma";
+import { idCardService } from "../public/id-card.service";
 import type { Prisma } from "../../generated/prisma/client";
 import type { PlatformRole, TenantRole } from "@fitconnect/shared/types/enums";
 
@@ -39,10 +40,24 @@ function overdueWhere(tenantId: string, overdueDays: number) {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - overdueDays);
 
+  const now = new Date();
+  const todayUtc = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+  );
+
   return {
     tenantId,
     status: "ACTIVE",
     dueDate: { not: null, lte: cutoff },
+    // A frozen membership has its clock deliberately stopped, so the sweep
+    // leaves it alone rather than suspending someone mid-break.
+    freezes: {
+      none: {
+        endedOn: null,
+        startsOn: { lte: todayUtc },
+        plannedEndsOn: { gte: todayUtc },
+      },
+    },
   } satisfies Prisma.TenantMembershipWhereInput;
 }
 
@@ -248,7 +263,7 @@ export const memberRepository = {
   async createMembership(
     tenantId: string,
     userId: string,
-    role: TenantRole,
+    role: string,
     shiftId?: string,
     referredByMembershipId?: string,
     /**
@@ -275,12 +290,16 @@ export const memberRepository = {
             ...(shiftId ? { shiftId } : {}),
             ...(referredByMembershipId ? { referredByMembershipId } : {}),
             ...(status ? { status } : {}),
+            // Minted here so the welcome email and WhatsApp message can
+            // carry the card link without a follow-up write.
+            idCardToken: idCardService.mintToken(),
           },
           select: {
             id: true,
             memberId: true,
             role: true,
             status: true,
+            idCardToken: true,
             shift: { select: shiftSelect },
             user: { select: { id: true, name: true, email: true, phone: true, gender: true } },
           },
@@ -323,8 +342,8 @@ export const memberRepository = {
       // "ALL" or empty — no status filter
     }
 
-    if (roleFilter && ["MEMBER", "COACH", "ADMIN"].includes(roleFilter)) {
-      where.role = roleFilter as TenantRole;
+    if (roleFilter) {
+      where.role = roleFilter;
     }
     const trimmedSearch = search?.trim();
     if (trimmedSearch) {
@@ -461,7 +480,7 @@ export const memberRepository = {
    * Run the `update member role` persistence operation for the members module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
-  updateMemberRole(membershipId: string, role: TenantRole) {
+  updateMemberRole(membershipId: string, role: string) {
     return prisma.tenantMembership.update({
       where: { id: membershipId },
       data: { role },

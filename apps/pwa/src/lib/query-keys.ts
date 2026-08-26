@@ -54,6 +54,14 @@ export const queryKeys = {
   badges: {
     list: (tenantId: string) => ["badges", tenantId] as const,
   },
+  coupons: {
+    list: (tenantId: string, includeInactive: boolean) =>
+      ["coupons", tenantId, includeInactive] as const,
+    detail: (tenantId: string, couponId: string) =>
+      ["coupons", tenantId, "detail", couponId] as const,
+    coins: (tenantId: string, membershipId: string) =>
+      ["coupons", tenantId, "coins", membershipId] as const,
+  },
   todos: {
     list: (tenantId: string) => ["todos", tenantId] as const,
   },

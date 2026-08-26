@@ -45,6 +45,7 @@ export type TenantMembershipMinAggregateOutputType = {
   dueDate: Date | null
   shiftId: string | null
   referredByMembershipId: string | null
+  idCardToken: string | null
   joinedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -60,6 +61,7 @@ export type TenantMembershipMaxAggregateOutputType = {
   dueDate: Date | null
   shiftId: string | null
   referredByMembershipId: string | null
+  idCardToken: string | null
   joinedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -75,6 +77,7 @@ export type TenantMembershipCountAggregateOutputType = {
   dueDate: number
   shiftId: number
   referredByMembershipId: number
+  idCardToken: number
   joinedAt: number
   createdAt: number
   updatedAt: number
@@ -100,6 +103,7 @@ export type TenantMembershipMinAggregateInputType = {
   dueDate?: true
   shiftId?: true
   referredByMembershipId?: true
+  idCardToken?: true
   joinedAt?: true
   createdAt?: true
   updatedAt?: true
@@ -115,6 +119,7 @@ export type TenantMembershipMaxAggregateInputType = {
   dueDate?: true
   shiftId?: true
   referredByMembershipId?: true
+  idCardToken?: true
   joinedAt?: true
   createdAt?: true
   updatedAt?: true
@@ -130,6 +135,7 @@ export type TenantMembershipCountAggregateInputType = {
   dueDate?: true
   shiftId?: true
   referredByMembershipId?: true
+  idCardToken?: true
   joinedAt?: true
   createdAt?: true
   updatedAt?: true
@@ -232,6 +238,7 @@ export type TenantMembershipGroupByOutputType = {
   dueDate: Date | null
   shiftId: string | null
   referredByMembershipId: string | null
+  idCardToken: string | null
   joinedAt: Date
   createdAt: Date
   updatedAt: Date
@@ -270,6 +277,7 @@ export type TenantMembershipWhereInput = {
   dueDate?: Prisma.DateTimeNullableFilter<"TenantMembership"> | Date | string | null
   shiftId?: Prisma.StringNullableFilter<"TenantMembership"> | string | null
   referredByMembershipId?: Prisma.StringNullableFilter<"TenantMembership"> | string | null
+  idCardToken?: Prisma.StringNullableFilter<"TenantMembership"> | string | null
   joinedAt?: Prisma.DateTimeFilter<"TenantMembership"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"TenantMembership"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TenantMembership"> | Date | string
@@ -288,6 +296,9 @@ export type TenantMembershipWhereInput = {
   createdTodos?: Prisma.TodoListRelationFilter
   updatedTodos?: Prisma.TodoListRelationFilter
   completedTodos?: Prisma.TodoListRelationFilter
+  couponRedemptions?: Prisma.CouponRedemptionListRelationFilter
+  coinLedger?: Prisma.CoinLedgerEntryListRelationFilter
+  freezes?: Prisma.MembershipFreezeListRelationFilter
 }
 
 export type TenantMembershipOrderByWithRelationInput = {
@@ -300,6 +311,7 @@ export type TenantMembershipOrderByWithRelationInput = {
   dueDate?: Prisma.SortOrderInput | Prisma.SortOrder
   shiftId?: Prisma.SortOrderInput | Prisma.SortOrder
   referredByMembershipId?: Prisma.SortOrderInput | Prisma.SortOrder
+  idCardToken?: Prisma.SortOrderInput | Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -318,11 +330,15 @@ export type TenantMembershipOrderByWithRelationInput = {
   createdTodos?: Prisma.TodoOrderByRelationAggregateInput
   updatedTodos?: Prisma.TodoOrderByRelationAggregateInput
   completedTodos?: Prisma.TodoOrderByRelationAggregateInput
+  couponRedemptions?: Prisma.CouponRedemptionOrderByRelationAggregateInput
+  coinLedger?: Prisma.CoinLedgerEntryOrderByRelationAggregateInput
+  freezes?: Prisma.MembershipFreezeOrderByRelationAggregateInput
 }
 
 export type TenantMembershipWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   userId?: string
+  idCardToken?: string
   tenantId_userId?: Prisma.TenantMembershipTenantIdUserIdCompoundUniqueInput
   tenantId_memberId?: Prisma.TenantMembershipTenantIdMemberIdCompoundUniqueInput
   AND?: Prisma.TenantMembershipWhereInput | Prisma.TenantMembershipWhereInput[]
@@ -353,7 +369,10 @@ export type TenantMembershipWhereUniqueInput = Prisma.AtLeast<{
   createdTodos?: Prisma.TodoListRelationFilter
   updatedTodos?: Prisma.TodoListRelationFilter
   completedTodos?: Prisma.TodoListRelationFilter
-}, "id" | "userId" | "tenantId_userId" | "tenantId_memberId">
+  couponRedemptions?: Prisma.CouponRedemptionListRelationFilter
+  coinLedger?: Prisma.CoinLedgerEntryListRelationFilter
+  freezes?: Prisma.MembershipFreezeListRelationFilter
+}, "id" | "userId" | "idCardToken" | "tenantId_userId" | "tenantId_memberId">
 
 export type TenantMembershipOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -365,6 +384,7 @@ export type TenantMembershipOrderByWithAggregationInput = {
   dueDate?: Prisma.SortOrderInput | Prisma.SortOrder
   shiftId?: Prisma.SortOrderInput | Prisma.SortOrder
   referredByMembershipId?: Prisma.SortOrderInput | Prisma.SortOrder
+  idCardToken?: Prisma.SortOrderInput | Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -388,6 +408,7 @@ export type TenantMembershipScalarWhereWithAggregatesInput = {
   dueDate?: Prisma.DateTimeNullableWithAggregatesFilter<"TenantMembership"> | Date | string | null
   shiftId?: Prisma.StringNullableWithAggregatesFilter<"TenantMembership"> | string | null
   referredByMembershipId?: Prisma.StringNullableWithAggregatesFilter<"TenantMembership"> | string | null
+  idCardToken?: Prisma.StringNullableWithAggregatesFilter<"TenantMembership"> | string | null
   joinedAt?: Prisma.DateTimeWithAggregatesFilter<"TenantMembership"> | Date | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"TenantMembership"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"TenantMembership"> | Date | string
@@ -399,6 +420,7 @@ export type TenantMembershipCreateInput = {
   role?: string
   status?: string
   dueDate?: Date | string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -417,6 +439,9 @@ export type TenantMembershipCreateInput = {
   createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipUncheckedCreateInput = {
@@ -429,6 +454,7 @@ export type TenantMembershipUncheckedCreateInput = {
   dueDate?: Date | string | null
   shiftId?: string | null
   referredByMembershipId?: string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -443,6 +469,9 @@ export type TenantMembershipUncheckedCreateInput = {
   createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipUpdateInput = {
@@ -451,6 +480,7 @@ export type TenantMembershipUpdateInput = {
   role?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -469,6 +499,9 @@ export type TenantMembershipUpdateInput = {
   createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateInput = {
@@ -481,6 +514,7 @@ export type TenantMembershipUncheckedUpdateInput = {
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -495,6 +529,9 @@ export type TenantMembershipUncheckedUpdateInput = {
   createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipCreateManyInput = {
@@ -507,6 +544,7 @@ export type TenantMembershipCreateManyInput = {
   dueDate?: Date | string | null
   shiftId?: string | null
   referredByMembershipId?: string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -518,6 +556,7 @@ export type TenantMembershipUpdateManyMutationInput = {
   role?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -533,6 +572,7 @@ export type TenantMembershipUncheckedUpdateManyInput = {
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -573,6 +613,7 @@ export type TenantMembershipCountOrderByAggregateInput = {
   dueDate?: Prisma.SortOrder
   shiftId?: Prisma.SortOrder
   referredByMembershipId?: Prisma.SortOrder
+  idCardToken?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -592,6 +633,7 @@ export type TenantMembershipMaxOrderByAggregateInput = {
   dueDate?: Prisma.SortOrder
   shiftId?: Prisma.SortOrder
   referredByMembershipId?: Prisma.SortOrder
+  idCardToken?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -607,6 +649,7 @@ export type TenantMembershipMinOrderByAggregateInput = {
   dueDate?: Prisma.SortOrder
   shiftId?: Prisma.SortOrder
   referredByMembershipId?: Prisma.SortOrder
+  idCardToken?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -883,6 +926,48 @@ export type TenantMembershipUpdateOneWithoutCollectedPaymentsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.TenantMembershipUpdateToOneWithWhereWithoutCollectedPaymentsInput, Prisma.TenantMembershipUpdateWithoutCollectedPaymentsInput>, Prisma.TenantMembershipUncheckedUpdateWithoutCollectedPaymentsInput>
 }
 
+export type TenantMembershipCreateNestedOneWithoutCouponRedemptionsInput = {
+  create?: Prisma.XOR<Prisma.TenantMembershipCreateWithoutCouponRedemptionsInput, Prisma.TenantMembershipUncheckedCreateWithoutCouponRedemptionsInput>
+  connectOrCreate?: Prisma.TenantMembershipCreateOrConnectWithoutCouponRedemptionsInput
+  connect?: Prisma.TenantMembershipWhereUniqueInput
+}
+
+export type TenantMembershipUpdateOneRequiredWithoutCouponRedemptionsNestedInput = {
+  create?: Prisma.XOR<Prisma.TenantMembershipCreateWithoutCouponRedemptionsInput, Prisma.TenantMembershipUncheckedCreateWithoutCouponRedemptionsInput>
+  connectOrCreate?: Prisma.TenantMembershipCreateOrConnectWithoutCouponRedemptionsInput
+  upsert?: Prisma.TenantMembershipUpsertWithoutCouponRedemptionsInput
+  connect?: Prisma.TenantMembershipWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.TenantMembershipUpdateToOneWithWhereWithoutCouponRedemptionsInput, Prisma.TenantMembershipUpdateWithoutCouponRedemptionsInput>, Prisma.TenantMembershipUncheckedUpdateWithoutCouponRedemptionsInput>
+}
+
+export type TenantMembershipCreateNestedOneWithoutCoinLedgerInput = {
+  create?: Prisma.XOR<Prisma.TenantMembershipCreateWithoutCoinLedgerInput, Prisma.TenantMembershipUncheckedCreateWithoutCoinLedgerInput>
+  connectOrCreate?: Prisma.TenantMembershipCreateOrConnectWithoutCoinLedgerInput
+  connect?: Prisma.TenantMembershipWhereUniqueInput
+}
+
+export type TenantMembershipUpdateOneRequiredWithoutCoinLedgerNestedInput = {
+  create?: Prisma.XOR<Prisma.TenantMembershipCreateWithoutCoinLedgerInput, Prisma.TenantMembershipUncheckedCreateWithoutCoinLedgerInput>
+  connectOrCreate?: Prisma.TenantMembershipCreateOrConnectWithoutCoinLedgerInput
+  upsert?: Prisma.TenantMembershipUpsertWithoutCoinLedgerInput
+  connect?: Prisma.TenantMembershipWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.TenantMembershipUpdateToOneWithWhereWithoutCoinLedgerInput, Prisma.TenantMembershipUpdateWithoutCoinLedgerInput>, Prisma.TenantMembershipUncheckedUpdateWithoutCoinLedgerInput>
+}
+
+export type TenantMembershipCreateNestedOneWithoutFreezesInput = {
+  create?: Prisma.XOR<Prisma.TenantMembershipCreateWithoutFreezesInput, Prisma.TenantMembershipUncheckedCreateWithoutFreezesInput>
+  connectOrCreate?: Prisma.TenantMembershipCreateOrConnectWithoutFreezesInput
+  connect?: Prisma.TenantMembershipWhereUniqueInput
+}
+
+export type TenantMembershipUpdateOneRequiredWithoutFreezesNestedInput = {
+  create?: Prisma.XOR<Prisma.TenantMembershipCreateWithoutFreezesInput, Prisma.TenantMembershipUncheckedCreateWithoutFreezesInput>
+  connectOrCreate?: Prisma.TenantMembershipCreateOrConnectWithoutFreezesInput
+  upsert?: Prisma.TenantMembershipUpsertWithoutFreezesInput
+  connect?: Prisma.TenantMembershipWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.TenantMembershipUpdateToOneWithWhereWithoutFreezesInput, Prisma.TenantMembershipUpdateWithoutFreezesInput>, Prisma.TenantMembershipUncheckedUpdateWithoutFreezesInput>
+}
+
 export type TenantMembershipCreateNestedOneWithoutCreatedPlansInput = {
   create?: Prisma.XOR<Prisma.TenantMembershipCreateWithoutCreatedPlansInput, Prisma.TenantMembershipUncheckedCreateWithoutCreatedPlansInput>
   connectOrCreate?: Prisma.TenantMembershipCreateOrConnectWithoutCreatedPlansInput
@@ -985,6 +1070,7 @@ export type TenantMembershipCreateWithoutUserInput = {
   role?: string
   status?: string
   dueDate?: Date | string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1002,6 +1088,9 @@ export type TenantMembershipCreateWithoutUserInput = {
   createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutUserInput = {
@@ -1013,6 +1102,7 @@ export type TenantMembershipUncheckedCreateWithoutUserInput = {
   dueDate?: Date | string | null
   shiftId?: string | null
   referredByMembershipId?: string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1027,6 +1117,9 @@ export type TenantMembershipUncheckedCreateWithoutUserInput = {
   createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutUserInput = {
@@ -1067,6 +1160,7 @@ export type TenantMembershipScalarWhereInput = {
   dueDate?: Prisma.DateTimeNullableFilter<"TenantMembership"> | Date | string | null
   shiftId?: Prisma.StringNullableFilter<"TenantMembership"> | string | null
   referredByMembershipId?: Prisma.StringNullableFilter<"TenantMembership"> | string | null
+  idCardToken?: Prisma.StringNullableFilter<"TenantMembership"> | string | null
   joinedAt?: Prisma.DateTimeFilter<"TenantMembership"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"TenantMembership"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TenantMembership"> | Date | string
@@ -1078,6 +1172,7 @@ export type TenantMembershipCreateWithoutTenantInput = {
   role?: string
   status?: string
   dueDate?: Date | string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1095,6 +1190,9 @@ export type TenantMembershipCreateWithoutTenantInput = {
   createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutTenantInput = {
@@ -1106,6 +1204,7 @@ export type TenantMembershipUncheckedCreateWithoutTenantInput = {
   dueDate?: Date | string | null
   shiftId?: string | null
   referredByMembershipId?: string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1120,6 +1219,9 @@ export type TenantMembershipUncheckedCreateWithoutTenantInput = {
   createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutTenantInput = {
@@ -1153,6 +1255,7 @@ export type TenantMembershipCreateWithoutReferralsInput = {
   role?: string
   status?: string
   dueDate?: Date | string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1170,6 +1273,9 @@ export type TenantMembershipCreateWithoutReferralsInput = {
   createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutReferralsInput = {
@@ -1182,6 +1288,7 @@ export type TenantMembershipUncheckedCreateWithoutReferralsInput = {
   dueDate?: Date | string | null
   shiftId?: string | null
   referredByMembershipId?: string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1195,6 +1302,9 @@ export type TenantMembershipUncheckedCreateWithoutReferralsInput = {
   createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutReferralsInput = {
@@ -1208,6 +1318,7 @@ export type TenantMembershipCreateWithoutReferredByInput = {
   role?: string
   status?: string
   dueDate?: Date | string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1225,6 +1336,9 @@ export type TenantMembershipCreateWithoutReferredByInput = {
   createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutReferredByInput = {
@@ -1236,6 +1350,7 @@ export type TenantMembershipUncheckedCreateWithoutReferredByInput = {
   status?: string
   dueDate?: Date | string | null
   shiftId?: string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1250,6 +1365,9 @@ export type TenantMembershipUncheckedCreateWithoutReferredByInput = {
   createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutReferredByInput = {
@@ -1278,6 +1396,7 @@ export type TenantMembershipUpdateWithoutReferralsInput = {
   role?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1295,6 +1414,9 @@ export type TenantMembershipUpdateWithoutReferralsInput = {
   createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutReferralsInput = {
@@ -1307,6 +1429,7 @@ export type TenantMembershipUncheckedUpdateWithoutReferralsInput = {
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1320,6 +1443,9 @@ export type TenantMembershipUncheckedUpdateWithoutReferralsInput = {
   createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUpsertWithWhereUniqueWithoutReferredByInput = {
@@ -1344,6 +1470,7 @@ export type TenantMembershipCreateWithoutShiftInput = {
   role?: string
   status?: string
   dueDate?: Date | string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1361,6 +1488,9 @@ export type TenantMembershipCreateWithoutShiftInput = {
   createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutShiftInput = {
@@ -1372,6 +1502,7 @@ export type TenantMembershipUncheckedCreateWithoutShiftInput = {
   status?: string
   dueDate?: Date | string | null
   referredByMembershipId?: string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1386,6 +1517,9 @@ export type TenantMembershipUncheckedCreateWithoutShiftInput = {
   createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutShiftInput = {
@@ -1419,6 +1553,7 @@ export type TenantMembershipCreateWithoutCreatedTodosInput = {
   role?: string
   status?: string
   dueDate?: Date | string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1436,6 +1571,9 @@ export type TenantMembershipCreateWithoutCreatedTodosInput = {
   markedAttendances?: Prisma.AttendanceCreateNestedManyWithoutMarkedByInput
   updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutCreatedTodosInput = {
@@ -1448,6 +1586,7 @@ export type TenantMembershipUncheckedCreateWithoutCreatedTodosInput = {
   dueDate?: Date | string | null
   shiftId?: string | null
   referredByMembershipId?: string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1461,6 +1600,9 @@ export type TenantMembershipUncheckedCreateWithoutCreatedTodosInput = {
   markedAttendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMarkedByInput
   updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutCreatedTodosInput = {
@@ -1474,6 +1616,7 @@ export type TenantMembershipCreateWithoutUpdatedTodosInput = {
   role?: string
   status?: string
   dueDate?: Date | string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1491,6 +1634,9 @@ export type TenantMembershipCreateWithoutUpdatedTodosInput = {
   markedAttendances?: Prisma.AttendanceCreateNestedManyWithoutMarkedByInput
   createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
   completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutUpdatedTodosInput = {
@@ -1503,6 +1649,7 @@ export type TenantMembershipUncheckedCreateWithoutUpdatedTodosInput = {
   dueDate?: Date | string | null
   shiftId?: string | null
   referredByMembershipId?: string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1516,6 +1663,9 @@ export type TenantMembershipUncheckedCreateWithoutUpdatedTodosInput = {
   markedAttendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMarkedByInput
   createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
   completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutUpdatedTodosInput = {
@@ -1529,6 +1679,7 @@ export type TenantMembershipCreateWithoutCompletedTodosInput = {
   role?: string
   status?: string
   dueDate?: Date | string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1546,6 +1697,9 @@ export type TenantMembershipCreateWithoutCompletedTodosInput = {
   markedAttendances?: Prisma.AttendanceCreateNestedManyWithoutMarkedByInput
   createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutCompletedTodosInput = {
@@ -1558,6 +1712,7 @@ export type TenantMembershipUncheckedCreateWithoutCompletedTodosInput = {
   dueDate?: Date | string | null
   shiftId?: string | null
   referredByMembershipId?: string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1571,6 +1726,9 @@ export type TenantMembershipUncheckedCreateWithoutCompletedTodosInput = {
   markedAttendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMarkedByInput
   createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutCompletedTodosInput = {
@@ -1595,6 +1753,7 @@ export type TenantMembershipUpdateWithoutCreatedTodosInput = {
   role?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1612,6 +1771,9 @@ export type TenantMembershipUpdateWithoutCreatedTodosInput = {
   markedAttendances?: Prisma.AttendanceUpdateManyWithoutMarkedByNestedInput
   updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutCreatedTodosInput = {
@@ -1624,6 +1786,7 @@ export type TenantMembershipUncheckedUpdateWithoutCreatedTodosInput = {
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1637,6 +1800,9 @@ export type TenantMembershipUncheckedUpdateWithoutCreatedTodosInput = {
   markedAttendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMarkedByNestedInput
   updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUpsertWithoutUpdatedTodosInput = {
@@ -1656,6 +1822,7 @@ export type TenantMembershipUpdateWithoutUpdatedTodosInput = {
   role?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1673,6 +1840,9 @@ export type TenantMembershipUpdateWithoutUpdatedTodosInput = {
   markedAttendances?: Prisma.AttendanceUpdateManyWithoutMarkedByNestedInput
   createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
   completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutUpdatedTodosInput = {
@@ -1685,6 +1855,7 @@ export type TenantMembershipUncheckedUpdateWithoutUpdatedTodosInput = {
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1698,6 +1869,9 @@ export type TenantMembershipUncheckedUpdateWithoutUpdatedTodosInput = {
   markedAttendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMarkedByNestedInput
   createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
   completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUpsertWithoutCompletedTodosInput = {
@@ -1717,6 +1891,7 @@ export type TenantMembershipUpdateWithoutCompletedTodosInput = {
   role?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1734,6 +1909,9 @@ export type TenantMembershipUpdateWithoutCompletedTodosInput = {
   markedAttendances?: Prisma.AttendanceUpdateManyWithoutMarkedByNestedInput
   createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutCompletedTodosInput = {
@@ -1746,6 +1924,7 @@ export type TenantMembershipUncheckedUpdateWithoutCompletedTodosInput = {
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1759,6 +1938,9 @@ export type TenantMembershipUncheckedUpdateWithoutCompletedTodosInput = {
   markedAttendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMarkedByNestedInput
   createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipCreateWithoutPaymentsInput = {
@@ -1767,6 +1949,7 @@ export type TenantMembershipCreateWithoutPaymentsInput = {
   role?: string
   status?: string
   dueDate?: Date | string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1784,6 +1967,9 @@ export type TenantMembershipCreateWithoutPaymentsInput = {
   createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutPaymentsInput = {
@@ -1796,6 +1982,7 @@ export type TenantMembershipUncheckedCreateWithoutPaymentsInput = {
   dueDate?: Date | string | null
   shiftId?: string | null
   referredByMembershipId?: string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1809,6 +1996,9 @@ export type TenantMembershipUncheckedCreateWithoutPaymentsInput = {
   createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutPaymentsInput = {
@@ -1822,6 +2012,7 @@ export type TenantMembershipCreateWithoutCollectedPaymentsInput = {
   role?: string
   status?: string
   dueDate?: Date | string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1839,6 +2030,9 @@ export type TenantMembershipCreateWithoutCollectedPaymentsInput = {
   createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutCollectedPaymentsInput = {
@@ -1851,6 +2045,7 @@ export type TenantMembershipUncheckedCreateWithoutCollectedPaymentsInput = {
   dueDate?: Date | string | null
   shiftId?: string | null
   referredByMembershipId?: string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1864,6 +2059,9 @@ export type TenantMembershipUncheckedCreateWithoutCollectedPaymentsInput = {
   createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutCollectedPaymentsInput = {
@@ -1888,6 +2086,7 @@ export type TenantMembershipUpdateWithoutPaymentsInput = {
   role?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1905,6 +2104,9 @@ export type TenantMembershipUpdateWithoutPaymentsInput = {
   createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutPaymentsInput = {
@@ -1917,6 +2119,7 @@ export type TenantMembershipUncheckedUpdateWithoutPaymentsInput = {
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1930,6 +2133,9 @@ export type TenantMembershipUncheckedUpdateWithoutPaymentsInput = {
   createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUpsertWithoutCollectedPaymentsInput = {
@@ -1949,6 +2155,7 @@ export type TenantMembershipUpdateWithoutCollectedPaymentsInput = {
   role?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1966,6 +2173,9 @@ export type TenantMembershipUpdateWithoutCollectedPaymentsInput = {
   createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutCollectedPaymentsInput = {
@@ -1978,6 +2188,7 @@ export type TenantMembershipUncheckedUpdateWithoutCollectedPaymentsInput = {
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1991,6 +2202,405 @@ export type TenantMembershipUncheckedUpdateWithoutCollectedPaymentsInput = {
   createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutMembershipNestedInput
+}
+
+export type TenantMembershipCreateWithoutCouponRedemptionsInput = {
+  id?: string
+  memberId: number
+  role?: string
+  status?: string
+  dueDate?: Date | string | null
+  idCardToken?: string | null
+  joinedAt?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tenant: Prisma.TenantCreateNestedOneWithoutMembershipsInput
+  user: Prisma.UserCreateNestedOneWithoutMembershipsInput
+  shift?: Prisma.ShiftCreateNestedOneWithoutMembersInput
+  referredBy?: Prisma.TenantMembershipCreateNestedOneWithoutReferralsInput
+  badges?: Prisma.BadgeCreateNestedManyWithoutUsersInput
+  referrals?: Prisma.TenantMembershipCreateNestedManyWithoutReferredByInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutMemberInput
+  collectedPayments?: Prisma.PaymentCreateNestedManyWithoutCollectedByInput
+  createdPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutCreatorInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentCreateNestedManyWithoutMembershipInput
+  attendances?: Prisma.AttendanceCreateNestedManyWithoutMemberInput
+  markedAttendances?: Prisma.AttendanceCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutMembershipInput
+}
+
+export type TenantMembershipUncheckedCreateWithoutCouponRedemptionsInput = {
+  id?: string
+  tenantId: string
+  userId: string
+  memberId: number
+  role?: string
+  status?: string
+  dueDate?: Date | string | null
+  shiftId?: string | null
+  referredByMembershipId?: string | null
+  idCardToken?: string | null
+  joinedAt?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutUsersInput
+  referrals?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutReferredByInput
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutMemberInput
+  collectedPayments?: Prisma.PaymentUncheckedCreateNestedManyWithoutCollectedByInput
+  createdPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutCreatorInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedCreateNestedManyWithoutMembershipInput
+  attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMemberInput
+  markedAttendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutMembershipInput
+}
+
+export type TenantMembershipCreateOrConnectWithoutCouponRedemptionsInput = {
+  where: Prisma.TenantMembershipWhereUniqueInput
+  create: Prisma.XOR<Prisma.TenantMembershipCreateWithoutCouponRedemptionsInput, Prisma.TenantMembershipUncheckedCreateWithoutCouponRedemptionsInput>
+}
+
+export type TenantMembershipUpsertWithoutCouponRedemptionsInput = {
+  update: Prisma.XOR<Prisma.TenantMembershipUpdateWithoutCouponRedemptionsInput, Prisma.TenantMembershipUncheckedUpdateWithoutCouponRedemptionsInput>
+  create: Prisma.XOR<Prisma.TenantMembershipCreateWithoutCouponRedemptionsInput, Prisma.TenantMembershipUncheckedCreateWithoutCouponRedemptionsInput>
+  where?: Prisma.TenantMembershipWhereInput
+}
+
+export type TenantMembershipUpdateToOneWithWhereWithoutCouponRedemptionsInput = {
+  where?: Prisma.TenantMembershipWhereInput
+  data: Prisma.XOR<Prisma.TenantMembershipUpdateWithoutCouponRedemptionsInput, Prisma.TenantMembershipUncheckedUpdateWithoutCouponRedemptionsInput>
+}
+
+export type TenantMembershipUpdateWithoutCouponRedemptionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  memberId?: Prisma.IntFieldUpdateOperationsInput | number
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tenant?: Prisma.TenantUpdateOneRequiredWithoutMembershipsNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutMembershipsNestedInput
+  shift?: Prisma.ShiftUpdateOneWithoutMembersNestedInput
+  referredBy?: Prisma.TenantMembershipUpdateOneWithoutReferralsNestedInput
+  badges?: Prisma.BadgeUpdateManyWithoutUsersNestedInput
+  referrals?: Prisma.TenantMembershipUpdateManyWithoutReferredByNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutMemberNestedInput
+  collectedPayments?: Prisma.PaymentUpdateManyWithoutCollectedByNestedInput
+  createdPlans?: Prisma.WorkoutPlanUpdateManyWithoutCreatorNestedInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUpdateManyWithoutMembershipNestedInput
+  attendances?: Prisma.AttendanceUpdateManyWithoutMemberNestedInput
+  markedAttendances?: Prisma.AttendanceUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUpdateManyWithoutMembershipNestedInput
+}
+
+export type TenantMembershipUncheckedUpdateWithoutCouponRedemptionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  memberId?: Prisma.IntFieldUpdateOperationsInput | number
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  badges?: Prisma.BadgeUncheckedUpdateManyWithoutUsersNestedInput
+  referrals?: Prisma.TenantMembershipUncheckedUpdateManyWithoutReferredByNestedInput
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutMemberNestedInput
+  collectedPayments?: Prisma.PaymentUncheckedUpdateManyWithoutCollectedByNestedInput
+  createdPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutCreatorNestedInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedUpdateManyWithoutMembershipNestedInput
+  attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMemberNestedInput
+  markedAttendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutMembershipNestedInput
+}
+
+export type TenantMembershipCreateWithoutCoinLedgerInput = {
+  id?: string
+  memberId: number
+  role?: string
+  status?: string
+  dueDate?: Date | string | null
+  idCardToken?: string | null
+  joinedAt?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tenant: Prisma.TenantCreateNestedOneWithoutMembershipsInput
+  user: Prisma.UserCreateNestedOneWithoutMembershipsInput
+  shift?: Prisma.ShiftCreateNestedOneWithoutMembersInput
+  referredBy?: Prisma.TenantMembershipCreateNestedOneWithoutReferralsInput
+  badges?: Prisma.BadgeCreateNestedManyWithoutUsersInput
+  referrals?: Prisma.TenantMembershipCreateNestedManyWithoutReferredByInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutMemberInput
+  collectedPayments?: Prisma.PaymentCreateNestedManyWithoutCollectedByInput
+  createdPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutCreatorInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentCreateNestedManyWithoutMembershipInput
+  attendances?: Prisma.AttendanceCreateNestedManyWithoutMemberInput
+  markedAttendances?: Prisma.AttendanceCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutMembershipInput
+}
+
+export type TenantMembershipUncheckedCreateWithoutCoinLedgerInput = {
+  id?: string
+  tenantId: string
+  userId: string
+  memberId: number
+  role?: string
+  status?: string
+  dueDate?: Date | string | null
+  shiftId?: string | null
+  referredByMembershipId?: string | null
+  idCardToken?: string | null
+  joinedAt?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutUsersInput
+  referrals?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutReferredByInput
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutMemberInput
+  collectedPayments?: Prisma.PaymentUncheckedCreateNestedManyWithoutCollectedByInput
+  createdPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutCreatorInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedCreateNestedManyWithoutMembershipInput
+  attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMemberInput
+  markedAttendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutMembershipInput
+}
+
+export type TenantMembershipCreateOrConnectWithoutCoinLedgerInput = {
+  where: Prisma.TenantMembershipWhereUniqueInput
+  create: Prisma.XOR<Prisma.TenantMembershipCreateWithoutCoinLedgerInput, Prisma.TenantMembershipUncheckedCreateWithoutCoinLedgerInput>
+}
+
+export type TenantMembershipUpsertWithoutCoinLedgerInput = {
+  update: Prisma.XOR<Prisma.TenantMembershipUpdateWithoutCoinLedgerInput, Prisma.TenantMembershipUncheckedUpdateWithoutCoinLedgerInput>
+  create: Prisma.XOR<Prisma.TenantMembershipCreateWithoutCoinLedgerInput, Prisma.TenantMembershipUncheckedCreateWithoutCoinLedgerInput>
+  where?: Prisma.TenantMembershipWhereInput
+}
+
+export type TenantMembershipUpdateToOneWithWhereWithoutCoinLedgerInput = {
+  where?: Prisma.TenantMembershipWhereInput
+  data: Prisma.XOR<Prisma.TenantMembershipUpdateWithoutCoinLedgerInput, Prisma.TenantMembershipUncheckedUpdateWithoutCoinLedgerInput>
+}
+
+export type TenantMembershipUpdateWithoutCoinLedgerInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  memberId?: Prisma.IntFieldUpdateOperationsInput | number
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tenant?: Prisma.TenantUpdateOneRequiredWithoutMembershipsNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutMembershipsNestedInput
+  shift?: Prisma.ShiftUpdateOneWithoutMembersNestedInput
+  referredBy?: Prisma.TenantMembershipUpdateOneWithoutReferralsNestedInput
+  badges?: Prisma.BadgeUpdateManyWithoutUsersNestedInput
+  referrals?: Prisma.TenantMembershipUpdateManyWithoutReferredByNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutMemberNestedInput
+  collectedPayments?: Prisma.PaymentUpdateManyWithoutCollectedByNestedInput
+  createdPlans?: Prisma.WorkoutPlanUpdateManyWithoutCreatorNestedInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUpdateManyWithoutMembershipNestedInput
+  attendances?: Prisma.AttendanceUpdateManyWithoutMemberNestedInput
+  markedAttendances?: Prisma.AttendanceUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUpdateManyWithoutMembershipNestedInput
+}
+
+export type TenantMembershipUncheckedUpdateWithoutCoinLedgerInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  memberId?: Prisma.IntFieldUpdateOperationsInput | number
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  badges?: Prisma.BadgeUncheckedUpdateManyWithoutUsersNestedInput
+  referrals?: Prisma.TenantMembershipUncheckedUpdateManyWithoutReferredByNestedInput
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutMemberNestedInput
+  collectedPayments?: Prisma.PaymentUncheckedUpdateManyWithoutCollectedByNestedInput
+  createdPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutCreatorNestedInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedUpdateManyWithoutMembershipNestedInput
+  attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMemberNestedInput
+  markedAttendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutMembershipNestedInput
+}
+
+export type TenantMembershipCreateWithoutFreezesInput = {
+  id?: string
+  memberId: number
+  role?: string
+  status?: string
+  dueDate?: Date | string | null
+  idCardToken?: string | null
+  joinedAt?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tenant: Prisma.TenantCreateNestedOneWithoutMembershipsInput
+  user: Prisma.UserCreateNestedOneWithoutMembershipsInput
+  shift?: Prisma.ShiftCreateNestedOneWithoutMembersInput
+  referredBy?: Prisma.TenantMembershipCreateNestedOneWithoutReferralsInput
+  badges?: Prisma.BadgeCreateNestedManyWithoutUsersInput
+  referrals?: Prisma.TenantMembershipCreateNestedManyWithoutReferredByInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutMemberInput
+  collectedPayments?: Prisma.PaymentCreateNestedManyWithoutCollectedByInput
+  createdPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutCreatorInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentCreateNestedManyWithoutMembershipInput
+  attendances?: Prisma.AttendanceCreateNestedManyWithoutMemberInput
+  markedAttendances?: Prisma.AttendanceCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutMembershipInput
+}
+
+export type TenantMembershipUncheckedCreateWithoutFreezesInput = {
+  id?: string
+  tenantId: string
+  userId: string
+  memberId: number
+  role?: string
+  status?: string
+  dueDate?: Date | string | null
+  shiftId?: string | null
+  referredByMembershipId?: string | null
+  idCardToken?: string | null
+  joinedAt?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutUsersInput
+  referrals?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutReferredByInput
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutMemberInput
+  collectedPayments?: Prisma.PaymentUncheckedCreateNestedManyWithoutCollectedByInput
+  createdPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutCreatorInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedCreateNestedManyWithoutMembershipInput
+  attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMemberInput
+  markedAttendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutMembershipInput
+}
+
+export type TenantMembershipCreateOrConnectWithoutFreezesInput = {
+  where: Prisma.TenantMembershipWhereUniqueInput
+  create: Prisma.XOR<Prisma.TenantMembershipCreateWithoutFreezesInput, Prisma.TenantMembershipUncheckedCreateWithoutFreezesInput>
+}
+
+export type TenantMembershipUpsertWithoutFreezesInput = {
+  update: Prisma.XOR<Prisma.TenantMembershipUpdateWithoutFreezesInput, Prisma.TenantMembershipUncheckedUpdateWithoutFreezesInput>
+  create: Prisma.XOR<Prisma.TenantMembershipCreateWithoutFreezesInput, Prisma.TenantMembershipUncheckedCreateWithoutFreezesInput>
+  where?: Prisma.TenantMembershipWhereInput
+}
+
+export type TenantMembershipUpdateToOneWithWhereWithoutFreezesInput = {
+  where?: Prisma.TenantMembershipWhereInput
+  data: Prisma.XOR<Prisma.TenantMembershipUpdateWithoutFreezesInput, Prisma.TenantMembershipUncheckedUpdateWithoutFreezesInput>
+}
+
+export type TenantMembershipUpdateWithoutFreezesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  memberId?: Prisma.IntFieldUpdateOperationsInput | number
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tenant?: Prisma.TenantUpdateOneRequiredWithoutMembershipsNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutMembershipsNestedInput
+  shift?: Prisma.ShiftUpdateOneWithoutMembersNestedInput
+  referredBy?: Prisma.TenantMembershipUpdateOneWithoutReferralsNestedInput
+  badges?: Prisma.BadgeUpdateManyWithoutUsersNestedInput
+  referrals?: Prisma.TenantMembershipUpdateManyWithoutReferredByNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutMemberNestedInput
+  collectedPayments?: Prisma.PaymentUpdateManyWithoutCollectedByNestedInput
+  createdPlans?: Prisma.WorkoutPlanUpdateManyWithoutCreatorNestedInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUpdateManyWithoutMembershipNestedInput
+  attendances?: Prisma.AttendanceUpdateManyWithoutMemberNestedInput
+  markedAttendances?: Prisma.AttendanceUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutMembershipNestedInput
+}
+
+export type TenantMembershipUncheckedUpdateWithoutFreezesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  memberId?: Prisma.IntFieldUpdateOperationsInput | number
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  badges?: Prisma.BadgeUncheckedUpdateManyWithoutUsersNestedInput
+  referrals?: Prisma.TenantMembershipUncheckedUpdateManyWithoutReferredByNestedInput
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutMemberNestedInput
+  collectedPayments?: Prisma.PaymentUncheckedUpdateManyWithoutCollectedByNestedInput
+  createdPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutCreatorNestedInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedUpdateManyWithoutMembershipNestedInput
+  attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMemberNestedInput
+  markedAttendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipCreateWithoutCreatedPlansInput = {
@@ -1999,6 +2609,7 @@ export type TenantMembershipCreateWithoutCreatedPlansInput = {
   role?: string
   status?: string
   dueDate?: Date | string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2016,6 +2627,9 @@ export type TenantMembershipCreateWithoutCreatedPlansInput = {
   createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutCreatedPlansInput = {
@@ -2028,6 +2642,7 @@ export type TenantMembershipUncheckedCreateWithoutCreatedPlansInput = {
   dueDate?: Date | string | null
   shiftId?: string | null
   referredByMembershipId?: string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2041,6 +2656,9 @@ export type TenantMembershipUncheckedCreateWithoutCreatedPlansInput = {
   createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutCreatedPlansInput = {
@@ -2065,6 +2683,7 @@ export type TenantMembershipUpdateWithoutCreatedPlansInput = {
   role?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2082,6 +2701,9 @@ export type TenantMembershipUpdateWithoutCreatedPlansInput = {
   createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutCreatedPlansInput = {
@@ -2094,6 +2716,7 @@ export type TenantMembershipUncheckedUpdateWithoutCreatedPlansInput = {
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2107,6 +2730,9 @@ export type TenantMembershipUncheckedUpdateWithoutCreatedPlansInput = {
   createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipCreateWithoutPlanAssignmentsInput = {
@@ -2115,6 +2741,7 @@ export type TenantMembershipCreateWithoutPlanAssignmentsInput = {
   role?: string
   status?: string
   dueDate?: Date | string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2132,6 +2759,9 @@ export type TenantMembershipCreateWithoutPlanAssignmentsInput = {
   createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutPlanAssignmentsInput = {
@@ -2144,6 +2774,7 @@ export type TenantMembershipUncheckedCreateWithoutPlanAssignmentsInput = {
   dueDate?: Date | string | null
   shiftId?: string | null
   referredByMembershipId?: string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2157,6 +2788,9 @@ export type TenantMembershipUncheckedCreateWithoutPlanAssignmentsInput = {
   createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutPlanAssignmentsInput = {
@@ -2181,6 +2815,7 @@ export type TenantMembershipUpdateWithoutPlanAssignmentsInput = {
   role?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2198,6 +2833,9 @@ export type TenantMembershipUpdateWithoutPlanAssignmentsInput = {
   createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutPlanAssignmentsInput = {
@@ -2210,6 +2848,7 @@ export type TenantMembershipUncheckedUpdateWithoutPlanAssignmentsInput = {
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2223,6 +2862,9 @@ export type TenantMembershipUncheckedUpdateWithoutPlanAssignmentsInput = {
   createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipCreateWithoutBadgesInput = {
@@ -2231,6 +2873,7 @@ export type TenantMembershipCreateWithoutBadgesInput = {
   role?: string
   status?: string
   dueDate?: Date | string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2248,6 +2891,9 @@ export type TenantMembershipCreateWithoutBadgesInput = {
   createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutBadgesInput = {
@@ -2260,6 +2906,7 @@ export type TenantMembershipUncheckedCreateWithoutBadgesInput = {
   dueDate?: Date | string | null
   shiftId?: string | null
   referredByMembershipId?: string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2273,6 +2920,9 @@ export type TenantMembershipUncheckedCreateWithoutBadgesInput = {
   createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutBadgesInput = {
@@ -2302,6 +2952,7 @@ export type TenantMembershipCreateWithoutAttendancesInput = {
   role?: string
   status?: string
   dueDate?: Date | string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2319,6 +2970,9 @@ export type TenantMembershipCreateWithoutAttendancesInput = {
   createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutAttendancesInput = {
@@ -2331,6 +2985,7 @@ export type TenantMembershipUncheckedCreateWithoutAttendancesInput = {
   dueDate?: Date | string | null
   shiftId?: string | null
   referredByMembershipId?: string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2344,6 +2999,9 @@ export type TenantMembershipUncheckedCreateWithoutAttendancesInput = {
   createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutAttendancesInput = {
@@ -2357,6 +3015,7 @@ export type TenantMembershipCreateWithoutMarkedAttendancesInput = {
   role?: string
   status?: string
   dueDate?: Date | string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2374,6 +3033,9 @@ export type TenantMembershipCreateWithoutMarkedAttendancesInput = {
   createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutMarkedAttendancesInput = {
@@ -2386,6 +3048,7 @@ export type TenantMembershipUncheckedCreateWithoutMarkedAttendancesInput = {
   dueDate?: Date | string | null
   shiftId?: string | null
   referredByMembershipId?: string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2399,6 +3062,9 @@ export type TenantMembershipUncheckedCreateWithoutMarkedAttendancesInput = {
   createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
   updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
   completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutMembershipInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutMarkedAttendancesInput = {
@@ -2423,6 +3089,7 @@ export type TenantMembershipUpdateWithoutAttendancesInput = {
   role?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2440,6 +3107,9 @@ export type TenantMembershipUpdateWithoutAttendancesInput = {
   createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutAttendancesInput = {
@@ -2452,6 +3122,7 @@ export type TenantMembershipUncheckedUpdateWithoutAttendancesInput = {
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2465,6 +3136,9 @@ export type TenantMembershipUncheckedUpdateWithoutAttendancesInput = {
   createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUpsertWithoutMarkedAttendancesInput = {
@@ -2484,6 +3158,7 @@ export type TenantMembershipUpdateWithoutMarkedAttendancesInput = {
   role?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2501,6 +3176,9 @@ export type TenantMembershipUpdateWithoutMarkedAttendancesInput = {
   createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutMarkedAttendancesInput = {
@@ -2513,6 +3191,7 @@ export type TenantMembershipUncheckedUpdateWithoutMarkedAttendancesInput = {
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2526,6 +3205,9 @@ export type TenantMembershipUncheckedUpdateWithoutMarkedAttendancesInput = {
   createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipCreateManyUserInput = {
@@ -2537,6 +3219,7 @@ export type TenantMembershipCreateManyUserInput = {
   dueDate?: Date | string | null
   shiftId?: string | null
   referredByMembershipId?: string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2548,6 +3231,7 @@ export type TenantMembershipUpdateWithoutUserInput = {
   role?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2565,6 +3249,9 @@ export type TenantMembershipUpdateWithoutUserInput = {
   createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutUserInput = {
@@ -2576,6 +3263,7 @@ export type TenantMembershipUncheckedUpdateWithoutUserInput = {
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2590,6 +3278,9 @@ export type TenantMembershipUncheckedUpdateWithoutUserInput = {
   createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateManyWithoutUserInput = {
@@ -2601,6 +3292,7 @@ export type TenantMembershipUncheckedUpdateManyWithoutUserInput = {
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2615,6 +3307,7 @@ export type TenantMembershipCreateManyTenantInput = {
   dueDate?: Date | string | null
   shiftId?: string | null
   referredByMembershipId?: string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2626,6 +3319,7 @@ export type TenantMembershipUpdateWithoutTenantInput = {
   role?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2643,6 +3337,9 @@ export type TenantMembershipUpdateWithoutTenantInput = {
   createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutTenantInput = {
@@ -2654,6 +3351,7 @@ export type TenantMembershipUncheckedUpdateWithoutTenantInput = {
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2668,6 +3366,9 @@ export type TenantMembershipUncheckedUpdateWithoutTenantInput = {
   createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateManyWithoutTenantInput = {
@@ -2679,6 +3380,7 @@ export type TenantMembershipUncheckedUpdateManyWithoutTenantInput = {
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2693,6 +3395,7 @@ export type TenantMembershipCreateManyReferredByInput = {
   status?: string
   dueDate?: Date | string | null
   shiftId?: string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2704,6 +3407,7 @@ export type TenantMembershipUpdateWithoutReferredByInput = {
   role?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2721,6 +3425,9 @@ export type TenantMembershipUpdateWithoutReferredByInput = {
   createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutReferredByInput = {
@@ -2732,6 +3439,7 @@ export type TenantMembershipUncheckedUpdateWithoutReferredByInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2746,6 +3454,9 @@ export type TenantMembershipUncheckedUpdateWithoutReferredByInput = {
   createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateManyWithoutReferredByInput = {
@@ -2757,6 +3468,7 @@ export type TenantMembershipUncheckedUpdateManyWithoutReferredByInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2771,6 +3483,7 @@ export type TenantMembershipCreateManyShiftInput = {
   status?: string
   dueDate?: Date | string | null
   referredByMembershipId?: string | null
+  idCardToken?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2782,6 +3495,7 @@ export type TenantMembershipUpdateWithoutShiftInput = {
   role?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2799,6 +3513,9 @@ export type TenantMembershipUpdateWithoutShiftInput = {
   createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutShiftInput = {
@@ -2810,6 +3527,7 @@ export type TenantMembershipUncheckedUpdateWithoutShiftInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2824,6 +3542,9 @@ export type TenantMembershipUncheckedUpdateWithoutShiftInput = {
   createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateManyWithoutShiftInput = {
@@ -2835,6 +3556,7 @@ export type TenantMembershipUncheckedUpdateManyWithoutShiftInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2846,6 +3568,7 @@ export type TenantMembershipUpdateWithoutBadgesInput = {
   role?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2863,6 +3586,9 @@ export type TenantMembershipUpdateWithoutBadgesInput = {
   createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutBadgesInput = {
@@ -2875,6 +3601,7 @@ export type TenantMembershipUncheckedUpdateWithoutBadgesInput = {
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2888,6 +3615,9 @@ export type TenantMembershipUncheckedUpdateWithoutBadgesInput = {
   createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
   completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateManyWithoutBadgesInput = {
@@ -2900,6 +3630,7 @@ export type TenantMembershipUncheckedUpdateManyWithoutBadgesInput = {
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2922,6 +3653,9 @@ export type TenantMembershipCountOutputType = {
   createdTodos: number
   updatedTodos: number
   completedTodos: number
+  couponRedemptions: number
+  coinLedger: number
+  freezes: number
 }
 
 export type TenantMembershipCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2936,6 +3670,9 @@ export type TenantMembershipCountOutputTypeSelect<ExtArgs extends runtime.Types.
   createdTodos?: boolean | TenantMembershipCountOutputTypeCountCreatedTodosArgs
   updatedTodos?: boolean | TenantMembershipCountOutputTypeCountUpdatedTodosArgs
   completedTodos?: boolean | TenantMembershipCountOutputTypeCountCompletedTodosArgs
+  couponRedemptions?: boolean | TenantMembershipCountOutputTypeCountCouponRedemptionsArgs
+  coinLedger?: boolean | TenantMembershipCountOutputTypeCountCoinLedgerArgs
+  freezes?: boolean | TenantMembershipCountOutputTypeCountFreezesArgs
 }
 
 /**
@@ -3025,6 +3762,27 @@ export type TenantMembershipCountOutputTypeCountCompletedTodosArgs<ExtArgs exten
   where?: Prisma.TodoWhereInput
 }
 
+/**
+ * TenantMembershipCountOutputType without action
+ */
+export type TenantMembershipCountOutputTypeCountCouponRedemptionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CouponRedemptionWhereInput
+}
+
+/**
+ * TenantMembershipCountOutputType without action
+ */
+export type TenantMembershipCountOutputTypeCountCoinLedgerArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CoinLedgerEntryWhereInput
+}
+
+/**
+ * TenantMembershipCountOutputType without action
+ */
+export type TenantMembershipCountOutputTypeCountFreezesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.MembershipFreezeWhereInput
+}
+
 
 export type TenantMembershipSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -3036,6 +3794,7 @@ export type TenantMembershipSelect<ExtArgs extends runtime.Types.Extensions.Inte
   dueDate?: boolean
   shiftId?: boolean
   referredByMembershipId?: boolean
+  idCardToken?: boolean
   joinedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -3054,6 +3813,9 @@ export type TenantMembershipSelect<ExtArgs extends runtime.Types.Extensions.Inte
   createdTodos?: boolean | Prisma.TenantMembership$createdTodosArgs<ExtArgs>
   updatedTodos?: boolean | Prisma.TenantMembership$updatedTodosArgs<ExtArgs>
   completedTodos?: boolean | Prisma.TenantMembership$completedTodosArgs<ExtArgs>
+  couponRedemptions?: boolean | Prisma.TenantMembership$couponRedemptionsArgs<ExtArgs>
+  coinLedger?: boolean | Prisma.TenantMembership$coinLedgerArgs<ExtArgs>
+  freezes?: boolean | Prisma.TenantMembership$freezesArgs<ExtArgs>
   _count?: boolean | Prisma.TenantMembershipCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["tenantMembership"]>
 
@@ -3067,6 +3829,7 @@ export type TenantMembershipSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   dueDate?: boolean
   shiftId?: boolean
   referredByMembershipId?: boolean
+  idCardToken?: boolean
   joinedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -3086,6 +3849,7 @@ export type TenantMembershipSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   dueDate?: boolean
   shiftId?: boolean
   referredByMembershipId?: boolean
+  idCardToken?: boolean
   joinedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -3105,12 +3869,13 @@ export type TenantMembershipSelectScalar = {
   dueDate?: boolean
   shiftId?: boolean
   referredByMembershipId?: boolean
+  idCardToken?: boolean
   joinedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type TenantMembershipOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "userId" | "memberId" | "role" | "status" | "dueDate" | "shiftId" | "referredByMembershipId" | "joinedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["tenantMembership"]>
+export type TenantMembershipOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "userId" | "memberId" | "role" | "status" | "dueDate" | "shiftId" | "referredByMembershipId" | "idCardToken" | "joinedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["tenantMembership"]>
 export type TenantMembershipInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -3127,6 +3892,9 @@ export type TenantMembershipInclude<ExtArgs extends runtime.Types.Extensions.Int
   createdTodos?: boolean | Prisma.TenantMembership$createdTodosArgs<ExtArgs>
   updatedTodos?: boolean | Prisma.TenantMembership$updatedTodosArgs<ExtArgs>
   completedTodos?: boolean | Prisma.TenantMembership$completedTodosArgs<ExtArgs>
+  couponRedemptions?: boolean | Prisma.TenantMembership$couponRedemptionsArgs<ExtArgs>
+  coinLedger?: boolean | Prisma.TenantMembership$coinLedgerArgs<ExtArgs>
+  freezes?: boolean | Prisma.TenantMembership$freezesArgs<ExtArgs>
   _count?: boolean | Prisma.TenantMembershipCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type TenantMembershipIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3160,6 +3928,9 @@ export type $TenantMembershipPayload<ExtArgs extends runtime.Types.Extensions.In
     createdTodos: Prisma.$TodoPayload<ExtArgs>[]
     updatedTodos: Prisma.$TodoPayload<ExtArgs>[]
     completedTodos: Prisma.$TodoPayload<ExtArgs>[]
+    couponRedemptions: Prisma.$CouponRedemptionPayload<ExtArgs>[]
+    coinLedger: Prisma.$CoinLedgerEntryPayload<ExtArgs>[]
+    freezes: Prisma.$MembershipFreezePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -3177,6 +3948,11 @@ export type $TenantMembershipPayload<ExtArgs extends runtime.Types.Extensions.In
     dueDate: Date | null
     shiftId: string | null
     referredByMembershipId: string | null
+    /**
+     * Unguessable key for this member's public ID-card URL. Null until the
+     * card is first issued for a membership that predates the feature.
+     */
+    idCardToken: string | null
     joinedAt: Date
     createdAt: Date
     updatedAt: Date
@@ -3589,6 +4365,9 @@ export interface Prisma__TenantMembershipClient<T, Null = never, ExtArgs extends
   createdTodos<T extends Prisma.TenantMembership$createdTodosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantMembership$createdTodosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   updatedTodos<T extends Prisma.TenantMembership$updatedTodosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantMembership$updatedTodosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   completedTodos<T extends Prisma.TenantMembership$completedTodosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantMembership$completedTodosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  couponRedemptions<T extends Prisma.TenantMembership$couponRedemptionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantMembership$couponRedemptionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CouponRedemptionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  coinLedger<T extends Prisma.TenantMembership$coinLedgerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantMembership$coinLedgerArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CoinLedgerEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  freezes<T extends Prisma.TenantMembership$freezesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantMembership$freezesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MembershipFreezePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3627,6 +4406,7 @@ export interface TenantMembershipFieldRefs {
   readonly dueDate: Prisma.FieldRef<"TenantMembership", 'DateTime'>
   readonly shiftId: Prisma.FieldRef<"TenantMembership", 'String'>
   readonly referredByMembershipId: Prisma.FieldRef<"TenantMembership", 'String'>
+  readonly idCardToken: Prisma.FieldRef<"TenantMembership", 'String'>
   readonly joinedAt: Prisma.FieldRef<"TenantMembership", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"TenantMembership", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"TenantMembership", 'DateTime'>
@@ -4328,6 +5108,78 @@ export type TenantMembership$completedTodosArgs<ExtArgs extends runtime.Types.Ex
   take?: number
   skip?: number
   distinct?: Prisma.TodoScalarFieldEnum | Prisma.TodoScalarFieldEnum[]
+}
+
+/**
+ * TenantMembership.couponRedemptions
+ */
+export type TenantMembership$couponRedemptionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CouponRedemption
+   */
+  select?: Prisma.CouponRedemptionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CouponRedemption
+   */
+  omit?: Prisma.CouponRedemptionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CouponRedemptionInclude<ExtArgs> | null
+  where?: Prisma.CouponRedemptionWhereInput
+  orderBy?: Prisma.CouponRedemptionOrderByWithRelationInput | Prisma.CouponRedemptionOrderByWithRelationInput[]
+  cursor?: Prisma.CouponRedemptionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CouponRedemptionScalarFieldEnum | Prisma.CouponRedemptionScalarFieldEnum[]
+}
+
+/**
+ * TenantMembership.coinLedger
+ */
+export type TenantMembership$coinLedgerArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CoinLedgerEntry
+   */
+  select?: Prisma.CoinLedgerEntrySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CoinLedgerEntry
+   */
+  omit?: Prisma.CoinLedgerEntryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CoinLedgerEntryInclude<ExtArgs> | null
+  where?: Prisma.CoinLedgerEntryWhereInput
+  orderBy?: Prisma.CoinLedgerEntryOrderByWithRelationInput | Prisma.CoinLedgerEntryOrderByWithRelationInput[]
+  cursor?: Prisma.CoinLedgerEntryWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CoinLedgerEntryScalarFieldEnum | Prisma.CoinLedgerEntryScalarFieldEnum[]
+}
+
+/**
+ * TenantMembership.freezes
+ */
+export type TenantMembership$freezesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the MembershipFreeze
+   */
+  select?: Prisma.MembershipFreezeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the MembershipFreeze
+   */
+  omit?: Prisma.MembershipFreezeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MembershipFreezeInclude<ExtArgs> | null
+  where?: Prisma.MembershipFreezeWhereInput
+  orderBy?: Prisma.MembershipFreezeOrderByWithRelationInput | Prisma.MembershipFreezeOrderByWithRelationInput[]
+  cursor?: Prisma.MembershipFreezeWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.MembershipFreezeScalarFieldEnum | Prisma.MembershipFreezeScalarFieldEnum[]
 }
 
 /**

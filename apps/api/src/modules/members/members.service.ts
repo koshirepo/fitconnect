@@ -6,6 +6,8 @@
  * - Primary exports: memberService.
  */
 import { PlatformRole, type TenantRole } from "@fitconnect/shared/types/enums";
+import { TenantRole as TenantRoleKeys } from "@fitconnect/shared/types/enums";
+import { rolePermissionRepository } from "../roles/roles.repository";
 import {
   hashPassword,
   verifyPassword,
@@ -23,6 +25,7 @@ import { prisma } from "../../lib/prisma";
 import { emailService } from "../../lib/email";
 import { settingsRepository } from "../settings/settings.repository";
 import { pushService } from "../push/push.service";
+import { buildIdCardUrl, idCardService } from "../public/id-card.service";
 import { renderWhatsAppTemplate } from "@fitconnect/shared/whatsapp-templates";
 
 type BackgroundTaskScheduler = (promise: Promise<unknown>) => void;
@@ -32,6 +35,17 @@ type AddMemberResult = {
   [key: string]: unknown;
 };
 const DEFAULT_OVERDUE_DAYS = 30;
+
+/**
+ * A role key is valid for a gym when it is one of the built-in tenant roles or
+ * an active custom role in that gym's registry.
+ */
+async function isTenantRoleValid(tenantId: string, role: string) {
+  if ((TenantRoleKeys as Record<string, string>)[role]) return true;
+  return Boolean(
+    await rolePermissionRepository.findCustomRole(tenantId, "TENANT", role),
+  );
+}
 
 function normalizeOptionalText(value: string | null | undefined) {
   if (value === undefined) return undefined;
@@ -169,9 +183,15 @@ export const memberService = {
     /** Who is adding them — excluded from the admin notification below. */
     actorUserId?: string,
   ): Promise<{ data: AddMemberResult } | ServiceError> {
-    // Coaches can only add members (not other coaches or admins)
+    // Coaches can only add members (not other coaches or admins, and not
+    // custom roles — those carry their own permissions).
     if (callerRole === "COACH" && input.role !== "MEMBER") {
       return { error: "Coaches can only add members.", status: 403 as const };
+    }
+
+    // The role must exist: a built-in tenant role or a custom role in this gym.
+    if (!(await isTenantRoleValid(tenantId, input.role))) {
+      return { error: `Unknown role: ${input.role}.`, status: 400 as const };
     }
 
     // A photo is part of the record for everyone except an admin, who is
@@ -319,7 +339,7 @@ export const memberService = {
     const membership = await memberRepository.createMembership(
       tenantId,
       user.id,
-      input.role as TenantRole,
+      input.role,
       input.shiftId,
       input.referredByMembershipId,
     );
@@ -403,6 +423,16 @@ export const memberService = {
       ? `Plan: *${subscription.title}* (${subscription.durationDays} days)\n\n`
       : "";
 
+    // A stable link. What it shows is re-read every time it is opened, so a
+    // later photo change or renewal appears on the same URL.
+    const tenantSlug = await prisma.tenant
+      .findUnique({ where: { id: tenantId }, select: { slug: true } })
+      .then((row) => row?.slug ?? null);
+    const idCardUrl =
+      tenantSlug && membership.idCardToken
+        ? buildIdCardUrl(tenantSlug, membership.idCardToken)
+        : null;
+
     const whatsappText = renderWhatsAppTemplate(
       "new_member_welcome",
       {
@@ -412,6 +442,11 @@ export const memberService = {
         email: input.email,
         paymentSummarySection,
         subscriptionLine,
+        idCardLine: idCardUrl
+          ? `
+
+Your membership card: ${idCardUrl}`
+          : "",
       },
       settings?.whatsappTemplates,
     );
@@ -424,6 +459,7 @@ export const memberService = {
     // not a mailbox, so there is nothing to send to.
     const welcomeEmailTo = input.email?.trim() ? input.email.trim() : null;
 
+
     const sendWelcomeEmail = async () => {
       if (!welcomeEmailTo) return;
       try {
@@ -435,6 +471,7 @@ export const memberService = {
           // The phone number is what `createUser` hashed as the password.
           password: input.phone,
           memberId: membership.memberId,
+          idCardUrl,
           payments: payments.map((payment) => ({
             description: payment.description,
             amount: payment.amount,
@@ -486,6 +523,8 @@ export const memberService = {
         whatsappText,
         /** Whether a welcome email was dispatched to a real address. */
         emailSent: Boolean(welcomeEmailTo),
+        /** Stable link to this member's card; its contents render live. */
+        idCardUrl,
       },
     };
   },
@@ -601,7 +640,23 @@ export const memberService = {
       tenantId,
     );
     if (!member) return { error: "Member not found.", status: 404 as const };
-    return { data: { member: flattenMemberDetail(member) } };
+
+    // The card link travels with the record so the profile can offer it without
+    // a second call. A member who predates the feature gets a token minted here,
+    // which is why this is a write-capable read.
+    const [token, tenant] = await Promise.all([
+      idCardService.ensureToken(member.id),
+      prisma.tenant.findUnique({ where: { id: tenantId }, select: { slug: true } }),
+    ]);
+
+    return {
+      data: {
+        member: {
+          ...flattenMemberDetail(member),
+          idCardUrl: token && tenant?.slug ? buildIdCardUrl(tenant.slug, token) : null,
+        },
+      },
+    };
   },
 
   /**
@@ -613,7 +668,22 @@ export const memberService = {
     if (!profile) {
       return { error: "Not a member of this tenant.", status: 403 as const };
     }
-    return { data: { profile: flattenMemberUser(profile) } };
+
+    // A member's own card link, minted here for anyone who joined before the
+    // feature existed.
+    const [token, tenant] = await Promise.all([
+      idCardService.ensureToken(profile.id),
+      prisma.tenant.findUnique({ where: { id: tenantId }, select: { slug: true } }),
+    ]);
+
+    return {
+      data: {
+        profile: {
+          ...flattenMemberUser(profile),
+          idCardUrl: token && tenant?.slug ? buildIdCardUrl(tenant.slug, token) : null,
+        },
+      },
+    };
   },
 
   /**
@@ -803,6 +873,12 @@ export const memberService = {
       return { error: "Membership not found.", status: 404 as const };
     }
 
+    // The target role must exist: a built-in tenant role or a custom role in
+    // this gym. A gym cannot assign its members a role from another gym.
+    if (!(await isTenantRoleValid(tenantId, newRole))) {
+      return { error: `Unknown role: ${newRole}.`, status: 400 as const };
+    }
+
     // Prevent demotion of the last admin
     if (membership.role === "ADMIN" && newRole !== "ADMIN") {
       const adminCount = await memberRepository.countActiveAdmins(tenantId);
@@ -816,7 +892,7 @@ export const memberService = {
 
     const updated = await memberRepository.updateMemberRole(
       membershipId,
-      newRole as TenantRole,
+      newRole,
     );
     return {
       data: { membership: flattenNestedMember(updated) },

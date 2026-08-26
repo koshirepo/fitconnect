@@ -155,6 +155,13 @@ place. Platform staff and gym admins can further tune role grants at runtime
 through the Roles &amp; Permissions screens, which persist overrides layered on top of
 that catalog. See [`docs/authorization.md`](docs/authorization.md).
 
+## Subscriptions
+
+A membership is a span of paid time, and one derived date — `dueDate` — drives
+access, suspension, renewal reminders, and the member's card. When a term starts
+depends on whether the previous one is still running, has lapsed, or lapsed while
+the member kept training. See [`docs/subscriptions.md`](docs/subscriptions.md).
+
 ## Adding another app
 
 1. Create `apps/<name>` with a `package.json` named `@fitconnect/<name>`.
@@ -178,3 +185,12 @@ No root config change is needed: the `apps/*` and `packages/*` globs already cov
 | `npm run build` | Build every workspace |
 | `npm run lint` / `npm run format` | Run each workspace's linter/formatter |
 | `npm run deploy:test` / `npm run deploy:production` | Deploy every deployable workspace |
+
+
+
+
+TODO
+1. In tenent store
+2. admin should be able to to crud on roles
+3. Biometric integration
+4. subscription rules — written up in [`docs/subscriptions.md`](docs/subscriptions.md); two known gaps listed there are still to fix 

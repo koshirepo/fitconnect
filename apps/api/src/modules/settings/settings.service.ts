@@ -16,6 +16,8 @@ import { gatewayService } from "../payments/gateway.service";
 
 const DEFAULT_SETTINGS = {
   overdueDays: 30,
+  referralRewardCoins: 0,
+  referralRefereeCoins: 0,
   whatsappTemplates: getWhatsAppTemplates(),
 };
 
@@ -38,6 +40,8 @@ export const settingsService = {
           ...(settings
             ? {
                 overdueDays: settings.overdueDays,
+                referralRewardCoins: settings.referralRewardCoins,
+                referralRefereeCoins: settings.referralRefereeCoins,
                 whatsappTemplates: getWhatsAppTemplates(settings.whatsappTemplates),
               }
             : DEFAULT_SETTINGS),
@@ -68,6 +72,10 @@ export const settingsService = {
 
     const data: Record<string, unknown> = {};
     if (input.overdueDays !== undefined) data.overdueDays = input.overdueDays;
+    if (input.referralRewardCoins !== undefined)
+      data.referralRewardCoins = input.referralRewardCoins;
+    if (input.referralRefereeCoins !== undefined)
+      data.referralRefereeCoins = input.referralRefereeCoins;
     if (input.whatsappTemplates !== undefined) {
       data.whatsappTemplates = input.whatsappTemplates;
     }
@@ -77,6 +85,10 @@ export const settingsService = {
       data: {
         settings: {
           overdueDays: settings.overdueDays,
+          // Returned as well as saved: the settings screen seeds its inputs
+          // from this response, and omitting them blanked the fields.
+          referralRewardCoins: settings.referralRewardCoins ?? 0,
+          referralRefereeCoins: settings.referralRefereeCoins ?? 0,
           whatsappTemplates: getWhatsAppTemplates(settings.whatsappTemplates),
           onlinePaymentsEnabled: Boolean(await gatewayService.resolveCredentials(tenantId)),
         },

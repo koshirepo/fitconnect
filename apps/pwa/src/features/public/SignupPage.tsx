@@ -22,7 +22,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PageLoader } from "@/components/ui/spinner";
+import { FormPageSkeleton } from "@/components/ui/skeleton";
 import {
   AlertCircle,
   ArrowLeft,
@@ -213,7 +213,7 @@ export default function SignupPage() {
     }
   };
 
-  if (loading) return <PageLoader />;
+  if (loading) return <FormPageSkeleton fields={5} />;
 
   if (loadError || !options) {
     return (

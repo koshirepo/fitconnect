@@ -39,7 +39,7 @@ import {
   Globe,
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { PageLoader } from "@/components/ui/spinner";
+import { FormPageSkeleton } from "@/components/ui/skeleton";
 import PaymentGatewayCard from "./PaymentGatewayCard";
 
 function formatAmount(amount: number) {
@@ -91,6 +91,10 @@ export default function GymSettingsPage() {
 
   // Settings form
   const [overdueDays, setOverdueDays] = React.useState(30);
+  // Zero means referral rewards are off, which is the default for a gym
+  // that has never set them.
+  const [referralRewardCoins, setReferralRewardCoins] = React.useState(0);
+  const [referralRefereeCoins, setReferralRefereeCoins] = React.useState(0);
 
   // Charge form
   const [showChargeForm, setShowChargeForm] = React.useState(false);
@@ -113,7 +117,11 @@ export default function GymSettingsPage() {
 
   // Seed the form from the loaded settings once they arrive.
   React.useEffect(() => {
-    if (settingsQuery.data) setOverdueDays(settingsQuery.data.overdueDays);
+    if (settingsQuery.data) {
+      setOverdueDays(settingsQuery.data.overdueDays);
+      setReferralRewardCoins(settingsQuery.data.referralRewardCoins ?? 0);
+      setReferralRefereeCoins(settingsQuery.data.referralRefereeCoins ?? 0);
+    }
   }, [settingsQuery.data]);
 
   const handleSaveSettings = async (e: React.FormEvent) => {
@@ -122,8 +130,14 @@ export default function GymSettingsPage() {
     setError("");
     setSuccessMsg("");
     try {
-      const settings = await updateSettings.mutateAsync({ overdueDays });
+      const settings = await updateSettings.mutateAsync({
+        overdueDays,
+        referralRewardCoins,
+        referralRefereeCoins,
+      });
       setOverdueDays(settings.overdueDays);
+      setReferralRewardCoins(settings.referralRewardCoins ?? 0);
+      setReferralRefereeCoins(settings.referralRefereeCoins ?? 0);
       setSuccessMsg("Settings saved successfully.");
       setTimeout(() => setSuccessMsg(""), 3000);
     } catch (err) {
@@ -285,7 +299,7 @@ export default function GymSettingsPage() {
   };
 
   if (loading) {
-    return <PageLoader />;
+    return <FormPageSkeleton fields={6} />;
   }
 
   return (
@@ -359,6 +373,35 @@ export default function GymSettingsPage() {
                 />
                 <p className="text-xs text-muted-foreground">
                   Days after subscription expiry to auto-inactivate member
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="referralRewardCoins">Referral reward (coins)</Label>
+                <Input
+                  id="referralRewardCoins"
+                  type="number"
+                  min={0}
+                  value={referralRewardCoins}
+                  onChange={(e) => setReferralRewardCoins(Number(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Coins the referrer earns when the member they brought in pays
+                  for their first subscription. 0 turns referral rewards off.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="referralRefereeCoins">Joining bonus (coins)</Label>
+                <Input
+                  id="referralRefereeCoins"
+                  type="number"
+                  min={0}
+                  value={referralRefereeCoins}
+                  onChange={(e) => setReferralRefereeCoins(Number(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Coins the referred member earns at the same moment. 0 for none.
                 </p>
               </div>
             </div>

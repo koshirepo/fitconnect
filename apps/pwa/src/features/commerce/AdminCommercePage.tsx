@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageLoader } from "@/components/ui/spinner";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { Edit2, PackageOpen, Plus, ShoppingBag } from "lucide-react";
 import type { Product } from "@/types/api";
 
@@ -29,7 +29,7 @@ export default function AdminCommercePage() {
   const error = productsQuery.isError ? getApiError(productsQuery.error) : "";
 
   if (loading) {
-    return <PageLoader />;
+    return <ListPageSkeleton />;
   }
 
   return (

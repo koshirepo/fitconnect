@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
-import { PageLoader } from "@/components/ui/spinner";
+import { SkeletonRow } from "@/components/ui/skeleton";
 import { ShoppingCart, Trash2, ArrowLeft, AlertTriangle } from "lucide-react";
 import type { Product } from "@/types/api";
 import { calculateTotals, formatCurrency } from "./pricing";
@@ -135,7 +135,7 @@ export default function PublicCartPage() {
     navigate("/shop/checkout");
   };
 
-  if (loading) return <PageLoader />;
+  if (loading) return (<div className="space-y-3">{[0,1,2].map((i)=>(<div key={i} className="rounded-lg ring-1 ring-foreground/10"><SkeletonRow className="p-3" /></div>))}</div>);
 
   if (cart.length === 0) {
     return (

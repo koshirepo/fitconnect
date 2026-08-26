@@ -15,7 +15,8 @@ export const addMemberSchema = z.object({
   name: z.string().min(2).max(120),
   email: z.string().optional(),
   phone: z.string().min(10).max(15),
-  role: z.enum(["MEMBER", "COACH", "ADMIN"]).default("MEMBER"),
+  /** Built-in (MEMBER/COACH/ADMIN) or a custom role key created by the gym. */
+  role: z.string().min(2).max(60).default("MEMBER"),
   gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
   avatarUrl: z.string().optional(),
   subscriptionId: z.string().optional(),
@@ -25,7 +26,8 @@ export const addMemberSchema = z.object({
 });
 
 export const updateMemberRoleSchema = z.object({
-  role: z.enum(["MEMBER", "COACH", "ADMIN"]),
+  /** Built-in (MEMBER/COACH/ADMIN) or a custom role key created by the gym. */
+  role: z.string().min(2).max(60),
 });
 
 export const updateMyProfileSchema = z

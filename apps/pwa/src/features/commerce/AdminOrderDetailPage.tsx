@@ -20,9 +20,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PageLoader, Spinner } from "@/components/ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
+import { DetailPageSkeleton } from "@/components/ui/skeleton";
 import { formatDateTime } from "@/lib/utils";
-import { ArrowLeft, PackageSearch, Trash2 } from "lucide-react";
+import { PackageSearch, Trash2 } from "lucide-react";
 import type { OrderStatus } from "@/types/api";
 
 const STATUS_STYLE: Record<string, "warning" | "success" | "secondary"> = {
@@ -90,16 +91,13 @@ export default function AdminOrderDetailPage() {
   };
 
   if (loading) {
-    return <PageLoader />;
+    return <DetailPageSkeleton />;
   }
 
   if (!canManageOrders) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/platform-commerce/orders")}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Order Details</h1>
             <p className="text-muted-foreground">Super admin access is required for this page.</p>
@@ -113,9 +111,6 @@ export default function AdminOrderDetailPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/platform-commerce/orders")}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Order Details</h1>
             <p className="text-muted-foreground">The requested order could not be loaded.</p>
@@ -140,9 +135,6 @@ export default function AdminOrderDetailPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/platform-commerce/orders")}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Order Details</h1>
             <p className="text-muted-foreground">Order ID: {order.id}</p>

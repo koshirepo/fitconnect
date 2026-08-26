@@ -195,6 +195,8 @@ export const paymentRepository = {
         description: true,
         amount: true,
         durationDays: true,
+        freezeDays: true,
+        freezeCount: true,
         isActive: true,
         badges: {
           orderBy: { name: "asc" },
@@ -361,6 +363,8 @@ export const paymentRepository = {
         description: true,
         amount: true,
         durationDays: true,
+        freezeDays: true,
+        freezeCount: true,
         isActive: true,
         badges: {
           orderBy: { name: "asc" },
@@ -403,6 +407,8 @@ export const paymentRepository = {
         description: true,
         amount: true,
         durationDays: true,
+        freezeDays: true,
+        freezeCount: true,
         isActive: true,
         badges: {
           orderBy: { name: "asc" },
@@ -446,6 +452,8 @@ export const paymentRepository = {
         description: true,
         amount: true,
         durationDays: true,
+        freezeDays: true,
+        freezeCount: true,
         isActive: true,
         badges: {
           orderBy: { name: "asc" },
@@ -533,6 +541,8 @@ export const paymentRepository = {
         title: true,
         amount: true,
         durationDays: true,
+        freezeDays: true,
+        freezeCount: true,
         isActive: true,
         badges: { select: { id: true } },
       },

@@ -17,16 +17,23 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { PhotoCapture } from "@/components/ui/photo-capture";
-import { PageLoader } from "@/components/ui/spinner";
+import { DetailPageSkeleton } from "@/components/ui/skeleton";
 import { PushToggle } from "@/components/ui/push-toggle";
-import { Camera } from "lucide-react";
+import { FreezeCard } from "@/components/ui/freeze-card";
+import { useCoinBalance } from "@/api/queries/coupons";
+import { useToast } from "@/components/ui/toast";
+import { Camera, CreditCard } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
 
 export default function ProfilePage() {
+  const toast = useToast();
   const { currentTenantId, user } = useAuthStore();
 
   const profileQuery = useMyProfile();
   const profile = profileQuery.data ?? null;
+
+  const coinsQuery = useCoinBalance(profile?.id);
+  const coinBalance = coinsQuery.data?.balance ?? 0;
   const loading = profileQuery.isLoading;
 
   // Both saves invalidate the members key, which this profile query lives under,
@@ -70,6 +77,7 @@ export default function ProfilePage() {
       }
 
       await updateProfile.mutateAsync({ avatarUrl: avatarUrl ?? null });
+      toast.success("Photo updated.");
       setPhotoDialogOpen(false);
       setPhotoFile(null);
       setPhotoPreview(null);
@@ -107,7 +115,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (loading) return <PageLoader />;
+  if (loading) return <DetailPageSkeleton />;
 
   if (!currentTenantId || !profile) {
     return (
@@ -176,6 +184,46 @@ export default function ProfilePage() {
             )}
           </CardContent>
         </Card>
+
+        {coinBalance > 0 && (
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle>Your Coins</CardTitle>
+              <CardDescription>Spend them on your next renewal</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">{coinBalance}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Worth {formatCurrency(coinBalance)} off a subscription.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {profile.id && <FreezeCard membershipId={profile.id} />}
+
+        {/* Membership card */}
+        {profile.idCardUrl && (
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle>Membership Card</CardTitle>
+              <CardDescription>Always shows your current details</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <a
+                href={profile.idCardUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block"
+              >
+                <Button variant="outline" className="w-full">
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  View &amp; download
+                </Button>
+              </a>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Notifications */}
         <Card className="lg:col-span-1">

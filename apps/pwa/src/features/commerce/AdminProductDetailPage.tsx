@@ -14,9 +14,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageLoader, Spinner } from "@/components/ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
+import { DetailPageSkeleton } from "@/components/ui/skeleton";
 import { formatDateTime } from "@/lib/utils";
-import { ArrowLeft, Edit2, PackageOpen, ShoppingBag, Trash2 } from "lucide-react";
+import { Edit2, PackageOpen, ShoppingBag, Trash2 } from "lucide-react";
 import type { Order, OrderItem } from "@/types/api";
 
 const STATUS_STYLE: Record<string, "warning" | "success" | "secondary"> = {
@@ -84,16 +85,13 @@ export default function AdminProductDetailPage() {
   };
 
   if (loading) {
-    return <PageLoader />;
+    return <DetailPageSkeleton />;
   }
 
   if (!product) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/platform-commerce")}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Product Details</h1>
             <p className="text-muted-foreground">The requested product could not be loaded.</p>
@@ -118,9 +116,6 @@ export default function AdminProductDetailPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/platform-commerce")}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Product Details</h1>
             <p className="text-muted-foreground">{product.name}</p>

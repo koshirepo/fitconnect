@@ -56,6 +56,7 @@ export const ModelName = {
   PasswordResetToken: 'PasswordResetToken',
   RefreshToken: 'RefreshToken',
   Tenant: 'Tenant',
+  Role: 'Role',
   RolePermissionOverride: 'RolePermissionOverride',
   TenantSettings: 'TenantSettings',
   TenantCharge: 'TenantCharge',
@@ -64,6 +65,10 @@ export const ModelName = {
   Shift: 'Shift',
   Todo: 'Todo',
   Payment: 'Payment',
+  Coupon: 'Coupon',
+  CouponRedemption: 'CouponRedemption',
+  CoinLedgerEntry: 'CoinLedgerEntry',
+  MembershipFreeze: 'MembershipFreeze',
   Product: 'Product',
   ProductReview: 'ProductReview',
   ProductReviewComment: 'ProductReviewComment',
@@ -166,6 +171,23 @@ export const TenantScalarFieldEnum = {
 export type TenantScalarFieldEnum = (typeof TenantScalarFieldEnum)[keyof typeof TenantScalarFieldEnum]
 
 
+export const RoleScalarFieldEnum = {
+  id: 'id',
+  scope: 'scope',
+  key: 'key',
+  name: 'name',
+  description: 'description',
+  tenantId: 'tenantId',
+  isSystem: 'isSystem',
+  isActive: 'isActive',
+  createdBy: 'createdBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RoleScalarFieldEnum = (typeof RoleScalarFieldEnum)[keyof typeof RoleScalarFieldEnum]
+
+
 export const RolePermissionOverrideScalarFieldEnum = {
   id: 'id',
   scope: 'scope',
@@ -186,6 +208,8 @@ export const TenantSettingsScalarFieldEnum = {
   tenantId: 'tenantId',
   overdueDays: 'overdueDays',
   whatsappTemplates: 'whatsappTemplates',
+  referralRewardCoins: 'referralRewardCoins',
+  referralRefereeCoins: 'referralRefereeCoins',
   razorpayKeyId: 'razorpayKeyId',
   razorpayKeySecret: 'razorpayKeySecret',
   razorpayWebhookSecret: 'razorpayWebhookSecret',
@@ -220,6 +244,7 @@ export const TenantMembershipScalarFieldEnum = {
   dueDate: 'dueDate',
   shiftId: 'shiftId',
   referredByMembershipId: 'referredByMembershipId',
+  idCardToken: 'idCardToken',
   joinedAt: 'joinedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -235,6 +260,8 @@ export const SubscriptionScalarFieldEnum = {
   description: 'description',
   amount: 'amount',
   durationDays: 'durationDays',
+  freezeDays: 'freezeDays',
+  freezeCount: 'freezeCount',
   isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -286,6 +313,9 @@ export const PaymentScalarFieldEnum = {
   subscriptionId: 'subscriptionId',
   chargeId: 'chargeId',
   description: 'description',
+  listAmount: 'listAmount',
+  discountAmount: 'discountAmount',
+  coinsRedeemed: 'coinsRedeemed',
   note: 'note',
   paidAt: 'paidAt',
   validFrom: 'validFrom',
@@ -299,6 +329,85 @@ export const PaymentScalarFieldEnum = {
 } as const
 
 export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]
+
+
+export const CouponScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  code: 'code',
+  description: 'description',
+  type: 'type',
+  percentOff: 'percentOff',
+  amountOff: 'amountOff',
+  maxDiscount: 'maxDiscount',
+  coinsGranted: 'coinsGranted',
+  bonusDays: 'bonusDays',
+  firstTimeOnly: 'firstTimeOnly',
+  gender: 'gender',
+  minAmount: 'minAmount',
+  maxRedemptions: 'maxRedemptions',
+  redemptionCount: 'redemptionCount',
+  maxPerMember: 'maxPerMember',
+  startsAt: 'startsAt',
+  endsAt: 'endsAt',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CouponScalarFieldEnum = (typeof CouponScalarFieldEnum)[keyof typeof CouponScalarFieldEnum]
+
+
+export const CouponRedemptionScalarFieldEnum = {
+  id: 'id',
+  couponId: 'couponId',
+  tenantId: 'tenantId',
+  membershipId: 'membershipId',
+  paymentId: 'paymentId',
+  discountAmount: 'discountAmount',
+  coinsGranted: 'coinsGranted',
+  bonusDays: 'bonusDays',
+  appliedById: 'appliedById',
+  reversedAt: 'reversedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type CouponRedemptionScalarFieldEnum = (typeof CouponRedemptionScalarFieldEnum)[keyof typeof CouponRedemptionScalarFieldEnum]
+
+
+export const CoinLedgerEntryScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  membershipId: 'membershipId',
+  amount: 'amount',
+  reason: 'reason',
+  note: 'note',
+  couponRedemptionId: 'couponRedemptionId',
+  paymentId: 'paymentId',
+  createdById: 'createdById',
+  createdAt: 'createdAt'
+} as const
+
+export type CoinLedgerEntryScalarFieldEnum = (typeof CoinLedgerEntryScalarFieldEnum)[keyof typeof CoinLedgerEntryScalarFieldEnum]
+
+
+export const MembershipFreezeScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  membershipId: 'membershipId',
+  paymentId: 'paymentId',
+  startsOn: 'startsOn',
+  plannedEndsOn: 'plannedEndsOn',
+  endedOn: 'endedOn',
+  daysUsed: 'daysUsed',
+  reason: 'reason',
+  endedBy: 'endedBy',
+  createdById: 'createdById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MembershipFreezeScalarFieldEnum = (typeof MembershipFreezeScalarFieldEnum)[keyof typeof MembershipFreezeScalarFieldEnum]
 
 
 export const ProductScalarFieldEnum = {

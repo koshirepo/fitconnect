@@ -33,6 +33,7 @@ const WHATSAPP_TEMPLATE_METADATA: Record<WhatsAppTemplateKey, TemplateMetadata> 
       "email",
       "paymentSummarySection",
       "subscriptionLine",
+      "idCardLine",
     ],
     defaultBody: `Welcome to *{{gymName}}*!
 
@@ -40,7 +41,7 @@ Hi *{{memberName}}*,
 Your membership has been created successfully.
 Member ID: *{{memberId}}*
 
-{{paymentSummarySection}}{{subscriptionLine}}Your login password is your phone number and your username is {{email}}.
+{{paymentSummarySection}}{{subscriptionLine}}Your login password is your phone number and your username is {{email}}.{{idCardLine}}
 
 Thank you for joining us.`,
   },

@@ -3,7 +3,7 @@ import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
-import { useBadges, useTenantSettings } from "@/api/queries/catalog";
+import { useTenantSettings } from "@/api/queries/catalog";
 import {
   useCreateCheckout,
   useDeleteSubscription,
@@ -16,42 +16,22 @@ import { openRazorpayCheckout } from "@/lib/razorpay-checkout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { PageLoader, Spinner } from "@/components/ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatCurrency } from "@/lib/utils";
 import { CreditCard, Pencil, Plus, Power, Trash2, Package } from "lucide-react";
-import type { Badge as BadgeModel, Subscription } from "@/types/api";
+import type { Subscription } from "@/types/api";
 
 export default function SubscriptionsPage() {
   const navigate = useAppNavigate();
-  const { currentTenantId, currentMembership, user } = useAuthStore();
+  const { currentMembership, user } = useAuthStore();
   const { can } = usePermissions();
   const isAdmin = can(Permission.SUBSCRIPTIONS_UPDATE);
   const gymName = currentMembership()?.tenantName ?? "the gym";
 
   const [pageError, setPageError] = React.useState("");
-
-  const [editOpen, setEditOpen] = React.useState(false);
-  const [editingSubscription, setEditingSubscription] = React.useState<Subscription | null>(null);
-  const [editTitle, setEditTitle] = React.useState("");
-  const [editDescription, setEditDescription] = React.useState("");
-  const [editAmount, setEditAmount] = React.useState("");
-  const [editDurationDays, setEditDurationDays] = React.useState("");
-  const [editSelectedBadgeIds, setEditSelectedBadgeIds] = React.useState<string[]>([]);
-  const [editError, setEditError] = React.useState("");
-  const [editSubmitting, setEditSubmitting] = React.useState(false);
 
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [confirmMode, setConfirmMode] = React.useState<"delete" | "toggle" | null>(null);
@@ -71,39 +51,16 @@ export default function SubscriptionsPage() {
   const canPayOnline =
     can(Permission.PAYMENTS_CHECKOUT_SELF) && Boolean(settingsQuery.data?.onlinePaymentsEnabled);
 
-  // Badges are only needed for the edit dialog's eligibility picker.
-  const badgesQuery = useBadges({ includeInactive: true, enabled: isAdmin });
-
   const subscriptions = React.useMemo<Subscription[]>(
     () => subscriptionsQuery.data ?? [],
     [subscriptionsQuery.data],
   );
-  const availableBadges = React.useMemo<BadgeModel[]>(
-    () => badgesQuery.data ?? [],
-    [badgesQuery.data],
-  );
   const loading = subscriptionsQuery.isLoading;
 
   const loadError = subscriptionsQuery.isError ? getApiError(subscriptionsQuery.error) : "";
-  // A badge failure must not block the dialog — the other fields still work.
-  const badgeLoadError =
-    isAdmin && badgesQuery.isError
-      ? "Badges could not be loaded. You can still edit title, price, and duration."
-      : "";
 
   const updateSubscription = useUpdateSubscription();
   const deleteSubscription = useDeleteSubscription();
-
-  const openEdit = (subscription: Subscription) => {
-    setEditingSubscription(subscription);
-    setEditTitle(subscription.title);
-    setEditDescription(subscription.description ?? "");
-    setEditAmount(String(subscription.amount));
-    setEditDurationDays(String(subscription.durationDays));
-    setEditSelectedBadgeIds(subscription.badges.map((badge) => badge.id));
-    setEditError("");
-    setEditOpen(true);
-  };
 
   /**
    * Buy a plan: the API opens the order, Razorpay collects the money, and the
@@ -159,56 +116,6 @@ export default function SubscriptionsPage() {
     setConfirmMode(mode);
     setPageError("");
     setConfirmOpen(true);
-  };
-
-  const handleEditSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentTenantId || !editingSubscription) return;
-
-    const amount = Number(editAmount);
-    const durationDays = Number.parseInt(editDurationDays, 10);
-
-    if (!editTitle.trim()) {
-      setEditError("Plan title is required.");
-      return;
-    }
-    if (!Number.isInteger(amount) || amount < 0) {
-      setEditError("Amount must be a whole number in rupees.");
-      return;
-    }
-    if (!Number.isInteger(durationDays) || durationDays <= 0) {
-      setEditError("Duration must be a whole number greater than 0.");
-      return;
-    }
-
-    setEditSubmitting(true);
-    setEditError("");
-    try {
-      // The mutation invalidates the subscriptions key, so the list refreshes
-      // itself rather than being patched in place.
-      await updateSubscription.mutateAsync({
-        subscriptionId: editingSubscription.id,
-        data: {
-          title: editTitle.trim(),
-          description: editDescription.trim() || null,
-          amount,
-          durationDays,
-          badgeIds: editSelectedBadgeIds,
-        },
-      });
-      setEditOpen(false);
-      setEditingSubscription(null);
-    } catch (err) {
-      setEditError(getApiError(err));
-    } finally {
-      setEditSubmitting(false);
-    }
-  };
-
-  const toggleEditBadge = (badgeId: string) => {
-    setEditSelectedBadgeIds((prev) =>
-      prev.includes(badgeId) ? prev.filter((id) => id !== badgeId) : [...prev, badgeId],
-    );
   };
 
   const handleConfirm = async () => {
@@ -268,14 +175,9 @@ export default function SubscriptionsPage() {
           {pageError || loadError}
         </div>
       )}
-      {badgeLoadError && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-          {badgeLoadError}
-        </div>
-      )}
 
       {loading ? (
-        <PageLoader />
+        <ListPageSkeleton />
       ) : subscriptions.length === 0 ? (
         <EmptyState
           icon={Package}
@@ -352,7 +254,11 @@ export default function SubscriptionsPage() {
 
                   {isAdmin && (
                     <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm" onClick={() => openEdit(sub)}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/subscriptions/${sub.id}/edit`)}
+                      >
                         <Pencil className="h-3.5 w-3.5" />
                         Edit
                       </Button>
@@ -382,128 +288,6 @@ export default function SubscriptionsPage() {
           })}
         </div>
       )}
-
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit Subscription Plan</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleEditSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="subscription-title">Plan Title</Label>
-              <Input
-                id="subscription-title"
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                placeholder="e.g. Monthly Basic"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="subscription-description">Description</Label>
-              <Textarea
-                id="subscription-description"
-                value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
-                rows={3}
-                placeholder="Optional plan details"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="subscription-amount">Amount (in rupees)</Label>
-                <Input
-                  id="subscription-amount"
-                  type="number"
-                  value={editAmount}
-                  onChange={(e) => setEditAmount(e.target.value)}
-                  min={0}
-                  step={1}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="subscription-duration">Duration (days)</Label>
-                <Input
-                  id="subscription-duration"
-                  type="number"
-                  value={editDurationDays}
-                  onChange={(e) => setEditDurationDays(e.target.value)}
-                  min={1}
-                  step={1}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <Label>Badge Access</Label>
-              {editSelectedBadgeIds.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Visible to all members.</p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {availableBadges
-                    .filter((badge) => editSelectedBadgeIds.includes(badge.id))
-                    .map((badge) => (
-                      <Badge key={badge.id} variant="secondary">
-                        {badge.name}
-                      </Badge>
-                    ))}
-                </div>
-              )}
-
-              {availableBadges.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No badges available yet. Leave this plan open to all members.
-                </p>
-              ) : (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {availableBadges.map((badge) => {
-                    const checked = editSelectedBadgeIds.includes(badge.id);
-                    return (
-                      <label
-                        key={badge.id}
-                        className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
-                          checked ? "border-primary bg-primary/5" : "border-border"
-                        }`}
-                      >
-                        <Checkbox
-                          checked={checked}
-                          onCheckedChange={() => toggleEditBadge(badge.id)}
-                        />
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">{badge.name}</span>
-                            {!badge.isActive && (
-                              <Badge variant="outline" className="text-[10px]">
-                                Inactive
-                              </Badge>
-                            )}
-                          </div>
-                          {badge.description && (
-                            <p className="text-xs text-muted-foreground">{badge.description}</p>
-                          )}
-                        </div>
-                      </label>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {editError && <p className="text-sm text-destructive">{editError}</p>}
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={editSubmitting}>
-                {editSubmitting ? "Saving..." : "Save Changes"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       <ConfirmDialog
         open={confirmOpen}

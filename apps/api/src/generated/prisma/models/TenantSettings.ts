@@ -28,16 +28,22 @@ export type AggregateTenantSettings = {
 
 export type TenantSettingsAvgAggregateOutputType = {
   overdueDays: number | null
+  referralRewardCoins: number | null
+  referralRefereeCoins: number | null
 }
 
 export type TenantSettingsSumAggregateOutputType = {
   overdueDays: number | null
+  referralRewardCoins: number | null
+  referralRefereeCoins: number | null
 }
 
 export type TenantSettingsMinAggregateOutputType = {
   id: string | null
   tenantId: string | null
   overdueDays: number | null
+  referralRewardCoins: number | null
+  referralRefereeCoins: number | null
   razorpayKeyId: string | null
   razorpayKeySecret: string | null
   razorpayWebhookSecret: string | null
@@ -49,6 +55,8 @@ export type TenantSettingsMaxAggregateOutputType = {
   id: string | null
   tenantId: string | null
   overdueDays: number | null
+  referralRewardCoins: number | null
+  referralRefereeCoins: number | null
   razorpayKeyId: string | null
   razorpayKeySecret: string | null
   razorpayWebhookSecret: string | null
@@ -61,6 +69,8 @@ export type TenantSettingsCountAggregateOutputType = {
   tenantId: number
   overdueDays: number
   whatsappTemplates: number
+  referralRewardCoins: number
+  referralRefereeCoins: number
   razorpayKeyId: number
   razorpayKeySecret: number
   razorpayWebhookSecret: number
@@ -72,16 +82,22 @@ export type TenantSettingsCountAggregateOutputType = {
 
 export type TenantSettingsAvgAggregateInputType = {
   overdueDays?: true
+  referralRewardCoins?: true
+  referralRefereeCoins?: true
 }
 
 export type TenantSettingsSumAggregateInputType = {
   overdueDays?: true
+  referralRewardCoins?: true
+  referralRefereeCoins?: true
 }
 
 export type TenantSettingsMinAggregateInputType = {
   id?: true
   tenantId?: true
   overdueDays?: true
+  referralRewardCoins?: true
+  referralRefereeCoins?: true
   razorpayKeyId?: true
   razorpayKeySecret?: true
   razorpayWebhookSecret?: true
@@ -93,6 +109,8 @@ export type TenantSettingsMaxAggregateInputType = {
   id?: true
   tenantId?: true
   overdueDays?: true
+  referralRewardCoins?: true
+  referralRefereeCoins?: true
   razorpayKeyId?: true
   razorpayKeySecret?: true
   razorpayWebhookSecret?: true
@@ -105,6 +123,8 @@ export type TenantSettingsCountAggregateInputType = {
   tenantId?: true
   overdueDays?: true
   whatsappTemplates?: true
+  referralRewardCoins?: true
+  referralRefereeCoins?: true
   razorpayKeyId?: true
   razorpayKeySecret?: true
   razorpayWebhookSecret?: true
@@ -204,6 +224,8 @@ export type TenantSettingsGroupByOutputType = {
   tenantId: string
   overdueDays: number
   whatsappTemplates: runtime.JsonValue
+  referralRewardCoins: number
+  referralRefereeCoins: number
   razorpayKeyId: string | null
   razorpayKeySecret: string | null
   razorpayWebhookSecret: string | null
@@ -239,6 +261,8 @@ export type TenantSettingsWhereInput = {
   tenantId?: Prisma.StringFilter<"TenantSettings"> | string
   overdueDays?: Prisma.IntFilter<"TenantSettings"> | number
   whatsappTemplates?: Prisma.JsonFilter<"TenantSettings">
+  referralRewardCoins?: Prisma.IntFilter<"TenantSettings"> | number
+  referralRefereeCoins?: Prisma.IntFilter<"TenantSettings"> | number
   razorpayKeyId?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
   razorpayKeySecret?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
   razorpayWebhookSecret?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
@@ -252,6 +276,8 @@ export type TenantSettingsOrderByWithRelationInput = {
   tenantId?: Prisma.SortOrder
   overdueDays?: Prisma.SortOrder
   whatsappTemplates?: Prisma.SortOrder
+  referralRewardCoins?: Prisma.SortOrder
+  referralRefereeCoins?: Prisma.SortOrder
   razorpayKeyId?: Prisma.SortOrderInput | Prisma.SortOrder
   razorpayKeySecret?: Prisma.SortOrderInput | Prisma.SortOrder
   razorpayWebhookSecret?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -268,6 +294,8 @@ export type TenantSettingsWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.TenantSettingsWhereInput | Prisma.TenantSettingsWhereInput[]
   overdueDays?: Prisma.IntFilter<"TenantSettings"> | number
   whatsappTemplates?: Prisma.JsonFilter<"TenantSettings">
+  referralRewardCoins?: Prisma.IntFilter<"TenantSettings"> | number
+  referralRefereeCoins?: Prisma.IntFilter<"TenantSettings"> | number
   razorpayKeyId?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
   razorpayKeySecret?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
   razorpayWebhookSecret?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
@@ -281,6 +309,8 @@ export type TenantSettingsOrderByWithAggregationInput = {
   tenantId?: Prisma.SortOrder
   overdueDays?: Prisma.SortOrder
   whatsappTemplates?: Prisma.SortOrder
+  referralRewardCoins?: Prisma.SortOrder
+  referralRefereeCoins?: Prisma.SortOrder
   razorpayKeyId?: Prisma.SortOrderInput | Prisma.SortOrder
   razorpayKeySecret?: Prisma.SortOrderInput | Prisma.SortOrder
   razorpayWebhookSecret?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -301,6 +331,8 @@ export type TenantSettingsScalarWhereWithAggregatesInput = {
   tenantId?: Prisma.StringWithAggregatesFilter<"TenantSettings"> | string
   overdueDays?: Prisma.IntWithAggregatesFilter<"TenantSettings"> | number
   whatsappTemplates?: Prisma.JsonWithAggregatesFilter<"TenantSettings">
+  referralRewardCoins?: Prisma.IntWithAggregatesFilter<"TenantSettings"> | number
+  referralRefereeCoins?: Prisma.IntWithAggregatesFilter<"TenantSettings"> | number
   razorpayKeyId?: Prisma.StringNullableWithAggregatesFilter<"TenantSettings"> | string | null
   razorpayKeySecret?: Prisma.StringNullableWithAggregatesFilter<"TenantSettings"> | string | null
   razorpayWebhookSecret?: Prisma.StringNullableWithAggregatesFilter<"TenantSettings"> | string | null
@@ -312,6 +344,8 @@ export type TenantSettingsCreateInput = {
   id?: string
   overdueDays?: number
   whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  referralRewardCoins?: number
+  referralRefereeCoins?: number
   razorpayKeyId?: string | null
   razorpayKeySecret?: string | null
   razorpayWebhookSecret?: string | null
@@ -325,6 +359,8 @@ export type TenantSettingsUncheckedCreateInput = {
   tenantId: string
   overdueDays?: number
   whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  referralRewardCoins?: number
+  referralRefereeCoins?: number
   razorpayKeyId?: string | null
   razorpayKeySecret?: string | null
   razorpayWebhookSecret?: string | null
@@ -336,6 +372,8 @@ export type TenantSettingsUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   overdueDays?: Prisma.IntFieldUpdateOperationsInput | number
   whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  referralRewardCoins?: Prisma.IntFieldUpdateOperationsInput | number
+  referralRefereeCoins?: Prisma.IntFieldUpdateOperationsInput | number
   razorpayKeyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   razorpayKeySecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   razorpayWebhookSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -349,6 +387,8 @@ export type TenantSettingsUncheckedUpdateInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   overdueDays?: Prisma.IntFieldUpdateOperationsInput | number
   whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  referralRewardCoins?: Prisma.IntFieldUpdateOperationsInput | number
+  referralRefereeCoins?: Prisma.IntFieldUpdateOperationsInput | number
   razorpayKeyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   razorpayKeySecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   razorpayWebhookSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -361,6 +401,8 @@ export type TenantSettingsCreateManyInput = {
   tenantId: string
   overdueDays?: number
   whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  referralRewardCoins?: number
+  referralRefereeCoins?: number
   razorpayKeyId?: string | null
   razorpayKeySecret?: string | null
   razorpayWebhookSecret?: string | null
@@ -372,6 +414,8 @@ export type TenantSettingsUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   overdueDays?: Prisma.IntFieldUpdateOperationsInput | number
   whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  referralRewardCoins?: Prisma.IntFieldUpdateOperationsInput | number
+  referralRefereeCoins?: Prisma.IntFieldUpdateOperationsInput | number
   razorpayKeyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   razorpayKeySecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   razorpayWebhookSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -384,6 +428,8 @@ export type TenantSettingsUncheckedUpdateManyInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   overdueDays?: Prisma.IntFieldUpdateOperationsInput | number
   whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  referralRewardCoins?: Prisma.IntFieldUpdateOperationsInput | number
+  referralRefereeCoins?: Prisma.IntFieldUpdateOperationsInput | number
   razorpayKeyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   razorpayKeySecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   razorpayWebhookSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -401,6 +447,8 @@ export type TenantSettingsCountOrderByAggregateInput = {
   tenantId?: Prisma.SortOrder
   overdueDays?: Prisma.SortOrder
   whatsappTemplates?: Prisma.SortOrder
+  referralRewardCoins?: Prisma.SortOrder
+  referralRefereeCoins?: Prisma.SortOrder
   razorpayKeyId?: Prisma.SortOrder
   razorpayKeySecret?: Prisma.SortOrder
   razorpayWebhookSecret?: Prisma.SortOrder
@@ -410,12 +458,16 @@ export type TenantSettingsCountOrderByAggregateInput = {
 
 export type TenantSettingsAvgOrderByAggregateInput = {
   overdueDays?: Prisma.SortOrder
+  referralRewardCoins?: Prisma.SortOrder
+  referralRefereeCoins?: Prisma.SortOrder
 }
 
 export type TenantSettingsMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   tenantId?: Prisma.SortOrder
   overdueDays?: Prisma.SortOrder
+  referralRewardCoins?: Prisma.SortOrder
+  referralRefereeCoins?: Prisma.SortOrder
   razorpayKeyId?: Prisma.SortOrder
   razorpayKeySecret?: Prisma.SortOrder
   razorpayWebhookSecret?: Prisma.SortOrder
@@ -427,6 +479,8 @@ export type TenantSettingsMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   tenantId?: Prisma.SortOrder
   overdueDays?: Prisma.SortOrder
+  referralRewardCoins?: Prisma.SortOrder
+  referralRefereeCoins?: Prisma.SortOrder
   razorpayKeyId?: Prisma.SortOrder
   razorpayKeySecret?: Prisma.SortOrder
   razorpayWebhookSecret?: Prisma.SortOrder
@@ -436,6 +490,8 @@ export type TenantSettingsMinOrderByAggregateInput = {
 
 export type TenantSettingsSumOrderByAggregateInput = {
   overdueDays?: Prisma.SortOrder
+  referralRewardCoins?: Prisma.SortOrder
+  referralRefereeCoins?: Prisma.SortOrder
 }
 
 export type TenantSettingsCreateNestedOneWithoutTenantInput = {
@@ -474,6 +530,8 @@ export type TenantSettingsCreateWithoutTenantInput = {
   id?: string
   overdueDays?: number
   whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  referralRewardCoins?: number
+  referralRefereeCoins?: number
   razorpayKeyId?: string | null
   razorpayKeySecret?: string | null
   razorpayWebhookSecret?: string | null
@@ -485,6 +543,8 @@ export type TenantSettingsUncheckedCreateWithoutTenantInput = {
   id?: string
   overdueDays?: number
   whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  referralRewardCoins?: number
+  referralRefereeCoins?: number
   razorpayKeyId?: string | null
   razorpayKeySecret?: string | null
   razorpayWebhookSecret?: string | null
@@ -512,6 +572,8 @@ export type TenantSettingsUpdateWithoutTenantInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   overdueDays?: Prisma.IntFieldUpdateOperationsInput | number
   whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  referralRewardCoins?: Prisma.IntFieldUpdateOperationsInput | number
+  referralRefereeCoins?: Prisma.IntFieldUpdateOperationsInput | number
   razorpayKeyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   razorpayKeySecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   razorpayWebhookSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -523,6 +585,8 @@ export type TenantSettingsUncheckedUpdateWithoutTenantInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   overdueDays?: Prisma.IntFieldUpdateOperationsInput | number
   whatsappTemplates?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  referralRewardCoins?: Prisma.IntFieldUpdateOperationsInput | number
+  referralRefereeCoins?: Prisma.IntFieldUpdateOperationsInput | number
   razorpayKeyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   razorpayKeySecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   razorpayWebhookSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -537,6 +601,8 @@ export type TenantSettingsSelect<ExtArgs extends runtime.Types.Extensions.Intern
   tenantId?: boolean
   overdueDays?: boolean
   whatsappTemplates?: boolean
+  referralRewardCoins?: boolean
+  referralRefereeCoins?: boolean
   razorpayKeyId?: boolean
   razorpayKeySecret?: boolean
   razorpayWebhookSecret?: boolean
@@ -550,6 +616,8 @@ export type TenantSettingsSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   tenantId?: boolean
   overdueDays?: boolean
   whatsappTemplates?: boolean
+  referralRewardCoins?: boolean
+  referralRefereeCoins?: boolean
   razorpayKeyId?: boolean
   razorpayKeySecret?: boolean
   razorpayWebhookSecret?: boolean
@@ -563,6 +631,8 @@ export type TenantSettingsSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   tenantId?: boolean
   overdueDays?: boolean
   whatsappTemplates?: boolean
+  referralRewardCoins?: boolean
+  referralRefereeCoins?: boolean
   razorpayKeyId?: boolean
   razorpayKeySecret?: boolean
   razorpayWebhookSecret?: boolean
@@ -576,6 +646,8 @@ export type TenantSettingsSelectScalar = {
   tenantId?: boolean
   overdueDays?: boolean
   whatsappTemplates?: boolean
+  referralRewardCoins?: boolean
+  referralRefereeCoins?: boolean
   razorpayKeyId?: boolean
   razorpayKeySecret?: boolean
   razorpayWebhookSecret?: boolean
@@ -583,7 +655,7 @@ export type TenantSettingsSelectScalar = {
   updatedAt?: boolean
 }
 
-export type TenantSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "overdueDays" | "whatsappTemplates" | "razorpayKeyId" | "razorpayKeySecret" | "razorpayWebhookSecret" | "createdAt" | "updatedAt", ExtArgs["result"]["tenantSettings"]>
+export type TenantSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "overdueDays" | "whatsappTemplates" | "referralRewardCoins" | "referralRefereeCoins" | "razorpayKeyId" | "razorpayKeySecret" | "razorpayWebhookSecret" | "createdAt" | "updatedAt", ExtArgs["result"]["tenantSettings"]>
 export type TenantSettingsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
 }
@@ -610,6 +682,15 @@ export type $TenantSettingsPayload<ExtArgs extends runtime.Types.Extensions.Inte
      * Tenant-level WhatsApp template overrides keyed by message purpose
      */
     whatsappTemplates: runtime.JsonValue
+    /**
+     * Coins the referrer earns when the member they brought in first pays for a
+     * subscription. Zero turns referral rewards off.
+     */
+    referralRewardCoins: number
+    /**
+     * Coins the referred member earns at the same moment. Zero for none.
+     */
+    referralRefereeCoins: number
     /**
      * Razorpay key id for this gym's own account. Null means online payments
      * fall back to the platform account configured in the Worker environment.
@@ -1053,6 +1134,8 @@ export interface TenantSettingsFieldRefs {
   readonly tenantId: Prisma.FieldRef<"TenantSettings", 'String'>
   readonly overdueDays: Prisma.FieldRef<"TenantSettings", 'Int'>
   readonly whatsappTemplates: Prisma.FieldRef<"TenantSettings", 'Json'>
+  readonly referralRewardCoins: Prisma.FieldRef<"TenantSettings", 'Int'>
+  readonly referralRefereeCoins: Prisma.FieldRef<"TenantSettings", 'Int'>
   readonly razorpayKeyId: Prisma.FieldRef<"TenantSettings", 'String'>
   readonly razorpayKeySecret: Prisma.FieldRef<"TenantSettings", 'String'>
   readonly razorpayWebhookSecret: Prisma.FieldRef<"TenantSettings", 'String'>

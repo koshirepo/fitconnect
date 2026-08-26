@@ -402,6 +402,7 @@ export const ModelName = {
   PasswordResetToken: 'PasswordResetToken',
   RefreshToken: 'RefreshToken',
   Tenant: 'Tenant',
+  Role: 'Role',
   RolePermissionOverride: 'RolePermissionOverride',
   TenantSettings: 'TenantSettings',
   TenantCharge: 'TenantCharge',
@@ -410,6 +411,10 @@ export const ModelName = {
   Shift: 'Shift',
   Todo: 'Todo',
   Payment: 'Payment',
+  Coupon: 'Coupon',
+  CouponRedemption: 'CouponRedemption',
+  CoinLedgerEntry: 'CoinLedgerEntry',
+  MembershipFreeze: 'MembershipFreeze',
   Product: 'Product',
   ProductReview: 'ProductReview',
   ProductReviewComment: 'ProductReviewComment',
@@ -438,7 +443,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "idempotencyKey" | "passwordResetToken" | "refreshToken" | "tenant" | "rolePermissionOverride" | "tenantSettings" | "tenantCharge" | "tenantMembership" | "subscription" | "shift" | "todo" | "payment" | "product" | "productReview" | "productReviewComment" | "productReviewHelpful" | "order" | "orderItem" | "workoutPlan" | "workoutPlanAssignment" | "badge" | "platformPayment" | "attendance" | "auditLog" | "pushSubscription"
+    modelProps: "user" | "idempotencyKey" | "passwordResetToken" | "refreshToken" | "tenant" | "role" | "rolePermissionOverride" | "tenantSettings" | "tenantCharge" | "tenantMembership" | "subscription" | "shift" | "todo" | "payment" | "coupon" | "couponRedemption" | "coinLedgerEntry" | "membershipFreeze" | "product" | "productReview" | "productReviewComment" | "productReviewHelpful" | "order" | "orderItem" | "workoutPlan" | "workoutPlanAssignment" | "badge" | "platformPayment" | "attendance" | "auditLog" | "pushSubscription"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -809,6 +814,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.TenantCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.TenantCountAggregateOutputType> | number
+        }
+      }
+    }
+    Role: {
+      payload: Prisma.$RolePayload<ExtArgs>
+      fields: Prisma.RoleFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RoleFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RolePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RoleFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RolePayload>
+        }
+        findFirst: {
+          args: Prisma.RoleFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RolePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RoleFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RolePayload>
+        }
+        findMany: {
+          args: Prisma.RoleFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RolePayload>[]
+        }
+        create: {
+          args: Prisma.RoleCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RolePayload>
+        }
+        createMany: {
+          args: Prisma.RoleCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RoleCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RolePayload>[]
+        }
+        delete: {
+          args: Prisma.RoleDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RolePayload>
+        }
+        update: {
+          args: Prisma.RoleUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RolePayload>
+        }
+        deleteMany: {
+          args: Prisma.RoleDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RoleUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RoleUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RolePayload>[]
+        }
+        upsert: {
+          args: Prisma.RoleUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RolePayload>
+        }
+        aggregate: {
+          args: Prisma.RoleAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRole>
+        }
+        groupBy: {
+          args: Prisma.RoleGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RoleGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RoleCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RoleCountAggregateOutputType> | number
         }
       }
     }
@@ -1401,6 +1480,302 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.PaymentCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.PaymentCountAggregateOutputType> | number
+        }
+      }
+    }
+    Coupon: {
+      payload: Prisma.$CouponPayload<ExtArgs>
+      fields: Prisma.CouponFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CouponFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CouponFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponPayload>
+        }
+        findFirst: {
+          args: Prisma.CouponFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CouponFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponPayload>
+        }
+        findMany: {
+          args: Prisma.CouponFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponPayload>[]
+        }
+        create: {
+          args: Prisma.CouponCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponPayload>
+        }
+        createMany: {
+          args: Prisma.CouponCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CouponCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponPayload>[]
+        }
+        delete: {
+          args: Prisma.CouponDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponPayload>
+        }
+        update: {
+          args: Prisma.CouponUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponPayload>
+        }
+        deleteMany: {
+          args: Prisma.CouponDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CouponUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CouponUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponPayload>[]
+        }
+        upsert: {
+          args: Prisma.CouponUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponPayload>
+        }
+        aggregate: {
+          args: Prisma.CouponAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCoupon>
+        }
+        groupBy: {
+          args: Prisma.CouponGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CouponGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CouponCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CouponCountAggregateOutputType> | number
+        }
+      }
+    }
+    CouponRedemption: {
+      payload: Prisma.$CouponRedemptionPayload<ExtArgs>
+      fields: Prisma.CouponRedemptionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CouponRedemptionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponRedemptionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CouponRedemptionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponRedemptionPayload>
+        }
+        findFirst: {
+          args: Prisma.CouponRedemptionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponRedemptionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CouponRedemptionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponRedemptionPayload>
+        }
+        findMany: {
+          args: Prisma.CouponRedemptionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponRedemptionPayload>[]
+        }
+        create: {
+          args: Prisma.CouponRedemptionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponRedemptionPayload>
+        }
+        createMany: {
+          args: Prisma.CouponRedemptionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CouponRedemptionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponRedemptionPayload>[]
+        }
+        delete: {
+          args: Prisma.CouponRedemptionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponRedemptionPayload>
+        }
+        update: {
+          args: Prisma.CouponRedemptionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponRedemptionPayload>
+        }
+        deleteMany: {
+          args: Prisma.CouponRedemptionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CouponRedemptionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CouponRedemptionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponRedemptionPayload>[]
+        }
+        upsert: {
+          args: Prisma.CouponRedemptionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponRedemptionPayload>
+        }
+        aggregate: {
+          args: Prisma.CouponRedemptionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCouponRedemption>
+        }
+        groupBy: {
+          args: Prisma.CouponRedemptionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CouponRedemptionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CouponRedemptionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CouponRedemptionCountAggregateOutputType> | number
+        }
+      }
+    }
+    CoinLedgerEntry: {
+      payload: Prisma.$CoinLedgerEntryPayload<ExtArgs>
+      fields: Prisma.CoinLedgerEntryFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CoinLedgerEntryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CoinLedgerEntryPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CoinLedgerEntryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CoinLedgerEntryPayload>
+        }
+        findFirst: {
+          args: Prisma.CoinLedgerEntryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CoinLedgerEntryPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CoinLedgerEntryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CoinLedgerEntryPayload>
+        }
+        findMany: {
+          args: Prisma.CoinLedgerEntryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CoinLedgerEntryPayload>[]
+        }
+        create: {
+          args: Prisma.CoinLedgerEntryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CoinLedgerEntryPayload>
+        }
+        createMany: {
+          args: Prisma.CoinLedgerEntryCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CoinLedgerEntryCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CoinLedgerEntryPayload>[]
+        }
+        delete: {
+          args: Prisma.CoinLedgerEntryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CoinLedgerEntryPayload>
+        }
+        update: {
+          args: Prisma.CoinLedgerEntryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CoinLedgerEntryPayload>
+        }
+        deleteMany: {
+          args: Prisma.CoinLedgerEntryDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CoinLedgerEntryUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CoinLedgerEntryUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CoinLedgerEntryPayload>[]
+        }
+        upsert: {
+          args: Prisma.CoinLedgerEntryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CoinLedgerEntryPayload>
+        }
+        aggregate: {
+          args: Prisma.CoinLedgerEntryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCoinLedgerEntry>
+        }
+        groupBy: {
+          args: Prisma.CoinLedgerEntryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CoinLedgerEntryGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CoinLedgerEntryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CoinLedgerEntryCountAggregateOutputType> | number
+        }
+      }
+    }
+    MembershipFreeze: {
+      payload: Prisma.$MembershipFreezePayload<ExtArgs>
+      fields: Prisma.MembershipFreezeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MembershipFreezeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MembershipFreezePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MembershipFreezeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MembershipFreezePayload>
+        }
+        findFirst: {
+          args: Prisma.MembershipFreezeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MembershipFreezePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MembershipFreezeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MembershipFreezePayload>
+        }
+        findMany: {
+          args: Prisma.MembershipFreezeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MembershipFreezePayload>[]
+        }
+        create: {
+          args: Prisma.MembershipFreezeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MembershipFreezePayload>
+        }
+        createMany: {
+          args: Prisma.MembershipFreezeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MembershipFreezeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MembershipFreezePayload>[]
+        }
+        delete: {
+          args: Prisma.MembershipFreezeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MembershipFreezePayload>
+        }
+        update: {
+          args: Prisma.MembershipFreezeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MembershipFreezePayload>
+        }
+        deleteMany: {
+          args: Prisma.MembershipFreezeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MembershipFreezeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MembershipFreezeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MembershipFreezePayload>[]
+        }
+        upsert: {
+          args: Prisma.MembershipFreezeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MembershipFreezePayload>
+        }
+        aggregate: {
+          args: Prisma.MembershipFreezeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMembershipFreeze>
+        }
+        groupBy: {
+          args: Prisma.MembershipFreezeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MembershipFreezeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MembershipFreezeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MembershipFreezeCountAggregateOutputType> | number
         }
       }
     }
@@ -2476,6 +2851,23 @@ export const TenantScalarFieldEnum = {
 export type TenantScalarFieldEnum = (typeof TenantScalarFieldEnum)[keyof typeof TenantScalarFieldEnum]
 
 
+export const RoleScalarFieldEnum = {
+  id: 'id',
+  scope: 'scope',
+  key: 'key',
+  name: 'name',
+  description: 'description',
+  tenantId: 'tenantId',
+  isSystem: 'isSystem',
+  isActive: 'isActive',
+  createdBy: 'createdBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RoleScalarFieldEnum = (typeof RoleScalarFieldEnum)[keyof typeof RoleScalarFieldEnum]
+
+
 export const RolePermissionOverrideScalarFieldEnum = {
   id: 'id',
   scope: 'scope',
@@ -2496,6 +2888,8 @@ export const TenantSettingsScalarFieldEnum = {
   tenantId: 'tenantId',
   overdueDays: 'overdueDays',
   whatsappTemplates: 'whatsappTemplates',
+  referralRewardCoins: 'referralRewardCoins',
+  referralRefereeCoins: 'referralRefereeCoins',
   razorpayKeyId: 'razorpayKeyId',
   razorpayKeySecret: 'razorpayKeySecret',
   razorpayWebhookSecret: 'razorpayWebhookSecret',
@@ -2530,6 +2924,7 @@ export const TenantMembershipScalarFieldEnum = {
   dueDate: 'dueDate',
   shiftId: 'shiftId',
   referredByMembershipId: 'referredByMembershipId',
+  idCardToken: 'idCardToken',
   joinedAt: 'joinedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -2545,6 +2940,8 @@ export const SubscriptionScalarFieldEnum = {
   description: 'description',
   amount: 'amount',
   durationDays: 'durationDays',
+  freezeDays: 'freezeDays',
+  freezeCount: 'freezeCount',
   isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -2596,6 +2993,9 @@ export const PaymentScalarFieldEnum = {
   subscriptionId: 'subscriptionId',
   chargeId: 'chargeId',
   description: 'description',
+  listAmount: 'listAmount',
+  discountAmount: 'discountAmount',
+  coinsRedeemed: 'coinsRedeemed',
   note: 'note',
   paidAt: 'paidAt',
   validFrom: 'validFrom',
@@ -2609,6 +3009,85 @@ export const PaymentScalarFieldEnum = {
 } as const
 
 export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]
+
+
+export const CouponScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  code: 'code',
+  description: 'description',
+  type: 'type',
+  percentOff: 'percentOff',
+  amountOff: 'amountOff',
+  maxDiscount: 'maxDiscount',
+  coinsGranted: 'coinsGranted',
+  bonusDays: 'bonusDays',
+  firstTimeOnly: 'firstTimeOnly',
+  gender: 'gender',
+  minAmount: 'minAmount',
+  maxRedemptions: 'maxRedemptions',
+  redemptionCount: 'redemptionCount',
+  maxPerMember: 'maxPerMember',
+  startsAt: 'startsAt',
+  endsAt: 'endsAt',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CouponScalarFieldEnum = (typeof CouponScalarFieldEnum)[keyof typeof CouponScalarFieldEnum]
+
+
+export const CouponRedemptionScalarFieldEnum = {
+  id: 'id',
+  couponId: 'couponId',
+  tenantId: 'tenantId',
+  membershipId: 'membershipId',
+  paymentId: 'paymentId',
+  discountAmount: 'discountAmount',
+  coinsGranted: 'coinsGranted',
+  bonusDays: 'bonusDays',
+  appliedById: 'appliedById',
+  reversedAt: 'reversedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type CouponRedemptionScalarFieldEnum = (typeof CouponRedemptionScalarFieldEnum)[keyof typeof CouponRedemptionScalarFieldEnum]
+
+
+export const CoinLedgerEntryScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  membershipId: 'membershipId',
+  amount: 'amount',
+  reason: 'reason',
+  note: 'note',
+  couponRedemptionId: 'couponRedemptionId',
+  paymentId: 'paymentId',
+  createdById: 'createdById',
+  createdAt: 'createdAt'
+} as const
+
+export type CoinLedgerEntryScalarFieldEnum = (typeof CoinLedgerEntryScalarFieldEnum)[keyof typeof CoinLedgerEntryScalarFieldEnum]
+
+
+export const MembershipFreezeScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  membershipId: 'membershipId',
+  paymentId: 'paymentId',
+  startsOn: 'startsOn',
+  plannedEndsOn: 'plannedEndsOn',
+  endedOn: 'endedOn',
+  daysUsed: 'daysUsed',
+  reason: 'reason',
+  endedBy: 'endedBy',
+  createdById: 'createdById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MembershipFreezeScalarFieldEnum = (typeof MembershipFreezeScalarFieldEnum)[keyof typeof MembershipFreezeScalarFieldEnum]
 
 
 export const ProductScalarFieldEnum = {
@@ -3054,6 +3533,7 @@ export type GlobalOmitConfig = {
   passwordResetToken?: Prisma.PasswordResetTokenOmit
   refreshToken?: Prisma.RefreshTokenOmit
   tenant?: Prisma.TenantOmit
+  role?: Prisma.RoleOmit
   rolePermissionOverride?: Prisma.RolePermissionOverrideOmit
   tenantSettings?: Prisma.TenantSettingsOmit
   tenantCharge?: Prisma.TenantChargeOmit
@@ -3062,6 +3542,10 @@ export type GlobalOmitConfig = {
   shift?: Prisma.ShiftOmit
   todo?: Prisma.TodoOmit
   payment?: Prisma.PaymentOmit
+  coupon?: Prisma.CouponOmit
+  couponRedemption?: Prisma.CouponRedemptionOmit
+  coinLedgerEntry?: Prisma.CoinLedgerEntryOmit
+  membershipFreeze?: Prisma.MembershipFreezeOmit
   product?: Prisma.ProductOmit
   productReview?: Prisma.ProductReviewOmit
   productReviewComment?: Prisma.ProductReviewCommentOmit

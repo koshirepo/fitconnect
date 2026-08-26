@@ -6,6 +6,7 @@
  * - Primary exports: attendanceService.
  */
 import { attendanceRepository } from "./attendance.repository";
+import { freezeService } from "../freezes/freezes.service";
 import type {
   MarkAttendanceInput,
   MarkAllAttendanceInput,
@@ -105,6 +106,11 @@ export const attendanceService = {
       isSelf ? null : actorMembershipId,
       input.note,
     )) as any;
+
+    // A member who trains is not paused. Ends any freeze covering this day and
+    // returns the days they did not use, so attending cannot quietly earn them
+    // free time on a frozen membership.
+    await freezeService.endForAttendance(tenantId, targetMembershipId, date);
 
     return {
       data: {

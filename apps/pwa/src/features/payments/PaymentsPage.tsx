@@ -5,10 +5,12 @@ import { useSearchParams } from "react-router-dom";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
 import { paymentsApi } from "@/api/payments";
+import { getApiError } from "@/api/client";
 import { useAllPayments, useMyPayments, useUpdatePaymentStatus } from "@/api/queries/payments";
+import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { MemberCard, PersonChip } from "@/components/ui/member-card";
-import { PageLoader } from "@/components/ui/spinner";
+import { SkeletonRow } from "@/components/ui/skeleton";
 import { SwipePane } from "@/components/ui/swipe-pane";
 import { EmptyState } from "@/components/ui/empty-state";
 import { downloadCsv } from "@/lib/csv";
@@ -81,6 +83,8 @@ export default function PaymentsPage() {
   const canRecordPayment = can(Permission.PAYMENTS_CREATE);
 
   const [exporting, setExporting] = React.useState(false);
+  const toast = useToast();
+
   const [confirmAction, setConfirmAction] = React.useState<{
     paymentId: string;
     status: "COMPLETED" | "FAILED";
@@ -217,8 +221,16 @@ export default function PaymentsPage() {
   ) => {
     try {
       await updatePaymentStatus.mutateAsync({ paymentId, status });
-    } catch {
-      //
+      toast.success(
+        status === "COMPLETED" ? "Payment approved." : "Payment marked failed.",
+      );
+    } catch (caught) {
+      // This used to be swallowed, so an approval that failed looked exactly
+      // like one that worked.
+      toast.error({
+        message: "Could not update the payment.",
+        description: getApiError(caught),
+      });
     }
   };
 
@@ -367,7 +379,11 @@ export default function PaymentsPage() {
         onPrevious={() => goToTab(-1)}
       >
       {loading ? (
-        <PageLoader />
+        <div className="space-y-3">
+          {[0,1,2,3,4].map((i) => (
+            <div key={i} className="rounded-lg ring-1 ring-foreground/10"><SkeletonRow className="p-3" /></div>
+          ))}
+        </div>
       ) : allPayments.length === 0 ? (
         <EmptyState
           icon={CreditCard}

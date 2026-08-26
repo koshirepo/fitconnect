@@ -9,6 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAllMembers, useMember } from "@/api/queries/members";
 import { useSubscriptions } from "@/api/queries/payments";
 import { useTenantSettings } from "@/api/queries/catalog";
+import { useCoinBalance, useCouponQuote } from "@/api/queries/coupons";
 import { getApiError } from "@/api/client";
 import { formatCurrency } from "@/lib/utils";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
@@ -23,7 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import MemberSelector from "@/components/ui/memberSelector";
-import { PageLoader } from "@/components/ui/spinner";
+import { FormPageSkeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -35,6 +36,7 @@ import { AlertCircle, Plus } from "lucide-react";
 import type {
   Badge as BadgeModel,
   CreatePaymentPayload,
+  CouponQuote,
   MemberDetail,
   TenantMember,
   Subscription,
@@ -93,7 +95,14 @@ export default function RecordPaymentPage() {
   const [fValidUntil, setFValidUntil] = React.useState("");
   const [fNote, setFNote] = React.useState("");
   const [fPaidAmount, setFPaidAmount] = React.useState("");
+  const [fCouponCode, setFCouponCode] = React.useState("");
+  const [fCoinsToSpend, setFCoinsToSpend] = React.useState("");
   const [fStatus, setFStatus] = React.useState<"PENDING" | "COMPLETED">("COMPLETED");
+
+  /** The priced result of the code currently applied, from the server. */
+  const [quote, setQuote] = React.useState<CouponQuote | null>(null);
+  const [couponError, setCouponError] = React.useState("");
+  const [applying, setApplying] = React.useState(false);
 
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState("");
@@ -171,6 +180,8 @@ export default function RecordPaymentPage() {
 
   const handleMemberChange = (memberId: string) => {
     setFMembershipId(memberId);
+    // A price quoted for one member means nothing for another.
+    clearCoupon();
     setFSubscriptionId("");
     setFAmount("");
     setFPaidAmount("");
@@ -179,6 +190,7 @@ export default function RecordPaymentPage() {
 
   const handleSubChange = (subId: string) => {
     setFSubscriptionId(subId);
+    clearCoupon();
     const sub = availableSubscriptions.find((s) => s.id === subId);
     if (sub) {
       setFAmount(String(sub.amount));
@@ -189,8 +201,51 @@ export default function RecordPaymentPage() {
     }
   };
 
+  const coinBalance = useCoinBalance(fMembershipId || undefined);
+  const couponQuote = useCouponQuote();
+  const availableCoins = coinBalance.data?.balance ?? 0;
+
+  /**
+   * Ask the server what this costs. Never computed here: the same call the
+   * save makes, so the preview and the saved payment cannot disagree.
+   */
+  const applyCoupon = async () => {
+    setCouponError("");
+    if (!fMembershipId) {
+      setCouponError("Choose a member first.");
+      return;
+    }
+
+    setApplying(true);
+    try {
+      const priced = await couponQuote.mutateAsync({
+        membershipId: fMembershipId,
+        subscriptionId: fSubscriptionId || null,
+        amount: Number(fAmount) || undefined,
+        code: fCouponCode.trim() || null,
+        coinsToSpend: Number(fCoinsToSpend) || 0,
+      });
+      setQuote(priced);
+    } catch (caught) {
+      setQuote(null);
+      setCouponError(getApiError(caught));
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const clearCoupon = () => {
+    setFCouponCode("");
+    setFCoinsToSpend("");
+    setQuote(null);
+    setCouponError("");
+  };
+
   // A part payment: blank means the member is paying the whole amount.
-  const totalAmount = Number(fAmount) || 0;
+  const listAmount = Number(fAmount) || 0;
+  // What the member owes after a coupon and coins, which is what a part
+  // payment splits and what the receipt should name.
+  const totalAmount = quote ? quote.netAmount : listAmount;
   const receivedAmount = fPaidAmount === "" ? totalAmount : Number(fPaidAmount) || 0;
   const balanceAmount =
     fStatus === "COMPLETED" ? Math.max(totalAmount - receivedAmount, 0) : 0;
@@ -257,6 +312,11 @@ export default function RecordPaymentPage() {
         // Sent only when it is actually a part payment, so an ordinary
         // payment in full keeps the simpler payload it always had.
         ...(balanceAmount > 0 ? { paidAmount: receivedAmount } : {}),
+        // The code, never the discounted figure — the server prices it.
+        ...(quote?.coupon ? { couponCode: quote.coupon.code } : {}),
+        ...(quote && quote.coinsRedeemed > 0
+          ? { coinsToSpend: quote.coinsRedeemed }
+          : {}),
         status: fStatus,
         note: fNote || undefined,
         validUntil: fValidUntil,
@@ -297,7 +357,7 @@ export default function RecordPaymentPage() {
     }
   };
 
-  if (loading) return <PageLoader />;
+  if (loading) return <FormPageSkeleton fields={6} />;
 
   return (
     <div className="space-y-6">
@@ -409,6 +469,98 @@ export default function RecordPaymentPage() {
 
               {!fAmount && error.includes("amount") && (
                 <p className="text-sm text-destructive-foreground">{error}</p>
+              )}
+            </div>
+
+            {/* Coupon & coins. The server prices both; this only collects
+                the code and shows what came back. */}
+            <div className="space-y-2 rounded-lg border p-3">
+              <Label htmlFor="couponCode">Coupon or coins</Label>
+
+              <div className="flex gap-2">
+                <Input
+                  id="couponCode"
+                  value={fCouponCode}
+                  onChange={(e) => setFCouponCode(e.target.value.toUpperCase())}
+                  placeholder="Code"
+                  className="font-mono uppercase"
+                  maxLength={32}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={applyCoupon}
+                  disabled={applying || !fMembershipId}
+                >
+                  {applying ? "Checking…" : "Apply"}
+                </Button>
+              </div>
+
+              {availableCoins > 0 && (
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={0}
+                    max={availableCoins}
+                    value={fCoinsToSpend}
+                    onChange={(e) => setFCoinsToSpend(e.target.value)}
+                    placeholder={`Spend coins (${availableCoins} available)`}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setFCoinsToSpend(String(availableCoins))}
+                  >
+                    All
+                  </Button>
+                </div>
+              )}
+
+              {couponError && (
+                <p className="text-sm text-destructive">{couponError}</p>
+              )}
+
+              {quote && (quote.coupon || quote.coinsRedeemed > 0) && (
+                <div className="space-y-1 rounded-lg bg-muted/50 p-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Price</span>
+                    <span>{formatCurrency(quote.listAmount)}</span>
+                  </div>
+                  {quote.discountAmount > 0 && (
+                    <div className="flex justify-between text-emerald-600">
+                      <span>Discount ({quote.coupon?.code})</span>
+                      <span>-{formatCurrency(quote.discountAmount)}</span>
+                    </div>
+                  )}
+                  {quote.coinsRedeemed > 0 && (
+                    <div className="flex justify-between text-emerald-600">
+                      <span>Coins</span>
+                      <span>-{formatCurrency(quote.coinsRedeemed)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between border-t pt-1 font-semibold">
+                    <span>To collect</span>
+                    <span>{formatCurrency(quote.netAmount)}</span>
+                  </div>
+                  {quote.bonusDays > 0 && (
+                    <p className="text-xs text-emerald-600">
+                      +{quote.bonusDays} extra days of validity
+                    </p>
+                  )}
+                  {quote.coinsGranted > 0 && (
+                    <p className="text-xs text-emerald-600">
+                      Earns {quote.coinsGranted} coins
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={clearCoupon}
+                    className="text-xs text-muted-foreground underline"
+                  >
+                    Remove
+                  </button>
+                </div>
               )}
             </div>
 

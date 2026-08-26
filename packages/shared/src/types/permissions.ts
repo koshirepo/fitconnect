@@ -70,6 +70,20 @@ export const Permission = {
   WORKOUTS_DELETE: "workouts:delete",
   WORKOUTS_ASSIGN: "workouts:assign",
 
+  /// Freeze or unfreeze a membership. A desk action, not a plan-editing one.
+  MEMBERS_FREEZE: "members:freeze",
+  /// Freeze their own membership. Opens the door; the controller still checks
+  /// the membership belongs to the caller.
+  MEMBERS_FREEZE_SELF: "members:freeze:self",
+
+  // Coupons
+  COUPONS_READ: "coupons:read",
+  COUPONS_CREATE: "coupons:create",
+  COUPONS_UPDATE: "coupons:update",
+  COUPONS_DELETE: "coupons:delete",
+  /// Apply a coupon or spend coins while taking a payment.
+  COUPONS_APPLY: "coupons:apply",
+
   // Badges
   BADGES_READ: "badges:read",
   BADGES_CREATE: "badges:create",
@@ -153,6 +167,8 @@ const MEMBER_PERMISSIONS: Permission[] = [
   Permission.SUBSCRIPTIONS_READ,
   Permission.WORKOUTS_READ,
   Permission.BADGES_READ,
+  Permission.MEMBERS_FREEZE_SELF,
+  Permission.COUPONS_READ,
   Permission.SETTINGS_READ,
   Permission.SHIFTS_READ,
 ];
@@ -160,6 +176,8 @@ const MEMBER_PERMISSIONS: Permission[] = [
 /** Coaches add day-to-day floor operations on top of the member baseline. */
 const COACH_PERMISSIONS: Permission[] = [
   ...MEMBER_PERMISSIONS,
+  Permission.COUPONS_APPLY,
+  Permission.MEMBERS_FREEZE,
   Permission.MEMBERS_READ,
   Permission.MEMBERS_CREATE,
   Permission.MEMBERS_UPDATE,
@@ -185,6 +203,9 @@ const COACH_PERMISSIONS: Permission[] = [
 /** Tenant admins hold every tenant-scoped capability. */
 const ADMIN_PERMISSIONS: Permission[] = [
   ...COACH_PERMISSIONS,
+  Permission.COUPONS_CREATE,
+  Permission.COUPONS_UPDATE,
+  Permission.COUPONS_DELETE,
   Permission.TENANT_UPDATE,
   Permission.MEMBERS_DELETE,
   Permission.MEMBERS_ROLE_UPDATE,
@@ -536,6 +557,7 @@ export const PERMISSION_GROUPS: { key: string; label: string; prefixes: string[]
   { key: "attendance", label: "Attendance", prefixes: ["attendance:"] },
   { key: "payments", label: "Payments & plans", prefixes: ["payments:", "subscriptions:", "charges:"] },
   { key: "workouts", label: "Workouts", prefixes: ["workouts:"] },
+  { key: "coupons", label: "Coupons & coins", prefixes: ["coupons:"] },
   { key: "badges", label: "Badges", prefixes: ["badges:"] },
   { key: "todos", label: "Todos", prefixes: ["todos:"] },
   { key: "operations", label: "Settings, shifts & roles", prefixes: ["settings:", "shifts:", "roles:"] },

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageLoader } from "@/components/ui/spinner";
+import { DetailPageSkeleton } from "@/components/ui/skeleton";
 import { formatDateTime } from "@/lib/utils";
 import { ArrowLeft, PackageSearch } from "lucide-react";
 import type { Order } from "@/types/api";
@@ -43,7 +43,7 @@ export default function PublicOrderStatusPage() {
       .finally(() => setLoading(false));
   }, [orderId]);
 
-  if (loading) return <PageLoader />;
+  if (loading) return <DetailPageSkeleton />;
 
   if (!order) {
     return (

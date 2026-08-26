@@ -14,7 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PageLoader, Spinner } from "@/components/ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { useInfiniteScroll } from "@/lib/use-infinite-scroll";
 import { formatDate } from "@/lib/utils";
 import { ArrowUpDown, Search, Sparkles, UserPlus, Users, X } from "lucide-react";
@@ -139,7 +140,7 @@ export default function ReferralsPage() {
       </div>
 
       {loading ? (
-        <PageLoader />
+        <ListPageSkeleton />
       ) : leaders.length === 0 ? (
         <EmptyState
           icon={UserPlus}

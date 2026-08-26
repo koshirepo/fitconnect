@@ -10,6 +10,9 @@ import { prisma } from "../../lib/prisma";
 type SettingsRecord = {
   overdueDays: number;
   whatsappTemplates?: unknown;
+  /// Absent on rows read through the legacy path, which predates them.
+  referralRewardCoins?: number;
+  referralRefereeCoins?: number;
 };
 
 type LegacySettingsRow = {

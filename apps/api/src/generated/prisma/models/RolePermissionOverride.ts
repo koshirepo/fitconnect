@@ -17,7 +17,8 @@ import type * as Prisma from "../internal/prismaNamespace"
  * Per-role permission overrides layered on top of the static catalog in
  * `src/shared/types/permissions.ts`. A row with `allowed = true` grants a
  * permission the baseline role does not have; `allowed = false` revokes one it
- * does. Rows with a null tenantId are platform-wide defaults.
+ * does. Rows with a null tenantId are platform-wide defaults. For custom roles
+ * the baseline is empty, so every granted permission is an `allowed = true` row.
  */
 export type RolePermissionOverrideModel = runtime.Types.Result.DefaultSelection<Prisma.$RolePermissionOverridePayload>
 
@@ -456,10 +457,6 @@ export type RolePermissionOverrideUncheckedUpdateManyWithoutTenantNestedInput = 
   update?: Prisma.RolePermissionOverrideUpdateWithWhereUniqueWithoutTenantInput | Prisma.RolePermissionOverrideUpdateWithWhereUniqueWithoutTenantInput[]
   updateMany?: Prisma.RolePermissionOverrideUpdateManyWithWhereWithoutTenantInput | Prisma.RolePermissionOverrideUpdateManyWithWhereWithoutTenantInput[]
   deleteMany?: Prisma.RolePermissionOverrideScalarWhereInput | Prisma.RolePermissionOverrideScalarWhereInput[]
-}
-
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
 }
 
 export type RolePermissionOverrideCreateWithoutTenantInput = {

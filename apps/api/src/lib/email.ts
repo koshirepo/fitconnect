@@ -66,6 +66,8 @@ export interface WelcomeEmailPayload {
   email: string;
   password: string;
   memberId: number;
+  /** Link to the member's card. Null when the gym slug could not be resolved. */
+  idCardUrl?: string | null;
   payments: { description: string | null; amount: number }[];
   subscriptionTitle?: string;
   subscriptionDays?: number;
@@ -136,6 +138,20 @@ export const emailService = {
             <p style="margin:0;font-size:14px;"><strong>Password:</strong> <code style="background:#e2e8f0;padding:2px 8px;border-radius:4px;font-size:15px;">${payload.password}</code></p>
           </div>
           <p style="color:#6b7280;font-size:13px;">Please change your password after your first login.</p>
+
+          ${
+            payload.idCardUrl
+              ? `
+          <div style="margin:24px 0;padding:16px;border:1px solid #e2e8f0;border-radius:8px;">
+            <p style="margin:0 0 12px;font-size:14px;"><strong>Your membership card</strong></p>
+            <p style="margin:0 0 12px;color:#6b7280;font-size:13px;">Open it any time — it always shows your current membership details.</p>
+            <a href="${payload.idCardUrl}"
+               style="background:#0f172a;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;display:inline-block;">
+              View &amp; download card
+            </a>
+          </div>`
+              : ""
+          }
 
           ${
             payload.payments.length > 0

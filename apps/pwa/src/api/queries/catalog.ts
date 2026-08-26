@@ -150,6 +150,15 @@ export function useMemberBadges(membershipId: string | undefined) {
   );
 }
 
+/** One badge, for the edit page — a deep link has no list to read from. */
+export function useBadge(badgeId: string | undefined) {
+  return useTenantQuery(
+    (tenantId) => [...queryKeys.badges.list(tenantId), "detail", badgeId ?? "none"],
+    async (tenantId) => unwrap(await badgesApi.getById(tenantId, badgeId!)),
+    { enabled: Boolean(badgeId) },
+  );
+}
+
 export function useCreateBadge() {
   const tenantId = useCurrentTenantId();
   return useTenantMutation(
@@ -228,6 +237,15 @@ export function useTodosInfinite(
       return { data: data.todos, meta };
     },
     options,
+  );
+}
+
+/** One todo, for the edit page — a deep link has no list to read from. */
+export function useTodo(todoId: string | undefined) {
+  return useTenantQuery(
+    (tenantId) => [...queryKeys.todos.list(tenantId), "detail", todoId ?? "none"],
+    async (tenantId) => unwrap(await todosApi.getById(tenantId, todoId!)),
+    { enabled: Boolean(todoId) },
   );
 }
 

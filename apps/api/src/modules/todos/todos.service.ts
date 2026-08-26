@@ -119,6 +119,25 @@ export const todoService = {
     };
   },
 
+  /**
+   * One todo, for the edit screen.
+   *
+   * A todo a role cannot see in the list must not become reachable by typing
+   * its id into the URL, so the list's visibility rule is applied here too.
+   */
+  async get(tenantId: string, todoId: string, role: TenantRole) {
+    const todo = await todoRepository.findById(todoId, tenantId);
+    if (!todo) {
+      return { error: "Todo not found.", status: 404 as const };
+    }
+
+    if (role !== TenantRole.ADMIN && todo.visibility === TodoVisibility.PRIVATE) {
+      return { error: "Todo not found.", status: 404 as const };
+    }
+
+    return { data: { todo: mapTodo(todo) } };
+  },
+
   async create(
     tenantId: string,
     userId: string,

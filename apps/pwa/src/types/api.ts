@@ -28,6 +28,17 @@ export type {
   UpdateProfilePayload,
   UpdateMemberPayload,
   MemberDetail,
+  MemberIdCard,
+  // Coupons & coins
+  Coupon,
+  CouponType,
+  CouponPayload,
+  CouponRedemption,
+  CouponQuote,
+  CoinEntry,
+  // Membership freezes
+  MembershipFreeze,
+  FreezeStatus,
   MemberReferral,
   MemberReferralLeader,
   Shift,

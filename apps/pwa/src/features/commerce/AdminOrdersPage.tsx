@@ -17,7 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PageLoader, Spinner } from "@/components/ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { formatDateTime } from "@/lib/utils";
 import { useInfiniteScroll } from "@/lib/use-infinite-scroll";
 import { ArrowLeft, PackageSearch, Trash2 } from "lucide-react";
@@ -132,7 +133,7 @@ export default function AdminOrdersPage() {
             {error && <p className="text-sm text-destructive">{error}</p>}
 
             {loading ? (
-              <PageLoader />
+              <ListPageSkeleton />
             ) : orders.length === 0 ? (
               <EmptyState
                 icon={PackageSearch}

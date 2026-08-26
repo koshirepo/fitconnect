@@ -35,6 +35,9 @@ export function RolePermissionEditor({
     () => new Set(role.baselinePermissions),
     [role.baselinePermissions],
   );
+  // Custom roles have an empty catalog baseline by design, so the "changed"
+  // badge (which compares against the baseline) is meaningless for them.
+  const showDeviations = role.isSystem;
 
   return (
     <div className="space-y-6">
@@ -72,7 +75,7 @@ export function RolePermissionEditor({
                 const isChecked = isLocked || selected.has(permission.key);
                 const isDisabled =
                   disabled || !role.editable || isLocked || !permission.manageable;
-                const deviates = isChecked !== baseline.has(permission.key);
+                const deviates = showDeviations && isChecked !== baseline.has(permission.key);
 
                 return (
                   <label

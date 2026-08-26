@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { PageLoader } from "@/components/ui/spinner";
+import { DetailPageSkeleton } from "@/components/ui/skeleton";
 import { SwipePane } from "@/components/ui/swipe-pane";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import {
@@ -210,7 +210,7 @@ export default function PaymentDetailPage() {
     }
   };
 
-  if (loading) return <PageLoader />;
+  if (loading) return <DetailPageSkeleton />;
 
   if (!payment) {
     return (

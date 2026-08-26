@@ -15,6 +15,7 @@ import {
   Dumbbell,
   CreditCard,
   Package,
+  Tag,
   ShoppingBag,
   ScrollText,
   Award,
@@ -114,6 +115,12 @@ const tenantNav: NavItem[] = [
     label: "Subscriptions",
     icon: Package,
     anyOf: [Permission.SUBSCRIPTIONS_READ],
+  },
+  {
+    to: "/coupons",
+    label: "Coupons",
+    icon: Tag,
+    anyOf: [Permission.COUPONS_READ],
   },
   {
     to: "/attendance",

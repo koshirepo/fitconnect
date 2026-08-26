@@ -12,7 +12,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PageLoader, Spinner } from "@/components/ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/utils";
 import { useInfiniteScroll } from "@/lib/use-infinite-scroll";
@@ -77,7 +78,7 @@ export default function TenantsPage() {
       </div>
 
       {loading ? (
-        <PageLoader />
+        <ListPageSkeleton />
       ) : tenants.length === 0 ? (
         <EmptyState
           icon={Building2}
