@@ -1,11 +1,14 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Download, X } from "lucide-react";
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt(): Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-}
+import {
+  clearDeferredInstallPrompt,
+  getDeferredInstallPrompt,
+  INSTALL_PROMPT_AVAILABLE,
+  type BeforeInstallPromptEvent,
+} from "@/lib/install-prompt-event";
+import { readCachedTenantBranding } from "@/lib/tenant-branding";
+import { isTenantSubdomain } from "@/lib/subdomain";
 
 export function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = React.useState<BeforeInstallPromptEvent | null>(null);
@@ -19,13 +22,21 @@ export function InstallPrompt() {
     const lastDismissed = localStorage.getItem("pwa-install-dismissed");
     if (lastDismissed && Date.now() - Number(lastDismissed) < 24 * 60 * 60 * 1000) return;
 
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-    };
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+    // The event may already have fired — `main.tsx` starts listening before the
+    // first render precisely because it usually has.
+    const held = getDeferredInstallPrompt();
+    if (held) {
+      setDeferredPrompt(held);
+      return;
+    }
+
+    const handler = () => setDeferredPrompt(getDeferredInstallPrompt());
+    window.addEventListener(INSTALL_PROMPT_AVAILABLE, handler);
+    return () => window.removeEventListener(INSTALL_PROMPT_AVAILABLE, handler);
   }, []);
+
+  // On a gym subdomain the app being installed is that gym, not the platform.
+  const gymName = isTenantSubdomain() ? readCachedTenantBranding()?.name : null;
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;
@@ -33,6 +44,7 @@ export function InstallPrompt() {
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === "accepted") {
       setDeferredPrompt(null);
+      clearDeferredInstallPrompt();
     }
   };
 
@@ -49,7 +61,7 @@ export function InstallPrompt() {
       <div className="flex items-center gap-3">
         <Download className="h-6 w-6 text-primary" />
         <div className="flex-1">
-          <p className="text-sm font-medium">Install FitConnect</p>
+          <p className="text-sm font-medium">Install {gymName ?? "FitConnect"}</p>
           <p className="text-xs text-muted-foreground">
             Add to home screen for the best experience.
           </p>

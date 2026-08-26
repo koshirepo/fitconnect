@@ -19,6 +19,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
 import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { isTenantSubdomain } from "@/lib/subdomain";
+import { useTenantInstallBranding } from "@/lib/install-branding";
 import { TenantPathNormalizer } from "@/features/auth/tenant-path-normalizer";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useAuthStore } from "@/stores/auth";
@@ -122,6 +123,11 @@ export default function App() {
   const { isAuthenticated, accessToken, fetchMe } = useAuthStore();
   const [authSyncing, setAuthSyncing] = React.useState(Boolean(isAuthenticated && accessToken));
   const isTenantHostView = isTenantSubdomain();
+
+  // iOS reads the home-screen name and icon from meta tags rather than the
+  // manifest, and a member can install from any screen — so this sits at the
+  // root instead of on one page.
+  useTenantInstallBranding();
 
   React.useEffect(() => {
     if (!isAuthenticated || !accessToken) {

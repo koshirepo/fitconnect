@@ -333,6 +333,8 @@ export function TenantPublicProfileCard({
                   setLogoPreview(preview);
                 }}
                 requireFace={false}
+                cropOutputWidth={512}
+                croppedFileName="logo.jpg"
                 disabled={saving}
               />
               <p className="text-xs text-muted-foreground">

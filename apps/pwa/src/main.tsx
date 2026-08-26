@@ -7,6 +7,11 @@ import App from "./App";
 import { registerSW } from "./lib/register-sw";
 import { initSyncListener } from "./lib/sync-listener";
 import { PERSIST_MAX_AGE_MS, queryClient, queryPersister } from "./lib/query-client";
+import { captureInstallPrompt } from "./lib/install-prompt-event";
+
+// Before the first render: Chrome fires `beforeinstallprompt` once, and a
+// listener attached later in a component's effect misses it outright.
+captureInstallPrompt();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

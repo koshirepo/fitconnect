@@ -447,6 +447,8 @@ export default function NewTenant() {
                     setLogoPreview(preview);
                   }}
                   requireFace={false}
+                  cropOutputWidth={512}
+                  croppedFileName="logo.jpg"
                   disabled={submitting}
                 />
               </div>
