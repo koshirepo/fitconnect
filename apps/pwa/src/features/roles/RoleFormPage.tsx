@@ -34,7 +34,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PageLoader } from "@/components/ui/spinner";
+import { FormPageSkeleton } from "@/components/ui/skeleton";
 import { AlertCircle, ArrowLeft } from "lucide-react";
 
 type Props = {
@@ -76,7 +76,7 @@ export default function RoleFormPage({ scope }: Props) {
     setSeeded(true);
   }, [isEdit, seeded, role]);
 
-  if (isEdit && matrix.isLoading) return <PageLoader />;
+  if (isEdit && matrix.isLoading) return <FormPageSkeleton fields={2} />;
 
   if (isEdit && (!role || role.isSystem)) {
     return (

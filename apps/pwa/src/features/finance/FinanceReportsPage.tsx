@@ -19,6 +19,8 @@ import {
   UserCheck,
   Ban,
   Activity,
+  CreditCard,
+  Wallet,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -201,6 +203,38 @@ export default function FinanceReportsPage() {
       ]
     : [];
 
+  // This month, by what was being paid for. Zeroed buckets still render so the
+  // mix reads as "nothing from charges" rather than silently omitting the row.
+  const mixRows = analytics
+    ? [
+        {
+          label: "Memberships",
+          revenue: analytics.revenueMix.subscriptions.revenue,
+          count: analytics.revenueMix.subscriptions.count,
+          color: COLORS.green,
+        },
+        {
+          label: "One-off charges",
+          revenue: analytics.revenueMix.charges.revenue,
+          count: analytics.revenueMix.charges.count,
+          color: COLORS.blue,
+        },
+        {
+          label: "Other",
+          revenue: analytics.revenueMix.other.revenue,
+          count: analytics.revenueMix.other.count,
+          color: COLORS.muted,
+        },
+      ]
+    : [];
+  const mixTotal = mixRows.reduce((sum, r) => sum + r.revenue, 0);
+  const givenAwayMonth = analytics
+    ? analytics.discounts.month.discount + analytics.discounts.month.coins
+    : 0;
+  const collectedTotal = analytics
+    ? analytics.collection.online.revenue + analytics.collection.manual.revenue
+    : 0;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -261,6 +295,161 @@ export default function FinanceReportsPage() {
               subtext={`${analytics.today.totalCount} payments`}
               color="text-blue-600"
             />
+          </div>
+
+          {/* ═══════════════ THIS MONTH IN DETAIL ═══════════════ */}
+          <div className="grid gap-4 lg:grid-cols-3">
+            {/* What was being paid for. Memberships and one-off charges bill on
+                different rhythms, so a month that looks flat overall can still
+                be a month where dues fell and admissions covered the gap. */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Revenue Mix</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {mixRows.every((r) => r.revenue === 0) ? (
+                  <p className="py-6 text-center text-sm text-muted-foreground">
+                    No completed payments this month yet.
+                  </p>
+                ) : (
+                  mixRows.map((row) => (
+                    <div key={row.label} className="space-y-1.5">
+                      <div className="flex items-baseline justify-between gap-2 text-sm">
+                        <span className="text-muted-foreground">{row.label}</span>
+                        <span className="font-semibold tabular-nums">
+                          {formatCompact(row.revenue)}
+                        </span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${mixTotal > 0 ? (row.revenue / mixTotal) * 100 : 0}%`,
+                            backgroundColor: row.color,
+                          }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {row.count} {row.count === 1 ? "payment" : "payments"}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+
+            {/* List price down to banked. `amount` is already net of both
+                giveaways, so this is the only place the gap is visible. */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Discounts &amp; Coins</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-muted-foreground">List price</span>
+                  <span className="font-medium tabular-nums">
+                    {formatCompact(analytics.discounts.month.gross)}
+                  </span>
+                </div>
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-muted-foreground">Coupon discounts</span>
+                  <span className="font-medium tabular-nums text-amber-600">
+                    −{formatCompact(analytics.discounts.month.discount)}
+                  </span>
+                </div>
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-muted-foreground">Coins redeemed</span>
+                  <span className="font-medium tabular-nums text-amber-600">
+                    −{formatCompact(analytics.discounts.month.coins)}
+                  </span>
+                </div>
+                <div className="mt-1 flex items-baseline justify-between gap-2 border-t pt-2">
+                  <span className="font-medium">Collected</span>
+                  <span className="text-lg font-bold tabular-nums text-green-600">
+                    {formatCompact(analytics.discounts.month.net)}
+                  </span>
+                </div>
+                <p className="pt-1 text-xs text-muted-foreground">
+                  {givenAwayMonth > 0
+                    ? `${formatCompact(givenAwayMonth)} given away this month · ${formatCompact(
+                        analytics.discounts.allTime.discount + analytics.discounts.allTime.coins,
+                      )} all time`
+                    : "No coupons or coins used this month."}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Cash still moves through most gyms, so knowing the split tells an
+                owner how much of the month is sitting in a drawer. */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">How It Was Collected</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {collectedTotal === 0 ? (
+                  <p className="py-6 text-center text-sm text-muted-foreground">
+                    Nothing collected this month yet.
+                  </p>
+                ) : (
+                  <>
+                    <div className="flex h-2 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full"
+                        style={{
+                          width: `${(analytics.collection.online.revenue / collectedTotal) * 100}%`,
+                          backgroundColor: COLORS.blue,
+                        }}
+                      />
+                      <div
+                        className="h-full"
+                        style={{
+                          width: `${(analytics.collection.manual.revenue / collectedTotal) * 100}%`,
+                          backgroundColor: COLORS.purple,
+                        }}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">Online</span>
+                        </div>
+                        <p className="text-lg font-bold tabular-nums">
+                          {formatCompact(analytics.collection.online.revenue)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {analytics.collection.online.count} payments
+                        </p>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <Wallet className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">Cash / manual</span>
+                        </div>
+                        <p className="text-lg font-bold tabular-nums">
+                          {formatCompact(analytics.collection.manual.revenue)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {analytics.collection.manual.count} payments
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
+                <div className="grid grid-cols-2 gap-3 border-t pt-3">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Coins outstanding</p>
+                    <p className="font-semibold tabular-nums">
+                      {analytics.coinsOutstanding.toLocaleString("en-IN")}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Frozen terms</p>
+                    <p className="font-semibold tabular-nums">{analytics.activeFreezes}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* ═══════════════ ROW 2: REVENUE TREND + MEMBER DISTRIBUTION ═══════════════ */}

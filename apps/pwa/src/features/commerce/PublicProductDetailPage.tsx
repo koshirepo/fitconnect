@@ -47,18 +47,6 @@ export default function PublicProductDetailPage() {
   const [ratingStats, setRatingStats] = React.useState<RatingStats | null>(null);
   const [reviewsLoading, setReviewsLoading] = React.useState(false);
 
-  React.useEffect(() => {
-    if (!productId) return;
-    setLoading(true);
-    setError("");
-    commerceApi
-      .getProductById(productId)
-      .then((res) => setProduct(res.data.data.product))
-      .catch((err: unknown) => setError(getApiError(err)))
-      .finally(() => setLoading(false));
-    loadReviewsAndStats(productId);
-  }, [productId]);
-
   const loadReviewsAndStats = async (pId: string) => {
     try {
       setReviewsLoading(true);
@@ -74,6 +62,19 @@ export default function PublicProductDetailPage() {
       setReviewsLoading(false);
     }
   };
+
+  React.useEffect(() => {
+    if (!productId) return;
+    setLoading(true);
+    setError("");
+    commerceApi
+      .getProductById(productId)
+      .then((res) => setProduct(res.data.data.product))
+      .catch((err: unknown) => setError(getApiError(err)))
+      .finally(() => setLoading(false));
+    loadReviewsAndStats(productId);
+  }, [productId]);
+
 
   const cartCount = getCartTotalQuantity(cart);
   const cartQty = product ? (cart.find((i) => i.productId === product.id)?.quantity ?? 0) : 0;

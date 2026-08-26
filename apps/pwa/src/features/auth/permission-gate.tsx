@@ -32,7 +32,10 @@ export function usePermissions(): PermissionCheck {
       canAll: (...permissions: Permission[]) =>
         permissions.every((permission) => granted.has(permission)),
     };
-    // `user` is the whole reason the set can change (role, membership, permissions list).
+    // `user` is the whole reason the set can change (role, membership, permissions
+    // list). The body reads it from the store, so it is a cache key rather than a
+    // referenced value — which is exactly what the rule cannot see.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate cache key
   }, [user]);
 }
 

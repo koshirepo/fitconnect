@@ -32,7 +32,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PageLoader } from "@/components/ui/spinner";
+import { FormPageSkeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import {
   Select,
@@ -215,7 +215,7 @@ export default function CouponFormPage() {
     }
   };
 
-  if (isEdit && couponQuery.isLoading) return <PageLoader />;
+  if (isEdit && couponQuery.isLoading) return <FormPageSkeleton fields={8} />;
 
   const TypeIcon = TYPE_META[form.type].icon;
 

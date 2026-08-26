@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge as UiBadge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageLoader } from "@/components/ui/spinner";
+import { PageHeaderSkeleton, SkeletonRow } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -136,7 +136,20 @@ export default function CouponsPage() {
   };
 
 
-  if (couponsQuery.isLoading) return <PageLoader />;
+  if (couponsQuery.isLoading) {
+    return (
+      <div className="space-y-6">
+        <PageHeaderSkeleton />
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="rounded-lg ring-1 ring-foreground/10">
+              <SkeletonRow className="p-3" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -37,12 +37,12 @@ export function SwipePane({
   // Read during render so the class is right on the first paint after a change;
   // an effect would run a frame too late and the animation would start from the
   // wrong side.
+  // The previous index has to be known during this render; an effect would
+  // resolve it a frame late and the animation would start from the wrong side.
+  // eslint-disable-next-line react-hooks/refs -- deliberate, see above
+  const previousIndex = lastIndex.current;
   const direction =
-    paneIndex > lastIndex.current
-      ? "next"
-      : paneIndex < lastIndex.current
-        ? "previous"
-        : null;
+    paneIndex > previousIndex ? "next" : paneIndex < previousIndex ? "previous" : null;
 
   React.useEffect(() => {
     lastIndex.current = paneIndex;

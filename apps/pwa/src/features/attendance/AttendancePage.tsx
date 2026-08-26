@@ -57,6 +57,12 @@ function formatMonthLabel(s: string) {
   return d.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
 }
 
+/**
+ * The member-facing self check-in card, parked while check-in happens at the
+ * desk. Kept rather than deleted because the flow it renders still works.
+ */
+const SHOW_SELF_CHECKIN_CARD = false;
+
 export default function AttendancePage() {
   const navigate = useAppNavigate();
   const { currentTenantId, currentMembership } = useAuthStore();
@@ -702,7 +708,7 @@ export default function AttendancePage() {
           )}
         </div>
       )}
-      {false && !isStaff && (
+      {SHOW_SELF_CHECKIN_CARD && !isStaff && (
         <Card>
           <CardContent className="py-8 text-center">
             {checkedIn ? (

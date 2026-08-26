@@ -45,6 +45,9 @@ export default function TenantDetails() {
   const canManageStatus = useAuthStore((s) => s.user?.platformRole === "SUPER_ADMIN");
   const updateTenantStatus = useUpdateTenantStatus();
 
+  // Read once for this mount rather than per render, so the expiry countdown is
+  // stable and the render stays pure.
+  const [renderedAt] = React.useState(() => Date.now());
   const [loading, setLoading] = React.useState(true);
   const [statusUpdating, setStatusUpdating] = React.useState(false);
   const [tenant, setTenant] = React.useState<Tenant | null>(null);
@@ -403,7 +406,7 @@ export default function TenantDetails() {
               {tenant.platformExpiresAt &&
                 (() => {
                   const daysLeft = Math.ceil(
-                    (new Date(tenant.platformExpiresAt).getTime() - Date.now()) / 86400000,
+                    (new Date(tenant.platformExpiresAt).getTime() - renderedAt) / 86400000,
                   );
                   if (daysLeft < 0) return <Badge variant="destructive">Expired</Badge>;
                   if (daysLeft <= 7) return <Badge variant="warning">Expires in {daysLeft}d</Badge>;

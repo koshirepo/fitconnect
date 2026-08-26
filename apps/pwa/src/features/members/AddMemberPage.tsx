@@ -35,6 +35,7 @@ import {
   Shield,
   Mail,
 } from "lucide-react";
+import { CardSkeleton } from "@/components/ui/skeleton";
 import MemberForm, { type MemberFormData } from "@/components/forms/MemberForm";
 
 function formatAmount(amount: number) {
@@ -328,8 +329,9 @@ export default function AddMemberPage() {
           </Button>
 
           {loadingOptions ? (
-            <div className="flex items-center justify-center py-10">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <div className="space-y-4">
+              <CardSkeleton />
+              <CardSkeleton />
             </div>
           ) : (
             <>

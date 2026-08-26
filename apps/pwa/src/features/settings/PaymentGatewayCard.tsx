@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Spinner } from "@/components/ui/spinner";
+import { Skeleton, SkeletonText } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { CreditCard, ExternalLink } from "lucide-react";
 
@@ -133,9 +133,9 @@ export default function PaymentGatewayCard() {
 
       <CardContent className="space-y-4">
         {gatewayQuery.isLoading ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Spinner size="sm" />
-            Loading payment settings…
+          <div className="space-y-3">
+            <Skeleton className="h-16 w-full rounded-lg" />
+            <SkeletonText lines={2} />
           </div>
         ) : (
           <>

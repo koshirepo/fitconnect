@@ -32,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PageLoader } from "@/components/ui/spinner";
+import { FormPageSkeleton } from "@/components/ui/skeleton";
 import { AlertCircle, ArrowLeft } from "lucide-react";
 import type { TodoVisibility } from "@/types/api";
 
@@ -72,7 +72,7 @@ export default function TodoFormPage() {
     return <Navigate to="/todos" replace />;
   }
 
-  if (isEdit && todoQuery.isLoading) return <PageLoader />;
+  if (isEdit && todoQuery.isLoading) return <FormPageSkeleton fields={3} />;
 
   if (isEdit && todoQuery.isError) {
     return (

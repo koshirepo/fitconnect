@@ -24,7 +24,30 @@ export default defineConfig([
         'error',
         {
           allowConstantExport: true,
-          allowExportNames: ['badgeVariants', 'buttonVariants'],
+          // Hooks colocated with the provider they read from. Splitting them into
+          // their own files would buy nothing but an extra import.
+          allowExportNames: [
+            'badgeVariants',
+            'buttonVariants',
+            'useToast',
+            'usePermissions',
+          ],
+        },
+      ],
+      // Flags effects that call setState synchronously — a React Compiler
+      // readiness rule, not a correctness one. The 38 current hits are working
+      // code (form seeding, fetch-then-set loaders) and each needs restructuring
+      // into derived state, a keyed remount, or react-query. Kept visible as a
+      // warning so the count can be burned down deliberately rather than muted.
+      'react-hooks/set-state-in-effect': 'warn',
+      // A leading underscore is how this codebase marks a binding it destructured
+      // only to leave it behind.
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
         },
       ],
     },

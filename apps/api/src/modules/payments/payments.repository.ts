@@ -8,6 +8,54 @@
 import { prisma } from "../../lib/prisma";
 import type { PaymentStatus } from "@fitconnect/shared/types/enums";
 
+/**
+ * Collapse a payment aggregate into the giveaway shape the analytics response
+ * uses: what was asked, what came off, and what was actually taken.
+ *
+ * `listAmount` is null on rows written before coupons existed. Those fall back
+ * to the net amount, so an old row reports no giveaway rather than a negative one.
+ */
+function mapGiveaway(sum: {
+  amount: number | null;
+  listAmount: number | null;
+  discountAmount: number | null;
+  coinsRedeemed: number | null;
+}) {
+  const net = sum.amount ?? 0;
+  const discount = sum.discountAmount ?? 0;
+  const coins = sum.coinsRedeemed ?? 0;
+  return {
+    gross: sum.listAmount ?? net,
+    discount,
+    coins,
+    net,
+  };
+}
+
+/** Total one side of the cash/online split out of a `groupBy("gateway")` result. */
+function sumGateway(
+  rows: { gateway: string | null; _sum: { amount: number | null }; _count: number }[],
+  matches: (gateway: string | null) => boolean,
+) {
+  let revenue = 0;
+  let count = 0;
+  for (const r of rows) {
+    if (!matches(r.gateway)) continue;
+    revenue += r._sum.amount ?? 0;
+    count += r._count;
+  }
+  return { revenue, count };
+}
+
+/** One bucket of the subscription/charge revenue split, zeroed when absent. */
+function pickMix(
+  rows: { kind: string; revenue: number | bigint; count: number | bigint }[],
+  kind: string,
+) {
+  const row = rows.find((r) => r.kind === kind);
+  return { revenue: Number(row?.revenue ?? 0), count: Number(row?.count ?? 0) };
+}
+
 const subscriptionBadgeSelect = {
   id: true,
   name: true,
@@ -696,6 +744,12 @@ export const paymentRepository = {
       deactivatedWeek,
       deactivatedMonth,
       deactivatedAll,
+      discountsMonth,
+      discountsAllTime,
+      collectionMonth,
+      coinBalance,
+      activeFreezes,
+      mixMonth,
     ] = await Promise.all([
       // Today's stats
       prisma.payment.groupBy({
@@ -767,6 +821,43 @@ export const paymentRepository = {
       prisma.tenantMembership.count({
         where: { tenantId, status: { in: ["SUSPENDED", "DELETED"] } },
       }),
+      // What was given away this month: coupons off the list price, and coins
+      // spent against it. `amount` is already net of both.
+      prisma.payment.aggregate({
+        where: { tenantId, status: "COMPLETED", createdAt: { gte: startOfMonth } },
+        _sum: { amount: true, listAmount: true, discountAmount: true, coinsRedeemed: true },
+      }),
+      prisma.payment.aggregate({
+        where: { tenantId, status: "COMPLETED" },
+        _sum: { amount: true, listAmount: true, discountAmount: true, coinsRedeemed: true },
+      }),
+      // How the money arrived. `gateway` is null for cash and other manual entries.
+      prisma.payment.groupBy({
+        by: ["gateway"],
+        where: { tenantId, status: "COMPLETED", createdAt: { gte: startOfMonth } },
+        _sum: { amount: true },
+        _count: true,
+      }),
+      // Coins the gym still owes its members: earns are positive, spends negative.
+      prisma.coinLedgerEntry.aggregate({ where: { tenantId }, _sum: { amount: true } }),
+      // Terms paused right now, which is revenue already collected but not yet run out.
+      prisma.membershipFreeze.count({ where: { tenantId, endedOn: null } }),
+      // Membership dues versus one-off charges, which bill on different rhythms.
+      prisma.$queryRaw<{ kind: string; revenue: number | bigint; count: number | bigint }[]>`
+        SELECT
+          CASE
+            WHEN "subscriptionId" IS NOT NULL THEN 'SUBSCRIPTION'
+            WHEN "chargeId" IS NOT NULL THEN 'CHARGE'
+            ELSE 'OTHER'
+          END AS kind,
+          COALESCE(SUM("amount"), 0) AS revenue,
+          COUNT(*) AS count
+        FROM "Payment"
+        WHERE "tenantId" = ${tenantId}
+          AND "status" = 'COMPLETED'
+          AND "createdAt" >= ${startOfMonth}
+        GROUP BY kind
+      `,
     ]);
 
     const mapStats = (rows: typeof daily) => {
@@ -809,6 +900,30 @@ export const paymentRepository = {
           month: deactivatedMonth,
           allTime: deactivatedAll,
         },
+      },
+
+      // What the list price became after coupons and coins. `listAmount` is null
+      // on rows written before coupons existed, so it falls back to the net
+      // amount and those rows simply show no giveaway.
+      discounts: {
+        month: mapGiveaway(discountsMonth._sum),
+        allTime: mapGiveaway(discountsAllTime._sum),
+      },
+
+      // Cash versus online, for this month.
+      collection: {
+        online: sumGateway(collectionMonth, (g) => g !== null),
+        manual: sumGateway(collectionMonth, (g) => g === null),
+      },
+
+      // Coins outstanding across the gym, and terms currently paused.
+      coinsOutstanding: coinBalance._sum.amount ?? 0,
+      activeFreezes,
+
+      revenueMix: {
+        subscriptions: pickMix(mixMonth, "SUBSCRIPTION"),
+        charges: pickMix(mixMonth, "CHARGE"),
+        other: pickMix(mixMonth, "OTHER"),
       },
     };
   },

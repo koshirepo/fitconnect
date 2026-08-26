@@ -156,6 +156,26 @@ export const paymentsApi = {
             joined: { today: number; week: number; month: number; allTime: number };
             deactivated: { today: number; week: number; month: number; allTime: number };
           };
+          /** List price, what coupons and coins took off it, and what was banked. */
+          discounts: {
+            month: { gross: number; discount: number; coins: number; net: number };
+            allTime: { gross: number; discount: number; coins: number; net: number };
+          };
+          /** This month's split between gateway payments and manual entries. */
+          collection: {
+            online: { revenue: number; count: number };
+            manual: { revenue: number; count: number };
+          };
+          /** Coins earned but not yet spent, across every member. */
+          coinsOutstanding: number;
+          /** Terms paused right now. */
+          activeFreezes: number;
+          /** This month's revenue by what was being paid for. */
+          revenueMix: {
+            subscriptions: { revenue: number; count: number };
+            charges: { revenue: number; count: number };
+            other: { revenue: number; count: number };
+          };
         };
       }>
     >(`/tenants/${tenantId}/payments/analytics`),

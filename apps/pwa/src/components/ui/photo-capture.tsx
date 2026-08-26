@@ -57,13 +57,6 @@ export function PhotoCapture({
   const [cropSrc, setCropSrc] = React.useState<string | null>(null);
   const resolvedValue = React.useMemo(() => resolveAssetUrl(value), [value]);
 
-  // Cleanup camera on unmount
-  React.useEffect(() => {
-    return () => {
-      stopCamera();
-    };
-  }, []);
-
   const stopCamera = () => {
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
@@ -77,33 +70,11 @@ export function PhotoCapture({
     setLiveFace({ count: 0, boxes: [] });
   };
 
-  // ─── Real-time face detection loop ─────────────────────────────────────────
-  const runFaceDetectionLoop = React.useCallback(() => {
-    let lastDetectTime = 0;
-    const DETECT_INTERVAL = 300; // ms between detections
-
-    const loop = async (timestamp: number) => {
-      if (!videoRef.current || !streamRef.current) return;
-
-      if (timestamp - lastDetectTime >= DETECT_INTERVAL && !detectingRef.current) {
-        detectingRef.current = true;
-        lastDetectTime = timestamp;
-
-        try {
-          const result = await detectFacesLive(videoRef.current);
-          setLiveFace(result);
-          drawFaceOverlay(result);
-        } catch {
-          // ignore detection failures
-        } finally {
-          detectingRef.current = false;
-        }
-      }
-
-      rafRef.current = requestAnimationFrame(loop);
+  // Cleanup camera on unmount
+  React.useEffect(() => {
+    return () => {
+      stopCamera();
     };
-
-    rafRef.current = requestAnimationFrame(loop);
   }, []);
 
   const drawFaceOverlay = (result: LiveFaceResult) => {
@@ -179,6 +150,35 @@ export function PhotoCapture({
       ctx.fill();
     }
   };
+
+  // ─── Real-time face detection loop ─────────────────────────────────────────
+  const runFaceDetectionLoop = React.useCallback(() => {
+    let lastDetectTime = 0;
+    const DETECT_INTERVAL = 300; // ms between detections
+
+    const loop = async (timestamp: number) => {
+      if (!videoRef.current || !streamRef.current) return;
+
+      if (timestamp - lastDetectTime >= DETECT_INTERVAL && !detectingRef.current) {
+        detectingRef.current = true;
+        lastDetectTime = timestamp;
+
+        try {
+          const result = await detectFacesLive(videoRef.current);
+          setLiveFace(result);
+          drawFaceOverlay(result);
+        } catch {
+          // ignore detection failures
+        } finally {
+          detectingRef.current = false;
+        }
+      }
+
+      rafRef.current = requestAnimationFrame(loop);
+    };
+
+    rafRef.current = requestAnimationFrame(loop);
+  }, []);
 
   const startCamera = async (facing: "user" | "environment" = facingMode) => {
     setCameraError("");

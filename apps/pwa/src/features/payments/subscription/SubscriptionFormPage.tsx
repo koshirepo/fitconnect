@@ -27,7 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PageLoader } from "@/components/ui/spinner";
+import { FormPageSkeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Package, AlertCircle, CheckCircle2 } from "lucide-react";
 import type { Badge as BadgeModel, Subscription } from "@/types/api";
 
@@ -126,7 +126,7 @@ export default function SubscriptionFormPage() {
     );
   }
 
-  if (isEdit && subscriptionsQuery.isLoading) return <PageLoader />;
+  if (isEdit && subscriptionsQuery.isLoading) return <FormPageSkeleton fields={6} />;
 
   if (isEdit && !subscriptionsQuery.isLoading && !editingPlan) {
     return (

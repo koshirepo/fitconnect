@@ -29,7 +29,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PageLoader } from "@/components/ui/spinner";
+import { FormPageSkeleton } from "@/components/ui/skeleton";
 import { AlertCircle, ArrowLeft, Plus, X } from "lucide-react";
 import type { Exercise } from "@/types/api";
 
@@ -69,7 +69,7 @@ export default function WorkoutFormPage() {
     return <Navigate to="/workouts" replace />;
   }
 
-  if (isEdit && planQuery.isLoading) return <PageLoader />;
+  if (isEdit && planQuery.isLoading) return <FormPageSkeleton fields={6} />;
 
   if (isEdit && planQuery.isError) {
     return (

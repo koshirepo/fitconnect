@@ -20,7 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PageLoader } from "@/components/ui/spinner";
+import { FormPageSkeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Award, AlertCircle, CheckCircle2 } from "lucide-react";
 
 // ─── Preset color options ─────────────────────────────────────────────────────
@@ -99,7 +99,7 @@ export default function BadgeFormPage() {
     );
   }
 
-  if (isEdit && badgeQuery.isLoading) return <PageLoader />;
+  if (isEdit && badgeQuery.isLoading) return <FormPageSkeleton fields={3} />;
 
   if (isEdit && badgeQuery.isError) {
     return (
