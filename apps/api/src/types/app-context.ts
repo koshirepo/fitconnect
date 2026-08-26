@@ -35,6 +35,16 @@ export type AppVariables = {
   permissions: ReadonlySet<Permission>;
 };
 
+/**
+ * Cloudflare's rate limiting binding.
+ *
+ * Typed here rather than imported: the Worker types are generated per build and
+ * this is the only shape the app calls.
+ */
+export type RateLimiter = {
+  limit: (options: { key: string }) => Promise<{ success: boolean }>;
+};
+
 export type AppBindings = {
   Bindings: {
     DB: D1Database;
@@ -42,6 +52,11 @@ export type AppBindings = {
     UPLOADS_BUCKET?: R2Bucket;
     APP_URL?: string;
     R2_PUBLIC_URL?: string;
+    /**
+     * Throttles the unauthenticated signup endpoints. Optional so local
+     * development and tests run without the binding configured.
+     */
+    SIGNUP_RATE_LIMITER?: RateLimiter;
   };
   Variables: AppVariables;
 };

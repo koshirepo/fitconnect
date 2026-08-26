@@ -493,6 +493,12 @@ export interface SelfSignupPayload {
   subscriptionId: string;
   chargeIds?: string[];
   shiftId?: string;
+  /**
+   * Solved Turnstile token, verified server-side before the account is created.
+   * Named as Cloudflare's widget posts it. Absent when the gym's deployment has
+   * no Turnstile secret configured, in which case the API does not check it.
+   */
+  "cf-turnstile-response"?: string;
 }
 
 /**

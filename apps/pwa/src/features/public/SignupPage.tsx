@@ -34,6 +34,7 @@ import {
   Shield,
 } from "lucide-react";
 import type { SelfSignupResult, SignupOptions } from "@/types/api";
+import { TURNSTILE_SITE_KEY, TurnstileWidget } from "@/components/ui/turnstile";
 
 /** Read a captured photo into the base64 payload the signup endpoint takes. */
 function toDataUrl(file: File) {
@@ -75,6 +76,8 @@ export default function SignupPage() {
   const [selectedChargeIds, setSelectedChargeIds] = React.useState<string[]>([]);
 
   const [submitting, setSubmitting] = React.useState(false);
+  // Null until the challenge is solved, and again when it expires.
+  const [turnstileToken, setTurnstileToken] = React.useState<string | null>(null);
   const [error, setError] = React.useState("");
   const [outcome, setOutcome] = React.useState<Outcome | null>(null);
 
@@ -150,6 +153,7 @@ export default function SignupPage() {
         subscriptionId: selectedPlan.id,
         ...(selectedChargeIds.length > 0 ? { chargeIds: selectedChargeIds } : {}),
         ...(memberData.shiftId ? { shiftId: memberData.shiftId } : {}),
+        ...(turnstileToken ? { "cf-turnstile-response": turnstileToken } : {}),
       });
 
       const signup = res.data.data;
@@ -494,6 +498,12 @@ export default function SignupPage() {
                 </div>
               )}
 
+              {TURNSTILE_SITE_KEY && (
+                <div className="mt-4 flex justify-center">
+                  <TurnstileWidget onToken={setTurnstileToken} />
+                </div>
+              )}
+
               <div className="mt-4 flex gap-3">
                 <Button variant="outline" onClick={() => setStep(1)}>
                   <ArrowLeft className="mr-1 h-4 w-4" />
@@ -501,7 +511,11 @@ export default function SignupPage() {
                 </Button>
                 <Button
                   onClick={handleJoin}
-                  disabled={submitting || !selectedPlan}
+                  disabled={
+                    submitting ||
+                    !selectedPlan ||
+                    (Boolean(TURNSTILE_SITE_KEY) && !turnstileToken)
+                  }
                   className="flex-1"
                 >
                   {submitting ? (

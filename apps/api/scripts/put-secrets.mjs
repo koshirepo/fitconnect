@@ -26,6 +26,10 @@ const REQUIRED_SECRETS = [
     key: "CLOUDFLARE_API_TOKEN",
     hint: "Registers each new gym's subdomain on the Pages project. Needs Account → Cloudflare Pages: Edit.",
   },
+  {
+    key: "TURNSTILE_SECRET_KEY",
+    hint: "Verifies the signup captcha. From the Turnstile widget you create; leave unset to disable the check.",
+  },
 ];
 
 const env = process.argv[2];

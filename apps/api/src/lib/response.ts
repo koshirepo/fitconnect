@@ -3,7 +3,7 @@
  *
  * - Creates success, message, pagination, and error envelopes that match the contracts exported from `src/shared/types/api.ts`.
  * - Controllers should use these helpers instead of building ad-hoc JSON so clients can depend on a stable response shape.
- * - Primary exports: ok, okMessage, okPaginated, error, badRequest, unauthorized, forbidden, notFound, conflict, validationError, internalError.
+ * - Primary exports: ok, okMessage, okPaginated, error, badRequest, unauthorized, forbidden, notFound, conflict, tooManyRequests, validationError, internalError.
  */
 import type { Context } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
@@ -85,6 +85,10 @@ export const notFound = (c: Context, message: string) =>
 /** 409 Conflict */
 export const conflict = (c: Context, message: string) =>
   error(c, 409, "CONFLICT", message);
+
+/** 429 Too Many Requests */
+export const tooManyRequests = (c: Context, message: string) =>
+  error(c, 429, "TOO_MANY_REQUESTS", message);
 
 /** 422 Validation Error */
 export const validationError = (c: Context, details: unknown) =>

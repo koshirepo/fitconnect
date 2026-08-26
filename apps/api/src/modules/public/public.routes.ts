@@ -7,11 +7,13 @@
  * - Primary exports: publicRoutes.
  */
 import { Hono } from "hono";
+import type { AppBindings } from "../../types/app-context";
 import { publicController } from "./public.controller";
 import { signupController } from "./signup.controller";
 import { idCardController } from "./id-card.controller";
+import { rateLimitSignup, verifyTurnstile } from "../../middleware/abuse-guard";
 
-export const publicRoutes = new Hono();
+export const publicRoutes = new Hono<AppBindings>();
 
 // No authentication required — these are public endpoints
 
@@ -23,12 +25,15 @@ publicRoutes.get("/gyms/:slug", publicController.getTenantBySlug);
 /**
  * Self-signup. Unauthenticated by definition — the caller has no account yet,
  * which is the entire point. What protects these is the gym being fixed by the
- * request host, every price being read from the database, and the payment
- * settling only against a Razorpay signature.
+ * request host, every price being read from the database, the payment settling
+ * only against a Razorpay signature, and the two guards below: a per-IP rate
+ * limit on volume, and Turnstile on whether there is a browser here at all.
+ * Both are inert until configured, so an unconfigured deployment behaves
+ * exactly as it did before they existed.
  */
 publicRoutes.get("/signup/options", signupController.getOptions);
-publicRoutes.post("/signup", signupController.register);
-publicRoutes.post("/signup/verify", signupController.verify);
+publicRoutes.post("/signup", rateLimitSignup, verifyTurnstile, signupController.register);
+publicRoutes.post("/signup/verify", rateLimitSignup, signupController.verify);
 
 /**
  * A member's ID card. Unauthenticated because the point is that it opens

@@ -15,6 +15,8 @@ export type ErrorCode =
   | "NOT_FOUND"
   | "CONFLICT"
   | "BAD_REQUEST"
+  /** Too many attempts from one caller; the abuse guards on public endpoints. */
+  | "TOO_MANY_REQUESTS"
   /** An upstream provider (e.g. the payment gateway) failed or refused. */
   | "GATEWAY_ERROR"
   | "INTERNAL_ERROR";

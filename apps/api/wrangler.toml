@@ -22,7 +22,7 @@ compatibility_date = "2026-03-27"
 compatibility_flags = ["nodejs_compat"]
 
 [triggers]
-crons = ["30 3 * * *"] # Daily at 03:30 UTC / 09:00 IST for tenant reports
+crons = ["30 3 * * *", "30 4 * * *"] # 03:30 UTC tenant reports, 04:30 UTC renewal reminders
 
 [[d1_databases]]
 binding = "DB"
@@ -33,6 +33,16 @@ migrations_dir = "prisma/migrations"
 [[r2_buckets]]
 binding = "FILES"
 bucket_name = "fit-bucket"
+
+# Caps unauthenticated signup attempts per IP. `namespace_id` is an arbitrary
+# positive integer that scopes the counter; the limit is per Worker, not global.
+[[ratelimits]]
+name = "SIGNUP_RATE_LIMITER"
+namespace_id = "1001"
+
+[ratelimits.simple]
+limit = 5
+period = 60
 
 [vars]
 APP_URL = "http://localhost:5173"
@@ -54,7 +64,7 @@ VAPID_PUBLIC_KEY = "BGM8SxeUeDufKP-etZ5Q-GJpW9GTmBhay_fGHK2vBlsIWVfbsbHzPD_TLVbS
 name = "fitconnect-api"
 
 [env.production.triggers]
-crons = ["30 3 * * *"]
+crons = ["30 3 * * *", "30 4 * * *"]
 
 [[env.production.d1_databases]]
 binding = "DB"
@@ -65,6 +75,14 @@ migrations_dir = "prisma/migrations"
 [[env.production.r2_buckets]]
 binding = "FILES"
 bucket_name = "fit-bucket"
+
+[[env.production.ratelimits]]
+name = "SIGNUP_RATE_LIMITER"
+namespace_id = "1001"
+
+[env.production.ratelimits.simple]
+limit = 5
+period = 60
 
 [env.production.vars]
 APP_URL = "https://fitconnect.co.in"

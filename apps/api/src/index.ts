@@ -9,6 +9,11 @@ import app from "./app";
 import { setD1 } from "./lib/prisma";
 
 const DAILY_TENANT_REPORT_CRON = "30 3 * * *";
+/**
+ * 04:30 UTC / 10:00 IST — late enough that a nudge lands during the day rather
+ * than overnight, and after the report cron so the two never contend for D1.
+ */
+const DAILY_RENEWAL_REMINDER_CRON = "30 4 * * *";
 
 type WorkerEnv = {
   DB: D1Database;
@@ -72,6 +77,21 @@ export default {
       // Imported here rather than at module scope so the cron path pulls in the
       // reporting code only when a schedule actually fires.
       const { reportService } = await import("./modules/members/reports.service");
+
+      if (controller.cron === DAILY_RENEWAL_REMINDER_CRON) {
+        const { renewalReminderService } = await import(
+          "./modules/members/renewal-reminders.service"
+        );
+        const result = await renewalReminderService.runScheduledRenewalReminders(
+          (promise) => ctx.waitUntil(promise),
+        );
+
+        console.info("[scheduled-renewal-reminders]", {
+          cron: controller.cron,
+          ...result.data,
+        });
+        return;
+      }
 
       if (controller.cron === DAILY_TENANT_REPORT_CRON) {
         const result = await reportService.runScheduledTenantReports((promise) =>
