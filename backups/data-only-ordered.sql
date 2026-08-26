@@ -1,29 +1,4 @@
 PRAGMA defer_foreign_keys=TRUE;
-CREATE TABLE d1_migrations(
-		id         INTEGER PRIMARY KEY AUTOINCREMENT,
-		name       TEXT UNIQUE,
-		applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
-);
-INSERT INTO "d1_migrations" ("id","name","applied_at") VALUES(1,'0001_init.sql','2026-03-28 02:26:19');
-INSERT INTO "d1_migrations" ("id","name","applied_at") VALUES(2,'0002_add_shifts.sql','2026-03-28 11:32:21');
-INSERT INTO "d1_migrations" ("id","name","applied_at") VALUES(3,'0003_member_shift_assignment.sql','2026-03-28 11:32:24');
-INSERT INTO "d1_migrations" ("id","name","applied_at") VALUES(4,'0004_tenant_whatsapp_templates.sql','2026-03-31 04:15:39');
-INSERT INTO "d1_migrations" ("id","name","applied_at") VALUES(5,'0005_user_phone_not_unique.sql','2026-03-31 04:15:40');
-INSERT INTO "d1_migrations" ("id","name","applied_at") VALUES(6,'0006_todos.sql','2026-03-31 04:48:02');
-INSERT INTO "d1_migrations" ("id","name","applied_at") VALUES(7,'0007_subscription_badges.sql','2026-04-23 06:07:45');
-INSERT INTO "d1_migrations" ("id","name","applied_at") VALUES(8,'0008_member_referrals.sql','2026-04-23 06:07:45');
-CREATE TABLE IF NOT EXISTS "User" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "name" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
-    "phone" TEXT,
-    "passwordHash" TEXT NOT NULL,
-    "avatarUrl" TEXT,
-    "platformRole" TEXT NOT NULL DEFAULT 'USER',
-    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
-);
 INSERT INTO "User" ("id","name","email","phone","passwordHash","avatarUrl","platformRole","status","createdAt","updatedAt") VALUES('user_0001','Seed Super Admin','superadmin@seed.gym.test','9000000001','$2b$10$rtvhjRoWJNzLmqKK4Ml7Rexe25mmgSee.lDaZKiQBxJMFEhtE2N7q',NULL,'SUPER_ADMIN','ACTIVE','2025-07-26T08:00:00.000Z','2025-07-26T08:00:00.000Z');
 INSERT INTO "User" ("id","name","email","phone","passwordHash","avatarUrl","platformRole","status","createdAt","updatedAt") VALUES('user_0002','Seed Support User','support@seed.gym.test','9000000002','$2b$10$rtvhjRoWJNzLmqKK4Ml7Rexe25mmgSee.lDaZKiQBxJMFEhtE2N7q',NULL,'SUPPORT','ACTIVE','2025-10-28T18:00:00.000Z','2025-10-28T18:00:00.000Z');
 INSERT INTO "User" ("id","name","email","phone","passwordHash","avatarUrl","platformRole","status","createdAt","updatedAt") VALUES('user_0003','Seed Admin 1','admin.seed-gym-1@seed.gym.test','9000000004','$2b$10$rtvhjRoWJNzLmqKK4Ml7Rexe25mmgSee.lDaZKiQBxJMFEhtE2N7q',NULL,'USER','ACTIVE','2025-12-11T11:00:00.000Z','2025-12-11T11:00:00.000Z');
@@ -819,15 +794,6 @@ INSERT INTO "User" ("id","name","email","phone","passwordHash","avatarUrl","plat
 INSERT INTO "User" ("id","name","email","phone","passwordHash","avatarUrl","platformRole","status","createdAt","updatedAt") VALUES('cmt091x3o0000psp7g2emg4ju','Suraj kumar','6204299067@Surajkumar.com','6204299067','$2b$12$x3xliTODwKZgeUsHf2mRLu1xrdyaoSHQpoYRZ85VzLSXf0ErlhYmm','https://fit-api.koshimicrosystem.workers.dev/uploads/file/avatars/9ffcfa9b-5f94-454b-8df3-acf3b89f958a.jpg','USER','ACTIVE','2026-08-19T15:31:43.956+00:00','2026-08-19T15:31:43.956+00:00');
 INSERT INTO "User" ("id","name","email","phone","passwordHash","avatarUrl","platformRole","status","createdAt","updatedAt") VALUES('cmt4drbf10000psp7ynk7wjjf','Ram yadav','8863072539@Ramyadav.com','8863072539','$2b$12$kccVuQrj/J58Nogj5sfHku3kWfk8WlmcYbPxwgaKXkMjcTw0Yi7ne','https://fit-api.koshimicrosystem.workers.dev/uploads/file/avatars/76e0eeb8-8c69-4c40-a2a5-ebdfa33bb74c.jpg','USER','ACTIVE','2026-08-22T12:54:32.077+00:00','2026-08-22T12:54:32.077+00:00');
 INSERT INTO "User" ("id","name","email","phone","passwordHash","avatarUrl","platformRole","status","createdAt","updatedAt") VALUES('cmt8w7cv90000psp7cv8mpuz4','BhaiBirendar','8676869855@BhaiBirendar.com','8676869855','$2b$12$TAAmm1e/eLYpLabFO6xjlOjCtuTw1OA94CjV6KU.0DRhz8Y8Y3aiK','https://fit-api.koshimicrosystem.workers.dev/uploads/file/avatars/09294e18-6136-4341-a33b-aec42474aa92.jpg','USER','ACTIVE','2026-08-25T16:41:58.245+00:00','2026-08-25T16:41:58.245+00:00');
-CREATE TABLE IF NOT EXISTS "PasswordResetToken" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "token" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "expiresAt" DATETIME NOT NULL,
-    "usedAt" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "PasswordResetToken_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
 INSERT INTO "PasswordResetToken" ("id","token","userId","expiresAt","usedAt","createdAt") VALUES('cmooddlx50000psp7ppoh8sln','77f02ed6bfce4e1d1bf3fd694f0b83e811cdd32d2604a1b21d617343e635fec9','rudra_gym_user_0421','2026-05-02T14:20:44.345+00:00','2026-05-02T13:24:51.927+00:00','2026-05-02T13:20:44.345+00:00');
 INSERT INTO "PasswordResetToken" ("id","token","userId","expiresAt","usedAt","createdAt") VALUES('cmop8vnqc0000psp77eyvnh1p','38ba3dd53146717e6921d9efa4a7dd670f774b69956541c824d1f41058031915','rudra_gym_staff_user_001','2026-05-03T05:02:34.596+00:00','2026-05-03T04:03:21.427+00:00','2026-05-03T04:02:34.596+00:00');
 INSERT INTO "PasswordResetToken" ("id","token","userId","expiresAt","usedAt","createdAt") VALUES('cmp43tl2c0003psp7yas3sgsk','2d31ef381e3111f1da1ff49a52df4f62474d667c85adc79eb9f191cf76abfaf6','rudra_gym_user_0454','2026-05-13T14:37:32.388+00:00',NULL,'2026-05-13T13:37:32.388+00:00');
@@ -837,15 +803,6 @@ INSERT INTO "PasswordResetToken" ("id","token","userId","expiresAt","usedAt","cr
 INSERT INTO "PasswordResetToken" ("id","token","userId","expiresAt","usedAt","createdAt") VALUES('cmrww4w3m0000psp7t32qu5ov','89d6bf1fce9b23a6d7a50878eac46a6afb56d64488e7b855be4b95dfd31ba056','rudra_gym_staff_user_006','2026-07-23T03:27:06.754+00:00','2026-07-23T02:27:48.630+00:00','2026-07-23T02:27:06.754+00:00');
 INSERT INTO "PasswordResetToken" ("id","token","userId","expiresAt","usedAt","createdAt") VALUES('cmssujq5x0000psp71xosmb5p','2212f0f2556b643a136646fa3a04a58750d5477960020c6ea0d1a9bf41ca5941','rudra_gym_staff_user_006','2026-08-14T12:11:17.301+00:00','2026-08-14T11:13:18.181+00:00','2026-08-14T11:11:17.301+00:00');
 INSERT INTO "PasswordResetToken" ("id","token","userId","expiresAt","usedAt","createdAt") VALUES('cmssujx7o0001psp7t3n5rq3m','b14f71684ca383bd688db083f30b1bd50a9fa9d87b06c01e3069a5c335ac55c5','rudra_gym_staff_user_006','2026-08-14T12:11:26.436+00:00',NULL,'2026-08-14T11:11:26.436+00:00');
-CREATE TABLE IF NOT EXISTS "RefreshToken" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "token" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "expiresAt" DATETIME NOT NULL,
-    "revokedAt" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "RefreshToken_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
 INSERT INTO "RefreshToken" ("id","token","userId","expiresAt","revokedAt","createdAt") VALUES('cmnalawyj0000psp7ob8gu5mb','436a087f627255d9863cb0b5743cde69d46e9b4e920daab97e0876d456df52a344fff2ddcb5bbf178eea1e7008e83b61','user_0003','2026-04-04T17:14:06.811+00:00',NULL,'2026-03-28T17:14:06.811+00:00');
 INSERT INTO "RefreshToken" ("id","token","userId","expiresAt","revokedAt","createdAt") VALUES('cmnam4w4t0000psp7qrjt21ui','deb94ddbb9494fadd6f9c9fe36551318d0fe8c708119463da2b743776b8c37bca2ef85f1ca9054fd23625f173cdf9616','rudra_gym_staff_user_005','2026-04-04T17:37:25.421+00:00','2026-03-28T17:39:13.460+00:00','2026-03-28T17:37:25.421+00:00');
 INSERT INTO "RefreshToken" ("id","token","userId","expiresAt","revokedAt","createdAt") VALUES('cmnam77i50000psp77imoq50z','ffcfed78d1001b4b8fe976be7ceec26a39e0b01b19b4c1a852356ae95df797b7bfe08659a427aa6fa15dcda34c0de03c','rudra_gym_staff_user_005','2026-04-04T17:39:13.460+00:00','2026-03-28T17:39:14.204+00:00','2026-03-28T17:39:13.469+00:00');
@@ -1920,22 +1877,6 @@ INSERT INTO "RefreshToken" ("id","token","userId","expiresAt","revokedAt","creat
 INSERT INTO "RefreshToken" ("id","token","userId","expiresAt","revokedAt","createdAt") VALUES('cmt9i5k390000psp7t1w97lk9','44c88b35f4fa89aa6136dd5a02b8e99b895a4a778bfc352b7ae56c223bff5521bae3736473ee0412e46fb741b156a2a9','cmo2vo9qf0000psp70iy72yro','2026-09-02T02:56:25.808+00:00',NULL,'2026-08-26T02:56:25.845+00:00');
 INSERT INTO "RefreshToken" ("id","token","userId","expiresAt","revokedAt","createdAt") VALUES('cmt9it2nu0000psp7g85sygl1','4145dbb42e11a5ba846535156bad1e6434e6b97c7955bdd503b32a9aa36d657d84a9b1f0412e9be1950391761582bcd4','rudra_gym_staff_user_001','2026-09-02T03:14:42.971+00:00','2026-08-26T03:37:10.182+00:00','2026-08-26T03:14:43.002+00:00');
 INSERT INTO "RefreshToken" ("id","token","userId","expiresAt","revokedAt","createdAt") VALUES('cmt9jm0b50001psp7l61hw1ve','533d1f487211db20c95f53b8f53e75fc604be06b115b648906d290da61cece5674fdc021730427d2dcb97bcf0baee9ab','rudra_gym_staff_user_001','2026-09-02T03:37:12.977+00:00',NULL,'2026-08-26T03:37:12.977+00:00');
-CREATE TABLE IF NOT EXISTS "Tenant" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "name" TEXT NOT NULL,
-    "slug" TEXT NOT NULL,
-    "email" TEXT,
-    "phone" TEXT,
-    "logoUrl" TEXT,
-    "address" TEXT,
-    "estd" DATETIME,
-    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    "markdown" TEXT,
-    "description" TEXT,
-    "platformExpiresAt" DATETIME
-);
 INSERT INTO "Tenant" ("id","name","slug","email","phone","logoUrl","address","estd","status","createdAt","updatedAt","markdown","description","platformExpiresAt") VALUES('tenant_0001','Seed Gym 1','seed-gym-1','seed-gym-1@seed.gym.test','9000000003',NULL,'101 Test Street, City 1','2022-11-14T00:00:00.000Z','ACTIVE','2025-08-12T09:00:00.000Z','2025-08-12T09:00:00.000Z',replace('# Seed Gym 1\n\nSeeded tenant.','\n',char(10)),'Seeded tenant 1','2026-10-09T17:03:47.519Z');
 INSERT INTO "Tenant" ("id","name","slug","email","phone","logoUrl","address","estd","status","createdAt","updatedAt","markdown","description","platformExpiresAt") VALUES('tenant_0002','Seed Gym 2','seed-gym-2','seed-gym-2@seed.gym.test','9000000031',NULL,'102 Test Street, City 2','2022-10-15T00:00:00.000Z','ACTIVE','2025-02-28T09:00:00.000Z','2025-02-28T09:00:00.000Z',replace('# Seed Gym 2\n\nSeeded tenant.','\n',char(10)),'Seeded tenant 2','2026-10-24T17:03:47.519Z');
 INSERT INTO "Tenant" ("id","name","slug","email","phone","logoUrl","address","estd","status","createdAt","updatedAt","markdown","description","platformExpiresAt") VALUES('tenant_0003','Seed Gym 3','seed-gym-3','seed-gym-3@seed.gym.test','9000000059',NULL,'103 Test Street, City 3','2022-09-15T00:00:00.000Z','ACTIVE','2025-06-07T09:00:00.000Z','2025-06-07T09:00:00.000Z',replace('# Seed Gym 3\n\nSeeded tenant.','\n',char(10)),'Seeded tenant 3','2026-11-08T17:03:47.519Z');
@@ -1943,14 +1884,6 @@ INSERT INTO "Tenant" ("id","name","slug","email","phone","logoUrl","address","es
 INSERT INTO "Tenant" ("id","name","slug","email","phone","logoUrl","address","estd","status","createdAt","updatedAt","markdown","description","platformExpiresAt") VALUES('tenant_0005','Seed Gym 5','seed-gym-5','seed-gym-5@seed.gym.test','9000000115',NULL,'105 Test Street, City 5','2022-07-17T00:00:00.000Z','ACTIVE','2025-09-15T09:00:00.000Z','2025-09-15T09:00:00.000Z',replace('# Seed Gym 5\n\nSeeded tenant.','\n',char(10)),'Seeded tenant 5','2026-12-08T17:03:47.519Z');
 INSERT INTO "Tenant" ("id","name","slug","email","phone","logoUrl","address","estd","status","createdAt","updatedAt","markdown","description","platformExpiresAt") VALUES('tenant_0006','Seed Gym 6','seed-gym-6','seed-gym-6@seed.gym.test','9000000143',NULL,'106 Test Street, City 6','2022-06-17T00:00:00.000Z','ACTIVE','2025-02-26T09:00:00.000Z','2025-02-26T09:00:00.000Z',replace('# Seed Gym 6\n\nSeeded tenant.','\n',char(10)),'Seeded tenant 6','2026-12-23T17:03:47.519Z');
 INSERT INTO "Tenant" ("id","name","slug","email","phone","logoUrl","address","estd","status","createdAt","updatedAt","markdown","description","platformExpiresAt") VALUES('tenant_rudra-gym','Rudra Gym','rudra-gym','rudragymbakhri@gmail.com','9479422951','https://fit-api.koshimicrosystem.workers.dev/uploads/file/logos/661f9ba4-1ea1-400f-9f70-e3af8520be5a.jpg','Bakhri bazar','2025-05-01T17:02:21.000Z','ACTIVE','2025-05-01T17:02:21.000Z','2026-04-03T06:00:13.272+00:00',replace('## Rudra Gym\n\n<iframe width="100%" height="315" src="https://www.youtube.com/embed/9r1UKQOmaWM?si=HikBVKsWFUFdK_8A" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>','\n',char(10)),'Legacy member and payment records imported into FitConnect.',NULL);
-CREATE TABLE IF NOT EXISTS "TenantSettings" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "tenantId" TEXT NOT NULL,
-    "overdueDays" INTEGER NOT NULL DEFAULT 30,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL, "whatsappTemplates" JSONB NOT NULL DEFAULT '{}',
-    CONSTRAINT "TenantSettings_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
 INSERT INTO "TenantSettings" ("id","tenantId","overdueDays","createdAt","updatedAt","whatsappTemplates") VALUES('tenant_settings_0001','tenant_0001',30,'2025-08-12T09:00:00.000Z','2025-08-12T09:00:00.000Z','{}');
 INSERT INTO "TenantSettings" ("id","tenantId","overdueDays","createdAt","updatedAt","whatsappTemplates") VALUES('tenant_settings_0002','tenant_0002',30,'2025-02-28T09:00:00.000Z','2025-02-28T09:00:00.000Z','{}');
 INSERT INTO "TenantSettings" ("id","tenantId","overdueDays","createdAt","updatedAt","whatsappTemplates") VALUES('tenant_settings_0003','tenant_0003',30,'2025-06-07T09:00:00.000Z','2025-06-07T09:00:00.000Z','{}');
@@ -1958,17 +1891,6 @@ INSERT INTO "TenantSettings" ("id","tenantId","overdueDays","createdAt","updated
 INSERT INTO "TenantSettings" ("id","tenantId","overdueDays","createdAt","updatedAt","whatsappTemplates") VALUES('tenant_settings_0005','tenant_0005',30,'2025-09-15T09:00:00.000Z','2025-09-15T09:00:00.000Z','{}');
 INSERT INTO "TenantSettings" ("id","tenantId","overdueDays","createdAt","updatedAt","whatsappTemplates") VALUES('tenant_settings_0006','tenant_0006',30,'2025-02-26T09:00:00.000Z','2025-02-26T09:00:00.000Z','{}');
 INSERT INTO "TenantSettings" ("id","tenantId","overdueDays","createdAt","updatedAt","whatsappTemplates") VALUES('rudra_gym_settings','tenant_rudra-gym',15,'2025-05-01T17:02:21.000Z','2026-04-03T04:02:41.739+00:00','{}');
-CREATE TABLE IF NOT EXISTS "TenantCharge" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "tenantId" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "amount" INTEGER NOT NULL,
-    "isMandatory" BOOLEAN NOT NULL DEFAULT true,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "TenantCharge_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
 INSERT INTO "TenantCharge" ("id","tenantId","name","amount","isMandatory","isActive","createdAt","updatedAt") VALUES('charge_0001','tenant_0001','Admission Fee',999,1,1,'2025-08-12T09:00:00.000Z','2025-08-12T09:00:00.000Z');
 INSERT INTO "TenantCharge" ("id","tenantId","name","amount","isMandatory","isActive","createdAt","updatedAt") VALUES('charge_0002','tenant_0001','Security Deposit',500,1,1,'2025-08-12T09:00:00.000Z','2025-08-12T09:00:00.000Z');
 INSERT INTO "TenantCharge" ("id","tenantId","name","amount","isMandatory","isActive","createdAt","updatedAt") VALUES('charge_0003','tenant_0001','Locker Rental',299,0,1,'2025-08-12T09:00:00.000Z','2025-08-12T09:00:00.000Z');
@@ -1990,20 +1912,26 @@ INSERT INTO "TenantCharge" ("id","tenantId","name","amount","isMandatory","isAct
 INSERT INTO "TenantCharge" ("id","tenantId","name","amount","isMandatory","isActive","createdAt","updatedAt") VALUES('cmnckyxve0005psp71wpao92b','tenant_rudra-gym','Gym shipper',150,0,1,'2026-03-30T02:40:20.474+00:00','2026-03-30T02:40:20.474+00:00');
 INSERT INTO "TenantCharge" ("id","tenantId","name","amount","isMandatory","isActive","createdAt","updatedAt") VALUES('cmnckzdgq0007psp77x2uingq','tenant_rudra-gym','Gym Tshirt',300,0,1,'2026-03-30T02:40:40.682+00:00','2026-03-30T02:40:40.682+00:00');
 INSERT INTO "TenantCharge" ("id","tenantId","name","amount","isMandatory","isActive","createdAt","updatedAt") VALUES('cmr0mluxu0003psp7wzl92lqe','tenant_rudra-gym','Admission ',200,1,1,'2026-06-30T12:31:44.610+00:00','2026-08-24T03:42:34.802+00:00');
-CREATE TABLE IF NOT EXISTS "TenantMembership" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "tenantId" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "memberId" INTEGER NOT NULL,
-    "role" TEXT NOT NULL DEFAULT 'MEMBER',
-    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
-    "dueDate" DATETIME,
-    "joinedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL, "shiftId" TEXT REFERENCES "Shift" ("id") ON DELETE SET NULL ON UPDATE CASCADE, "referredByMembershipId" TEXT REFERENCES "TenantMembership" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT "TenantMembership_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "TenantMembership_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
+INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0001','tenant_0001','Morning Shift','Early training window for before-work members.','06:00','10:00',1,'2025-08-12T09:00:00.000Z','2025-08-12T09:00:00.000Z');
+INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0002','tenant_0001','Afternoon Shift','Midday slot with lighter floor traffic.','12:00','16:00',0,'2025-08-12T09:00:00.000Z','2025-08-12T09:00:00.000Z');
+INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0003','tenant_0001','Evening Shift','Peak post-work training slot.','17:00','22:00',1,'2025-08-12T09:00:00.000Z','2025-08-12T09:00:00.000Z');
+INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0004','tenant_0002','Morning Shift','Early training window for before-work members.','06:00','10:00',1,'2025-02-28T09:00:00.000Z','2025-02-28T09:00:00.000Z');
+INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0005','tenant_0002','Afternoon Shift','Midday slot with lighter floor traffic.','12:00','16:00',1,'2025-02-28T09:00:00.000Z','2025-02-28T09:00:00.000Z');
+INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0006','tenant_0002','Evening Shift','Peak post-work training slot.','17:00','22:00',1,'2025-02-28T09:00:00.000Z','2025-02-28T09:00:00.000Z');
+INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0007','tenant_0003','Morning Shift','Early training window for before-work members.','06:00','10:00',1,'2025-06-07T09:00:00.000Z','2025-06-07T09:00:00.000Z');
+INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0008','tenant_0003','Afternoon Shift','Midday slot with lighter floor traffic.','12:00','16:00',0,'2025-06-07T09:00:00.000Z','2025-06-07T09:00:00.000Z');
+INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0009','tenant_0003','Evening Shift','Peak post-work training slot.','17:00','22:00',1,'2025-06-07T09:00:00.000Z','2025-06-07T09:00:00.000Z');
+INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0010','tenant_0004','Morning Shift','Early training window for before-work members.','06:00','10:00',1,'2024-11-22T09:00:00.000Z','2024-11-22T09:00:00.000Z');
+INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0011','tenant_0004','Afternoon Shift','Midday slot with lighter floor traffic.','12:00','16:00',1,'2024-11-22T09:00:00.000Z','2024-11-22T09:00:00.000Z');
+INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0012','tenant_0004','Evening Shift','Peak post-work training slot.','17:00','22:00',1,'2024-11-22T09:00:00.000Z','2024-11-22T09:00:00.000Z');
+INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0013','tenant_0005','Morning Shift','Early training window for before-work members.','06:00','10:00',1,'2025-09-15T09:00:00.000Z','2025-09-15T09:00:00.000Z');
+INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0014','tenant_0005','Afternoon Shift','Midday slot with lighter floor traffic.','12:00','16:00',0,'2025-09-15T09:00:00.000Z','2025-09-15T09:00:00.000Z');
+INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0015','tenant_0005','Evening Shift','Peak post-work training slot.','17:00','22:00',1,'2025-09-15T09:00:00.000Z','2025-09-15T09:00:00.000Z');
+INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0016','tenant_0006','Morning Shift','Early training window for before-work members.','06:00','10:00',1,'2025-02-26T09:00:00.000Z','2025-02-26T09:00:00.000Z');
+INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0017','tenant_0006','Afternoon Shift','Midday slot with lighter floor traffic.','12:00','16:00',1,'2025-02-26T09:00:00.000Z','2025-02-26T09:00:00.000Z');
+INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0018','tenant_0006','Evening Shift','Peak post-work training slot.','17:00','22:00',1,'2025-02-26T09:00:00.000Z','2025-02-26T09:00:00.000Z');
+INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('rudra_gym_shift_evening','tenant_rudra-gym','Evening','Imported from legacy batch data.','17:00','22:00',1,'2025-05-01T17:02:21.000Z','2027-03-23T00:00:00.000Z');
+INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('rudra_gym_shift_morning','tenant_rudra-gym','Morning','Imported from legacy batch data.','05:00','10:00',1,'2025-05-01T17:02:21.000Z','2026-03-31T16:19:49.467+00:00');
 INSERT INTO "TenantMembership" ("id","tenantId","userId","memberId","role","status","dueDate","joinedAt","createdAt","updatedAt","shiftId","referredByMembershipId") VALUES('membership_0001','tenant_0001','user_0003',1,'ADMIN','ACTIVE',NULL,'2025-08-12T09:00:00.000Z','2025-08-12T09:00:00.000Z','2025-08-12T09:00:00.000Z',NULL,NULL);
 INSERT INTO "TenantMembership" ("id","tenantId","userId","memberId","role","status","dueDate","joinedAt","createdAt","updatedAt","shiftId","referredByMembershipId") VALUES('membership_0002','tenant_0001','user_0004',2,'COACH','ACTIVE',NULL,'2026-02-21T07:30:00.000Z','2026-02-21T07:30:00.000Z','2026-02-21T07:30:00.000Z',NULL,NULL);
 INSERT INTO "TenantMembership" ("id","tenantId","userId","memberId","role","status","dueDate","joinedAt","createdAt","updatedAt","shiftId","referredByMembershipId") VALUES('membership_0003','tenant_0001','user_0005',3,'COACH','ACTIVE',NULL,'2025-11-26T07:30:00.000Z','2025-11-26T07:30:00.000Z','2025-11-26T07:30:00.000Z',NULL,NULL);
@@ -2787,18 +2715,6 @@ INSERT INTO "TenantMembership" ("id","tenantId","userId","memberId","role","stat
 INSERT INTO "TenantMembership" ("id","tenantId","userId","memberId","role","status","dueDate","joinedAt","createdAt","updatedAt","shiftId","referredByMembershipId") VALUES('cmt091x610001psp79ebwrzij','tenant_rudra-gym','cmt091x3o0000psp7g2emg4ju',635,'MEMBER','ACTIVE','2026-09-18T00:00:00.000+00:00','2026-08-19T15:31:44.041+00:00','2026-08-19T15:31:44.041+00:00','2026-08-25T14:02:55.216+00:00','rudra_gym_shift_evening',NULL);
 INSERT INTO "TenantMembership" ("id","tenantId","userId","memberId","role","status","dueDate","joinedAt","createdAt","updatedAt","shiftId","referredByMembershipId") VALUES('cmt4drbiq0001psp78undza52','tenant_rudra-gym','cmt4drbf10000psp7ynk7wjjf',636,'MEMBER','ACTIVE','2026-09-21T00:00:00.000+00:00','2026-08-22T12:54:32.210+00:00','2026-08-22T12:54:32.210+00:00','2026-08-23T01:34:19.603+00:00','rudra_gym_shift_evening',NULL);
 INSERT INTO "TenantMembership" ("id","tenantId","userId","memberId","role","status","dueDate","joinedAt","createdAt","updatedAt","shiftId","referredByMembershipId") VALUES('cmt8w7czp0001psp7sj7y53cc','tenant_rudra-gym','cmt8w7cv90000psp7cv8mpuz4',637,'MEMBER','ACTIVE',NULL,'2026-08-25T16:41:58.405+00:00','2026-08-25T16:41:58.405+00:00','2026-08-25T16:41:58.405+00:00','rudra_gym_shift_evening',NULL);
-CREATE TABLE IF NOT EXISTS "Subscription" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "tenantId" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
-    "description" TEXT,
-    "amount" INTEGER NOT NULL,
-    "durationDays" INTEGER NOT NULL DEFAULT 30,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "Subscription_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
 INSERT INTO "Subscription" ("id","tenantId","title","description","amount","durationDays","isActive","createdAt","updatedAt") VALUES('subscription_0001','tenant_0001','Monthly','Monthly seeded plan',1499,30,1,'2025-08-12T09:00:00.000Z','2025-08-12T09:00:00.000Z');
 INSERT INTO "Subscription" ("id","tenantId","title","description","amount","durationDays","isActive","createdAt","updatedAt") VALUES('subscription_0002','tenant_0001','Quarterly','Quarterly seeded plan',3899,90,1,'2025-08-12T09:00:00.000Z','2025-08-12T09:00:00.000Z');
 INSERT INTO "Subscription" ("id","tenantId","title","description","amount","durationDays","isActive","createdAt","updatedAt") VALUES('subscription_0003','tenant_0001','Annual','Annual seeded plan',13999,365,1,'2025-08-12T09:00:00.000Z','2025-08-12T09:00:00.000Z');
@@ -2826,28 +2742,6 @@ INSERT INTO "Subscription" ("id","tenantId","title","description","amount","dura
 INSERT INTO "Subscription" ("id","tenantId","title","description","amount","durationDays","isActive","createdAt","updatedAt") VALUES('rudra_gym_subscription_admission','tenant_rudra-gym','Admission','Imported from legacy plan "Admission".',200,0,0,'2025-05-01T17:02:21.000Z','2026-04-02T02:32:47.812+00:00');
 INSERT INTO "Subscription" ("id","tenantId","title","description","amount","durationDays","isActive","createdAt","updatedAt") VALUES('rudra_gym_subscription_admission-1-month','tenant_rudra-gym','Admission + 1 Month','Imported from legacy plan "Admission and 1 Month".',800,30,0,'2025-05-01T17:02:21.000Z','2027-03-23T00:00:00.000Z');
 INSERT INTO "Subscription" ("id","tenantId","title","description","amount","durationDays","isActive","createdAt","updatedAt") VALUES('cmnjoh9ce0000psp72zgrbtzm','tenant_rudra-gym','Monthly',NULL,600,30,1,'2026-04-04T01:52:57.230+00:00','2026-06-23T12:09:56.608+00:00');
-CREATE TABLE IF NOT EXISTS "Payment" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "amount" INTEGER NOT NULL,
-    "status" TEXT NOT NULL DEFAULT 'PENDING',
-    "tenantId" TEXT NOT NULL,
-    "membershipId" TEXT NOT NULL,
-    "collectorId" TEXT,
-    "subscriptionId" TEXT,
-    "chargeId" TEXT,
-    "description" TEXT,
-    "note" TEXT,
-    "paidAt" DATETIME,
-    "validFrom" DATETIME,
-    "validUntil" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "Payment_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "Payment_membershipId_fkey" FOREIGN KEY ("membershipId") REFERENCES "TenantMembership" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "Payment_collectorId_fkey" FOREIGN KEY ("collectorId") REFERENCES "TenantMembership" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT "Payment_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "Subscription" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT "Payment_chargeId_fkey" FOREIGN KEY ("chargeId") REFERENCES "TenantCharge" ("id") ON DELETE SET NULL ON UPDATE CASCADE
-);
 INSERT INTO "Payment" ("id","amount","status","tenantId","membershipId","collectorId","subscriptionId","chargeId","description","note","paidAt","validFrom","validUntil","createdAt","updatedAt") VALUES('payment_0001',999,'COMPLETED','tenant_0001','membership_0004','membership_0003',NULL,'charge_0001','Admission Fee','Seeded joining charge','2025-12-09T07:15:00.000Z',NULL,NULL,'2025-12-09T07:15:00.000Z','2025-12-09T07:15:00.000Z');
 INSERT INTO "Payment" ("id","amount","status","tenantId","membershipId","collectorId","subscriptionId","chargeId","description","note","paidAt","validFrom","validUntil","createdAt","updatedAt") VALUES('payment_0002',1499,'COMPLETED','tenant_0001','membership_0004','membership_0003','subscription_0001',NULL,'Monthly plan','Seeded membership cycle','2026-03-11T08:00:00.000Z','2026-03-11T08:00:00.000Z','2026-04-10T08:00:00.000Z','2026-03-11T08:00:00.000Z','2026-03-11T08:00:00.000Z');
 INSERT INTO "Payment" ("id","amount","status","tenantId","membershipId","collectorId","subscriptionId","chargeId","description","note","paidAt","validFrom","validUntil","createdAt","updatedAt") VALUES('payment_0003',999,'COMPLETED','tenant_0001','membership_0005','membership_0003',NULL,'charge_0001','Admission Fee','Seeded joining charge','2026-01-02T07:15:00.000Z',NULL,NULL,'2026-01-02T07:15:00.000Z','2026-01-02T07:15:00.000Z');
@@ -4254,96 +4148,7 @@ INSERT INTO "Payment" ("id","amount","status","tenantId","membershipId","collect
 INSERT INTO "Payment" ("id","amount","status","tenantId","membershipId","collectorId","subscriptionId","chargeId","description","note","paidAt","validFrom","validUntil","createdAt","updatedAt") VALUES('cmt848lzm0000psp7zbh2ddip',600,'COMPLETED','tenant_rudra-gym','cmpqvuscs0006psp7sqmyry8e','cmo2vo9sy0001psp7tl53a2y0','cmnjoh9ce0000psp72zgrbtzm',NULL,NULL,'500 paid 100 dues ','2026-08-25T03:39:07.474+00:00',NULL,'2026-09-24T00:00:00.000+00:00','2026-08-25T03:39:07.474+00:00','2026-08-25T03:39:07.474+00:00');
 INSERT INTO "Payment" ("id","amount","status","tenantId","membershipId","collectorId","subscriptionId","chargeId","description","note","paidAt","validFrom","validUntil","createdAt","updatedAt") VALUES('cmt8w7d1j0003psp71ayovfil',600,'COMPLETED','tenant_rudra-gym','cmt8w7czp0001psp7sj7y53cc',NULL,'cmnjoh9ce0000psp72zgrbtzm',NULL,NULL,NULL,'2026-08-25T16:41:58.471+00:00','2026-08-25T16:41:58.471+00:00','2026-09-24T16:41:58.471+00:00','2026-08-25T16:41:58.471+00:00','2026-08-25T16:41:58.471+00:00');
 INSERT INTO "Payment" ("id","amount","status","tenantId","membershipId","collectorId","subscriptionId","chargeId","description","note","paidAt","validFrom","validUntil","createdAt","updatedAt") VALUES('cmt8w7d1j0002psp761vczyto',200,'COMPLETED','tenant_rudra-gym','cmt8w7czp0001psp7sj7y53cc',NULL,NULL,'cmr0mluxu0003psp7wzl92lqe','Admission ',NULL,'2026-08-25T16:41:58.471+00:00',NULL,NULL,'2026-08-25T16:41:58.471+00:00','2026-08-25T16:41:58.471+00:00');
-CREATE TABLE IF NOT EXISTS "Product" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "name" TEXT NOT NULL,
-    "description" TEXT,
-    "markdown" TEXT,
-    "photos" JSONB NOT NULL DEFAULT [],
-    "category" TEXT NOT NULL,
-    "price" INTEGER NOT NULL,
-    "stock" INTEGER NOT NULL DEFAULT 0,
-    "minOrderQty" INTEGER NOT NULL DEFAULT 1,
-    "maxOrderQty" INTEGER NOT NULL DEFAULT 100,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
-);
 INSERT INTO "Product" ("id","name","description","markdown","photos","category","price","stock","minOrderQty","maxOrderQty","isActive","createdAt","updatedAt") VALUES('cmninulus0000psp7bu6wunhz','Shipper bottle with custom Logo',NULL,NULL,'["https://fit-api.koshimicrosystem.workers.dev/uploads/file/products/1f2c2737-42fa-41e7-becf-770775c68e72.jpg"]','Shipper bottle',80,5000,10,1001,1,'2026-04-03T08:47:34.180+00:00','2026-04-03T08:47:34.180+00:00');
-CREATE TABLE IF NOT EXISTS "ProductReview" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "productId" TEXT NOT NULL,
-    "userId" TEXT,
-    "rating" INTEGER NOT NULL,
-    "title" TEXT NOT NULL,
-    "description" TEXT NOT NULL,
-    "isAnonymous" BOOLEAN NOT NULL DEFAULT false,
-    "verifiedBuyer" BOOLEAN NOT NULL DEFAULT false,
-    "helpfulCount" INTEGER NOT NULL DEFAULT 0,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "ProductReview_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "ProductReview_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE
-);
-CREATE TABLE IF NOT EXISTS "ProductReviewComment" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "reviewId" TEXT NOT NULL,
-    "userId" TEXT,
-    "text" TEXT NOT NULL,
-    "isAnonymous" BOOLEAN NOT NULL DEFAULT false,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "ProductReviewComment_reviewId_fkey" FOREIGN KEY ("reviewId") REFERENCES "ProductReview" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "ProductReviewComment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE
-);
-CREATE TABLE IF NOT EXISTS "ProductReviewHelpful" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "reviewId" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "ProductReviewHelpful_reviewId_fkey" FOREIGN KEY ("reviewId") REFERENCES "ProductReview" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "ProductReviewHelpful_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
-CREATE TABLE IF NOT EXISTS "Order" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "userId" TEXT,
-    "buyerName" TEXT NOT NULL,
-    "buyerEmail" TEXT NOT NULL,
-    "buyerPhone" TEXT NOT NULL,
-    "buyerAddress" TEXT NOT NULL,
-    "status" TEXT NOT NULL DEFAULT 'PENDING',
-    "subtotalAmount" INTEGER NOT NULL DEFAULT 0,
-    "gstRatePct" INTEGER NOT NULL DEFAULT 18,
-    "gstAmount" INTEGER NOT NULL DEFAULT 0,
-    "totalAmount" INTEGER NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "Order_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE
-);
-CREATE TABLE IF NOT EXISTS "OrderItem" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "orderId" TEXT NOT NULL,
-    "productId" TEXT NOT NULL,
-    "productName" TEXT NOT NULL,
-    "quantity" INTEGER NOT NULL,
-    "unitPrice" INTEGER NOT NULL,
-    "lineTotal" INTEGER NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "OrderItem_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "OrderItem_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
-);
-CREATE TABLE IF NOT EXISTS "WorkoutPlan" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "tenantId" TEXT NOT NULL,
-    "creatorId" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
-    "description" TEXT,
-    "exercises" JSONB NOT NULL DEFAULT [],
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "WorkoutPlan_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "WorkoutPlan_creatorId_fkey" FOREIGN KEY ("creatorId") REFERENCES "TenantMembership" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
-);
 INSERT INTO "WorkoutPlan" ("id","tenantId","creatorId","title","description","exercises","createdAt","updatedAt") VALUES('workout_plan_0001','tenant_0001','membership_0002','Seed Plan 1-1','Seeded workout plan 1','[{"exercise":"Back Squat","sets":5,"reps":"5"},{"exercise":"Bench Press","sets":4,"reps":"8"},{"exercise":"Lat Pulldown","sets":4,"reps":"12"}]','2026-01-10T06:45:00.000Z','2026-01-10T06:45:00.000Z');
 INSERT INTO "WorkoutPlan" ("id","tenantId","creatorId","title","description","exercises","createdAt","updatedAt") VALUES('workout_plan_0002','tenant_0001','membership_0001','Seed Plan 1-2','Seeded workout plan 2','[{"exercise":"Back Squat","sets":5,"reps":"5"},{"exercise":"Bench Press","sets":4,"reps":"8"},{"exercise":"Lat Pulldown","sets":4,"reps":"12"}]','2026-03-24T06:45:00.000Z','2026-03-24T06:45:00.000Z');
 INSERT INTO "WorkoutPlan" ("id","tenantId","creatorId","title","description","exercises","createdAt","updatedAt") VALUES('workout_plan_0003','tenant_0001','membership_0001','Seed Plan 1-3','Seeded workout plan 3','[{"exercise":"Back Squat","sets":5,"reps":"5"},{"exercise":"Bench Press","sets":4,"reps":"8"},{"exercise":"Lat Pulldown","sets":4,"reps":"12"}]','2026-03-07T06:45:00.000Z','2026-03-07T06:45:00.000Z');
@@ -4368,14 +4173,6 @@ INSERT INTO "WorkoutPlan" ("id","tenantId","creatorId","title","description","ex
 INSERT INTO "WorkoutPlan" ("id","tenantId","creatorId","title","description","exercises","createdAt","updatedAt") VALUES('workout_plan_0022','tenant_0006','membership_0138','Seed Plan 6-2','Seeded workout plan 2','[{"exercise":"Back Squat","sets":5,"reps":"5"},{"exercise":"Bench Press","sets":4,"reps":"8"},{"exercise":"Lat Pulldown","sets":4,"reps":"12"}]','2026-03-11T06:45:00.000Z','2026-03-11T06:45:00.000Z');
 INSERT INTO "WorkoutPlan" ("id","tenantId","creatorId","title","description","exercises","createdAt","updatedAt") VALUES('workout_plan_0023','tenant_0006','membership_0137','Seed Plan 6-3','Seeded workout plan 3','[{"exercise":"Back Squat","sets":5,"reps":"5"},{"exercise":"Bench Press","sets":4,"reps":"8"},{"exercise":"Lat Pulldown","sets":4,"reps":"12"}]','2026-02-21T06:45:00.000Z','2026-02-21T06:45:00.000Z');
 INSERT INTO "WorkoutPlan" ("id","tenantId","creatorId","title","description","exercises","createdAt","updatedAt") VALUES('workout_plan_0024','tenant_0006','membership_0137','Seed Plan 6-4','Seeded workout plan 4','[{"exercise":"Back Squat","sets":5,"reps":"5"},{"exercise":"Bench Press","sets":4,"reps":"8"},{"exercise":"Lat Pulldown","sets":4,"reps":"12"}]','2026-01-25T06:45:00.000Z','2026-01-25T06:45:00.000Z');
-CREATE TABLE IF NOT EXISTS "WorkoutPlanAssignment" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "planId" TEXT NOT NULL,
-    "membershipId" TEXT NOT NULL,
-    "assignedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "WorkoutPlanAssignment_planId_fkey" FOREIGN KEY ("planId") REFERENCES "WorkoutPlan" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "WorkoutPlanAssignment_membershipId_fkey" FOREIGN KEY ("membershipId") REFERENCES "TenantMembership" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
-);
 INSERT INTO "WorkoutPlanAssignment" ("id","planId","membershipId","assignedAt") VALUES('workout_assignment_0001','workout_plan_0001','membership_0011','2026-02-26T08:00:00.000Z');
 INSERT INTO "WorkoutPlanAssignment" ("id","planId","membershipId","assignedAt") VALUES('workout_assignment_0002','workout_plan_0001','membership_0020','2026-03-03T08:00:00.000Z');
 INSERT INTO "WorkoutPlanAssignment" ("id","planId","membershipId","assignedAt") VALUES('workout_assignment_0003','workout_plan_0001','membership_0014','2026-02-26T08:00:00.000Z');
@@ -4568,18 +4365,6 @@ INSERT INTO "WorkoutPlanAssignment" ("id","planId","membershipId","assignedAt") 
 INSERT INTO "WorkoutPlanAssignment" ("id","planId","membershipId","assignedAt") VALUES('workout_assignment_0190','workout_plan_0024','membership_0147','2026-03-01T08:00:00.000Z');
 INSERT INTO "WorkoutPlanAssignment" ("id","planId","membershipId","assignedAt") VALUES('workout_assignment_0191','workout_plan_0024','membership_0142','2026-03-09T08:00:00.000Z');
 INSERT INTO "WorkoutPlanAssignment" ("id","planId","membershipId","assignedAt") VALUES('workout_assignment_0192','workout_plan_0024','membership_0160','2026-02-19T08:00:00.000Z');
-CREATE TABLE IF NOT EXISTS "Badge" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "tenantId" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "description" TEXT,
-    "color" TEXT NOT NULL DEFAULT '#6366f1',
-    "icon" TEXT,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "Badge_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
 INSERT INTO "Badge" ("id","tenantId","name","description","color","icon","isActive","createdAt","updatedAt") VALUES('badge_0001','tenant_0001','Consistency Streak','Recognizes members who keep showing up week after week.','#0f766e','calendar-check',1,'2026-03-26T09:30:00.000Z','2026-03-26T09:30:00.000Z');
 INSERT INTO "Badge" ("id","tenantId","name","description","color","icon","isActive","createdAt","updatedAt") VALUES('badge_0002','tenant_0001','Early Bird','Awarded to members who own the morning shift.','#f59e0b','sunrise',1,'2025-12-13T09:30:00.000Z','2025-12-13T09:30:00.000Z');
 INSERT INTO "Badge" ("id","tenantId","name","description","color","icon","isActive","createdAt","updatedAt") VALUES('badge_0003','tenant_0001','Strength PR','Celebrates a major personal record or lifting milestone.','#dc2626','dumbbell',1,'2026-02-19T09:30:00.000Z','2026-02-19T09:30:00.000Z');
@@ -4611,36 +4396,12 @@ INSERT INTO "Badge" ("id","tenantId","name","description","color","icon","isActi
 INSERT INTO "Badge" ("id","tenantId","name","description","color","icon","isActive","createdAt","updatedAt") VALUES('badge_0029','tenant_0006','Transformation','Highlights visible progress built through long-term discipline.','#7c3aed','sparkles',1,'2026-01-04T09:30:00.000Z','2026-01-04T09:30:00.000Z');
 INSERT INTO "Badge" ("id","tenantId","name","description","color","icon","isActive","createdAt","updatedAt") VALUES('badge_0030','tenant_0006','Coach''s Choice','Given to members who bring exceptional effort and attitude.','#2563eb','star',1,'2025-12-13T09:30:00.000Z','2025-12-13T09:30:00.000Z');
 INSERT INTO "Badge" ("id","tenantId","name","description","color","icon","isActive","createdAt","updatedAt") VALUES('cmnbr03l70002psp7cg7z369b','tenant_rudra-gym','Old Member',NULL,'#3b82f6',NULL,1,'2026-03-29T12:41:26.059+00:00','2026-03-29T12:41:26.059+00:00');
-CREATE TABLE IF NOT EXISTS "PlatformPayment" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "tenantId" TEXT NOT NULL,
-    "amount" INTEGER NOT NULL,
-    "note" TEXT,
-    "extendsUntil" DATETIME NOT NULL,
-    "recordedBy" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "PlatformPayment_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "PlatformPayment_recordedBy_fkey" FOREIGN KEY ("recordedBy") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
-);
 INSERT INTO "PlatformPayment" ("id","tenantId","amount","note","extendsUntil","recordedBy","createdAt") VALUES('platform_payment_0001','tenant_0001',9999,'Seeded platform billing','2026-09-24T17:03:47.519Z','user_0001','2026-02-25T10:00:00.000Z');
 INSERT INTO "PlatformPayment" ("id","tenantId","amount","note","extendsUntil","recordedBy","createdAt") VALUES('platform_payment_0002','tenant_0002',9999,'Seeded platform billing','2026-09-24T17:03:47.519Z','user_0001','2026-01-15T10:00:00.000Z');
 INSERT INTO "PlatformPayment" ("id","tenantId","amount","note","extendsUntil","recordedBy","createdAt") VALUES('platform_payment_0003','tenant_0003',9999,'Seeded platform billing','2026-09-24T17:03:47.519Z','user_0001','2026-01-31T10:00:00.000Z');
 INSERT INTO "PlatformPayment" ("id","tenantId","amount","note","extendsUntil","recordedBy","createdAt") VALUES('platform_payment_0004','tenant_0004',9999,'Seeded platform billing','2026-09-24T17:03:47.519Z','user_0001','2026-01-03T10:00:00.000Z');
 INSERT INTO "PlatformPayment" ("id","tenantId","amount","note","extendsUntil","recordedBy","createdAt") VALUES('platform_payment_0005','tenant_0005',9999,'Seeded platform billing','2026-09-24T17:03:47.519Z','user_0001','2026-01-05T10:00:00.000Z');
 INSERT INTO "PlatformPayment" ("id","tenantId","amount","note","extendsUntil","recordedBy","createdAt") VALUES('platform_payment_0006','tenant_0006',9999,'Seeded platform billing','2026-09-24T17:03:47.519Z','user_0001','2025-12-20T10:00:00.000Z');
-CREATE TABLE IF NOT EXISTS "Attendance" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "tenantId" TEXT NOT NULL,
-    "membershipId" TEXT NOT NULL,
-    "markedById" TEXT,
-    "date" DATETIME NOT NULL,
-    "checkInAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "note" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "Attendance_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "Attendance_membershipId_fkey" FOREIGN KEY ("membershipId") REFERENCES "TenantMembership" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "Attendance_markedById_fkey" FOREIGN KEY ("markedById") REFERENCES "TenantMembership" ("id") ON DELETE SET NULL ON UPDATE CASCADE
-);
 INSERT INTO "Attendance" ("id","tenantId","membershipId","markedById","date","checkInAt","note","createdAt") VALUES('attendance_0001','tenant_0001','membership_0004','membership_0001','2026-02-21T00:00:00.000Z','2026-02-21T17:45:00.000Z',NULL,'2026-02-21T17:45:00.000Z');
 INSERT INTO "Attendance" ("id","tenantId","membershipId","markedById","date","checkInAt","note","createdAt") VALUES('attendance_0002','tenant_0001','membership_0004',NULL,'2026-03-10T00:00:00.000Z','2026-03-10T05:34:00.000Z',NULL,'2026-03-10T05:34:00.000Z');
 INSERT INTO "Attendance" ("id","tenantId","membershipId","markedById","date","checkInAt","note","createdAt") VALUES('attendance_0003','tenant_0001','membership_0004',NULL,'2026-03-09T00:00:00.000Z','2026-03-09T12:41:00.000Z',NULL,'2026-03-09T12:41:00.000Z');
@@ -6709,19 +6470,6 @@ INSERT INTO "Attendance" ("id","tenantId","membershipId","markedById","date","ch
 INSERT INTO "Attendance" ("id","tenantId","membershipId","markedById","date","checkInAt","note","createdAt") VALUES('cmp43qz3p0001psp7nlkx99tu','tenant_rudra-gym','rudra_gym_membership_0421',NULL,'2026-05-13T00:00:00.000+00:00','2026-05-13T13:35:30.596+00:00',NULL,'2026-05-13T13:35:30.596+00:00');
 INSERT INTO "Attendance" ("id","tenantId","membershipId","markedById","date","checkInAt","note","createdAt") VALUES('cmp5k8nxo0001psp7xstxqjxk','tenant_rudra-gym','rudra_gym_membership_0421',NULL,'2026-05-14T00:00:00.000+00:00','2026-05-14T14:04:55.941+00:00',NULL,'2026-05-14T14:04:55.941+00:00');
 INSERT INTO "Attendance" ("id","tenantId","membershipId","markedById","date","checkInAt","note","createdAt") VALUES('cmp6wxk8g0000psp7igduegx1','tenant_rudra-gym','rudra_gym_membership_0421',NULL,'2026-05-15T00:00:00.000+00:00','2026-05-15T12:47:59.141+00:00',NULL,'2026-05-15T12:47:59.141+00:00');
-CREATE TABLE IF NOT EXISTS "AuditLog" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "action" TEXT NOT NULL,
-    "entity" TEXT NOT NULL,
-    "entityId" TEXT,
-    "actorId" TEXT,
-    "tenantId" TEXT,
-    "metadata" JSONB,
-    "ipAddress" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "AuditLog_actorId_fkey" FOREIGN KEY ("actorId") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT "AuditLog_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant" ("id") ON DELETE SET NULL ON UPDATE CASCADE
-);
 INSERT INTO "AuditLog" ("id","action","entity","entityId","actorId","tenantId","metadata","ipAddress","createdAt") VALUES('audit_0001','UPDATE','Payment','entity_0001','user_0003','tenant_0001','{"seeded":true,"tenantIndex":1,"logIndex":1}','10.1.1.1','2026-02-18T17:00:00.000Z');
 INSERT INTO "AuditLog" ("id","action","entity","entityId","actorId","tenantId","metadata","ipAddress","createdAt") VALUES('audit_0002','UPDATE','Payment','entity_0002','user_0003','tenant_0001','{"seeded":true,"tenantIndex":1,"logIndex":2}','10.1.2.1','2026-03-22T14:00:00.000Z');
 INSERT INTO "AuditLog" ("id","action","entity","entityId","actorId","tenantId","metadata","ipAddress","createdAt") VALUES('audit_0003','ROLE_CHANGE','WorkoutPlan','entity_0003','user_0003','tenant_0001','{"seeded":true,"tenantIndex":1,"logIndex":3}','10.1.3.1','2026-03-22T16:00:00.000Z');
@@ -8240,21 +7988,6 @@ INSERT INTO "AuditLog" ("id","action","entity","entityId","actorId","tenantId","
 INSERT INTO "AuditLog" ("id","action","entity","entityId","actorId","tenantId","metadata","ipAddress","createdAt") VALUES('cmt9jly0l0000psp79v3jmgx2','CREATE','Report',NULL,'rudra_gym_staff_user_001','tenant_rudra-gym','{"suspendedCount":0,"totalMembers":621}',NULL,'2026-08-26T03:37:10.005+00:00');
 INSERT INTO "AuditLog" ("id","action","entity","entityId","actorId","tenantId","metadata","ipAddress","createdAt") VALUES('cmt9jm0by0002psp7420qb2h8','LOGIN','User','rudra_gym_staff_user_001','rudra_gym_staff_user_001',NULL,NULL,NULL,'2026-08-26T03:37:13.006+00:00');
 INSERT INTO "AuditLog" ("id","action","entity","entityId","actorId","tenantId","metadata","ipAddress","createdAt") VALUES('cmt9jm2u40003psp7b759nxz0','CREATE','Report',NULL,'rudra_gym_staff_user_001','tenant_rudra-gym','{"suspendedCount":0,"totalMembers":621}',NULL,'2026-08-26T03:37:16.252+00:00');
-CREATE TABLE IF NOT EXISTS "PushSubscription" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "userId" TEXT NOT NULL,
-    "endpoint" TEXT NOT NULL,
-    "p256dh" TEXT NOT NULL,
-    "auth" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "PushSubscription_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
-CREATE TABLE IF NOT EXISTS "_BadgeToTenantMembership" (
-    "A" TEXT NOT NULL,
-    "B" TEXT NOT NULL,
-    CONSTRAINT "_BadgeToTenantMembership_A_fkey" FOREIGN KEY ("A") REFERENCES "Badge" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "_BadgeToTenantMembership_B_fkey" FOREIGN KEY ("B") REFERENCES "TenantMembership" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
 INSERT INTO "_BadgeToTenantMembership" ("A","B") VALUES('badge_0001','membership_0008');
 INSERT INTO "_BadgeToTenantMembership" ("A","B") VALUES('badge_0001','membership_0018');
 INSERT INTO "_BadgeToTenantMembership" ("A","B") VALUES('badge_0001','membership_0014');
@@ -8395,136 +8128,6 @@ INSERT INTO "_BadgeToTenantMembership" ("A","B") VALUES('cmnbr03l70002psp7cg7z36
 INSERT INTO "_BadgeToTenantMembership" ("A","B") VALUES('cmnbr03l70002psp7cg7z369b','cmou09u3y0001psp7vgj9c8up');
 INSERT INTO "_BadgeToTenantMembership" ("A","B") VALUES('cmnbr03l70002psp7cg7z369b','rudra_gym_membership_0455');
 INSERT INTO "_BadgeToTenantMembership" ("A","B") VALUES('cmnbr03l70002psp7cg7z369b','rudra_gym_membership_0320');
-CREATE TABLE IF NOT EXISTS "Shift" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "tenantId" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "description" TEXT,
-    "startTime" TEXT NOT NULL,
-    "endTime" TEXT NOT NULL,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "Shift_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
-INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0001','tenant_0001','Morning Shift','Early training window for before-work members.','06:00','10:00',1,'2025-08-12T09:00:00.000Z','2025-08-12T09:00:00.000Z');
-INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0002','tenant_0001','Afternoon Shift','Midday slot with lighter floor traffic.','12:00','16:00',0,'2025-08-12T09:00:00.000Z','2025-08-12T09:00:00.000Z');
-INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0003','tenant_0001','Evening Shift','Peak post-work training slot.','17:00','22:00',1,'2025-08-12T09:00:00.000Z','2025-08-12T09:00:00.000Z');
-INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0004','tenant_0002','Morning Shift','Early training window for before-work members.','06:00','10:00',1,'2025-02-28T09:00:00.000Z','2025-02-28T09:00:00.000Z');
-INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0005','tenant_0002','Afternoon Shift','Midday slot with lighter floor traffic.','12:00','16:00',1,'2025-02-28T09:00:00.000Z','2025-02-28T09:00:00.000Z');
-INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0006','tenant_0002','Evening Shift','Peak post-work training slot.','17:00','22:00',1,'2025-02-28T09:00:00.000Z','2025-02-28T09:00:00.000Z');
-INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0007','tenant_0003','Morning Shift','Early training window for before-work members.','06:00','10:00',1,'2025-06-07T09:00:00.000Z','2025-06-07T09:00:00.000Z');
-INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0008','tenant_0003','Afternoon Shift','Midday slot with lighter floor traffic.','12:00','16:00',0,'2025-06-07T09:00:00.000Z','2025-06-07T09:00:00.000Z');
-INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0009','tenant_0003','Evening Shift','Peak post-work training slot.','17:00','22:00',1,'2025-06-07T09:00:00.000Z','2025-06-07T09:00:00.000Z');
-INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0010','tenant_0004','Morning Shift','Early training window for before-work members.','06:00','10:00',1,'2024-11-22T09:00:00.000Z','2024-11-22T09:00:00.000Z');
-INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0011','tenant_0004','Afternoon Shift','Midday slot with lighter floor traffic.','12:00','16:00',1,'2024-11-22T09:00:00.000Z','2024-11-22T09:00:00.000Z');
-INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0012','tenant_0004','Evening Shift','Peak post-work training slot.','17:00','22:00',1,'2024-11-22T09:00:00.000Z','2024-11-22T09:00:00.000Z');
-INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0013','tenant_0005','Morning Shift','Early training window for before-work members.','06:00','10:00',1,'2025-09-15T09:00:00.000Z','2025-09-15T09:00:00.000Z');
-INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0014','tenant_0005','Afternoon Shift','Midday slot with lighter floor traffic.','12:00','16:00',0,'2025-09-15T09:00:00.000Z','2025-09-15T09:00:00.000Z');
-INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0015','tenant_0005','Evening Shift','Peak post-work training slot.','17:00','22:00',1,'2025-09-15T09:00:00.000Z','2025-09-15T09:00:00.000Z');
-INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0016','tenant_0006','Morning Shift','Early training window for before-work members.','06:00','10:00',1,'2025-02-26T09:00:00.000Z','2025-02-26T09:00:00.000Z');
-INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0017','tenant_0006','Afternoon Shift','Midday slot with lighter floor traffic.','12:00','16:00',1,'2025-02-26T09:00:00.000Z','2025-02-26T09:00:00.000Z');
-INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('shift_0018','tenant_0006','Evening Shift','Peak post-work training slot.','17:00','22:00',1,'2025-02-26T09:00:00.000Z','2025-02-26T09:00:00.000Z');
-INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('rudra_gym_shift_evening','tenant_rudra-gym','Evening','Imported from legacy batch data.','17:00','22:00',1,'2025-05-01T17:02:21.000Z','2027-03-23T00:00:00.000Z');
-INSERT INTO "Shift" ("id","tenantId","name","description","startTime","endTime","isActive","createdAt","updatedAt") VALUES('rudra_gym_shift_morning','tenant_rudra-gym','Morning','Imported from legacy batch data.','05:00','10:00',1,'2025-05-01T17:02:21.000Z','2026-03-31T16:19:49.467+00:00');
-CREATE TABLE IF NOT EXISTS "Todo" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "tenantId" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
-    "description" TEXT,
-    "visibility" TEXT NOT NULL DEFAULT 'PUBLIC',
-    "isCompleted" BOOLEAN NOT NULL DEFAULT false,
-    "completedAt" DATETIME,
-    "createdById" TEXT,
-    "updatedById" TEXT,
-    "completedById" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "Todo_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "Todo_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "TenantMembership" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT "Todo_updatedById_fkey" FOREIGN KEY ("updatedById") REFERENCES "TenantMembership" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT "Todo_completedById_fkey" FOREIGN KEY ("completedById") REFERENCES "TenantMembership" ("id") ON DELETE SET NULL ON UPDATE CASCADE
-);
 INSERT INTO "Todo" ("id","tenantId","title","description","visibility","isCompleted","completedAt","createdById","updatedById","completedById","createdAt","updatedAt") VALUES('cmne53xsa0003psp7gx8fooha','tenant_rudra-gym','200 advance from Raju',NULL,'PROTECTED',0,NULL,'rudra_gym_staff_membership_001','rudra_gym_staff_membership_001',NULL,'2026-03-31T04:51:52.138+00:00','2026-04-03T03:18:49.367+00:00');
 INSERT INTO "Todo" ("id","tenantId","title","description","visibility","isCompleted","completedAt","createdById","updatedById","completedById","createdAt","updatedAt") VALUES('cmpffp01g0005psp7cnfzvgrz','tenant_rudra-gym','200 due','519','PROTECTED',0,NULL,'rudra_gym_staff_membership_001','rudra_gym_staff_membership_001',NULL,'2026-05-21T11:55:21.844+00:00','2026-05-21T11:55:21.844+00:00');
-CREATE TABLE IF NOT EXISTS "_BadgeToSubscription" (
-    "A" TEXT NOT NULL,
-    "B" TEXT NOT NULL,
-    CONSTRAINT "_BadgeToSubscription_A_fkey" FOREIGN KEY ("A") REFERENCES "Badge" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "_BadgeToSubscription_B_fkey" FOREIGN KEY ("B") REFERENCES "Subscription" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
 INSERT INTO "_BadgeToSubscription" ("A","B") VALUES('cmnbr03l70002psp7cg7z369b','rudra_gym_subscription_1-month');
-DELETE FROM sqlite_sequence;
-INSERT INTO "sqlite_sequence" ("name","seq") VALUES('d1_migrations',8);
-CREATE INDEX "User_email_idx" ON "User"("email");
-CREATE UNIQUE INDEX "PasswordResetToken_token_key" ON "PasswordResetToken"("token");
-CREATE INDEX "PasswordResetToken_userId_idx" ON "PasswordResetToken"("userId");
-CREATE INDEX "PasswordResetToken_token_idx" ON "PasswordResetToken"("token");
-CREATE UNIQUE INDEX "RefreshToken_token_key" ON "RefreshToken"("token");
-CREATE INDEX "RefreshToken_userId_idx" ON "RefreshToken"("userId");
-CREATE INDEX "RefreshToken_token_idx" ON "RefreshToken"("token");
-CREATE UNIQUE INDEX "Tenant_slug_key" ON "Tenant"("slug");
-CREATE UNIQUE INDEX "Tenant_phone_key" ON "Tenant"("phone");
-CREATE INDEX "Tenant_slug_idx" ON "Tenant"("slug");
-CREATE UNIQUE INDEX "TenantSettings_tenantId_key" ON "TenantSettings"("tenantId");
-CREATE INDEX "TenantCharge_tenantId_idx" ON "TenantCharge"("tenantId");
-CREATE UNIQUE INDEX "TenantCharge_tenantId_name_key" ON "TenantCharge"("tenantId", "name");
-CREATE UNIQUE INDEX "TenantMembership_userId_key" ON "TenantMembership"("userId");
-CREATE INDEX "TenantMembership_tenantId_idx" ON "TenantMembership"("tenantId");
-CREATE INDEX "TenantMembership_userId_idx" ON "TenantMembership"("userId");
-CREATE UNIQUE INDEX "TenantMembership_tenantId_userId_key" ON "TenantMembership"("tenantId", "userId");
-CREATE UNIQUE INDEX "TenantMembership_tenantId_memberId_key" ON "TenantMembership"("tenantId", "memberId");
-CREATE INDEX "Subscription_tenantId_idx" ON "Subscription"("tenantId");
-CREATE INDEX "Payment_tenantId_idx" ON "Payment"("tenantId");
-CREATE INDEX "Payment_membershipId_idx" ON "Payment"("membershipId");
-CREATE INDEX "Payment_status_idx" ON "Payment"("status");
-CREATE INDEX "Payment_createdAt_idx" ON "Payment"("createdAt");
-CREATE INDEX "Product_isActive_idx" ON "Product"("isActive");
-CREATE INDEX "Product_category_idx" ON "Product"("category");
-CREATE INDEX "ProductReview_productId_idx" ON "ProductReview"("productId");
-CREATE INDEX "ProductReview_userId_idx" ON "ProductReview"("userId");
-CREATE INDEX "ProductReview_rating_idx" ON "ProductReview"("rating");
-CREATE INDEX "ProductReview_createdAt_idx" ON "ProductReview"("createdAt");
-CREATE UNIQUE INDEX "ProductReview_productId_userId_createdAt_key" ON "ProductReview"("productId", "userId", "createdAt");
-CREATE INDEX "ProductReviewComment_reviewId_idx" ON "ProductReviewComment"("reviewId");
-CREATE INDEX "ProductReviewComment_userId_idx" ON "ProductReviewComment"("userId");
-CREATE INDEX "ProductReviewComment_createdAt_idx" ON "ProductReviewComment"("createdAt");
-CREATE INDEX "ProductReviewHelpful_reviewId_idx" ON "ProductReviewHelpful"("reviewId");
-CREATE INDEX "ProductReviewHelpful_userId_idx" ON "ProductReviewHelpful"("userId");
-CREATE UNIQUE INDEX "ProductReviewHelpful_reviewId_userId_key" ON "ProductReviewHelpful"("reviewId", "userId");
-CREATE INDEX "Order_userId_idx" ON "Order"("userId");
-CREATE INDEX "Order_status_idx" ON "Order"("status");
-CREATE INDEX "Order_createdAt_idx" ON "Order"("createdAt");
-CREATE INDEX "OrderItem_orderId_idx" ON "OrderItem"("orderId");
-CREATE INDEX "OrderItem_productId_idx" ON "OrderItem"("productId");
-CREATE UNIQUE INDEX "OrderItem_orderId_productId_key" ON "OrderItem"("orderId", "productId");
-CREATE INDEX "WorkoutPlan_tenantId_idx" ON "WorkoutPlan"("tenantId");
-CREATE INDEX "WorkoutPlan_creatorId_idx" ON "WorkoutPlan"("creatorId");
-CREATE INDEX "WorkoutPlanAssignment_membershipId_idx" ON "WorkoutPlanAssignment"("membershipId");
-CREATE UNIQUE INDEX "WorkoutPlanAssignment_planId_membershipId_key" ON "WorkoutPlanAssignment"("planId", "membershipId");
-CREATE INDEX "Badge_tenantId_idx" ON "Badge"("tenantId");
-CREATE UNIQUE INDEX "Badge_tenantId_name_key" ON "Badge"("tenantId", "name");
-CREATE INDEX "PlatformPayment_tenantId_idx" ON "PlatformPayment"("tenantId");
-CREATE INDEX "Attendance_tenantId_idx" ON "Attendance"("tenantId");
-CREATE INDEX "Attendance_membershipId_idx" ON "Attendance"("membershipId");
-CREATE INDEX "Attendance_date_idx" ON "Attendance"("date");
-CREATE UNIQUE INDEX "Attendance_tenantId_membershipId_date_key" ON "Attendance"("tenantId", "membershipId", "date");
-CREATE INDEX "AuditLog_tenantId_idx" ON "AuditLog"("tenantId");
-CREATE INDEX "AuditLog_actorId_idx" ON "AuditLog"("actorId");
-CREATE INDEX "AuditLog_entity_entityId_idx" ON "AuditLog"("entity", "entityId");
-CREATE INDEX "AuditLog_createdAt_idx" ON "AuditLog"("createdAt");
-CREATE UNIQUE INDEX "PushSubscription_endpoint_key" ON "PushSubscription"("endpoint");
-CREATE INDEX "PushSubscription_userId_idx" ON "PushSubscription"("userId");
-CREATE UNIQUE INDEX "_BadgeToTenantMembership_AB_unique" ON "_BadgeToTenantMembership"("A", "B");
-CREATE INDEX "_BadgeToTenantMembership_B_index" ON "_BadgeToTenantMembership"("B");
-CREATE UNIQUE INDEX "Shift_tenantId_name_key" ON "Shift"("tenantId", "name");
-CREATE INDEX "Shift_tenantId_isActive_idx" ON "Shift"("tenantId", "isActive");
-CREATE INDEX "TenantMembership_shiftId_idx" ON "TenantMembership"("shiftId");
-CREATE INDEX "Todo_tenantId_updatedAt_idx" ON "Todo"("tenantId", "updatedAt");
-CREATE INDEX "Todo_tenantId_visibility_isCompleted_idx" ON "Todo"("tenantId", "visibility", "isCompleted");
-CREATE INDEX "Todo_createdById_idx" ON "Todo"("createdById");
-CREATE INDEX "Todo_updatedById_idx" ON "Todo"("updatedById");
-CREATE INDEX "Todo_completedById_idx" ON "Todo"("completedById");
-CREATE UNIQUE INDEX "_BadgeToSubscription_AB_unique" ON "_BadgeToSubscription"("A", "B");
-CREATE INDEX "_BadgeToSubscription_B_index" ON "_BadgeToSubscription"("B");
-CREATE INDEX "TenantMembership_referredByMembershipId_idx" ON "TenantMembership"("referredByMembershipId");

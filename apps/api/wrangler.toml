@@ -34,7 +34,7 @@ crons = ["30 3 * * *"] # Daily at 03:30 UTC / 09:00 IST for tenant reports
 [[d1_databases]]
 binding = "DB"
 database_name = "fit-db"
-database_id = "9578b082-95e3-4284-bec8-10f3a075309b"
+database_id = "5aefb73c-0f37-4c33-9ba3-78b38ea1c4c4"
 migrations_dir = "prisma/migrations"
 
 [[r2_buckets]]
@@ -97,7 +97,7 @@ crons = ["30 3 * * *"]
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "fit-db"
-database_id = "9578b082-95e3-4284-bec8-10f3a075309b"
+database_id = "5aefb73c-0f37-4c33-9ba3-78b38ea1c4c4"
 migrations_dir = "prisma/migrations"
 
 [[env.production.r2_buckets]]
