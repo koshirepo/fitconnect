@@ -114,8 +114,14 @@ export default function FinanceReportsPage() {
   const reportQuery = useMemberReport();
   const analyticsQuery = usePaymentAnalytics();
 
-  const report = (reportQuery.data as ReportData | undefined) ?? null;
-  const analytics = (analyticsQuery.data?.analytics as AnalyticsData | undefined) ?? null;
+  // Both payloads are trusted for their shape all over this page, so anything
+  // that arrives without its sections is treated as absent. An offline-queued
+  // POST resolves to `{}`, which is truthy and would otherwise crash the render
+  // on the first nested read.
+  const rawReport = (reportQuery.data as ReportData | undefined) ?? null;
+  const report = rawReport?.members && rawReport?.finances ? rawReport : null;
+  const rawAnalytics = (analyticsQuery.data?.analytics as AnalyticsData | undefined) ?? null;
+  const analytics = rawAnalytics?.month && rawAnalytics?.allTime ? rawAnalytics : null;
   const loading = reportQuery.isLoading || analyticsQuery.isLoading;
   const error = reportQuery.isError
     ? getApiError(reportQuery.error)
@@ -203,36 +209,51 @@ export default function FinanceReportsPage() {
       ]
     : [];
 
+  // These four arrived with the schema-aware sections and are absent from an API
+  // deployed before them, so each falls back to zeros rather than taking the
+  // page down while the two halves are out of step.
+  const zeroBucket = { revenue: 0, count: 0 };
+  const zeroGiveaway = { gross: 0, discount: 0, coins: 0, net: 0 };
+  const discounts = analytics?.discounts ?? { month: zeroGiveaway, allTime: zeroGiveaway };
+  const collection = analytics?.collection ?? { online: zeroBucket, manual: zeroBucket };
+  const revenueMix = analytics?.revenueMix ?? {
+    subscriptions: zeroBucket,
+    charges: zeroBucket,
+    other: zeroBucket,
+  };
+  const coinsOutstanding = analytics?.coinsOutstanding ?? 0;
+  const activeFreezes = analytics?.activeFreezes ?? 0;
+
   // This month, by what was being paid for. Zeroed buckets still render so the
   // mix reads as "nothing from charges" rather than silently omitting the row.
   const mixRows = analytics
     ? [
         {
           label: "Memberships",
-          revenue: analytics.revenueMix.subscriptions.revenue,
-          count: analytics.revenueMix.subscriptions.count,
+          revenue: revenueMix.subscriptions.revenue,
+          count: revenueMix.subscriptions.count,
           color: COLORS.green,
         },
         {
           label: "One-off charges",
-          revenue: analytics.revenueMix.charges.revenue,
-          count: analytics.revenueMix.charges.count,
+          revenue: revenueMix.charges.revenue,
+          count: revenueMix.charges.count,
           color: COLORS.blue,
         },
         {
           label: "Other",
-          revenue: analytics.revenueMix.other.revenue,
-          count: analytics.revenueMix.other.count,
+          revenue: revenueMix.other.revenue,
+          count: revenueMix.other.count,
           color: COLORS.muted,
         },
       ]
     : [];
   const mixTotal = mixRows.reduce((sum, r) => sum + r.revenue, 0);
   const givenAwayMonth = analytics
-    ? analytics.discounts.month.discount + analytics.discounts.month.coins
+    ? discounts.month.discount + discounts.month.coins
     : 0;
   const collectedTotal = analytics
-    ? analytics.collection.online.revenue + analytics.collection.manual.revenue
+    ? collection.online.revenue + collection.manual.revenue
     : 0;
 
   return (
@@ -348,31 +369,31 @@ export default function FinanceReportsPage() {
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="text-muted-foreground">List price</span>
                   <span className="font-medium tabular-nums">
-                    {formatCompact(analytics.discounts.month.gross)}
+                    {formatCompact(discounts.month.gross)}
                   </span>
                 </div>
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="text-muted-foreground">Coupon discounts</span>
                   <span className="font-medium tabular-nums text-amber-600">
-                    −{formatCompact(analytics.discounts.month.discount)}
+                    −{formatCompact(discounts.month.discount)}
                   </span>
                 </div>
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="text-muted-foreground">Coins redeemed</span>
                   <span className="font-medium tabular-nums text-amber-600">
-                    −{formatCompact(analytics.discounts.month.coins)}
+                    −{formatCompact(discounts.month.coins)}
                   </span>
                 </div>
                 <div className="mt-1 flex items-baseline justify-between gap-2 border-t pt-2">
                   <span className="font-medium">Collected</span>
                   <span className="text-lg font-bold tabular-nums text-green-600">
-                    {formatCompact(analytics.discounts.month.net)}
+                    {formatCompact(discounts.month.net)}
                   </span>
                 </div>
                 <p className="pt-1 text-xs text-muted-foreground">
                   {givenAwayMonth > 0
                     ? `${formatCompact(givenAwayMonth)} given away this month · ${formatCompact(
-                        analytics.discounts.allTime.discount + analytics.discounts.allTime.coins,
+                        discounts.allTime.discount + discounts.allTime.coins,
                       )} all time`
                     : "No coupons or coins used this month."}
                 </p>
@@ -396,14 +417,14 @@ export default function FinanceReportsPage() {
                       <div
                         className="h-full"
                         style={{
-                          width: `${(analytics.collection.online.revenue / collectedTotal) * 100}%`,
+                          width: `${(collection.online.revenue / collectedTotal) * 100}%`,
                           backgroundColor: COLORS.blue,
                         }}
                       />
                       <div
                         className="h-full"
                         style={{
-                          width: `${(analytics.collection.manual.revenue / collectedTotal) * 100}%`,
+                          width: `${(collection.manual.revenue / collectedTotal) * 100}%`,
                           backgroundColor: COLORS.purple,
                         }}
                       />
@@ -415,10 +436,10 @@ export default function FinanceReportsPage() {
                           <span className="text-xs text-muted-foreground">Online</span>
                         </div>
                         <p className="text-lg font-bold tabular-nums">
-                          {formatCompact(analytics.collection.online.revenue)}
+                          {formatCompact(collection.online.revenue)}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {analytics.collection.online.count} payments
+                          {collection.online.count} payments
                         </p>
                       </div>
                       <div>
@@ -427,10 +448,10 @@ export default function FinanceReportsPage() {
                           <span className="text-xs text-muted-foreground">Cash / manual</span>
                         </div>
                         <p className="text-lg font-bold tabular-nums">
-                          {formatCompact(analytics.collection.manual.revenue)}
+                          {formatCompact(collection.manual.revenue)}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {analytics.collection.manual.count} payments
+                          {collection.manual.count} payments
                         </p>
                       </div>
                     </div>
@@ -440,12 +461,12 @@ export default function FinanceReportsPage() {
                   <div>
                     <p className="text-xs text-muted-foreground">Coins outstanding</p>
                     <p className="font-semibold tabular-nums">
-                      {analytics.coinsOutstanding.toLocaleString("en-IN")}
+                      {coinsOutstanding.toLocaleString("en-IN")}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Frozen terms</p>
-                    <p className="font-semibold tabular-nums">{analytics.activeFreezes}</p>
+                    <p className="font-semibold tabular-nums">{activeFreezes}</p>
                   </div>
                 </div>
               </CardContent>

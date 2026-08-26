@@ -263,6 +263,12 @@ export async function queueFailedMutation(error: unknown): Promise<AxiosResponse
   // an answer now — a queued "we'll get to it" is worse than a plain failure.
   if (url.includes("/public/signup")) return Promise.reject(error);
 
+  // Skip reads that happen to use POST. Report generation returns a payload the
+  // caller renders; queueing it would hand back the synthetic empty body below,
+  // which reads as a successful-but-shapeless response — and would re-send the
+  // report emails whenever the queue replayed.
+  if (url.includes("/members/report")) return Promise.reject(error);
+
   // Skip FormData/multipart requests — binary data can't be serialized to JSON.
   // File uploads must be handled explicitly (e.g. AddMemberPage stores files in pendingFiles).
   if (config.data instanceof FormData) return Promise.reject(error);
