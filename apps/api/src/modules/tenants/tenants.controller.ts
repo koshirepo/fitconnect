@@ -30,7 +30,9 @@ export const tenantController = {
     const parsed = await parseBody(c, createTenantSchema);
     if (!parsed.ok) return parsed.response;
 
-    const result = await tenantService.create(parsed.data);
+    const result = await tenantService.create(parsed.data, (promise) =>
+      c.executionCtx.waitUntil(promise),
+    );
     if ("error" in result) return conflict(c, result.error!);
 
     await auditLog({

@@ -1,4 +1,3 @@
-import * as React from "react";
 import { tenantsApi } from "@/api/tenants";
 import { paymentsApi } from "@/api/payments";
 import { useMemberReport } from "@/api/queries/members";
@@ -7,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatGridSkeleton, CardSkeleton } from "@/components/ui/skeleton";
+import { StatCard } from "@/components/ui/stat-card";
+import { ChartTooltip } from "@/components/ui/chart-tooltip";
 import { formatCurrency } from "@/lib/utils";
 import { getApiError } from "@/api/client";
 import {
@@ -51,61 +52,8 @@ const COLORS = {
   muted: "#94a3b8",
 };
 
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  subtext,
-  color = "text-foreground",
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string | number;
-  subtext?: string;
-  color?: string;
-}) {
-  return (
-    <Card>
-      <CardContent className="pt-5 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-muted p-2.5">
-            <Icon className="h-5 w-5 text-muted-foreground" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs text-muted-foreground truncate">{label}</p>
-            <p className={`text-xl font-bold ${color}`}>{value}</p>
-            {subtext && <p className="text-xs text-muted-foreground">{subtext}</p>}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 function formatCompact(amount: number) {
   return formatCurrency(amount).replace("₹", "₹ ");
-}
-
-function CustomTooltip({
-  active,
-  payload,
-  label,
-}: {
-  active?: boolean;
-  payload?: { value: number; name: string; color: string }[];
-  label?: string;
-}) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="rounded-lg border bg-popover px-3 py-2 text-xs shadow-lg">
-      <p className="font-semibold mb-1">{label}</p>
-      {payload.map((p, i) => (
-        <p key={i} style={{ color: p.color }}>
-          {p.name}: {p.name.toLowerCase().includes("revenue") ? formatCurrency(p.value) : p.value}
-        </p>
-      ))}
-    </div>
-  );
 }
 
 export default function FinanceReportsPage() {
@@ -501,7 +449,7 @@ export default function FinanceReportsPage() {
                         tickFormatter={(v) => `₹${Number(v).toLocaleString("en-IN")}`}
                         className="text-muted-foreground"
                       />
-                      <Tooltip content={<CustomTooltip />} />
+                      <Tooltip content={<ChartTooltip />} />
                       <Area
                         type="monotone"
                         dataKey="Revenue"
@@ -573,7 +521,7 @@ export default function FinanceReportsPage() {
                       tick={{ fontSize: 11 }}
                       tickFormatter={(v) => `₹${Number(v).toLocaleString("en-IN")}`}
                     />
-                    <Tooltip content={<CustomTooltip />} />
+                    <Tooltip content={<ChartTooltip />} />
                     <Bar dataKey="Revenue" fill={COLORS.green} radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>

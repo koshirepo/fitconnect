@@ -3,7 +3,7 @@
  *
  * - Walks the Worker secrets an environment needs and shells out to `wrangler secret put` for each one, so nobody has to remember the list.
  * - Values are typed into wrangler's own prompt and never pass through this script, a file, or the shell history.
- * - Usage: `node scripts/put-secrets.mjs <test|production>` (or `npm run secrets:test`).
+ * - Usage: `node scripts/put-secrets.mjs production` (or `npm run secrets:production`).
  */
 import { spawnSync } from "node:child_process";
 
@@ -22,12 +22,16 @@ const REQUIRED_SECRETS = [
     key: "CREDENTIALS_KEY",
     hint: "Encrypts gym-owned gateway secrets at rest. Generate with: openssl rand -base64 32",
   },
+  {
+    key: "CLOUDFLARE_API_TOKEN",
+    hint: "Registers each new gym's subdomain on the Pages project. Needs Account → Cloudflare Pages: Edit.",
+  },
 ];
 
 const env = process.argv[2];
 
-if (!env || !["test", "production"].includes(env)) {
-  console.error("Usage: node scripts/put-secrets.mjs <test|production>");
+if (env !== "production") {
+  console.error("Usage: node scripts/put-secrets.mjs production");
   process.exit(1);
 }
 

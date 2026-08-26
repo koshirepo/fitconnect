@@ -12,9 +12,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "build:test": "tsc -b && vite build --mode test",
     "build:production": "tsc -b && vite build --mode production",
-    "deploy:test": "npm run build:test && wrangler pages deploy dist --project-name=fitconnect-pwa-test --branch=test",
     "deploy:production": "npm run build:production && wrangler pages deploy dist --project-name=fitconnect-pwa --branch=main"
   },
   "dependencies": {

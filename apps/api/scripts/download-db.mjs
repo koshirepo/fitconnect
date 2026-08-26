@@ -3,12 +3,10 @@
  *
  * - Shells out to `wrangler d1 export` so the exact database id / environment
  *   wiring from `wrangler.toml` is reused and nothing needs to be remembered.
- * - Defaults to the production database (`fit-db`); pass `test` to grab the
- *   test database instead.
+ * - Targets the production database (`fit-db`), the only remote environment.
  * - Writes next to the repo root by default so the file lands beside the
  *   project, e.g. `fit-db-export.sql`.
- * - Usage: `node scripts/download-db.mjs [test|production] [outputPath]`
- *   (or `npm run db:download` / `npm run db:download:test`).
+ * - Usage: `node scripts/download-db.mjs [production] [outputPath]` (or `npm run db:download`).
  */
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
@@ -35,7 +33,6 @@ function resolveWranglerCli() {
 const wranglerCli = resolveWranglerCli();
 
 const DATABASES = {
-  test: { name: "fit-db-test", file: "fit-db-test-export.sql" },
   production: { name: "fit-db", file: "fit-db-export.sql" },
 };
 
@@ -43,7 +40,7 @@ const env = process.argv[2] ?? "production";
 const db = DATABASES[env];
 
 if (!db) {
-  console.error("Usage: node scripts/download-db.mjs [test|production] [outputPath]");
+  console.error("Usage: node scripts/download-db.mjs [production] [outputPath]");
   process.exit(1);
 }
 
@@ -66,7 +63,7 @@ const result = spawnSync(
     "export",
     db.name,
     // Without this, wrangler only sees the top-level `[[d1_databases]]` block
-    // and cannot find a database declared under `[env.test]`.
+    // and cannot find the database declared under `[env.production]`.
     "--env",
     env,
     "--remote",

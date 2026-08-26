@@ -4,24 +4,17 @@
 #
 # Environments
 # ------------
-#   (top level)   local development — `npm run dev`, backed by the local miniflare D1/R2 state
-#   env.test      shared test deployment — `npm run deploy:test`
-#   env.production live deployment      — `npm run deploy:production`
+#   (top level)    local development — `npm run dev`, backed by the local miniflare D1/R2 state
+#   env.production live deployment    — `npm run deploy:production`
 #
 # Wrangler does NOT inherit `vars`, `d1_databases`, `r2_buckets`, or `triggers`
-# into named environments, so each block below repeats everything it needs.
+# into named environments, so the production block below repeats everything it needs.
 #
-# Secrets are NOT stored here. Set them per environment with:
-#   npx wrangler secret put JWT_SECRET --env test
-#   npx wrangler secret put EMAIL_USER --env test
-#   npx wrangler secret put EMAIL_PASSWORD --env test
-#   npx wrangler secret put VAPID_PRIVATE_KEY --env test
-#   npx wrangler secret put RAZORPAY_KEY_ID --env test
-#   npx wrangler secret put RAZORPAY_KEY_SECRET --env test
-#   npx wrangler secret put RAZORPAY_WEBHOOK_SECRET --env test
-#   npx wrangler secret put CREDENTIALS_KEY --env test
-# and again with `--env production`. For local development put the same keys in
-# `.dev.vars` (gitignored) — see `.dev.vars.example`.
+# Secrets are NOT stored here. Set them all with `npm run secrets:production`, or
+# one at a time:
+#   npx wrangler secret put JWT_SECRET --env production
+# For local development put the same keys in `.dev.vars` (gitignored) — see
+# `.dev.vars.example`.
 
 name = "fitconnect-api-dev"
 main = "src/index.ts"
@@ -44,45 +37,14 @@ bucket_name = "fit-bucket"
 [vars]
 APP_URL = "http://localhost:5173"
 APP_ROOT_DOMAINS = "localhost"
+CLOUDFLARE_ACCOUNT_ID = "610fe4c99988bf13d33f49fbfe446fee"
+CLOUDFLARE_PAGES_PROJECT = "fitconnect-pwa"
 R2_PUBLIC_URL = "https://pub-2da141b1571a44ebb3e8f7633b6e5b61.r2.dev"
 CORS_ORIGIN = "http://localhost:5173"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = "587"
 EMAIL_SECURE = "false"
 EMAIL_FROM = "Fit Connect <rudragymbakhri@gmail.com>"
-VAPID_EMAIL = "mailto:rudragymbakhri@gmail.com"
-VAPID_PUBLIC_KEY = "BGM8SxeUeDufKP-etZ5Q-GJpW9GTmBhay_fGHK2vBlsIWVfbsbHzPD_TLVbSl35oBOnjL2qdG47YibTHhwASP2c"
-
-# ─── Test ─────────────────────────────────────────────────────────────────────
-# Create the backing resources once, then paste the returned database_id below:
-#   npx wrangler d1 create fit-db-test
-#   npx wrangler r2 bucket create fit-bucket-test
-
-[env.test]
-name = "fitconnect-api-test"
-
-[env.test.triggers]
-crons = ["30 3 * * *"]
-
-[[env.test.d1_databases]]
-binding = "DB"
-database_name = "fit-db-test"
-database_id = "1767d82c-1828-49b5-b3e4-092604fd4087"
-migrations_dir = "prisma/migrations"
-
-[[env.test.r2_buckets]]
-binding = "FILES"
-bucket_name = "fit-bucket-test"
-
-[env.test.vars]
-APP_URL = "https://test.fitconnect.co.in"
-APP_ROOT_DOMAINS = "test.fitconnect.co.in"
-R2_PUBLIC_URL = "https://pub-5d3e2f58e0844e3b8b282ae8301f3ae3.r2.dev"
-CORS_ORIGIN = "https://test.fitconnect.co.in,https://fitconnect-pwa-test.pages.dev"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = "587"
-EMAIL_SECURE = "false"
-EMAIL_FROM = "Fit Connect (Test) <rudragymbakhri@gmail.com>"
 VAPID_EMAIL = "mailto:rudragymbakhri@gmail.com"
 VAPID_PUBLIC_KEY = "BGM8SxeUeDufKP-etZ5Q-GJpW9GTmBhay_fGHK2vBlsIWVfbsbHzPD_TLVbSl35oBOnjL2qdG47YibTHhwASP2c"
 
@@ -107,6 +69,8 @@ bucket_name = "fit-bucket"
 [env.production.vars]
 APP_URL = "https://fitconnect.co.in"
 APP_ROOT_DOMAINS = "fitconnect.co.in"
+CLOUDFLARE_ACCOUNT_ID = "610fe4c99988bf13d33f49fbfe446fee"
+CLOUDFLARE_PAGES_PROJECT = "fitconnect-pwa"
 R2_PUBLIC_URL = "https://pub-2da141b1571a44ebb3e8f7633b6e5b61.r2.dev"
 CORS_ORIGIN = "https://fitconnect.co.in"
 EMAIL_HOST = "smtp.gmail.com"

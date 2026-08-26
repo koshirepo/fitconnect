@@ -9,6 +9,7 @@ import type { AccountStatus } from "@fitconnect/shared/types/enums";
 import { toSlug } from "@fitconnect/shared/utils";
 import { hashPassword, generateRandomPassword } from "../../auth/password";
 import { deleteFileByUrl, type StorageOptions } from "../../lib/storage";
+import { provisionTenantSubdomain } from "../../lib/tenant-subdomain";
 import { tenantRepository } from "./tenants.repository";
 import type {
   CreateTenantInput,
@@ -83,7 +84,10 @@ export const tenantService = {
    * Execute the `create` workflow for the tenants module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
-  async create(input: CreateTenantInput) {
+  async create(
+    input: CreateTenantInput,
+    scheduleBackgroundTask?: (promise: Promise<unknown>) => void,
+  ) {
     const requestedSlug = input.slug?.trim();
     // If no slug is supplied, derive one from the tenant name and keep
     // incrementing until the public identifier is unique.
@@ -145,10 +149,32 @@ export const tenantService = {
       admin: adminPayload,
     });
 
+    // The gym's own address. Registered in the background because certificate
+    // issuance takes a minute or two and the person creating the gym should not
+    // wait on Cloudflare — and because a gym that exists without its address yet
+    // is a far better outcome than a creation that failed at the last step.
+    const provisioning = provisionTenantSubdomain(slug).then((outcome) => {
+      if (outcome.status === "failed") {
+        console.error("Tenant subdomain provisioning failed.", {
+          slug,
+          hostname: outcome.hostname,
+          reason: outcome.reason,
+        });
+      }
+      return outcome;
+    });
+
+    if (scheduleBackgroundTask) {
+      scheduleBackgroundTask(provisioning);
+    }
+
     return {
       data: {
         tenant,
         ...(generatedPassword ? { generatedPassword } : {}),
+        // Present only when the caller waited for it; the background path
+        // reports through the log above instead.
+        ...(scheduleBackgroundTask ? {} : { subdomain: await provisioning }),
       },
     };
   },

@@ -10,6 +10,7 @@ import { useAllPayments, useMyPayments, useUpdatePaymentStatus } from "@/api/que
 import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { MemberCard, PersonChip } from "@/components/ui/member-card";
+import { PaymentStatusChip } from "@/components/ui/payment-status-chip";
 import { SkeletonRow } from "@/components/ui/skeleton";
 import { SwipePane } from "@/components/ui/swipe-pane";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -28,7 +29,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import type { Payment, PaymentStatus } from "@/types/api";
+import type { Payment } from "@/types/api";
 import { usePendingMutations } from "@/lib/use-pending-mutations";
 
 type PendingPaymentMutationBody = {
@@ -51,26 +52,6 @@ const STATUS_TABS = [
   { value: "FAILED", label: "Failed", icon: XCircle, iconClass: "text-red-600" },
   { value: "REFUNDED", label: "Refunded", icon: RotateCcw, iconClass: "text-muted-foreground" },
 ];
-
-/** Icon and colour for each payment status, keyed the same way the tabs are. */
-const STATUS_CHIP: Record<PaymentStatus, { icon: React.ElementType; className: string }> = {
-  COMPLETED: {
-    icon: CheckCircle2,
-    className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  },
-  PENDING: { icon: Clock, className: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
-  FAILED: { icon: XCircle, className: "bg-red-500/10 text-red-600 dark:text-red-400" },
-  REFUNDED: { icon: RotateCcw, className: "" },
-};
-
-function PaymentStatusChip({ status }: { status: PaymentStatus }) {
-  const chip = STATUS_CHIP[status] ?? STATUS_CHIP.PENDING;
-  return (
-    <PersonChip icon={chip.icon} className={chip.className}>
-      {status.charAt(0) + status.slice(1).toLowerCase()}
-    </PersonChip>
-  );
-}
 
 export default function PaymentsPage() {
   const navigate = useAppNavigate();

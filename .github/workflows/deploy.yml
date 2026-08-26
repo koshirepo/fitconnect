@@ -1,10 +1,9 @@
 # Branch-based deployment to Cloudflare.
 #
-#   branch main  -> production (Worker: fitconnect-api + Pages: fitconnect-pwa)
-#   branch test  -> test        (Worker: fitconnect-api-test + Pages: fitconnect-pwa-test)
+#   branch main -> production (Worker: fitconnect-api + Pages: fitconnect-pwa)
 #
-# The target environment is derived from the branch being pushed. Pushing to any
-# other branch only builds and type-checks; nothing is deployed.
+# Production is the only deployed environment; everything else runs locally.
+# Pushing any other branch only builds and type-checks; nothing is deployed.
 #
 # Required GitHub secrets:
 #   CLOUDFLARE_API_TOKEN  - Cloudflare API token with edit on Workers, D1, R2,
@@ -12,16 +11,16 @@
 #                          resources. See docs/DEPLOYMENT.md for scope tips.
 #
 # One-time manual setup (cannot be done from CI):
-#   - Create the test D1 database and R2 bucket; fill their ids into wrangler.toml.
-#   - Set the API Worker secrets for both environments (npm run secrets:test etc.).
-#   - Create the Pages projects fitconnect-pwa and fitconnect-pwa-test.
+#   - Create the D1 database and R2 bucket; fill their ids into wrangler.toml.
+#   - Set the API Worker secrets (npm run secrets:production).
+#   - Create the Pages project fitconnect-pwa.
 #   See docs/DEPLOYMENT.md.
 
 name: Deploy
 
 on:
   push:
-    branches: [main, test]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -54,9 +53,9 @@ jobs:
 
   deploy:
     needs: test
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/test'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'test' }}
+    environment: production
     steps:
       - uses: actions/checkout@v4
 
@@ -68,27 +67,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Determine environment
-        id: env
-        run: |
-          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            echo "name=production" >> "${GITHUB_OUTPUT}"
-          else
-            echo "name=test" >> "${GITHUB_OUTPUT}"
-          fi
-
       ############################################################
       # API Worker
       ############################################################
-      - name: Deploy API (${{ steps.env.outputs.name }})
+      - name: Deploy API
         run: npm run deploy:production --workspace @fitconnect/api
-        if: steps.env.outputs.name == 'production'
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-
-      - name: Deploy API (test)
-        run: npm run deploy:test --workspace @fitconnect/api
-        if: steps.env.outputs.name != 'production'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
@@ -96,15 +79,7 @@ jobs:
       # PWA / Cloudflare Pages
       ############################################################
       # deploy:production = npm run build:production && wrangler pages deploy dist --project-name=fitconnect-pwa --branch=main
-      # deploy:test       = npm run build:test       && wrangler pages deploy dist --project-name=fitconnect-pwa-test --branch=test
-      - name: Deploy PWA (${{ steps.env.outputs.name }})
+      - name: Deploy PWA
         run: npm run deploy:production --workspace @fitconnect/pwa
-        if: steps.env.outputs.name == 'production'
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-
-      - name: Deploy PWA (test)
-        run: npm run deploy:test --workspace @fitconnect/pwa
-        if: steps.env.outputs.name != 'production'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
