@@ -30,9 +30,12 @@ import { Plus, Dumbbell, Trash2, UserPlus } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import MemberSelector from "@/components/ui/memberSelector";
 import type { WorkoutPlan, TenantMember } from "@/types/api";
+import { getApiError } from "@/api/client";
+import { useToast } from "@/components/ui/toast";
 
 export default function WorkoutsPage() {
   const navigate = useAppNavigate();
+  const toast = useToast();
   const { currentTenantId } = useAuthStore();
   const { can } = usePermissions();
   const canCreate = can(Permission.WORKOUTS_CREATE);
@@ -82,8 +85,9 @@ export default function WorkoutsPage() {
     if (!pendingDeleteId) return;
     try {
       await deletePlan.mutateAsync(pendingDeleteId);
-    } catch {
-      //
+      toast.success("Workout plan deleted.");
+    } catch (caught) {
+      toast.error(getApiError(caught));
     } finally {
       setPendingDeleteId(null);
     }
@@ -112,8 +116,11 @@ export default function WorkoutsPage() {
       setAssignDialogOpen(false);
       setSelectedMember(null);
       setSelectedMemberId("");
-    } catch {
-      //
+      toast.success(`Plan assigned to ${selectedMember?.name ?? "member"}.`);
+    } catch (caught) {
+      // The dialog closes on success, so without this a failed assignment and a
+      // successful one look identical from the outside.
+      toast.error(getApiError(caught));
     }
   };
 

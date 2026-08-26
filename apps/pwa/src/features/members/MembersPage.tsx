@@ -46,6 +46,8 @@ import type { TenantMember } from "@/types/api";
 import { usePendingMutations } from "@/lib/use-pending-mutations";
 import { getTenantDashboardPath } from "@/lib/subdomain";
 import { GENDER_OPTIONS } from "@/lib/gender";
+import { getApiError } from "@/api/client";
+import { useToast } from "@/components/ui/toast";
 
 type PendingMemberMutationBody = {
   name?: string;
@@ -96,6 +98,7 @@ function matchesStatusTab(member: DisplayMember, statusTab: string, now: Date) {
 
 export default function MembersPage() {
   const navigate = useAppNavigate();
+  const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const { currentTenantId, currentMembership } = useAuthStore();
   const { can } = usePermissions();
@@ -352,8 +355,11 @@ export default function MembersPage() {
     if (!currentTenantId || !pendingRemoveId) return;
     try {
       await removeMember.mutateAsync(pendingRemoveId);
-    } catch {
-      // silent
+      toast.success("Member removed.");
+    } catch (caught) {
+      // Removing a member is destructive and irreversible from this screen, so
+      // a failure has to say so rather than leaving the row quietly in place.
+      toast.error(getApiError(caught));
     } finally {
       setPendingRemoveId(null);
     }

@@ -12,6 +12,7 @@ import {
 import { useAllMembers } from "@/api/queries/members";
 import { flattenPages } from "@/api/queries/shared";
 import { getApiError } from "@/api/client";
+import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +37,7 @@ import type { Badge, TenantMember } from "@/types/api";
 
 export default function BadgesPage() {
   const navigate = useAppNavigate();
+  const toast = useToast();
   const { currentTenantId } = useAuthStore();
   const { can } = usePermissions();
   // Badge authoring is a capability, not the ADMIN role: assignment is a
@@ -100,8 +102,11 @@ export default function BadgesPage() {
     if (!currentTenantId || !pendingDeleteId) return;
     try {
       await deleteBadge.mutateAsync(pendingDeleteId);
-    } catch {
-      //
+      toast.success("Badge deleted.");
+    } catch (caught) {
+      // There is no form banner on this screen, so a swallowed failure would
+      // look exactly like a success: the dialog closes and the badge stays.
+      toast.error(getApiError(caught));
     } finally {
       setPendingDeleteId(null);
     }
@@ -138,6 +143,7 @@ export default function BadgesPage() {
         data: { membershipId: selectedMemberId },
       });
       setAssignDialog(false);
+      toast.success(`${assignBadgeName} awarded to ${selectedMember?.name ?? "member"}.`);
     } catch (err) {
       setAssignError(getApiError(err));
     } finally {

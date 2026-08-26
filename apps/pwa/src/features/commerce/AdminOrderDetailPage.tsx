@@ -8,6 +8,7 @@ import {
   useUpdateOrderStatus,
 } from "@/api/queries/platform";
 import { getApiError } from "@/api/client";
+import { useToast } from "@/components/ui/toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,6 +43,7 @@ const fmt = (amount: number) =>
 export default function AdminOrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
+  const toast = useToast();
   const { can } = usePermissions();
   const canManageOrders = can(Permission.PLATFORM_ORDERS_UPDATE);
 
@@ -67,6 +69,7 @@ export default function AdminOrderDetailPage() {
 
     try {
       await updateStatus.mutateAsync({ orderId: order.id, status });
+      toast.success(`Order marked ${status.toLowerCase()}.`);
     } catch (err: unknown) {
       setActionError(getApiError(err));
     } finally {

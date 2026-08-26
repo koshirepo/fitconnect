@@ -9,6 +9,7 @@ import {
 } from "@/api/queries/platform";
 import { flattenPages } from "@/api/queries/shared";
 import { getApiError } from "@/api/client";
+import { useToast } from "@/components/ui/toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +41,7 @@ function getProductLine(order: Order, productId: string): OrderItem | undefined 
 export default function AdminProductDetailPage() {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
+  const toast = useToast();
   const { can } = usePermissions();
   const canManageOrders = can(Permission.PLATFORM_ORDERS_UPDATE);
 
@@ -76,6 +78,9 @@ export default function AdminProductDetailPage() {
 
     try {
       await deleteProduct.mutateAsync(product.id);
+      // The page unmounts on the next line, so the banner this screen uses for
+      // failures has nowhere to appear — a toast outlives the navigation.
+      toast.success(`${product.name} deleted.`);
       navigate("/platform-commerce");
     } catch (err: unknown) {
       setActionError(getApiError(err));
