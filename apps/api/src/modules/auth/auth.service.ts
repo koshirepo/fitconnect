@@ -355,9 +355,26 @@ export const authService = {
     appUrl?: string,
     scheduleBackgroundTask?: ScheduleBackgroundTask,
   ) {
-    // Always return success to avoid leaking whether email exists
+    // Deliberately tells the caller when no account matches, rather than the
+    // usual "if that email is registered…". A member who mistypes their address
+    // otherwise waits for a mail that is never coming, and this is a gym roster
+    // rather than a public service. The cost is that the endpoint can be used to
+    // test whether an address belongs to a member, which is why the route is
+    // rate limited — see `middleware/abuse-guard`.
     const user = await authRepository.findUserByEmail(input.email);
-    if (!user || user.status !== "ACTIVE") return { data: true };
+    if (!user) {
+      return {
+        error: "No account found with this email address.",
+        status: 404 as const,
+      };
+    }
+
+    if (user.status !== "ACTIVE") {
+      return {
+        error: "This account is not active. Please ask your gym to restore it.",
+        status: 403 as const,
+      };
+    }
 
     // Clean up old expired tokens
     await authRepository.deleteExpiredPasswordResetTokens(user.id);

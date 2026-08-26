@@ -3,7 +3,7 @@
  *
  * - Binds the shared host-parsing logic in `@fitconnect/shared/tenant-host` to this app's configuration, so `/public/branding` and `/public/gyms/resolve` can serve a gym by its subdomain.
  * - Only the config source lives here: root domains come from `APP_ROOT_DOMAINS`, or from `APP_URL` when that is not set. The parsing itself is shared with the PWA so the two can never disagree about what counts as a gym subdomain.
- * - Primary exports: normalizeTenantHost, getRootHostname, resolveRequestTenantHost.
+ * - Primary exports: normalizeTenantHost, getRootHostname, resolveRequestTenantHost, buildTenantAppUrl.
  */
 import {
   RESERVED_SUBDOMAIN_PREFIXES,
@@ -76,4 +76,34 @@ export function resolveRequestTenantHost(headers: {
   const port = candidate.replace(/^https?:\/\//, "").match(/:(\d+)/)?.[1];
 
   return { slug: prefix, rootHost: port ? `${root}:${port}` : root };
+}
+
+/**
+ * The base URL a gym's own pages are served from, for links mailed back to a
+ * member — a password reset, most importantly.
+ *
+ * Falls back to the app root when the request did not come from a gym, so the
+ * platform's own users still get a working link.
+ *
+ * The host is rebuilt from the configured root domain plus the slug rather than
+ * echoed from the request, so a forged `Host` header cannot turn an email this
+ * app sends into a link to somewhere else.
+ */
+export function buildTenantAppUrl(
+  requestTenant: RequestTenantHost | null,
+  fallbackAppUrl?: string,
+): string | undefined {
+  const fallback = (fallbackAppUrl ?? process.env.APP_URL ?? "").trim();
+  if (!requestTenant) return fallback || undefined;
+
+  // Protocol follows the deployment's own base URL: https in production, http
+  // for local development against `*.localhost`.
+  let protocol = "https:";
+  try {
+    if (fallback) protocol = new URL(fallback).protocol;
+  } catch {
+    // A malformed APP_URL should not stop a reset mail going out.
+  }
+
+  return `${protocol}//${requestTenant.slug}.${requestTenant.rootHost}`;
 }

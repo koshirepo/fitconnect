@@ -9,7 +9,7 @@ import type { Context } from "hono";
 import { authService } from "./auth.service";
 import { auditLog } from "../../lib/audit";
 import { parseBody } from "../../lib/http";
-import { ok, okMessage, conflict, unauthorized, forbidden, badRequest } from "../../lib/response";
+import { ok, okMessage, conflict, unauthorized, forbidden, notFound, badRequest } from "../../lib/response";
 import {
   bootstrapSchema,
   loginSchema,
@@ -18,7 +18,7 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
 } from "./auth.schema";
-import { resolveRequestTenantHost } from "../../lib/tenant-host";
+import { buildTenantAppUrl, resolveRequestTenantHost } from "../../lib/tenant-host";
 import type { AppBindings } from "../../types/app-context";
 
 type AppContext = Context<AppBindings>;
@@ -142,12 +142,26 @@ export const authController = {
     const parsed = await parseBody(c, forgotPasswordSchema);
     if (!parsed.ok) return parsed.response;
 
-    await authService.forgotPassword(
+    // A member who asks from their gym's address is sent back to it. Without
+    // this the link lands on the platform root, showing FitConnect's branding
+    // rather than the gym's, and the sign-in that follows is bounced back to
+    // the subdomain anyway by the tenant-host guard.
+    const requestTenant = resolveRequestTenantHost({
+      origin: c.req.header("origin"),
+      host: c.req.header("host"),
+    });
+
+    const result = await authService.forgotPassword(
       parsed.data,
-      c.env?.APP_URL,
+      buildTenantAppUrl(requestTenant, c.env?.APP_URL),
       (promise) => c.executionCtx.waitUntil(promise),
     );
-    return okMessage(c, "If that email is registered, a reset link has been sent.");
+
+    if ("error" in result) {
+      return result.status === 403 ? forbidden(c, result.error!) : notFound(c, result.error!);
+    }
+
+    return okMessage(c, "A reset link has been sent to your email.");
   },
 
   /**

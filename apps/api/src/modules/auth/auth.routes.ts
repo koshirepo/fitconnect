@@ -11,6 +11,7 @@ import { Permission } from "@fitconnect/shared/types/permissions";
 import { authenticate } from "../../middleware/authenticate";
 import { optionalAuthenticate } from "../../middleware/optional-authenticate";
 import { requirePermissions } from "../../middleware/authorize";
+import { rateLimitSignup } from "../../middleware/abuse-guard";
 import { authController } from "./auth.controller";
 import type { AppBindings } from "../../types/app-context";
 
@@ -26,5 +27,5 @@ authRoutes.post(
   requirePermissions(Permission.PLATFORM_USERS_CREATE),
   authController.createPlatformUser,
 );
-authRoutes.post("/forgot-password", authController.forgotPassword);
+authRoutes.post("/forgot-password", rateLimitSignup, authController.forgotPassword);
 authRoutes.post("/reset-password", authController.resetPassword);
