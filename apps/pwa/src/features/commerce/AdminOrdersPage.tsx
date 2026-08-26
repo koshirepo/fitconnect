@@ -133,7 +133,7 @@ export default function AdminOrdersPage() {
             {error && <p className="text-sm text-destructive">{error}</p>}
 
             {loading ? (
-              <ListPageSkeleton />
+              <ListPageSkeleton search={false} filters={1} />
             ) : orders.length === 0 ? (
               <EmptyState
                 icon={PackageSearch}

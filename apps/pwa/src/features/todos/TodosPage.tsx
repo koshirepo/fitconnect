@@ -129,7 +129,7 @@ export default function TodosPage() {
   }
 
   if (loading) {
-    return <ListPageSkeleton />;
+    return <ListPageSkeleton filters={1} />;
   }
 
   return (

@@ -135,7 +135,7 @@ export default function WorkoutsPage() {
       </div>
 
       {loading ? (
-        <ListPageSkeleton />
+        <ListPageSkeleton search={false} filters={0} />
       ) : plans.length === 0 ? (
         <EmptyState
           icon={Dumbbell}

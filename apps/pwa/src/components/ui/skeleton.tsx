@@ -63,10 +63,16 @@ function SkeletonRow({ className }: { className?: string }) {
   );
 }
 
-/** Page heading with a right-aligned action button. */
+/**
+ * Page heading with an action button beside it.
+ *
+ * Wraps rather than staying on one line: several pages stack their title and
+ * action on a phone, and a header that refuses to wrap would sit one row taller
+ * than the page it precedes, shifting everything below it on load.
+ */
 function PageHeaderSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn("flex items-center justify-between gap-4", className)}>
+    <div className={cn("flex flex-wrap items-start justify-between gap-3", className)}>
       <div className="min-w-0 space-y-2">
         <Skeleton className="h-7 w-40" />
         <Skeleton className="h-3.5 w-56" />
@@ -76,7 +82,16 @@ function PageHeaderSkeleton({ className }: { className?: string }) {
   );
 }
 
-/** A row of stat cards, for dashboards and finance/report pages. */
+/**
+ * A row of stat cards, for dashboards and finance/report pages.
+ *
+ * The default is the two-up-then-four shape those screens use. A page whose
+ * real grid differs passes its own columns through `className` — `cn` merges
+ * Tailwind conflicts, so `grid-cols-1 sm:grid-cols-2` replaces the defaults
+ * rather than fighting them. Keep the two in step: a skeleton that reflows at
+ * a different breakpoint than the content it stands in for makes the page
+ * jump on load, which is the one thing a skeleton exists to prevent.
+ */
 function StatGridSkeleton({
   count = 4,
   className,
@@ -85,7 +100,7 @@ function StatGridSkeleton({
   className?: string;
 }) {
   return (
-    <div className={cn("grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4", className)}>
+    <div className={cn("grid grid-cols-2 gap-3 lg:grid-cols-4", className)}>
       {Array.from({ length: count }).map((_, i) => (
         <Skeleton key={i} className="h-24 rounded-lg" />
       ))}
@@ -117,26 +132,61 @@ function CardsGridSkeleton({
   );
 }
 
-/** Search input + filter selects, for list pages with a filter toolbar. */
-function FilterBarSkeleton({ className }: { className?: string }) {
+/**
+ * Search input + filter selects, for list pages with a filter toolbar.
+ *
+ * Both parts are optional because the list pages differ: some have a search box
+ * and one select, some have neither. Drawing controls a page does not have is
+ * worse than drawing none — the toolbar vanishes when the data lands and the
+ * whole list jumps up.
+ */
+function FilterBarSkeleton({
+  search = true,
+  filters = 3,
+  className,
+}: {
+  search?: boolean;
+  filters?: number;
+  className?: string;
+}) {
+  if (!search && filters <= 0) return null;
+
   return (
     <div className={cn("space-y-3", className)}>
-      <Skeleton className="h-12 w-full rounded-lg" />
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <Skeleton className="h-12 w-full rounded-lg" />
-        <Skeleton className="h-12 w-full rounded-lg" />
-        <Skeleton className="h-12 w-full rounded-lg" />
-      </div>
+      {search && <Skeleton className="h-12 w-full rounded-lg" />}
+      {filters > 0 && (
+        <div
+          className="grid gap-2 sm:gap-3"
+          style={{ gridTemplateColumns: `repeat(${filters}, minmax(0, 1fr))` }}
+        >
+          {Array.from({ length: filters }).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full rounded-lg" />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-/** Full list-page shell: heading, filter bar, then a stack of person rows. */
-function ListPageSkeleton({ rows = 6 }: { rows?: number }) {
+/**
+ * Full list-page shell: heading, optional filter bar, then a stack of rows.
+ *
+ * Pass the toolbar the page actually has. The defaults suit a filtered roster;
+ * a plain list should pass `search={false} filters={0}`.
+ */
+function ListPageSkeleton({
+  rows = 6,
+  search = true,
+  filters = 3,
+}: {
+  rows?: number;
+  search?: boolean;
+  filters?: number;
+}) {
   return (
     <div className="space-y-6">
       <PageHeaderSkeleton />
-      <FilterBarSkeleton />
+      <FilterBarSkeleton search={search} filters={filters} />
       <div className="space-y-3">
         {Array.from({ length: rows }).map((_, i) => (
           <div key={i} className="rounded-lg ring-1 ring-foreground/10">

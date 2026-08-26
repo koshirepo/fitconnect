@@ -177,7 +177,7 @@ export default function SubscriptionsPage() {
       )}
 
       {loading ? (
-        <ListPageSkeleton />
+        <ListPageSkeleton search={false} filters={0} />
       ) : subscriptions.length === 0 ? (
         <EmptyState
           icon={Package}

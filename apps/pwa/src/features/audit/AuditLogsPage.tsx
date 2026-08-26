@@ -144,7 +144,7 @@ export default function AuditLogsPage({ scope = "tenant" }: Props) {
 
       {/* Logs Table */}
       {loading ? (
-        <ListPageSkeleton />
+        <ListPageSkeleton search={false} filters={1} />
       ) : (
         <Card>
           <CardContent className="p-0">

@@ -78,7 +78,7 @@ export default function TenantsPage() {
       </div>
 
       {loading ? (
-        <ListPageSkeleton />
+        <ListPageSkeleton search={false} filters={0} />
       ) : tenants.length === 0 ? (
         <EmptyState
           icon={Building2}

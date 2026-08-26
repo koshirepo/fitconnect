@@ -176,7 +176,7 @@ export default function BadgesPage() {
 
       {/* Badge Grid */}
       {loading ? (
-        <CardsGridSkeleton count={6} />
+        <CardsGridSkeleton count={6} className="gap-4" />
       ) : badges.length === 0 ? (
         <EmptyState
           icon={Award}

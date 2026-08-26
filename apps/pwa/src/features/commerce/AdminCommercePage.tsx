@@ -29,7 +29,7 @@ export default function AdminCommercePage() {
   const error = productsQuery.isError ? getApiError(productsQuery.error) : "";
 
   if (loading) {
-    return <ListPageSkeleton />;
+    return <ListPageSkeleton search={false} filters={0} />;
   }
 
   return (

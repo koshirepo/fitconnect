@@ -140,7 +140,7 @@ export default function ReferralsPage() {
       </div>
 
       {loading ? (
-        <ListPageSkeleton />
+        <ListPageSkeleton filters={1} />
       ) : leaders.length === 0 ? (
         <EmptyState
           icon={UserPlus}

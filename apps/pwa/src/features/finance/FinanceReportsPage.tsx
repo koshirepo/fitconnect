@@ -5,7 +5,7 @@ import { usePaymentAnalytics } from "@/api/queries/payments";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { StatGridSkeleton, CardSkeleton } from "@/components/ui/skeleton";
+import { Skeleton, StatGridSkeleton } from "@/components/ui/skeleton";
 import { StatCard } from "@/components/ui/stat-card";
 import { ChartTooltip } from "@/components/ui/chart-tooltip";
 import { formatCurrency } from "@/lib/utils";
@@ -77,7 +77,18 @@ export default function FinanceReportsPage() {
       ? getApiError(analyticsQuery.error)
       : "";
 
-  if (loading && !report) return (<div className="space-y-6"><StatGridSkeleton count={3} /><CardSkeleton /></div>);
+  // Four KPI tiles, then the chart row — the same shape the loaded page has.
+  if (loading && !report) {
+    return (
+      <div className="space-y-6">
+        <StatGridSkeleton count={4} />
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Skeleton className="h-72 rounded-lg lg:col-span-2" />
+          <Skeleton className="h-72 rounded-lg" />
+        </div>
+      </div>
+    );
+  }
 
   // Derived chart data
   const revenueChartData = analytics?.dailyBreakdown.map((d) => {

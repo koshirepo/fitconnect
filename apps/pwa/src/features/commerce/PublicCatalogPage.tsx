@@ -82,7 +82,7 @@ export default function PublicCatalogPage() {
     }
   };
 
-  if (loading) return <CardsGridSkeleton count={6} />;
+  if (loading) return <CardsGridSkeleton count={8} className="gap-5 xl:grid-cols-4" />;
 
   return (
     <div className="min-h-screen bg-background">

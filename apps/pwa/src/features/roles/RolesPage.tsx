@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FormPageSkeleton } from "@/components/ui/skeleton";
+import { PageHeaderSkeleton, Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ShieldCheck, RotateCcw, Save, Users, Plus, Trash2, Pencil } from "lucide-react";
@@ -201,7 +201,19 @@ export default function RolesPage({ scope }: Props) {
     );
   }
 
-  if (query.isLoading) return <FormPageSkeleton fields={3} />;
+  // Header, then the roles list beside the permission matrix — the page's real
+  // two-column shape, not the stacked form fields a form skeleton would draw.
+  if (query.isLoading) {
+    return (
+      <div className="space-y-6 p-4 md:p-6">
+        <PageHeaderSkeleton />
+        <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
+          <Skeleton className="h-64 rounded-lg" />
+          <Skeleton className="h-96 rounded-lg" />
+        </div>
+      </div>
+    );
+  }
 
   if (query.isError) {
     return (

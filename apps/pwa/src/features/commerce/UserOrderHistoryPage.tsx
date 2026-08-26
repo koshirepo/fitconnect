@@ -62,7 +62,7 @@ export default function UserOrderHistoryPage() {
       </div>
 
       {loading ? (
-        <ListPageSkeleton />
+        <ListPageSkeleton search={false} filters={0} />
       ) : orders.length === 0 ? (
         <EmptyState
           icon={PackageSearch}
