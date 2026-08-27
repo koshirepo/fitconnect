@@ -25,6 +25,7 @@ import {
   Dumbbell,
   CreditCard,
   ArrowRight,
+  ShoppingBag,
   Building2,
   Sparkles,
   ShieldCheck,
@@ -184,6 +185,16 @@ export default function TenantPublicPage() {
                   Sign In
                 </Button>
               )}
+              {/* The gym's own shop. Signed-in members go straight to it;
+                  a visitor is sent to sign in first, because buying needs an
+                  account to hang the order and the coins off. */}
+              <Button
+                variant="outline"
+                onClick={() => navigate(isAuthenticated ? "/dashboard/store" : "/login")}
+              >
+                <ShoppingBag className="h-4 w-4" />
+                Visit Store
+              </Button>
               <Button variant="outline" onClick={() => navigate("/")}>
                 <ArrowLeft className="h-4 w-4" />
                 Back to Home

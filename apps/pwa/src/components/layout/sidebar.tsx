@@ -123,6 +123,12 @@ const tenantNav: NavItem[] = [
     anyOf: [Permission.COUPONS_READ],
   },
   {
+    to: "/store",
+    label: "Store",
+    icon: ShoppingBag,
+    anyOf: [Permission.STORE_READ],
+  },
+  {
     to: "/attendance",
     label: "Attendance",
     icon: CalendarCheck,

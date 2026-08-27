@@ -40,6 +40,12 @@ export const queryKeys = {
     list: (tenantId: string, includeInactive: boolean) =>
       ["shifts", tenantId, includeInactive] as const,
   },
+  store: {
+    products: (tenantId: string, params?: unknown) =>
+      ["store", tenantId, "products", params ?? null] as const,
+    product: (tenantId: string, productId: string) =>
+      ["store", tenantId, "product", productId] as const,
+  },
   attendance: {
     byDate: (tenantId: string, date: string) => ["attendance", tenantId, "date", date] as const,
     member: (tenantId: string, membershipId: string) =>

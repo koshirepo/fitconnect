@@ -1005,3 +1005,56 @@ export interface FreezeStatus {
   history: MembershipFreeze[];
   termEndsOn?: string | null;
 }
+
+// ─── Gym store ────────────────────────────────────────────────────────────────
+
+/** What a gym sells. The sellable unit is the variant, not this. */
+export interface StoreProduct {
+  id: string;
+  name: string;
+  description?: string | null;
+  /** "SUPPLEMENT" | "ACCESSORY" */
+  category: string;
+  photos: string[];
+  /** Coins the buyer earns per unit. Zero means no gift. */
+  coinsGranted: number;
+  isActive: boolean;
+  createdAt: string;
+  variants: StoreVariant[];
+}
+
+/** One buyable combination — a flavour and a size, or a size and a colour. */
+export interface StoreVariant {
+  id: string;
+  name: string;
+  /** e.g. `{ flavour: "Chocolate", size: "1kg" }`. */
+  attributes: Record<string, string>;
+  sku?: string | null;
+  price: number;
+  stock: number;
+  isActive: boolean;
+}
+
+/** A line of a basket, as the browser holds it before checkout. */
+export interface StoreBasketLine {
+  variantId: string;
+  quantity: number;
+}
+
+/** What a sale returns, whichever channel took the money. */
+export interface StoreSaleResult {
+  order: { id: string; totalAmount: number; coinsEarned: number; coinsRedeemed: number };
+  paymentId: string;
+  subtotal: number;
+  discount: number;
+  coinsRedeemed: number;
+  total: number;
+  coinsEarned: number;
+  /** Null when coins and a coupon cleared the bill, so there is nothing to pay. */
+  checkout?: {
+    orderId: string;
+    keyId: string;
+    amount: number;
+    currency: string;
+  } | null;
+}

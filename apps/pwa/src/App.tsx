@@ -73,6 +73,7 @@ const ResetPasswordPage = React.lazy(
 const LandingPage = React.lazy(() => import("@/features/public/LandingPage"));
 const SignupPage = React.lazy(() => import("@/features/public/SignupPage"));
 const CouponsPage = React.lazy(() => import("@/features/coupons/CouponsPage"));
+const StorePage = React.lazy(() => import("@/features/store/StorePage"));
 const CouponFormPage = React.lazy(() => import("@/features/coupons/CouponFormPage"));
 const IdCardPage = React.lazy(() => import("@/features/public/IdCardPage"));
 const TenantPublicPage = React.lazy(
@@ -226,6 +227,9 @@ export default function App() {
             </Route>
             <Route element={<RequirePermission anyOf={[Permission.COUPONS_READ]} />}>
               <Route path="/dashboard/coupons" element={<CouponsPage />} />
+            </Route>
+            <Route element={<RequirePermission anyOf={[Permission.STORE_READ]} />}>
+              <Route path="/dashboard/store" element={<StorePage />} />
             </Route>
             <Route element={<RequirePermission anyOf={[Permission.COUPONS_CREATE]} />}>
               <Route path="/dashboard/coupons/new" element={<CouponFormPage />} />
@@ -437,6 +441,9 @@ export default function App() {
                   </Route>
                   <Route element={<RequirePermission anyOf={[Permission.COUPONS_READ]} />}>
                     <Route path="/coupons" element={<CouponsPage />} />
+                  </Route>
+                  <Route element={<RequirePermission anyOf={[Permission.STORE_READ]} />}>
+                    <Route path="/store" element={<StorePage />} />
                   </Route>
                   <Route element={<RequirePermission anyOf={[Permission.COUPONS_CREATE]} />}>
                     <Route path="/coupons/new" element={<CouponFormPage />} />
