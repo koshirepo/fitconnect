@@ -508,6 +508,11 @@ export interface SelfSignupPayload {
  */
 export interface SelfSignupResult {
   membership: { id: string; memberId: number; status: string };
+  /**
+   * A session for the account just created, so the app can sign the new member
+   * in rather than sending them to a login form.
+   */
+  auth: { accessToken: string; refreshToken: string };
   loginEmail: string;
   total: number;
   lineItems: { description: string | null; amount: number }[];

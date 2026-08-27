@@ -55,7 +55,7 @@ export default function SubscriptionsPage() {
     () => subscriptionsQuery.data ?? [],
     [subscriptionsQuery.data],
   );
-  const loading = subscriptionsQuery.isLoading;
+  const loading = subscriptionsQuery.isPending;
 
   const loadError = subscriptionsQuery.isError ? getApiError(subscriptionsQuery.error) : "";
 

@@ -46,7 +46,7 @@ export default function AttendanceCalendarPage() {
   // already fetched instead of refetching each time.
   const calendarQuery = useAttendanceCalendar(currentMonth);
   const days = (calendarQuery.data?.days ?? {}) as Record<string, DayData>;
-  const loading = calendarQuery.isLoading;
+  const loading = calendarQuery.isPending;
   const error = calendarQuery.isError ? getApiError(calendarQuery.error) : "";
 
   React.useEffect(() => {

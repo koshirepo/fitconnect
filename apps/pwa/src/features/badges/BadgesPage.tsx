@@ -52,7 +52,7 @@ export default function BadgesPage() {
     () => flattenPages<Badge>(badgesQuery.data?.pages),
     [badgesQuery.data],
   );
-  const loading = badgesQuery.isLoading;
+  const loading = badgesQuery.isPending;
   const loadingMore = badgesQuery.isFetchingNextPage;
   const hasMore = Boolean(badgesQuery.hasNextPage);
 

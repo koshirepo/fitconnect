@@ -49,7 +49,7 @@ export default function AuditLogsPage({ scope = "tenant" }: Props) {
   );
 
   const logs = React.useMemo(() => flattenPages<AuditLog>(logsQuery.data?.pages), [logsQuery.data]);
-  const loading = logsQuery.isLoading;
+  const loading = logsQuery.isPending;
   const loadingMore = logsQuery.isFetchingNextPage;
   const hasMore = Boolean(logsQuery.hasNextPage);
   const error = logsQuery.isError ? getApiError(logsQuery.error) : "";

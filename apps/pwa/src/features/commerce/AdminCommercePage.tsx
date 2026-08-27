@@ -25,7 +25,7 @@ export default function AdminCommercePage() {
     () => productsQuery.data?.data.products ?? [],
     [productsQuery.data],
   );
-  const loading = productsQuery.isLoading;
+  const loading = productsQuery.isPending;
   const error = productsQuery.isError ? getApiError(productsQuery.error) : "";
 
   if (loading) {

@@ -154,7 +154,12 @@ export default function MembersPage() {
   const members = React.useMemo(() => membersQuery.data ?? [], [membersQuery.data]);
   const badges = React.useMemo(() => badgesQuery.data ?? [], [badgesQuery.data]);
   const tenantSettings = settingsQuery.data ?? null;
-  const loading = membersQuery.isLoading;
+  // `isPending`, not `isLoading`: the query is disabled until the tenant id
+  // resolves, and a disabled query reports `isLoading: false` with no data — so
+  // this screen would flash "No members found" before the first fetch even
+  // starts. `isPending` is false the moment data exists, including data the
+  // persisted cache restored, so a warm reload still shows no skeleton.
+  const loading = membersQuery.isPending;
 
   const removeMember = useRemoveMember();
 

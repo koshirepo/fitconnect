@@ -33,7 +33,7 @@ export default function UserOrderHistoryPage() {
     () => flattenPages<Order>(ordersQuery.data?.pages),
     [ordersQuery.data],
   );
-  const loading = ordersQuery.isLoading;
+  const loading = ordersQuery.isPending;
   const loadingMore = ordersQuery.isFetchingNextPage;
   const hasMore = Boolean(ordersQuery.hasNextPage);
 

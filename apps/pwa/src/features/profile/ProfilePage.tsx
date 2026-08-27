@@ -34,7 +34,7 @@ export default function ProfilePage() {
 
   const coinsQuery = useCoinBalance(profile?.id);
   const coinBalance = coinsQuery.data?.balance ?? 0;
-  const loading = profileQuery.isLoading;
+  const loading = profileQuery.isPending;
 
   // Both saves invalidate the members key, which this profile query lives under,
   // so the refreshed profile arrives without a manual re-read.

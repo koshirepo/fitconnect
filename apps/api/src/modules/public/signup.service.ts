@@ -7,7 +7,7 @@
  * - A gym with no gateway configured still accepts signups; the member simply stays inactive with a pending bill for the front desk to settle.
  * - Primary exports: signupService.
  */
-import { PlatformRole } from "@fitconnect/shared/types/enums";
+import { PlatformRole, type TenantRole } from "@fitconnect/shared/types/enums";
 import { hashPassword } from "../../auth/password";
 import {
   createOrder,
@@ -15,6 +15,12 @@ import {
   RazorpayError,
 } from "../../lib/razorpay";
 import { normalizeTenantHost } from "../../lib/tenant-host";
+import {
+  generateRefreshToken,
+  refreshTokenExpiresAt,
+  signAccessToken,
+} from "../../auth/jwt";
+import { authRepository } from "../auth/auth.repository";
 import { memberRepository } from "../members/members.repository";
 import { gatewayService } from "../payments/gateway.service";
 import { paymentRepository } from "../payments/payments.repository";
@@ -80,6 +86,7 @@ export const signupService = {
     | {
         data: {
           membership: { id: string; memberId: number; status: string };
+          auth: { accessToken: string; refreshToken: string };
           loginEmail: string;
           total: number;
           lineItems: { description: string | null; amount: number }[];
@@ -243,6 +250,21 @@ export const signupService = {
       await notifyAdmins;
     }
 
+    // A session for the account just created, so joining ends inside the app
+    // rather than at a login form asking for a password nobody chose. The
+    // caller proved ownership by creating it a moment ago; abuse is held off by
+    // the rate limit and Turnstile in front of this route, not by making the
+    // new member log in again.
+    const accessToken = await signAccessToken({
+      userId: user.id,
+      // Self-signup only ever produces a member; a dormant account it reuses is
+      // one too, since anything with a membership was rejected above.
+      platformRole: PlatformRole.USER,
+      tenants: { [tenant.id]: "MEMBER" as TenantRole },
+    });
+    const refreshToken = generateRefreshToken();
+    await authRepository.createRefreshToken(user.id, refreshToken, refreshTokenExpiresAt());
+
     return {
       data: {
         membership: {
@@ -250,6 +272,7 @@ export const signupService = {
           memberId: membership.memberId,
           status: membership.status,
         },
+        auth: { accessToken, refreshToken },
         loginEmail,
         total,
         lineItems: payments.map((payment) => ({

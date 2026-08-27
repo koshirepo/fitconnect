@@ -56,7 +56,7 @@ export default function AdminOrdersPage() {
     () => flattenPages<Order>(ordersQuery.data?.pages),
     [ordersQuery.data],
   );
-  const loading = ordersQuery.isLoading;
+  const loading = ordersQuery.isPending;
   const loadingMore = ordersQuery.isFetchingNextPage;
   const hasMore = Boolean(ordersQuery.hasNextPage);
   const error = actionError || (ordersQuery.isError ? getApiError(ordersQuery.error) : "");

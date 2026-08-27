@@ -75,7 +75,7 @@ export default function TodosPage() {
   );
 
   const todos = React.useMemo(() => flattenPages<Todo>(todosQuery.data?.pages), [todosQuery.data]);
-  const loading = todosQuery.isLoading;
+  const loading = todosQuery.isPending;
   const loadingMore = todosQuery.isFetchingNextPage;
   const hasMore = Boolean(todosQuery.hasNextPage);
 

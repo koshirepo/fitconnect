@@ -48,7 +48,7 @@ export default function WorkoutsPage() {
     () => flattenPages<WorkoutPlan>(plansQuery.data?.pages),
     [plansQuery.data],
   );
-  const loading = plansQuery.isLoading;
+  const loading = plansQuery.isPending;
   const loadingMore = plansQuery.isFetchingNextPage;
   const hasMore = Boolean(plansQuery.hasNextPage);
 

@@ -64,7 +64,7 @@ export default function ReferralsPage() {
     [leadersQuery.data],
   );
   const total = leadersQuery.data?.pages[0]?.meta.total ?? 0;
-  const loading = leadersQuery.isLoading;
+  const loading = leadersQuery.isPending;
   const loadingMore = leadersQuery.isFetchingNextPage;
   const hasMore = Boolean(leadersQuery.hasNextPage);
 

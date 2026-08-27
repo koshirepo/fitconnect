@@ -41,7 +41,7 @@ export default function MessagesPage() {
 
   const settingsQuery = useTenantSettings();
   const updateSettings = useUpdateTenantSettings();
-  const loading = settingsQuery.isLoading;
+  const loading = settingsQuery.isPending;
 
   // Seed the editable copies once the saved templates arrive.
   React.useEffect(() => {

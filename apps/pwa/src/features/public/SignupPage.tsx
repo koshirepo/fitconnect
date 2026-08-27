@@ -35,6 +35,8 @@ import {
 } from "lucide-react";
 import type { SelfSignupResult, SignupOptions } from "@/types/api";
 import { TURNSTILE_SITE_KEY, TurnstileWidget } from "@/components/ui/turnstile";
+import { useAuthStore } from "@/stores/auth";
+import { getTenantDashboardPath } from "@/lib/subdomain";
 
 /** Read a captured photo into the base64 payload the signup endpoint takes. */
 function toDataUrl(file: File) {
@@ -72,7 +74,11 @@ export default function SignupPage() {
   // Step 1 = details, 2 = plan and charges. Mirrors the admin Add Member page.
   const [step, setStep] = React.useState(1);
   const [memberData, setMemberData] = React.useState<MemberFormData | null>(null);
-  const [selectedPlanId, setSelectedPlanId] = React.useState("");
+  // Empty until the visitor picks one; the first plan stands in as the default
+  // so arriving at this step already shows a priced summary rather than a blank
+  // total. Deriving it beats seeding state in an effect, which would fight a
+  // deliberate deselection on the render after the plans arrive.
+  const [chosenPlanId, setChosenPlanId] = React.useState("");
   const [selectedChargeIds, setSelectedChargeIds] = React.useState<string[]>([]);
 
   const [submitting, setSubmitting] = React.useState(false);
@@ -108,6 +114,7 @@ export default function SignupPage() {
   }, []);
 
   const plans = options?.plans ?? [];
+  const selectedPlanId = chosenPlanId || plans[0]?.id || "";
   const charges = options?.charges ?? [];
   const selectedPlan = plans.find((plan) => plan.id === selectedPlanId) ?? null;
   const chargesTotal = charges
@@ -130,6 +137,19 @@ export default function SignupPage() {
     setError("");
     setMemberData(data);
     setStep(2);
+  };
+
+  /**
+   * Adopt the session the signup returned.
+   *
+   * `fetchMe` is what populates the membership the route guards read, so it has
+   * to land before any navigation into the app — otherwise the guard sees a
+   * token with no gym and bounces straight back out.
+   */
+  const signInNewMember = async (auth: { accessToken: string; refreshToken: string }) => {
+    const store = useAuthStore.getState();
+    store.setTokens(auth.accessToken, auth.refreshToken);
+    await store.fetchMe();
   };
 
   const handleJoin = async () => {
@@ -157,6 +177,13 @@ export default function SignupPage() {
       });
 
       const signup = res.data.data;
+
+      // Joining ends inside the app rather than at a login form: the API
+      // returns a session for the account it just created. Done before the
+      // payment branch below so a member whose payment is still pending is
+      // signed in too — that is exactly who needs to reach their dashboard and
+      // settle it.
+      await signInNewMember(signup.auth);
 
       // No checkout means the gym takes no cards yet. The member exists and
       // owes the money at the desk, which is a finished signup, not a failure.
@@ -204,9 +231,18 @@ export default function SignupPage() {
         signature: result.signature,
       });
 
+      const active = verified.data.data.membership?.status === "ACTIVE";
+
+      // Paid and active: there is nothing left to explain, so go straight in
+      // rather than showing a receipt screen with a button to the same place.
+      if (active) {
+        navigate(getTenantDashboardPath("/"));
+        return;
+      }
+
       setOutcome({
         signup,
-        active: verified.data.data.membership?.status === "ACTIVE",
+        active,
         pendingReason:
           "Your payment is recorded but the membership hasn't activated yet. It will as soon as the gym's payment provider confirms it.",
       });
@@ -290,10 +326,12 @@ export default function SignupPage() {
             </div>
 
             <p className="text-center text-xs text-muted-foreground">
-              Please change your password after your first sign in.
+              Your password is your phone number — change it from your profile.
             </p>
 
-            <Button onClick={() => navigate("/login")}>Sign In</Button>
+            <Button onClick={() => navigate(getTenantDashboardPath("/"))}>
+              Go to Dashboard
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -374,7 +412,7 @@ export default function SignupPage() {
                     <button
                       key={plan.id}
                       type="button"
-                      onClick={() => setSelectedPlanId(plan.id)}
+                      onClick={() => setChosenPlanId(plan.id)}
                       className={`rounded-lg border-2 p-4 text-left transition-all ${
                         selectedPlanId === plan.id
                           ? "border-primary bg-primary/5"
