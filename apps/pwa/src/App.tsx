@@ -74,6 +74,10 @@ const LandingPage = React.lazy(() => import("@/features/public/LandingPage"));
 const SignupPage = React.lazy(() => import("@/features/public/SignupPage"));
 const CouponsPage = React.lazy(() => import("@/features/coupons/CouponsPage"));
 const StorePage = React.lazy(() => import("@/features/store/StorePage"));
+const StoreManagePage = React.lazy(() => import("@/features/store/StoreManagePage"));
+const StoreProductFormPage = React.lazy(
+  () => import("@/features/store/StoreProductFormPage"),
+);
 const CouponFormPage = React.lazy(() => import("@/features/coupons/CouponFormPage"));
 const IdCardPage = React.lazy(() => import("@/features/public/IdCardPage"));
 const TenantPublicPage = React.lazy(
@@ -230,6 +234,14 @@ export default function App() {
             </Route>
             <Route element={<RequirePermission anyOf={[Permission.STORE_READ]} />}>
               <Route path="/dashboard/store" element={<StorePage />} />
+            </Route>
+            <Route element={<RequirePermission anyOf={[Permission.STORE_MANAGE]} />}>
+              <Route path="/dashboard/store/manage" element={<StoreManagePage />} />
+              <Route path="/dashboard/store/manage/new" element={<StoreProductFormPage />} />
+              <Route
+                path="/dashboard/store/manage/:productId/edit"
+                element={<StoreProductFormPage />}
+              />
             </Route>
             <Route element={<RequirePermission anyOf={[Permission.COUPONS_CREATE]} />}>
               <Route path="/dashboard/coupons/new" element={<CouponFormPage />} />
@@ -444,6 +456,14 @@ export default function App() {
                   </Route>
                   <Route element={<RequirePermission anyOf={[Permission.STORE_READ]} />}>
                     <Route path="/store" element={<StorePage />} />
+                  </Route>
+                  <Route element={<RequirePermission anyOf={[Permission.STORE_MANAGE]} />}>
+                    <Route path="/store/manage" element={<StoreManagePage />} />
+                    <Route path="/store/manage/new" element={<StoreProductFormPage />} />
+                    <Route
+                      path="/store/manage/:productId/edit"
+                      element={<StoreProductFormPage />}
+                    />
                   </Route>
                   <Route element={<RequirePermission anyOf={[Permission.COUPONS_CREATE]} />}>
                     <Route path="/coupons/new" element={<CouponFormPage />} />

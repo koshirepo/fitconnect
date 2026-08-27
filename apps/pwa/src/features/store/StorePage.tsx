@@ -8,6 +8,7 @@
  */
 import * as React from "react";
 import { useAuthStore } from "@/stores/auth";
+import { useAppNavigate } from "@/lib/use-app-navigate";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import {
@@ -27,7 +28,7 @@ import { CardsGridSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useToast } from "@/components/ui/toast";
 import { formatCurrency } from "@/lib/utils";
-import { ShoppingBag, Minus, Plus, Coins, Trash2 } from "lucide-react";
+import { ShoppingBag, Minus, Plus, Coins, Settings, Trash2 } from "lucide-react";
 import type { StoreProduct, StoreVariant } from "@fitconnect/shared/types/models";
 import { StoreVariantPicker } from "./StoreVariantPicker";
 
@@ -43,8 +44,10 @@ type BasketEntry = {
 
 export default function StorePage() {
   const toast = useToast();
+  const navigate = useAppNavigate();
   const { can } = usePermissions();
   const canBuy = can(Permission.STORE_BUY_SELF);
+  const canManage = can(Permission.STORE_MANAGE);
   const currentMembership = useAuthStore((state) => state.currentMembership);
   const gymName = currentMembership()?.tenantName ?? "the gym";
 
@@ -184,11 +187,19 @@ export default function StorePage() {
           <h1 className="text-2xl font-bold tracking-tight">Store</h1>
           <p className="text-muted-foreground">Supplements and kit from {gymName}</p>
         </div>
-        {basket.length > 0 && (
-          <Badge variant="accent" className="text-sm">
-            {basket.reduce((sum, entry) => sum + entry.quantity, 0)} in basket
-          </Badge>
-        )}
+        <div className="flex items-center gap-2">
+          {basket.length > 0 && (
+            <Badge variant="accent" className="text-sm">
+              {basket.reduce((sum, entry) => sum + entry.quantity, 0)} in basket
+            </Badge>
+          )}
+          {canManage && (
+            <Button variant="outline" size="sm" onClick={() => navigate("/store/manage")}>
+              <Settings className="h-4 w-4" />
+              Manage
+            </Button>
+          )}
+        </div>
       </div>
 
       {products.length === 0 ? (
