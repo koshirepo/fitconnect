@@ -17,6 +17,7 @@ import { paymentRoutes, gatewayWebhookRoutes } from "./modules/payments/payments
 import { badgeRoutes } from "./modules/badges/badges.routes";
 import { couponRoutes } from "./modules/coupons/coupons.routes";
 import { freezeRoutes } from "./modules/freezes/freezes.routes";
+import { storeRoutes } from "./modules/store/store.routes";
 import { auditRoutes } from "./modules/audit/audit.routes";
 import { publicRoutes } from "./modules/public/public.routes";
 import { commerceRoutes } from "./modules/commerce/commerce.routes";
@@ -100,6 +101,7 @@ app.route("/tenants", paymentRoutes);
 app.route("/tenants", badgeRoutes);
 app.route("/tenants", couponRoutes);
 app.route("/tenants", freezeRoutes);
+app.route("/tenants", storeRoutes);
 app.route("/tenants", settingsRoutes);
 app.route("/tenants", attendanceRoutes);
 app.route("/tenants", shiftRoutes);

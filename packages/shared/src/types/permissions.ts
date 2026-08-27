@@ -84,6 +84,16 @@ export const Permission = {
   /// Apply a coupon or spend coins while taking a payment.
   COUPONS_APPLY: "coupons:apply",
 
+  // Gym store
+  STORE_READ: "store:read",
+  STORE_MANAGE: "store:manage",
+  /// Buy from the gym store for oneself.
+  STORE_BUY_SELF: "store:buy:self",
+  /// Ring up a sale for a member at the counter.
+  STORE_SELL: "store:sell",
+  /// See what the gym has sold, beyond one's own purchases.
+  STORE_ORDERS_READ: "store:orders:read",
+
   // Badges
   BADGES_READ: "badges:read",
   BADGES_CREATE: "badges:create",
@@ -169,6 +179,8 @@ const MEMBER_PERMISSIONS: Permission[] = [
   Permission.BADGES_READ,
   Permission.MEMBERS_FREEZE_SELF,
   Permission.COUPONS_READ,
+  Permission.STORE_READ,
+  Permission.STORE_BUY_SELF,
   Permission.SETTINGS_READ,
   Permission.SHIFTS_READ,
 ];
@@ -177,6 +189,8 @@ const MEMBER_PERMISSIONS: Permission[] = [
 const COACH_PERMISSIONS: Permission[] = [
   ...MEMBER_PERMISSIONS,
   Permission.COUPONS_APPLY,
+  Permission.STORE_SELL,
+  Permission.STORE_ORDERS_READ,
   Permission.MEMBERS_FREEZE,
   Permission.MEMBERS_READ,
   Permission.MEMBERS_CREATE,
@@ -206,6 +220,7 @@ const ADMIN_PERMISSIONS: Permission[] = [
   Permission.COUPONS_CREATE,
   Permission.COUPONS_UPDATE,
   Permission.COUPONS_DELETE,
+  Permission.STORE_MANAGE,
   Permission.TENANT_UPDATE,
   Permission.MEMBERS_DELETE,
   Permission.MEMBERS_ROLE_UPDATE,
@@ -496,6 +511,11 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [Permission.PAYMENTS_CHECKOUT_SELF]: "Pay online for own membership",
   [Permission.PAYMENTS_GATEWAY_READ]: "View payment gateway setup",
   [Permission.PAYMENTS_GATEWAY_UPDATE]: "Change payment gateway keys",
+  [Permission.STORE_READ]: "Browse the gym store",
+  [Permission.STORE_MANAGE]: "Manage store products and stock",
+  [Permission.STORE_BUY_SELF]: "Buy from the gym store",
+  [Permission.STORE_SELL]: "Sell at the counter",
+  [Permission.STORE_ORDERS_READ]: "View store sales",
   [Permission.SUBSCRIPTIONS_READ]: "View plans",
   [Permission.SUBSCRIPTIONS_CREATE]: "Create plans",
   [Permission.SUBSCRIPTIONS_UPDATE]: "Edit plans",
@@ -558,6 +578,7 @@ export const PERMISSION_GROUPS: { key: string; label: string; prefixes: string[]
   { key: "payments", label: "Payments & plans", prefixes: ["payments:", "subscriptions:", "charges:"] },
   { key: "workouts", label: "Workouts", prefixes: ["workouts:"] },
   { key: "coupons", label: "Coupons & coins", prefixes: ["coupons:"] },
+  { key: "store", label: "Gym store", prefixes: ["store:"] },
   { key: "badges", label: "Badges", prefixes: ["badges:"] },
   { key: "todos", label: "Todos", prefixes: ["todos:"] },
   { key: "operations", label: "Settings, shifts & roles", prefixes: ["settings:", "shifts:", "roles:"] },
