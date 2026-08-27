@@ -129,6 +129,8 @@ model Tenant {
   couponRedemptions CouponRedemption[]
   coinLedger       CoinLedgerEntry[]
   membershipFreezes MembershipFreeze[]
+  storeProducts    StoreProduct[]
+  storeOrders      StoreOrder[]
 
   @@index([slug])
 }
@@ -266,6 +268,8 @@ model TenantMembership {
   couponRedemptions CouponRedemption[]
   coinLedger        CoinLedgerEntry[]
   freezes           MembershipFreeze[]
+  storeOrders       StoreOrder[]              @relation("StoreOrderBuyer")
+  soldStoreOrders   StoreOrder[]              @relation("StoreOrderSeller")
 
   @@unique([tenantId, userId])
   @@unique([tenantId, memberId])
@@ -381,6 +385,8 @@ model Payment {
   gatewayAccount   String?
 
   freezes        MembershipFreeze[]
+  /// Set when this row is a gym-store sale rather than a membership payment.
+  storeOrder     StoreOrder?
 
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
@@ -410,6 +416,10 @@ model Coupon {
   description String?
   /// "DISCOUNT" | "COINS" | "VALIDITY"
   type        String
+  /// What the code may be spent on: "SUBSCRIPTION" | "STORE" | "BOTH".
+  /// Defaults to subscriptions, which is every coupon that existed before the
+  /// gym store did.
+  appliesTo   String  @default("SUBSCRIPTION")
 
   /// DISCOUNT: percentage or flat rupees, with an optional cap on the former.
   percentOff  Int?
@@ -771,3 +781,132 @@ model PushSubscription {
   @@index([userId])
 }
 
+
+// ─── Gym store ────────────────────────────────────────────────────────────────
+// A gym's own stock, distinct from the platform storefront above. The models are
+// separate rather than a `tenantId` bolted onto `Product`/`Order` for three
+// reasons: those carry shipping details a counter sale has no use for, a
+// nullable tenant id makes every existing query correct only by remembering a
+// filter, and variants would change the platform storefront for no benefit.
+
+/// Something a gym sells. The sellable unit is the variant, not this — a
+/// supplement is bought as a flavour and a size, never as "the supplement".
+model StoreProduct {
+  id          String  @id @default(cuid())
+  tenantId    String
+  tenant      Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  /// "SUPPLEMENT" | "ACCESSORY"
+  category    String
+  photos      Json    @default("[]")
+  /// Coins the buyer earns when an order containing this completes. Per product
+  /// because a ₹3,000 protein tub and a ₹200 pair of gloves should not reward
+  /// the same. Zero turns the gift off.
+  coinsGranted Int    @default(0)
+  isActive    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  variants StoreVariant[]
+
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@index([tenantId, category])
+}
+
+/// One buyable combination: chocolate 1kg, or black large. Price and stock live
+/// here because the combinations sell independently of each other.
+model StoreVariant {
+  id        String       @id @default(cuid())
+  productId String
+  product   StoreProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  /// What the counter says out loud, e.g. "Chocolate · 1kg".
+  name      String
+  /// The axes that make this variant, e.g. `{"flavour":"Chocolate","size":"1kg"}`
+  /// or `{"size":"L","colour":"Black"}`. Free-form because supplements and
+  /// accessories do not share axes, and a gym may invent its own.
+  attributes Json    @default("{}")
+  sku       String?
+  price     Int
+  stock     Int     @default(0)
+  isActive  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orderItems StoreOrderItem[]
+
+  @@index([productId])
+  @@index([productId, isActive])
+}
+
+/// A purchase from a gym's store, whether taken online or over the counter.
+model StoreOrder {
+  id           String           @id @default(cuid())
+  tenantId     String
+  tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  /// Who bought it. Always a member of this gym — there is no guest checkout.
+  membershipId String
+  member       TenantMembership @relation("StoreOrderBuyer", fields: [membershipId], references: [id])
+  /// Staff who rang it up, for a counter sale. Null for an online purchase.
+  soldById     String?
+  soldBy       TenantMembership? @relation("StoreOrderSeller", fields: [soldById], references: [id])
+
+  /// "PENDING" | "COMPLETED" | "CANCELLED"
+  status  String @default("PENDING")
+  /// "ONLINE" | "COUNTER"
+  channel String
+
+  /// Line totals before anything came off.
+  subtotalAmount Int
+  /// Taken off by a coupon.
+  discountAmount Int @default(0)
+  /// Coins spent against this order. `totalAmount` is already net of both.
+  coinsRedeemed  Int @default(0)
+  totalAmount    Int
+  /// Coins earned, frozen at completion so editing a product later cannot
+  /// rewrite what a member was given.
+  coinsEarned    Int @default(0)
+
+  /// The money row this sale wrote, so store revenue reaches the finance page
+  /// through the same ledger as memberships and charges.
+  paymentId String?  @unique
+  payment   Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items StoreOrderItem[]
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([membershipId])
+  @@index([tenantId, createdAt])
+}
+
+/// One line of a store order. The product and variant names and attributes are
+/// copied here rather than read through the relation, so renaming a flavour or
+/// retiring a variant can never rewrite a receipt someone already holds.
+model StoreOrderItem {
+  id         String       @id @default(cuid())
+  orderId    String
+  order      StoreOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId  String
+  variant    StoreVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+
+  productName String
+  variantName String
+  attributes  Json @default("{}")
+
+  quantity  Int
+  unitPrice Int
+  lineTotal Int
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([variantId])
+}

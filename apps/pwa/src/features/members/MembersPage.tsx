@@ -159,7 +159,11 @@ export default function MembersPage() {
   // this screen would flash "No members found" before the first fetch even
   // starts. `isPending` is false the moment data exists, including data the
   // persisted cache restored, so a warm reload still shows no skeleton.
-  const loading = membersQuery.isPending;
+  // Also covers a refetch that has nothing to show yet: `useAllMembers` passes
+  // `forceRefresh`, so an invalidation re-reads every page, and until the first
+  // one lands there are no rows to render.
+  const loading =
+    membersQuery.isPending || (membersQuery.isFetching && members.length === 0);
 
   const removeMember = useRemoveMember();
 

@@ -16,15 +16,18 @@
     "./constants": "./src/constants/index.ts",
     "./utils": "./src/utils/index.ts",
     "./tenant-host": "./src/tenant-host.ts",
-    "./whatsapp-templates": "./src/whatsapp-templates.ts"
+    "./whatsapp-templates": "./src/whatsapp-templates.ts",
+    "./store-pricing": "./src/store-pricing.ts"
   },
   "files": [
     "src"
   ],
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "devDependencies": {
-    "typescript": "~5.9.3"
+    "typescript": "~5.9.3",
+    "vitest": "^4.1.11"
   }
 }

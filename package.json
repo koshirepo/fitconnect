@@ -21,7 +21,8 @@
     "lint": "npm run lint --workspaces --if-present",
     "format": "npm run format --workspaces --if-present",
     "deploy:test": "npm run deploy:test --workspaces --if-present",
-    "deploy:production": "npm run deploy:production --workspaces --if-present"
+    "deploy:production": "npm run deploy:production --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
   },
   "devDependencies": {
     "typescript": "~5.9.3"

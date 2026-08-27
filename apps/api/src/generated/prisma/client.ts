@@ -215,3 +215,27 @@ export type AuditLog = Prisma.AuditLogModel
  * 
  */
 export type PushSubscription = Prisma.PushSubscriptionModel
+/**
+ * Model StoreProduct
+ * Something a gym sells. The sellable unit is the variant, not this — a
+ * supplement is bought as a flavour and a size, never as "the supplement".
+ */
+export type StoreProduct = Prisma.StoreProductModel
+/**
+ * Model StoreVariant
+ * One buyable combination: chocolate 1kg, or black large. Price and stock live
+ * here because the combinations sell independently of each other.
+ */
+export type StoreVariant = Prisma.StoreVariantModel
+/**
+ * Model StoreOrder
+ * A purchase from a gym's store, whether taken online or over the counter.
+ */
+export type StoreOrder = Prisma.StoreOrderModel
+/**
+ * Model StoreOrderItem
+ * One line of a store order. The product and variant names and attributes are
+ * copied here rather than read through the relation, so renaming a flavour or
+ * retiring a variant can never rewrite a receipt someone already holds.
+ */
+export type StoreOrderItem = Prisma.StoreOrderItemModel

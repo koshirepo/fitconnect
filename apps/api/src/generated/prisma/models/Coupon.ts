@@ -59,6 +59,7 @@ export type CouponMinAggregateOutputType = {
   code: string | null
   description: string | null
   type: string | null
+  appliesTo: string | null
   percentOff: number | null
   amountOff: number | null
   maxDiscount: number | null
@@ -83,6 +84,7 @@ export type CouponMaxAggregateOutputType = {
   code: string | null
   description: string | null
   type: string | null
+  appliesTo: string | null
   percentOff: number | null
   amountOff: number | null
   maxDiscount: number | null
@@ -107,6 +109,7 @@ export type CouponCountAggregateOutputType = {
   code: number
   description: number
   type: number
+  appliesTo: number
   percentOff: number
   amountOff: number
   maxDiscount: number
@@ -157,6 +160,7 @@ export type CouponMinAggregateInputType = {
   code?: true
   description?: true
   type?: true
+  appliesTo?: true
   percentOff?: true
   amountOff?: true
   maxDiscount?: true
@@ -181,6 +185,7 @@ export type CouponMaxAggregateInputType = {
   code?: true
   description?: true
   type?: true
+  appliesTo?: true
   percentOff?: true
   amountOff?: true
   maxDiscount?: true
@@ -205,6 +210,7 @@ export type CouponCountAggregateInputType = {
   code?: true
   description?: true
   type?: true
+  appliesTo?: true
   percentOff?: true
   amountOff?: true
   maxDiscount?: true
@@ -316,6 +322,7 @@ export type CouponGroupByOutputType = {
   code: string
   description: string | null
   type: string
+  appliesTo: string
   percentOff: number | null
   amountOff: number | null
   maxDiscount: number | null
@@ -363,6 +370,7 @@ export type CouponWhereInput = {
   code?: Prisma.StringFilter<"Coupon"> | string
   description?: Prisma.StringNullableFilter<"Coupon"> | string | null
   type?: Prisma.StringFilter<"Coupon"> | string
+  appliesTo?: Prisma.StringFilter<"Coupon"> | string
   percentOff?: Prisma.IntNullableFilter<"Coupon"> | number | null
   amountOff?: Prisma.IntNullableFilter<"Coupon"> | number | null
   maxDiscount?: Prisma.IntNullableFilter<"Coupon"> | number | null
@@ -391,6 +399,7 @@ export type CouponOrderByWithRelationInput = {
   code?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
+  appliesTo?: Prisma.SortOrder
   percentOff?: Prisma.SortOrderInput | Prisma.SortOrder
   amountOff?: Prisma.SortOrderInput | Prisma.SortOrder
   maxDiscount?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -423,6 +432,7 @@ export type CouponWhereUniqueInput = Prisma.AtLeast<{
   code?: Prisma.StringFilter<"Coupon"> | string
   description?: Prisma.StringNullableFilter<"Coupon"> | string | null
   type?: Prisma.StringFilter<"Coupon"> | string
+  appliesTo?: Prisma.StringFilter<"Coupon"> | string
   percentOff?: Prisma.IntNullableFilter<"Coupon"> | number | null
   amountOff?: Prisma.IntNullableFilter<"Coupon"> | number | null
   maxDiscount?: Prisma.IntNullableFilter<"Coupon"> | number | null
@@ -451,6 +461,7 @@ export type CouponOrderByWithAggregationInput = {
   code?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
+  appliesTo?: Prisma.SortOrder
   percentOff?: Prisma.SortOrderInput | Prisma.SortOrder
   amountOff?: Prisma.SortOrderInput | Prisma.SortOrder
   maxDiscount?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -483,6 +494,7 @@ export type CouponScalarWhereWithAggregatesInput = {
   code?: Prisma.StringWithAggregatesFilter<"Coupon"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"Coupon"> | string | null
   type?: Prisma.StringWithAggregatesFilter<"Coupon"> | string
+  appliesTo?: Prisma.StringWithAggregatesFilter<"Coupon"> | string
   percentOff?: Prisma.IntNullableWithAggregatesFilter<"Coupon"> | number | null
   amountOff?: Prisma.IntNullableWithAggregatesFilter<"Coupon"> | number | null
   maxDiscount?: Prisma.IntNullableWithAggregatesFilter<"Coupon"> | number | null
@@ -506,6 +518,7 @@ export type CouponCreateInput = {
   code: string
   description?: string | null
   type: string
+  appliesTo?: string
   percentOff?: number | null
   amountOff?: number | null
   maxDiscount?: number | null
@@ -534,6 +547,7 @@ export type CouponUncheckedCreateInput = {
   code: string
   description?: string | null
   type: string
+  appliesTo?: string
   percentOff?: number | null
   amountOff?: number | null
   maxDiscount?: number | null
@@ -560,6 +574,7 @@ export type CouponUpdateInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
   percentOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   amountOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   maxDiscount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -588,6 +603,7 @@ export type CouponUncheckedUpdateInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
   percentOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   amountOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   maxDiscount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -615,6 +631,7 @@ export type CouponCreateManyInput = {
   code: string
   description?: string | null
   type: string
+  appliesTo?: string
   percentOff?: number | null
   amountOff?: number | null
   maxDiscount?: number | null
@@ -638,6 +655,7 @@ export type CouponUpdateManyMutationInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
   percentOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   amountOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   maxDiscount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -662,6 +680,7 @@ export type CouponUncheckedUpdateManyInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
   percentOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   amountOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   maxDiscount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -701,6 +720,7 @@ export type CouponCountOrderByAggregateInput = {
   code?: Prisma.SortOrder
   description?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  appliesTo?: Prisma.SortOrder
   percentOff?: Prisma.SortOrder
   amountOff?: Prisma.SortOrder
   maxDiscount?: Prisma.SortOrder
@@ -737,6 +757,7 @@ export type CouponMaxOrderByAggregateInput = {
   code?: Prisma.SortOrder
   description?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  appliesTo?: Prisma.SortOrder
   percentOff?: Prisma.SortOrder
   amountOff?: Prisma.SortOrder
   maxDiscount?: Prisma.SortOrder
@@ -761,6 +782,7 @@ export type CouponMinOrderByAggregateInput = {
   code?: Prisma.SortOrder
   description?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  appliesTo?: Prisma.SortOrder
   percentOff?: Prisma.SortOrder
   amountOff?: Prisma.SortOrder
   maxDiscount?: Prisma.SortOrder
@@ -933,6 +955,7 @@ export type CouponCreateWithoutTenantInput = {
   code: string
   description?: string | null
   type: string
+  appliesTo?: string
   percentOff?: number | null
   amountOff?: number | null
   maxDiscount?: number | null
@@ -959,6 +982,7 @@ export type CouponUncheckedCreateWithoutTenantInput = {
   code: string
   description?: string | null
   type: string
+  appliesTo?: string
   percentOff?: number | null
   amountOff?: number | null
   maxDiscount?: number | null
@@ -1014,6 +1038,7 @@ export type CouponScalarWhereInput = {
   code?: Prisma.StringFilter<"Coupon"> | string
   description?: Prisma.StringNullableFilter<"Coupon"> | string | null
   type?: Prisma.StringFilter<"Coupon"> | string
+  appliesTo?: Prisma.StringFilter<"Coupon"> | string
   percentOff?: Prisma.IntNullableFilter<"Coupon"> | number | null
   amountOff?: Prisma.IntNullableFilter<"Coupon"> | number | null
   maxDiscount?: Prisma.IntNullableFilter<"Coupon"> | number | null
@@ -1037,6 +1062,7 @@ export type CouponCreateWithoutSubscriptionsInput = {
   code: string
   description?: string | null
   type: string
+  appliesTo?: string
   percentOff?: number | null
   amountOff?: number | null
   maxDiscount?: number | null
@@ -1064,6 +1090,7 @@ export type CouponUncheckedCreateWithoutSubscriptionsInput = {
   code: string
   description?: string | null
   type: string
+  appliesTo?: string
   percentOff?: number | null
   amountOff?: number | null
   maxDiscount?: number | null
@@ -1110,6 +1137,7 @@ export type CouponCreateWithoutRedemptionsInput = {
   code: string
   description?: string | null
   type: string
+  appliesTo?: string
   percentOff?: number | null
   amountOff?: number | null
   maxDiscount?: number | null
@@ -1137,6 +1165,7 @@ export type CouponUncheckedCreateWithoutRedemptionsInput = {
   code: string
   description?: string | null
   type: string
+  appliesTo?: string
   percentOff?: number | null
   amountOff?: number | null
   maxDiscount?: number | null
@@ -1178,6 +1207,7 @@ export type CouponUpdateWithoutRedemptionsInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
   percentOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   amountOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   maxDiscount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1205,6 +1235,7 @@ export type CouponUncheckedUpdateWithoutRedemptionsInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
   percentOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   amountOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   maxDiscount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1230,6 +1261,7 @@ export type CouponCreateWithoutBadgesInput = {
   code: string
   description?: string | null
   type: string
+  appliesTo?: string
   percentOff?: number | null
   amountOff?: number | null
   maxDiscount?: number | null
@@ -1257,6 +1289,7 @@ export type CouponUncheckedCreateWithoutBadgesInput = {
   code: string
   description?: string | null
   type: string
+  appliesTo?: string
   percentOff?: number | null
   amountOff?: number | null
   maxDiscount?: number | null
@@ -1303,6 +1336,7 @@ export type CouponCreateManyTenantInput = {
   code: string
   description?: string | null
   type: string
+  appliesTo?: string
   percentOff?: number | null
   amountOff?: number | null
   maxDiscount?: number | null
@@ -1326,6 +1360,7 @@ export type CouponUpdateWithoutTenantInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
   percentOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   amountOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   maxDiscount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1352,6 +1387,7 @@ export type CouponUncheckedUpdateWithoutTenantInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
   percentOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   amountOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   maxDiscount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1378,6 +1414,7 @@ export type CouponUncheckedUpdateManyWithoutTenantInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
   percentOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   amountOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   maxDiscount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1401,6 +1438,7 @@ export type CouponUpdateWithoutSubscriptionsInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
   percentOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   amountOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   maxDiscount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1428,6 +1466,7 @@ export type CouponUncheckedUpdateWithoutSubscriptionsInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
   percentOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   amountOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   maxDiscount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1454,6 +1493,7 @@ export type CouponUncheckedUpdateManyWithoutSubscriptionsInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
   percentOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   amountOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   maxDiscount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1477,6 +1517,7 @@ export type CouponUpdateWithoutBadgesInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
   percentOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   amountOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   maxDiscount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1504,6 +1545,7 @@ export type CouponUncheckedUpdateWithoutBadgesInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
   percentOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   amountOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   maxDiscount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1530,6 +1572,7 @@ export type CouponUncheckedUpdateManyWithoutBadgesInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
   percentOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   amountOff?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   maxDiscount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1603,6 +1646,7 @@ export type CouponSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   code?: boolean
   description?: boolean
   type?: boolean
+  appliesTo?: boolean
   percentOff?: boolean
   amountOff?: boolean
   maxDiscount?: boolean
@@ -1632,6 +1676,7 @@ export type CouponSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   code?: boolean
   description?: boolean
   type?: boolean
+  appliesTo?: boolean
   percentOff?: boolean
   amountOff?: boolean
   maxDiscount?: boolean
@@ -1657,6 +1702,7 @@ export type CouponSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   code?: boolean
   description?: boolean
   type?: boolean
+  appliesTo?: boolean
   percentOff?: boolean
   amountOff?: boolean
   maxDiscount?: boolean
@@ -1682,6 +1728,7 @@ export type CouponSelectScalar = {
   code?: boolean
   description?: boolean
   type?: boolean
+  appliesTo?: boolean
   percentOff?: boolean
   amountOff?: boolean
   maxDiscount?: boolean
@@ -1700,7 +1747,7 @@ export type CouponSelectScalar = {
   updatedAt?: boolean
 }
 
-export type CouponOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "code" | "description" | "type" | "percentOff" | "amountOff" | "maxDiscount" | "coinsGranted" | "bonusDays" | "firstTimeOnly" | "gender" | "minAmount" | "maxRedemptions" | "redemptionCount" | "maxPerMember" | "startsAt" | "endsAt" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["coupon"]>
+export type CouponOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "code" | "description" | "type" | "appliesTo" | "percentOff" | "amountOff" | "maxDiscount" | "coinsGranted" | "bonusDays" | "firstTimeOnly" | "gender" | "minAmount" | "maxRedemptions" | "redemptionCount" | "maxPerMember" | "startsAt" | "endsAt" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["coupon"]>
 export type CouponInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
   badges?: boolean | Prisma.Coupon$badgesArgs<ExtArgs>
@@ -1741,6 +1788,12 @@ export type $CouponPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
      * "DISCOUNT" | "COINS" | "VALIDITY"
      */
     type: string
+    /**
+     * What the code may be spent on: "SUBSCRIPTION" | "STORE" | "BOTH".
+     * Defaults to subscriptions, which is every coupon that existed before the
+     * gym store did.
+     */
+    appliesTo: string
     /**
      * DISCOUNT: percentage or flat rupees, with an optional cap on the former.
      */
@@ -2210,6 +2263,7 @@ export interface CouponFieldRefs {
   readonly code: Prisma.FieldRef<"Coupon", 'String'>
   readonly description: Prisma.FieldRef<"Coupon", 'String'>
   readonly type: Prisma.FieldRef<"Coupon", 'String'>
+  readonly appliesTo: Prisma.FieldRef<"Coupon", 'String'>
   readonly percentOff: Prisma.FieldRef<"Coupon", 'Int'>
   readonly amountOff: Prisma.FieldRef<"Coupon", 'Int'>
   readonly maxDiscount: Prisma.FieldRef<"Coupon", 'Int'>
