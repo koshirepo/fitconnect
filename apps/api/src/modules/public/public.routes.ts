@@ -18,6 +18,8 @@ export const publicRoutes = new Hono<AppBindings>();
 // No authentication required — these are public endpoints
 
 publicRoutes.get("/branding", publicController.getTenantBranding);
+/** The gym's shop window. Browsing needs no account; buying still does. */
+publicRoutes.get("/store", publicController.getTenantStore);
 publicRoutes.get("/gyms", publicController.listGyms);
 publicRoutes.get("/gyms/resolve", publicController.getTenantByHost);
 publicRoutes.get("/gyms/:slug", publicController.getTenantBySlug);

@@ -31,6 +31,15 @@ export const publicController = {
    return ok(c, result.data);
   },
 
+  /** A gym's catalogue, for a visitor who has not signed in. */
+  async getTenantStore(c: Context) {
+   const host = c.req.query("host") ?? c.req.header("host") ?? "";
+   if (!host) return notFound(c, "Tenant host is required.");
+   const result = await publicService.getStoreByHost(host);
+   if ("error" in result) return notFound(c, result.error ?? "Tenant not found.");
+   return ok(c, result.data);
+  },
+
   async getTenantBranding(c: Context) {
    const host = c.req.query("host") ?? c.req.header("host") ?? "";
    if (!host) return notFound(c, "Tenant host is required.");

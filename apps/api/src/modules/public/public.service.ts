@@ -6,6 +6,7 @@
  * - Primary exports: publicService.
  */
 import { normalizeTenantHost, publicRepository } from "./public.repository";
+import { storeRepository } from "../store/store.repository";
 
 export const publicService = {
   /**
@@ -22,6 +23,31 @@ export const publicService = {
    const slug = normalizeTenantHost(host);
    if (!slug) return { error: "Tenant host is invalid.", status: 404 as const };
    return this.getTenantBySlug(slug);
+  },
+
+  /**
+   * A gym's shop window, for somebody with no account.
+   *
+   * Only what is actually for sale: retired products and retired variants are
+   * left out, because a visitor has no way to tell the difference between "we
+   * stopped stocking this" and "we never did". Buying still needs an account —
+   * this is the browsing half.
+   */
+  async getStoreByHost(host: string) {
+    const slug = normalizeTenantHost(host);
+    if (!slug) return { error: "Tenant host is invalid.", status: 404 as const };
+
+    const tenant = await publicRepository.findTenantBySlug(slug);
+    if (!tenant) return { error: "Tenant not found.", status: 404 as const };
+
+    const products = await storeRepository.listProducts(tenant.id, {});
+
+    return {
+      data: {
+        tenant: { id: tenant.id, name: tenant.name, slug: tenant.slug },
+        products,
+      },
+    };
   },
 
   async getTenantBrandingByHost(host: string) {

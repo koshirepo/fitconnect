@@ -25,6 +25,7 @@ export const GYM_PATH_SEGMENTS = new Set([
   "finance",
   "profile",
   "orders",
+  "store",
 ]);
 
 /** True when a path addresses a gym screen rather than a public or platform one. */

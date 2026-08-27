@@ -74,6 +74,7 @@ const LandingPage = React.lazy(() => import("@/features/public/LandingPage"));
 const SignupPage = React.lazy(() => import("@/features/public/SignupPage"));
 const CouponsPage = React.lazy(() => import("@/features/coupons/CouponsPage"));
 const StorePage = React.lazy(() => import("@/features/store/StorePage"));
+const PublicStorePage = React.lazy(() => import("@/features/store/PublicStorePage"));
 const StoreManagePage = React.lazy(() => import("@/features/store/StoreManagePage"));
 const StoreProductFormPage = React.lazy(
   () => import("@/features/store/StoreProductFormPage"),
@@ -158,6 +159,9 @@ export default function App() {
       {/* QR check-in links are generated from window.location.origin, so they
           land on the gym subdomain and need the route here too. */}
       <Route path="/attendance/qr/:tenantId" element={<AttendanceQrPage />} />
+      {/* The shop window. Public on purpose: a visitor can see what the gym
+          sells before deciding to join. Buying lives behind the dashboard. */}
+      <Route path="/store" element={<PublicStorePage />} />
       <Route element={<RedirectIfAuth />}>
         <Route path="/login" element={<LoginPage />} />
         {/* Joining is for people without an account; a signed-in member is

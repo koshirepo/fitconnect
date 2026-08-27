@@ -1,4 +1,5 @@
 import { api } from "./client";
+import type { StoreProduct } from "@fitconnect/shared/types/models";
 import type {
   PublicTenantDetail,
   PublicGymSummary,
@@ -38,6 +39,13 @@ export const publicApi = {
     api.get<ApiResponse<{ tenant: PublicTenantDetail }>>("/public/gyms/resolve", {
       params: { host, _: Date.now() },
     }),
+
+  /** A gym's shop window. No session required — browsing is open, buying is not. */
+  getStore: (host = currentHost()) =>
+    api.get<ApiResponse<{ tenant: { id: string; name: string; slug: string }; products: StoreProduct[] }>>(
+      "/public/store",
+      { params: { host } },
+    ),
 
   getTenantBranding: (host = typeof window !== "undefined" ? window.location.host : "") =>
     api.get<ApiResponse<{ tenant: TenantBrandingPayload }>>("/public/branding", {

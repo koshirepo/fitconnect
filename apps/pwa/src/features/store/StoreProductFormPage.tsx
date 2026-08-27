@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/select";
 import { FormPageSkeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 
 /** A variant being typed, before it becomes a payload. */
 type VariantDraft = {
@@ -185,13 +185,6 @@ export default function StoreProductFormPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/store/manage")}>
-          <ArrowLeft className="h-4 w-4" />
-          Back to store
-        </Button>
-      </div>
-
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
           {isEdit ? "Edit product" : "New product"}

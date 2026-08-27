@@ -190,7 +190,7 @@ export default function TenantPublicPage() {
                   account to hang the order and the coins off. */}
               <Button
                 variant="outline"
-                onClick={() => navigate(isAuthenticated ? "/dashboard/store" : "/login")}
+                onClick={() => navigate(isAuthenticated ? "/dashboard/store" : "/store")}
               >
                 <ShoppingBag className="h-4 w-4" />
                 Visit Store
