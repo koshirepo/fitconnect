@@ -10,7 +10,11 @@ import { Hono } from "hono";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { authenticate } from "../../middleware/authenticate";
 import { requireTenantPermissions } from "../../middleware/authorize";
-import { storeController, storeSaleController } from "./store.controller";
+import {
+  storeCheckoutController,
+  storeController,
+  storeSaleController,
+} from "./store.controller";
 import type { AppBindings } from "../../types/app-context";
 
 export const storeRoutes = new Hono<AppBindings>();
@@ -99,4 +103,32 @@ storeRoutes.post(
   authenticate,
   requireTenantPermissions(Permission.STORE_SELL),
   storeSaleController.sellAtCounter,
+);
+
+/**
+ * Buying online, for oneself.
+ *
+ * `STORE_BUY_SELF`, which every member holds. The buyer is taken from the
+ * session rather than the body, so these need no further scoping.
+ */
+storeRoutes.post(
+  "/:tenantId/store/checkout",
+  authenticate,
+  requireTenantPermissions(Permission.STORE_BUY_SELF),
+  storeCheckoutController.start,
+);
+
+storeRoutes.post(
+  "/:tenantId/store/checkout/verify",
+  authenticate,
+  requireTenantPermissions(Permission.STORE_BUY_SELF),
+  storeCheckoutController.verify,
+);
+
+/** Releases the stock a closed payment window was holding. */
+storeRoutes.post(
+  "/:tenantId/store/orders/:orderId/cancel",
+  authenticate,
+  requireTenantPermissions(Permission.STORE_BUY_SELF),
+  storeCheckoutController.cancel,
 );

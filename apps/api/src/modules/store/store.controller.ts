@@ -9,10 +9,12 @@
 import type { Context } from "hono";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { storeService } from "./store.service";
-import { storeSaleService } from "./store-sale.service";
+import { storeCheckoutService, storeSaleService } from "./store-sale.service";
 import {
   adjustStockSchema,
   counterSaleSchema,
+  storeCheckoutSchema,
+  storeCheckoutVerifySchema,
   createProductSchema,
   createVariantSchema,
   listProductsSchema,
@@ -21,7 +23,8 @@ import {
 } from "./store.schema";
 import { auditLog } from "../../lib/audit";
 import { parseBody } from "../../lib/http";
-import { badRequest, conflict, notFound, ok } from "../../lib/response";
+import { badRequest, conflict, forbidden, notFound, ok } from "../../lib/response";
+import { paymentRepository } from "../payments/payments.repository";
 import type { AppBindings } from "../../types/app-context";
 
 type AppContext = Context<AppBindings>;
@@ -242,5 +245,77 @@ export const storeSaleController = {
     });
 
     return ok(c, result.data, 201);
+  },
+};
+
+
+/**
+ * A member buying for themselves online.
+ *
+ * The buyer is always whoever is signed in — the request never names a
+ * membership, because accepting one would let a member put a purchase on
+ * somebody else's account.
+ */
+export const storeCheckoutController = {
+  async start(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    const parsed = await parseBody(c, storeCheckoutSchema);
+    if (!parsed.ok) return parsed.response;
+
+    const user = c.get("authUser");
+    const membership = await paymentRepository.findMembershipByUser(tenantId, user.id);
+    if (!membership) return forbidden(c, "You are not a member of this gym.");
+
+    const result = await storeCheckoutService.start(tenantId, membership.id, parsed.data, user.id);
+    if ("error" in result) {
+      if (result.status === 409) return conflict(c, result.error!);
+      if (result.status === 404) return notFound(c, result.error!);
+      return badRequest(c, result.error!);
+    }
+
+    return ok(c, result.data, 201);
+  },
+
+  async verify(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    const parsed = await parseBody(c, storeCheckoutVerifySchema);
+    if (!parsed.ok) return parsed.response;
+
+    const user = c.get("authUser");
+    const membership = await paymentRepository.findMembershipByUser(tenantId, user.id);
+    if (!membership) return forbidden(c, "You are not a member of this gym.");
+
+    const result = await storeCheckoutService.verify(tenantId, membership.id, parsed.data);
+    if ("error" in result) {
+      if (result.status === 409) return conflict(c, result.error!);
+      if (result.status === 404) return notFound(c, result.error!);
+      return badRequest(c, result.error!);
+    }
+
+    await auditLog({
+      action: "UPDATE",
+      entity: "StoreOrder",
+      entityId: result.data.orderId,
+      actorId: user.id,
+      tenantId,
+      metadata: { settled: !result.data.alreadySettled },
+      ip: c.req.header("x-forwarded-for") ?? undefined,
+    });
+
+    return ok(c, result.data);
+  },
+
+  async cancel(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    const orderId = c.req.param("orderId")!;
+
+    const user = c.get("authUser");
+    const membership = await paymentRepository.findMembershipByUser(tenantId, user.id);
+    if (!membership) return forbidden(c, "You are not a member of this gym.");
+
+    const result = await storeCheckoutService.cancel(tenantId, membership.id, orderId);
+    if ("error" in result) return notFound(c, result.error!);
+
+    return ok(c, result.data);
   },
 };

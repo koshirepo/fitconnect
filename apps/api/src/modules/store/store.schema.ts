@@ -104,3 +104,21 @@ export const counterSaleSchema = z.object({
 });
 
 export type CounterSaleInput = z.infer<typeof counterSaleSchema>;
+
+/**
+ * An online purchase a member makes for themselves.
+ *
+ * No `membershipId`: the buyer is whoever is signed in. Accepting one would let
+ * a member put a purchase on somebody else's account.
+ */
+export const storeCheckoutSchema = counterSaleSchema.omit({ membershipId: true });
+
+/** Settling an online purchase against what Razorpay signed. */
+export const storeCheckoutVerifySchema = z.object({
+  orderId: z.string().min(1),
+  paymentId: z.string().min(1),
+  signature: z.string().min(1),
+});
+
+export type StoreCheckoutInput = z.infer<typeof storeCheckoutSchema>;
+export type StoreCheckoutVerifyInput = z.infer<typeof storeCheckoutVerifySchema>;

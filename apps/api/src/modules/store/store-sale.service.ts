@@ -1,18 +1,24 @@
 /**
  * Documentation: Gym store sales.
  *
- * - Takes money for a basket: prices it, claims the stock, writes the ledger row, spends and grants coins, and records the order.
- * - Stock is claimed before anything is charged, and each claim is a conditional decrement rather than a read followed by a write. Two people buying the last tub at the same moment cannot both succeed, and a basket that fails halfway puts back what it already took.
- * - Pricing is recomputed here from the database, never taken from the request. A client that could name its own total could buy a ₹5,000 tub for a rupee — the same rule the subscription checkout follows.
- * - This module covers the counter sale, which completes immediately because the money is already in the till. An online sale reserves stock the same way but settles against a gateway signature, and lands alongside the existing checkout code.
- * - Primary exports: storeSaleService.
+ * - Takes money for a basket, whether the till or a card takes it: prices it, claims the stock, writes the ledger row, spends and grants coins, and records the order.
+ * - Both channels share `priceForSale`, `claimStock`, `createOrderRecord`, and `writeCoinEntries`, so a counter sale and an online one can never charge or credit differently for the same basket.
+ * - Stock is claimed before anything is charged, and each claim is a conditional decrement rather than a read followed by a write. Two people buying the last tub at once cannot both succeed, and a basket that fails halfway puts back what it already took.
+ * - Pricing is recomputed here from the database, never taken from the request. A client that could name its own total could buy a ₹5,000 tub for a rupee — the rule the subscription checkout already follows.
+ * - Primary exports: storeSaleService, storeCheckoutService.
  */
 import { priceBasket, validateBasket, type BasketLine } from "@fitconnect/shared/store-pricing";
 import { prisma } from "../../lib/prisma";
+import { createOrder, verifyCheckoutSignature } from "../../lib/razorpay";
 import { storeRepository } from "./store.repository";
 import { couponService, findCoupon } from "../coupons/coupons.service";
+import { gatewayService } from "../payments/gateway.service";
 import { paymentRepository } from "../payments/payments.repository";
-import type { CounterSaleInput } from "./store.schema";
+import type {
+  CounterSaleInput,
+  StoreCheckoutInput,
+  StoreCheckoutVerifyInput,
+} from "./store.schema";
 
 type SaleError = { error: string; status: 400 | 404 | 409 };
 
@@ -24,10 +30,17 @@ type ResolvedLine = BasketLine & {
   attributes: unknown;
 };
 
+type PricedSale = {
+  lines: ResolvedLine[];
+  priced: ReturnType<typeof priceBasket>;
+};
+
+// ─── Resolution and pricing ───────────────────────────────────────────────────
+
 /**
  * Join the requested basket to the catalogue.
  *
- * Every price, coin grant, and stock figure comes from the database. The request
+ * Every price, coin grant, and stock figure comes from the database; the request
  * contributes nothing but variant ids and quantities.
  */
 async function resolveLines(
@@ -45,10 +58,7 @@ async function resolveLines(
   for (const item of items) {
     const variant = byId.get(item.variantId);
     if (!variant) {
-      return {
-        error: "One of those items is no longer on sale.",
-        status: 404 as const,
-      };
+      return { error: "One of those items is no longer on sale.", status: 404 };
     }
 
     lines.push({
@@ -67,16 +77,18 @@ async function resolveLines(
   return { lines };
 }
 
-/**
- * A coupon a member may spend on the store, or a reason they may not.
- *
- * Store coupons reuse the one registry, so `appliesTo` is what keeps a
- * membership-only code from being spent on protein.
- */
 type CouponResolution =
   | { ok: true; coupon: Awaited<ReturnType<typeof findCoupon>> }
   | ({ ok: false } & SaleError);
 
+/**
+ * A coupon a member may spend on the store, or a reason they may not.
+ *
+ * Store coupons live in the one registry, so `appliesTo` is what keeps a
+ * membership-only code from being spent on protein. Every other condition —
+ * windows, caps, per-member limits, badges, gender — comes from the coupon
+ * module's own eligibility check rather than a second implementation.
+ */
 async function resolveStoreCoupon(
   tenantId: string,
   membershipId: string,
@@ -110,6 +122,210 @@ async function resolveStoreCoupon(
   return { ok: true, coupon: record };
 }
 
+/** Resolve, validate, and price a basket. The shared front half of any sale. */
+async function priceForSale(
+  tenantId: string,
+  membershipId: string,
+  input: {
+    items: { variantId: string; quantity: number }[];
+    couponCode?: string;
+    coinsToSpend?: number;
+  },
+): Promise<PricedSale | SaleError> {
+  const resolved = await resolveLines(tenantId, input.items);
+  if ("error" in resolved) return resolved;
+
+  const problem = validateBasket(resolved.lines);
+  if (problem) {
+    if (problem.reason === "EMPTY") {
+      return { error: "Add something to the basket first.", status: 400 };
+    }
+    if (problem.reason === "INSUFFICIENT_STOCK") {
+      const line = resolved.lines.find((l) => l.variantId === problem.variantId);
+      return {
+        error: `Only ${problem.available} of ${line?.variantName ?? "that item"} left.`,
+        status: 409,
+      };
+    }
+    return { error: "That quantity is not valid.", status: 400 };
+  }
+
+  const subtotal = resolved.lines.reduce(
+    (sum, line) => sum + line.unitPrice * line.quantity,
+    0,
+  );
+
+  const couponResult = await resolveStoreCoupon(
+    tenantId,
+    membershipId,
+    input.couponCode,
+    subtotal,
+  );
+  if (!couponResult.ok) {
+    return { error: couponResult.error, status: couponResult.status };
+  }
+
+  const coupon = couponResult.coupon;
+  const coinsAvailable = await couponService.getCoinBalance(tenantId, membershipId);
+
+  const priced = priceBasket({
+    lines: resolved.lines,
+    coupon: coupon
+      ? {
+          percentOff: coupon.percentOff,
+          amountOff: coupon.amountOff,
+          maxDiscount: coupon.maxDiscount,
+          minAmount: coupon.minAmount,
+        }
+      : null,
+    coinsAvailable,
+    coinsRequested: input.coinsToSpend ?? 0,
+  });
+
+  return { lines: resolved.lines, priced };
+}
+
+// ─── Stock ────────────────────────────────────────────────────────────────────
+
+/**
+ * Take every line's stock, or none of it.
+ *
+ * Each decrement is conditional on the stock still being there, so two sales of
+ * the last tub cannot both succeed. Anything already taken is put back when a
+ * later line cannot be met.
+ */
+async function claimStock(
+  lines: { variantId: string; quantity: number; variantName?: string }[],
+): Promise<{ claimed: { variantId: string; quantity: number }[] } | SaleError> {
+  const claimed: { variantId: string; quantity: number }[] = [];
+
+  for (const line of lines) {
+    const took = await storeRepository.decrementStock(line.variantId, line.quantity);
+    if (!took) {
+      await releaseStock(claimed);
+      return {
+        error: `${line.variantName ?? "That item"} just sold out. Recount and try again.`,
+        status: 409,
+      };
+    }
+    claimed.push({ variantId: line.variantId, quantity: line.quantity });
+  }
+
+  return { claimed };
+}
+
+/** Put stock back, for a failed claim or an abandoned checkout. */
+async function releaseStock(lines: { variantId: string; quantity: number }[]) {
+  for (const line of lines) {
+    await storeRepository.restoreStock(line.variantId, line.quantity);
+  }
+}
+
+// ─── Writes ───────────────────────────────────────────────────────────────────
+
+/** Record the order and its lines, with the names and attributes frozen. */
+function createOrderRecord(input: {
+  tenantId: string;
+  membershipId: string;
+  sellerMembershipId: string | null;
+  channel: "COUNTER" | "ONLINE";
+  status: "PENDING" | "COMPLETED";
+  priced: PricedSale;
+  paymentId: string;
+  note?: string;
+}) {
+  const { priced } = input.priced;
+
+  return prisma.storeOrder.create({
+    data: {
+      tenantId: input.tenantId,
+      membershipId: input.membershipId,
+      soldById: input.sellerMembershipId,
+      status: input.status,
+      channel: input.channel,
+      subtotalAmount: priced.subtotal,
+      discountAmount: priced.discount,
+      coinsRedeemed: priced.coinsRedeemed,
+      totalAmount: priced.total,
+      coinsEarned: priced.coinsEarned,
+      paymentId: input.paymentId,
+      ...(input.note ? { note: input.note } : {}),
+      items: {
+        create: input.priced.lines.map((line) => ({
+          variantId: line.variantId,
+          productName: line.productName,
+          variantName: line.variantName,
+          attributes: line.attributes as object,
+          quantity: line.quantity,
+          unitPrice: line.unitPrice,
+          lineTotal: line.unitPrice * line.quantity,
+        })),
+      },
+    },
+    select: { id: true, totalAmount: true, coinsEarned: true, coinsRedeemed: true },
+  });
+}
+
+/**
+ * The coins a completed sale moves: what was spent, and what it earned.
+ *
+ * Shared by both channels so the same basket can never credit a member
+ * differently depending on how they paid.
+ */
+async function writeCoinEntries(input: {
+  tenantId: string;
+  membershipId: string;
+  paymentId: string;
+  coinsRedeemed: number;
+  coinsEarned: number;
+  createdById?: string;
+}) {
+  const entries = [];
+
+  if (input.coinsRedeemed > 0) {
+    entries.push({
+      tenantId: input.tenantId,
+      membershipId: input.membershipId,
+      amount: -input.coinsRedeemed,
+      reason: "REDEEMED",
+      note: "Spent on a gym store purchase",
+      paymentId: input.paymentId,
+      ...(input.createdById ? { createdById: input.createdById } : {}),
+    });
+  }
+
+  if (input.coinsEarned > 0) {
+    entries.push({
+      tenantId: input.tenantId,
+      membershipId: input.membershipId,
+      amount: input.coinsEarned,
+      reason: "STORE_PURCHASE",
+      note: "Earned on a gym store purchase",
+      paymentId: input.paymentId,
+      ...(input.createdById ? { createdById: input.createdById } : {}),
+    });
+  }
+
+  if (entries.length > 0) {
+    await prisma.coinLedgerEntry.createMany({ data: entries });
+  }
+}
+
+/** Everything a finished sale hands back, whichever channel took the money. */
+function saleResult(order: { id: string }, priced: PricedSale, paymentId: string) {
+  return {
+    order,
+    paymentId,
+    subtotal: priced.priced.subtotal,
+    discount: priced.priced.discount,
+    coinsRedeemed: priced.priced.coinsRedeemed,
+    total: priced.priced.total,
+    coinsEarned: priced.priced.coinsEarned,
+  };
+}
+
+// ─── Counter ──────────────────────────────────────────────────────────────────
+
 export const storeSaleService = {
   /**
    * Sell a basket to a member at the counter.
@@ -124,157 +340,253 @@ export const storeSaleService = {
     const seller = await paymentRepository.findMembershipByUser(tenantId, sellerUserId);
     const sellerMembershipId = seller?.id ?? null;
 
-    const resolved = await resolveLines(tenantId, input.items);
-    if ("error" in resolved) return resolved;
+    const priced = await priceForSale(tenantId, input.membershipId, input);
+    if ("error" in priced) return priced;
 
-    const problem = validateBasket(resolved.lines);
-    if (problem) {
-      if (problem.reason === "EMPTY") {
-        return { error: "Add something to the basket first.", status: 400 as const };
-      }
-      if (problem.reason === "INSUFFICIENT_STOCK") {
-        const line = resolved.lines.find((l) => l.variantId === problem.variantId);
-        return {
-          error: `Only ${problem.available} of ${line?.variantName ?? "that item"} left.`,
-          status: 409 as const,
-        };
-      }
-      return { error: "That quantity is not valid.", status: 400 as const };
-    }
+    const claim = await claimStock(priced.lines);
+    if ("error" in claim) return claim;
 
-    const subtotal = resolved.lines.reduce(
-      (sum, line) => sum + line.unitPrice * line.quantity,
-      0,
-    );
-
-    const couponResult = await resolveStoreCoupon(
-      tenantId,
-      input.membershipId,
-      input.couponCode,
-      subtotal,
-    );
-    if (!couponResult.ok) {
-      return { error: couponResult.error, status: couponResult.status };
-    }
-    const coupon = couponResult.coupon;
-
-    const coinsAvailable = await couponService.getCoinBalance(tenantId, input.membershipId);
-
-    const priced = priceBasket({
-      lines: resolved.lines,
-      coupon: coupon
-        ? {
-            percentOff: coupon.percentOff,
-            amountOff: coupon.amountOff,
-            maxDiscount: coupon.maxDiscount,
-            minAmount: coupon.minAmount,
-          }
-        : null,
-      coinsAvailable,
-      coinsRequested: input.coinsToSpend ?? 0,
-    });
-
-    // ─── Claim the stock ──────────────────────────────────────────────────────
-    // Conditional per line. Anything already taken goes back if a later line
-    // cannot be met, so a failed sale leaves the shelf as it found it.
-    const claimed: { variantId: string; quantity: number }[] = [];
-    for (const line of resolved.lines) {
-      const took = await storeRepository.decrementStock(line.variantId, line.quantity);
-      if (!took) {
-        for (const done of claimed) {
-          await storeRepository.restoreStock(done.variantId, done.quantity);
-        }
-        return {
-          error: `${line.variantName} just sold out. Recount and try again.`,
-          status: 409 as const,
-        };
-      }
-      claimed.push({ variantId: line.variantId, quantity: line.quantity });
-    }
-
-    // ─── Money ────────────────────────────────────────────────────────────────
-    // Written to the same ledger as memberships and charges, so store takings
-    // appear in the finance report rather than beside it.
     const payment = await paymentRepository.createPayment({
       tenantId,
       membershipId: input.membershipId,
       description: "Gym store purchase",
       status: "COMPLETED",
-      amount: priced.total,
+      amount: priced.priced.total,
       ...(sellerMembershipId ? { collectorId: sellerMembershipId } : {}),
       paidAt: new Date(),
       ...(input.note ? { note: input.note } : {}),
     });
 
-    const order = await prisma.storeOrder.create({
-      data: {
-        tenantId,
-        membershipId: input.membershipId,
-        soldById: sellerMembershipId,
-        status: "COMPLETED",
-        channel: "COUNTER",
-        subtotalAmount: priced.subtotal,
-        discountAmount: priced.discount,
-        coinsRedeemed: priced.coinsRedeemed,
-        totalAmount: priced.total,
-        coinsEarned: priced.coinsEarned,
-        paymentId: payment.id,
-        ...(input.note ? { note: input.note } : {}),
-        items: {
-          create: resolved.lines.map((line) => ({
-            variantId: line.variantId,
-            productName: line.productName,
-            variantName: line.variantName,
-            attributes: line.attributes as object,
-            quantity: line.quantity,
-            unitPrice: line.unitPrice,
-            lineTotal: line.unitPrice * line.quantity,
-          })),
-        },
-      },
-      select: { id: true, totalAmount: true, coinsEarned: true, coinsRedeemed: true },
+    const order = await createOrderRecord({
+      tenantId,
+      membershipId: input.membershipId,
+      sellerMembershipId,
+      channel: "COUNTER",
+      status: "COMPLETED",
+      priced,
+      paymentId: payment.id,
+      note: input.note,
     });
 
-    // ─── Coins ────────────────────────────────────────────────────────────────
-    // Both directions in one write: what was spent, and what the purchase
-    // earned. Written after the order so every entry names something real.
-    const entries = [];
-    if (priced.coinsRedeemed > 0) {
-      entries.push({
+    await writeCoinEntries({
+      tenantId,
+      membershipId: input.membershipId,
+      paymentId: payment.id,
+      coinsRedeemed: priced.priced.coinsRedeemed,
+      coinsEarned: priced.priced.coinsEarned,
+      createdById: sellerUserId,
+    });
+
+    return { data: saleResult(order, priced, payment.id) };
+  },
+};
+
+// ─── Online ───────────────────────────────────────────────────────────────────
+
+export const storeCheckoutService = {
+  /**
+   * Open an online purchase.
+   *
+   * Stock is claimed now rather than at settlement, so the tub is the buyer's
+   * while they are typing their card number. The cost is that an abandoned
+   * checkout holds stock until `cancel` releases it.
+   */
+  async start(
+    tenantId: string,
+    membershipId: string,
+    input: StoreCheckoutInput,
+    userId: string,
+  ) {
+    const priced = await priceForSale(tenantId, membershipId, input);
+    if ("error" in priced) return priced;
+
+    // Coins and a coupon can legitimately clear a bill. There is nothing to
+    // send a gateway, so the sale simply completes.
+    if (priced.priced.total === 0) {
+      const claim = await claimStock(priced.lines);
+      if ("error" in claim) return claim;
+
+      const payment = await paymentRepository.createPayment({
         tenantId,
-        membershipId: input.membershipId,
-        amount: -priced.coinsRedeemed,
-        reason: "REDEEMED",
-        note: "Spent on a gym store purchase",
-        paymentId: payment.id,
-        createdById: sellerUserId,
+        membershipId,
+        description: "Gym store purchase",
+        status: "COMPLETED",
+        amount: 0,
+        paidAt: new Date(),
       });
-    }
-    if (priced.coinsEarned > 0) {
-      entries.push({
+
+      const order = await createOrderRecord({
         tenantId,
-        membershipId: input.membershipId,
-        amount: priced.coinsEarned,
-        reason: "STORE_PURCHASE",
-        note: "Earned on a gym store purchase",
+        membershipId,
+        sellerMembershipId: null,
+        channel: "ONLINE",
+        status: "COMPLETED",
+        priced,
         paymentId: payment.id,
-        createdById: sellerUserId,
+        note: input.note,
       });
-    }
-    if (entries.length > 0) {
-      await prisma.coinLedgerEntry.createMany({ data: entries });
+
+      await writeCoinEntries({
+        tenantId,
+        membershipId,
+        paymentId: payment.id,
+        coinsRedeemed: priced.priced.coinsRedeemed,
+        coinsEarned: priced.priced.coinsEarned,
+        createdById: userId,
+      });
+
+      return { data: { ...saleResult(order, priced, payment.id), checkout: null } };
     }
 
-    return {
-      data: {
-        order,
+    const credentials = await gatewayService.resolveCredentials(tenantId);
+    if (!credentials) {
+      return { error: "This gym has not set up online payments yet.", status: 409 as const };
+    }
+
+    const claim = await claimStock(priced.lines);
+    if ("error" in claim) return claim;
+
+    try {
+      const payment = await paymentRepository.createPayment({
+        tenantId,
+        membershipId,
+        description: "Gym store purchase",
+        status: "PENDING",
+        amount: priced.priced.total,
+        gateway: "RAZORPAY",
+        gatewayAccount: credentials.source,
+      });
+
+      const gatewayOrder = await createOrder(credentials, {
+        amount: priced.priced.total,
+        receipt: payment.id,
+        notes: { tenantId, membershipId, kind: "store" },
+      });
+
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: { gatewayOrderId: gatewayOrder.id },
+      });
+
+      const order = await createOrderRecord({
+        tenantId,
+        membershipId,
+        sellerMembershipId: null,
+        channel: "ONLINE",
+        status: "PENDING",
+        priced,
         paymentId: payment.id,
-        subtotal: priced.subtotal,
-        discount: priced.discount,
-        coinsRedeemed: priced.coinsRedeemed,
-        total: priced.total,
-        coinsEarned: priced.coinsEarned,
+        note: input.note,
+      });
+
+      return {
+        data: {
+          ...saleResult(order, priced, payment.id),
+          checkout: {
+            orderId: gatewayOrder.id,
+            keyId: credentials.keyId,
+            amount: priced.priced.total,
+            currency: "INR",
+          },
+        },
+      };
+    } catch (error) {
+      // The gateway refused, or a write failed. Either way nothing was sold, so
+      // the stock goes back rather than sitting reserved for nobody.
+      await releaseStock(claim.claimed);
+      throw error;
+    }
+  },
+
+  /**
+   * Settle an online purchase against what Razorpay signed.
+   *
+   * Idempotent by a conditional status update: a browser returning at the same
+   * moment as the webhook must not credit the coins twice.
+   */
+  async verify(tenantId: string, membershipId: string, input: StoreCheckoutVerifyInput) {
+    const credentials = await gatewayService.resolveCredentials(tenantId);
+    if (!credentials) {
+      return { error: "This gym has not set up online payments yet.", status: 409 as const };
+    }
+
+    const valid = await verifyCheckoutSignature(credentials.keySecret, input);
+    if (!valid) return { error: "That payment could not be verified.", status: 400 as const };
+
+    const payment = await prisma.payment.findFirst({
+      where: { tenantId, membershipId, gatewayOrderId: input.orderId },
+      select: { id: true },
+    });
+    if (!payment) return { error: "That order was not found.", status: 404 as const };
+
+    const order = await prisma.storeOrder.findFirst({
+      where: { tenantId, paymentId: payment.id },
+      select: { id: true, status: true, coinsRedeemed: true, coinsEarned: true },
+    });
+    if (!order) return { error: "That order was not found.", status: 404 as const };
+
+    const claimed = await prisma.storeOrder.updateMany({
+      where: { id: order.id, status: "PENDING" },
+      data: { status: "COMPLETED" },
+    });
+    if (claimed.count === 0) {
+      return { data: { orderId: order.id, alreadySettled: true } };
+    }
+
+    await prisma.payment.update({
+      where: { id: payment.id },
+      data: {
+        status: "COMPLETED",
+        paidAt: new Date(),
+        gatewayPaymentId: input.paymentId,
       },
-    };
+    });
+
+    await writeCoinEntries({
+      tenantId,
+      membershipId,
+      paymentId: payment.id,
+      coinsRedeemed: order.coinsRedeemed,
+      coinsEarned: order.coinsEarned,
+    });
+
+    return { data: { orderId: order.id, alreadySettled: false } };
+  },
+
+  /**
+   * Give up on an online purchase and put the stock back.
+   *
+   * Only ever touches an order that is still pending, so a settled sale cannot
+   * be unwound this way.
+   */
+  async cancel(tenantId: string, membershipId: string, orderId: string) {
+    const order = await prisma.storeOrder.findFirst({
+      where: { id: orderId, tenantId, membershipId, status: "PENDING" },
+      select: {
+        id: true,
+        paymentId: true,
+        items: { select: { variantId: true, quantity: true } },
+      },
+    });
+    if (!order) return { error: "That order was not found.", status: 404 as const };
+
+    const released = await prisma.storeOrder.updateMany({
+      where: { id: order.id, status: "PENDING" },
+      data: { status: "CANCELLED" },
+    });
+    if (released.count === 0) {
+      return { data: { orderId: order.id, cancelled: false } };
+    }
+
+    await releaseStock(order.items);
+
+    if (order.paymentId) {
+      await prisma.payment.update({
+        where: { id: order.paymentId },
+        data: { status: "FAILED" },
+      });
+    }
+
+    return { data: { orderId: order.id, cancelled: true } };
   },
 };
