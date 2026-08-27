@@ -9,8 +9,10 @@
 import type { Context } from "hono";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { storeService } from "./store.service";
+import { storeSaleService } from "./store-sale.service";
 import {
   adjustStockSchema,
+  counterSaleSchema,
   createProductSchema,
   createVariantSchema,
   listProductsSchema,
@@ -19,7 +21,7 @@ import {
 } from "./store.schema";
 import { auditLog } from "../../lib/audit";
 import { parseBody } from "../../lib/http";
-import { conflict, notFound, ok } from "../../lib/response";
+import { badRequest, conflict, notFound, ok } from "../../lib/response";
 import type { AppBindings } from "../../types/app-context";
 
 type AppContext = Context<AppBindings>;
@@ -195,5 +197,50 @@ export const storeController = {
     });
 
     return ok(c, result.data);
+  },
+};
+
+/**
+ * Ring up a counter sale.
+ *
+ * Kept apart from `storeController` because selling is a different concern from
+ * managing a catalogue, and the two carry different permissions.
+ */
+export const storeSaleController = {
+  async sellAtCounter(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    const parsed = await parseBody(c, counterSaleSchema);
+    if (!parsed.ok) return parsed.response;
+
+    // The service resolves which membership this staff member holds here, the
+    // same way the payment path does, rather than the route guessing at it.
+    const result = await storeSaleService.sellAtCounter(
+      tenantId,
+      parsed.data,
+      c.get("authUser").id,
+    );
+
+    if ("error" in result) {
+      if (result.status === 409) return conflict(c, result.error!);
+      if (result.status === 404) return notFound(c, result.error!);
+      return badRequest(c, result.error!);
+    }
+
+    await auditLog({
+      action: "CREATE",
+      entity: "StoreOrder",
+      entityId: result.data.order.id,
+      actorId: c.get("authUser").id,
+      tenantId,
+      metadata: {
+        total: result.data.total,
+        discount: result.data.discount,
+        coinsRedeemed: result.data.coinsRedeemed,
+        coinsEarned: result.data.coinsEarned,
+      },
+      ip: c.req.header("x-forwarded-for") ?? undefined,
+    });
+
+    return ok(c, result.data, 201);
   },
 };

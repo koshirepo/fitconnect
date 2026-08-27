@@ -77,3 +77,30 @@ export type CreateVariantInput = z.infer<typeof createVariantSchema>;
 export type UpdateVariantInput = z.infer<typeof updateVariantSchema>;
 export type AdjustStockInput = z.infer<typeof adjustStockSchema>;
 export type ListProductsInput = z.infer<typeof listProductsSchema>;
+
+/**
+ * A counter sale.
+ *
+ * The basket names variants and quantities only. Prices, coin grants, and the
+ * coupon's benefit are all read from the database at sale time — a request that
+ * could name its own total could buy a ₹5,000 tub for a rupee.
+ */
+export const counterSaleSchema = z.object({
+  /** The member being sold to. Staff sell on someone's behalf, never anonymously. */
+  membershipId: z.string().min(1),
+  items: z
+    .array(
+      z.object({
+        variantId: z.string().min(1),
+        quantity: z.number().int().min(1).max(100),
+      }),
+    )
+    .min(1)
+    .max(50),
+  couponCode: z.string().trim().min(1).max(40).optional(),
+  /** Coins the member chose to spend. Capped at their balance and the bill. */
+  coinsToSpend: z.number().int().min(0).optional(),
+  note: z.string().trim().max(200).optional(),
+});
+
+export type CounterSaleInput = z.infer<typeof counterSaleSchema>;

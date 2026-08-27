@@ -47,7 +47,13 @@ type QuoteInput = {
 
 type CouponRecord = Awaited<ReturnType<typeof findCoupon>>;
 
-function findCoupon(tenantId: string, code: string) {
+/**
+ * Load a coupon by its code, with everything its conditions are checked against.
+ *
+ * Exported because the gym store checks the same coupons against the same
+ * limits; duplicating the select there would let the two drift apart.
+ */
+export function findCoupon(tenantId: string, code: string) {
   return prisma.coupon.findFirst({
     where: { tenantId, code: code.trim().toUpperCase() },
     select: {
@@ -63,6 +69,7 @@ function findCoupon(tenantId: string, code: string) {
       firstTimeOnly: true,
       gender: true,
       minAmount: true,
+      appliesTo: true,
       maxRedemptions: true,
       redemptionCount: true,
       maxPerMember: true,

@@ -10,7 +10,7 @@ import { Hono } from "hono";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { authenticate } from "../../middleware/authenticate";
 import { requireTenantPermissions } from "../../middleware/authorize";
-import { storeController } from "./store.controller";
+import { storeController, storeSaleController } from "./store.controller";
 import type { AppBindings } from "../../types/app-context";
 
 export const storeRoutes = new Hono<AppBindings>();
@@ -86,4 +86,17 @@ storeRoutes.post(
   authenticate,
   requireTenantPermissions(Permission.STORE_MANAGE),
   storeController.adjustStock,
+);
+
+/**
+ * Sell to a member at the counter.
+ *
+ * `STORE_SELL`, which coaches and admins hold — a member cannot ring up a sale
+ * for themselves at counter prices with no money changing hands.
+ */
+storeRoutes.post(
+  "/:tenantId/store/sales",
+  authenticate,
+  requireTenantPermissions(Permission.STORE_SELL),
+  storeSaleController.sellAtCounter,
 );
