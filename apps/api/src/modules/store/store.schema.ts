@@ -29,11 +29,25 @@ export const createVariantSchema = z.object({
 
 export const updateVariantSchema = createVariantSchema.partial();
 
+/**
+ * A video link, stored as pasted.
+ *
+ * Whatever a gym copies out of YouTube — a share link, a watch link, a Shorts
+ * link — is kept verbatim and turned into an embed by the player. Normalising
+ * on the way in would mean guessing at a format that changes without notice.
+ */
+const videoUrl = z.string().trim().url().max(400);
+
+/** The long form beside the one-line `description`, rendered as markdown. */
+const markdown = z.string().trim().max(20000);
+
 export const createProductSchema = z.object({
   name: z.string().trim().min(1).max(160),
   description: z.string().trim().max(2000).optional(),
+  markdown: markdown.optional(),
   category: z.enum(STORE_CATEGORIES),
-  photos: z.array(z.string().url()).max(6).default([]),
+  photos: z.array(z.string().url()).max(8).default([]),
+  videoUrl: videoUrl.optional(),
   /** Coins the buyer earns per unit. Zero turns the gift off. */
   coinsGranted: z.number().int().min(0).default(0),
   isActive: z.boolean().default(true),
@@ -44,8 +58,12 @@ export const createProductSchema = z.object({
 export const updateProductSchema = z.object({
   name: z.string().trim().min(1).max(160).optional(),
   description: z.string().trim().max(2000).nullable().optional(),
+  // Nullable so a gym can clear a body or a video it no longer wants, which an
+  // optional-only field cannot express: omitting it means "leave it alone".
+  markdown: markdown.nullable().optional(),
   category: z.enum(STORE_CATEGORIES).optional(),
-  photos: z.array(z.string().url()).max(6).optional(),
+  photos: z.array(z.string().url()).max(8).optional(),
+  videoUrl: videoUrl.nullable().optional(),
   coinsGranted: z.number().int().min(0).optional(),
   isActive: z.boolean().optional(),
 });

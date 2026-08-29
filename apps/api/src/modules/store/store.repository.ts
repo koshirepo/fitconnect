@@ -20,11 +20,17 @@ const productSelect = {
   id: true,
   name: true,
   description: true,
+  markdown: true,
   category: true,
   photos: true,
+  videoUrl: true,
   coinsGranted: true,
   isActive: true,
   createdAt: true,
+  // Counts rather than the rows: a catalogue page wants to say "12 likes", and
+  // loading twelve rows per product to render one number would not scale past
+  // a gym that is doing well.
+  _count: { select: { likes: true, comments: true } },
   variants: {
     select: {
       id: true,
@@ -38,6 +44,19 @@ const productSelect = {
     orderBy: { createdAt: "asc" },
   },
 } as const;
+
+/** What a product looks like straight out of `productSelect`. */
+type SelectedProduct = { _count: { likes: number; comments: number } } & Record<string, unknown>;
+
+/**
+ * Flatten Prisma's `_count` into the two numbers a page actually renders.
+ *
+ * Done here rather than in each caller so the storefront, the public shop
+ * window, and the admin catalogue cannot disagree about the shape.
+ */
+function shapeProduct<T extends SelectedProduct>({ _count, ...product }: T) {
+  return { ...product, likeCount: _count.likes, commentCount: _count.comments };
+}
 
 export const storeRepository = {
   /**
@@ -58,19 +77,23 @@ export const storeRepository = {
       orderBy: { name: "asc" },
     });
 
-    if (filters.includeInactive) return products;
+    if (filters.includeInactive) return products.map(shapeProduct);
 
-    return products.map((product) => ({
-      ...product,
-      variants: product.variants.filter((variant) => variant.isActive),
-    }));
+    return products.map((product) =>
+      shapeProduct({
+        ...product,
+        variants: product.variants.filter((variant) => variant.isActive),
+      }),
+    );
   },
 
-  findProduct(tenantId: string, productId: string) {
-    return prisma.storeProduct.findFirst({
+  async findProduct(tenantId: string, productId: string) {
+    const product = await prisma.storeProduct.findFirst({
       where: { id: productId, tenantId },
       select: productSelect,
     });
+
+    return product ? shapeProduct(product) : null;
   },
 
   /**
@@ -79,10 +102,10 @@ export const storeRepository = {
    * One write so a product can never exist without something to sell — the
    * state that would show a buyer an empty product page.
    */
-  createProduct(tenantId: string, input: CreateProductInput) {
+  async createProduct(tenantId: string, input: CreateProductInput) {
     const { variants, ...product } = input;
 
-    return prisma.storeProduct.create({
+    const created = await prisma.storeProduct.create({
       data: {
         tenantId,
         ...product,
@@ -96,6 +119,8 @@ export const storeRepository = {
       },
       select: productSelect,
     });
+
+    return shapeProduct(created);
   },
 
   async updateProduct(tenantId: string, productId: string, input: UpdateProductInput) {

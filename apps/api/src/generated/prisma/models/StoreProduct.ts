@@ -40,7 +40,9 @@ export type StoreProductMinAggregateOutputType = {
   tenantId: string | null
   name: string | null
   description: string | null
+  markdown: string | null
   category: string | null
+  videoUrl: string | null
   coinsGranted: number | null
   isActive: boolean | null
   createdAt: Date | null
@@ -52,7 +54,9 @@ export type StoreProductMaxAggregateOutputType = {
   tenantId: string | null
   name: string | null
   description: string | null
+  markdown: string | null
   category: string | null
+  videoUrl: string | null
   coinsGranted: number | null
   isActive: boolean | null
   createdAt: Date | null
@@ -64,8 +68,10 @@ export type StoreProductCountAggregateOutputType = {
   tenantId: number
   name: number
   description: number
+  markdown: number
   category: number
   photos: number
+  videoUrl: number
   coinsGranted: number
   isActive: number
   createdAt: number
@@ -87,7 +93,9 @@ export type StoreProductMinAggregateInputType = {
   tenantId?: true
   name?: true
   description?: true
+  markdown?: true
   category?: true
+  videoUrl?: true
   coinsGranted?: true
   isActive?: true
   createdAt?: true
@@ -99,7 +107,9 @@ export type StoreProductMaxAggregateInputType = {
   tenantId?: true
   name?: true
   description?: true
+  markdown?: true
   category?: true
+  videoUrl?: true
   coinsGranted?: true
   isActive?: true
   createdAt?: true
@@ -111,8 +121,10 @@ export type StoreProductCountAggregateInputType = {
   tenantId?: true
   name?: true
   description?: true
+  markdown?: true
   category?: true
   photos?: true
+  videoUrl?: true
   coinsGranted?: true
   isActive?: true
   createdAt?: true
@@ -211,8 +223,10 @@ export type StoreProductGroupByOutputType = {
   tenantId: string
   name: string
   description: string | null
+  markdown: string | null
   category: string
   photos: runtime.JsonValue
+  videoUrl: string | null
   coinsGranted: number
   isActive: boolean
   createdAt: Date
@@ -247,14 +261,18 @@ export type StoreProductWhereInput = {
   tenantId?: Prisma.StringFilter<"StoreProduct"> | string
   name?: Prisma.StringFilter<"StoreProduct"> | string
   description?: Prisma.StringNullableFilter<"StoreProduct"> | string | null
+  markdown?: Prisma.StringNullableFilter<"StoreProduct"> | string | null
   category?: Prisma.StringFilter<"StoreProduct"> | string
   photos?: Prisma.JsonFilter<"StoreProduct">
+  videoUrl?: Prisma.StringNullableFilter<"StoreProduct"> | string | null
   coinsGranted?: Prisma.IntFilter<"StoreProduct"> | number
   isActive?: Prisma.BoolFilter<"StoreProduct"> | boolean
   createdAt?: Prisma.DateTimeFilter<"StoreProduct"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"StoreProduct"> | Date | string
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
   variants?: Prisma.StoreVariantListRelationFilter
+  likes?: Prisma.StoreProductLikeListRelationFilter
+  comments?: Prisma.StoreProductCommentListRelationFilter
 }
 
 export type StoreProductOrderByWithRelationInput = {
@@ -262,14 +280,18 @@ export type StoreProductOrderByWithRelationInput = {
   tenantId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
+  markdown?: Prisma.SortOrderInput | Prisma.SortOrder
   category?: Prisma.SortOrder
   photos?: Prisma.SortOrder
+  videoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   coinsGranted?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   tenant?: Prisma.TenantOrderByWithRelationInput
   variants?: Prisma.StoreVariantOrderByRelationAggregateInput
+  likes?: Prisma.StoreProductLikeOrderByRelationAggregateInput
+  comments?: Prisma.StoreProductCommentOrderByRelationAggregateInput
 }
 
 export type StoreProductWhereUniqueInput = Prisma.AtLeast<{
@@ -280,14 +302,18 @@ export type StoreProductWhereUniqueInput = Prisma.AtLeast<{
   tenantId?: Prisma.StringFilter<"StoreProduct"> | string
   name?: Prisma.StringFilter<"StoreProduct"> | string
   description?: Prisma.StringNullableFilter<"StoreProduct"> | string | null
+  markdown?: Prisma.StringNullableFilter<"StoreProduct"> | string | null
   category?: Prisma.StringFilter<"StoreProduct"> | string
   photos?: Prisma.JsonFilter<"StoreProduct">
+  videoUrl?: Prisma.StringNullableFilter<"StoreProduct"> | string | null
   coinsGranted?: Prisma.IntFilter<"StoreProduct"> | number
   isActive?: Prisma.BoolFilter<"StoreProduct"> | boolean
   createdAt?: Prisma.DateTimeFilter<"StoreProduct"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"StoreProduct"> | Date | string
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
   variants?: Prisma.StoreVariantListRelationFilter
+  likes?: Prisma.StoreProductLikeListRelationFilter
+  comments?: Prisma.StoreProductCommentListRelationFilter
 }, "id">
 
 export type StoreProductOrderByWithAggregationInput = {
@@ -295,8 +321,10 @@ export type StoreProductOrderByWithAggregationInput = {
   tenantId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
+  markdown?: Prisma.SortOrderInput | Prisma.SortOrder
   category?: Prisma.SortOrder
   photos?: Prisma.SortOrder
+  videoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   coinsGranted?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -316,8 +344,10 @@ export type StoreProductScalarWhereWithAggregatesInput = {
   tenantId?: Prisma.StringWithAggregatesFilter<"StoreProduct"> | string
   name?: Prisma.StringWithAggregatesFilter<"StoreProduct"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"StoreProduct"> | string | null
+  markdown?: Prisma.StringNullableWithAggregatesFilter<"StoreProduct"> | string | null
   category?: Prisma.StringWithAggregatesFilter<"StoreProduct"> | string
   photos?: Prisma.JsonWithAggregatesFilter<"StoreProduct">
+  videoUrl?: Prisma.StringNullableWithAggregatesFilter<"StoreProduct"> | string | null
   coinsGranted?: Prisma.IntWithAggregatesFilter<"StoreProduct"> | number
   isActive?: Prisma.BoolWithAggregatesFilter<"StoreProduct"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"StoreProduct"> | Date | string
@@ -328,14 +358,18 @@ export type StoreProductCreateInput = {
   id?: string
   name: string
   description?: string | null
+  markdown?: string | null
   category: string
   photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: string | null
   coinsGranted?: number
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutStoreProductsInput
   variants?: Prisma.StoreVariantCreateNestedManyWithoutProductInput
+  likes?: Prisma.StoreProductLikeCreateNestedManyWithoutProductInput
+  comments?: Prisma.StoreProductCommentCreateNestedManyWithoutProductInput
 }
 
 export type StoreProductUncheckedCreateInput = {
@@ -343,27 +377,35 @@ export type StoreProductUncheckedCreateInput = {
   tenantId: string
   name: string
   description?: string | null
+  markdown?: string | null
   category: string
   photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: string | null
   coinsGranted?: number
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   variants?: Prisma.StoreVariantUncheckedCreateNestedManyWithoutProductInput
+  likes?: Prisma.StoreProductLikeUncheckedCreateNestedManyWithoutProductInput
+  comments?: Prisma.StoreProductCommentUncheckedCreateNestedManyWithoutProductInput
 }
 
 export type StoreProductUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coinsGranted?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutStoreProductsNestedInput
   variants?: Prisma.StoreVariantUpdateManyWithoutProductNestedInput
+  likes?: Prisma.StoreProductLikeUpdateManyWithoutProductNestedInput
+  comments?: Prisma.StoreProductCommentUpdateManyWithoutProductNestedInput
 }
 
 export type StoreProductUncheckedUpdateInput = {
@@ -371,13 +413,17 @@ export type StoreProductUncheckedUpdateInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coinsGranted?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   variants?: Prisma.StoreVariantUncheckedUpdateManyWithoutProductNestedInput
+  likes?: Prisma.StoreProductLikeUncheckedUpdateManyWithoutProductNestedInput
+  comments?: Prisma.StoreProductCommentUncheckedUpdateManyWithoutProductNestedInput
 }
 
 export type StoreProductCreateManyInput = {
@@ -385,8 +431,10 @@ export type StoreProductCreateManyInput = {
   tenantId: string
   name: string
   description?: string | null
+  markdown?: string | null
   category: string
   photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: string | null
   coinsGranted?: number
   isActive?: boolean
   createdAt?: Date | string
@@ -397,8 +445,10 @@ export type StoreProductUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coinsGranted?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -410,8 +460,10 @@ export type StoreProductUncheckedUpdateManyInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coinsGranted?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -433,8 +485,10 @@ export type StoreProductCountOrderByAggregateInput = {
   tenantId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  markdown?: Prisma.SortOrder
   category?: Prisma.SortOrder
   photos?: Prisma.SortOrder
+  videoUrl?: Prisma.SortOrder
   coinsGranted?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -450,7 +504,9 @@ export type StoreProductMaxOrderByAggregateInput = {
   tenantId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  markdown?: Prisma.SortOrder
   category?: Prisma.SortOrder
+  videoUrl?: Prisma.SortOrder
   coinsGranted?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -462,7 +518,9 @@ export type StoreProductMinOrderByAggregateInput = {
   tenantId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  markdown?: Prisma.SortOrder
   category?: Prisma.SortOrder
+  videoUrl?: Prisma.SortOrder
   coinsGranted?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -520,6 +578,34 @@ export type StoreProductUncheckedUpdateManyWithoutTenantNestedInput = {
   deleteMany?: Prisma.StoreProductScalarWhereInput | Prisma.StoreProductScalarWhereInput[]
 }
 
+export type StoreProductCreateNestedOneWithoutLikesInput = {
+  create?: Prisma.XOR<Prisma.StoreProductCreateWithoutLikesInput, Prisma.StoreProductUncheckedCreateWithoutLikesInput>
+  connectOrCreate?: Prisma.StoreProductCreateOrConnectWithoutLikesInput
+  connect?: Prisma.StoreProductWhereUniqueInput
+}
+
+export type StoreProductUpdateOneRequiredWithoutLikesNestedInput = {
+  create?: Prisma.XOR<Prisma.StoreProductCreateWithoutLikesInput, Prisma.StoreProductUncheckedCreateWithoutLikesInput>
+  connectOrCreate?: Prisma.StoreProductCreateOrConnectWithoutLikesInput
+  upsert?: Prisma.StoreProductUpsertWithoutLikesInput
+  connect?: Prisma.StoreProductWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.StoreProductUpdateToOneWithWhereWithoutLikesInput, Prisma.StoreProductUpdateWithoutLikesInput>, Prisma.StoreProductUncheckedUpdateWithoutLikesInput>
+}
+
+export type StoreProductCreateNestedOneWithoutCommentsInput = {
+  create?: Prisma.XOR<Prisma.StoreProductCreateWithoutCommentsInput, Prisma.StoreProductUncheckedCreateWithoutCommentsInput>
+  connectOrCreate?: Prisma.StoreProductCreateOrConnectWithoutCommentsInput
+  connect?: Prisma.StoreProductWhereUniqueInput
+}
+
+export type StoreProductUpdateOneRequiredWithoutCommentsNestedInput = {
+  create?: Prisma.XOR<Prisma.StoreProductCreateWithoutCommentsInput, Prisma.StoreProductUncheckedCreateWithoutCommentsInput>
+  connectOrCreate?: Prisma.StoreProductCreateOrConnectWithoutCommentsInput
+  upsert?: Prisma.StoreProductUpsertWithoutCommentsInput
+  connect?: Prisma.StoreProductWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.StoreProductUpdateToOneWithWhereWithoutCommentsInput, Prisma.StoreProductUpdateWithoutCommentsInput>, Prisma.StoreProductUncheckedUpdateWithoutCommentsInput>
+}
+
 export type StoreProductCreateNestedOneWithoutVariantsInput = {
   create?: Prisma.XOR<Prisma.StoreProductCreateWithoutVariantsInput, Prisma.StoreProductUncheckedCreateWithoutVariantsInput>
   connectOrCreate?: Prisma.StoreProductCreateOrConnectWithoutVariantsInput
@@ -538,26 +624,34 @@ export type StoreProductCreateWithoutTenantInput = {
   id?: string
   name: string
   description?: string | null
+  markdown?: string | null
   category: string
   photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: string | null
   coinsGranted?: number
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   variants?: Prisma.StoreVariantCreateNestedManyWithoutProductInput
+  likes?: Prisma.StoreProductLikeCreateNestedManyWithoutProductInput
+  comments?: Prisma.StoreProductCommentCreateNestedManyWithoutProductInput
 }
 
 export type StoreProductUncheckedCreateWithoutTenantInput = {
   id?: string
   name: string
   description?: string | null
+  markdown?: string | null
   category: string
   photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: string | null
   coinsGranted?: number
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   variants?: Prisma.StoreVariantUncheckedCreateNestedManyWithoutProductInput
+  likes?: Prisma.StoreProductLikeUncheckedCreateNestedManyWithoutProductInput
+  comments?: Prisma.StoreProductCommentUncheckedCreateNestedManyWithoutProductInput
 }
 
 export type StoreProductCreateOrConnectWithoutTenantInput = {
@@ -593,25 +687,199 @@ export type StoreProductScalarWhereInput = {
   tenantId?: Prisma.StringFilter<"StoreProduct"> | string
   name?: Prisma.StringFilter<"StoreProduct"> | string
   description?: Prisma.StringNullableFilter<"StoreProduct"> | string | null
+  markdown?: Prisma.StringNullableFilter<"StoreProduct"> | string | null
   category?: Prisma.StringFilter<"StoreProduct"> | string
   photos?: Prisma.JsonFilter<"StoreProduct">
+  videoUrl?: Prisma.StringNullableFilter<"StoreProduct"> | string | null
   coinsGranted?: Prisma.IntFilter<"StoreProduct"> | number
   isActive?: Prisma.BoolFilter<"StoreProduct"> | boolean
   createdAt?: Prisma.DateTimeFilter<"StoreProduct"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"StoreProduct"> | Date | string
 }
 
-export type StoreProductCreateWithoutVariantsInput = {
+export type StoreProductCreateWithoutLikesInput = {
   id?: string
   name: string
   description?: string | null
+  markdown?: string | null
   category: string
   photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: string | null
   coinsGranted?: number
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutStoreProductsInput
+  variants?: Prisma.StoreVariantCreateNestedManyWithoutProductInput
+  comments?: Prisma.StoreProductCommentCreateNestedManyWithoutProductInput
+}
+
+export type StoreProductUncheckedCreateWithoutLikesInput = {
+  id?: string
+  tenantId: string
+  name: string
+  description?: string | null
+  markdown?: string | null
+  category: string
+  photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: string | null
+  coinsGranted?: number
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  variants?: Prisma.StoreVariantUncheckedCreateNestedManyWithoutProductInput
+  comments?: Prisma.StoreProductCommentUncheckedCreateNestedManyWithoutProductInput
+}
+
+export type StoreProductCreateOrConnectWithoutLikesInput = {
+  where: Prisma.StoreProductWhereUniqueInput
+  create: Prisma.XOR<Prisma.StoreProductCreateWithoutLikesInput, Prisma.StoreProductUncheckedCreateWithoutLikesInput>
+}
+
+export type StoreProductUpsertWithoutLikesInput = {
+  update: Prisma.XOR<Prisma.StoreProductUpdateWithoutLikesInput, Prisma.StoreProductUncheckedUpdateWithoutLikesInput>
+  create: Prisma.XOR<Prisma.StoreProductCreateWithoutLikesInput, Prisma.StoreProductUncheckedCreateWithoutLikesInput>
+  where?: Prisma.StoreProductWhereInput
+}
+
+export type StoreProductUpdateToOneWithWhereWithoutLikesInput = {
+  where?: Prisma.StoreProductWhereInput
+  data: Prisma.XOR<Prisma.StoreProductUpdateWithoutLikesInput, Prisma.StoreProductUncheckedUpdateWithoutLikesInput>
+}
+
+export type StoreProductUpdateWithoutLikesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  coinsGranted?: Prisma.IntFieldUpdateOperationsInput | number
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tenant?: Prisma.TenantUpdateOneRequiredWithoutStoreProductsNestedInput
+  variants?: Prisma.StoreVariantUpdateManyWithoutProductNestedInput
+  comments?: Prisma.StoreProductCommentUpdateManyWithoutProductNestedInput
+}
+
+export type StoreProductUncheckedUpdateWithoutLikesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  coinsGranted?: Prisma.IntFieldUpdateOperationsInput | number
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  variants?: Prisma.StoreVariantUncheckedUpdateManyWithoutProductNestedInput
+  comments?: Prisma.StoreProductCommentUncheckedUpdateManyWithoutProductNestedInput
+}
+
+export type StoreProductCreateWithoutCommentsInput = {
+  id?: string
+  name: string
+  description?: string | null
+  markdown?: string | null
+  category: string
+  photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: string | null
+  coinsGranted?: number
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tenant: Prisma.TenantCreateNestedOneWithoutStoreProductsInput
+  variants?: Prisma.StoreVariantCreateNestedManyWithoutProductInput
+  likes?: Prisma.StoreProductLikeCreateNestedManyWithoutProductInput
+}
+
+export type StoreProductUncheckedCreateWithoutCommentsInput = {
+  id?: string
+  tenantId: string
+  name: string
+  description?: string | null
+  markdown?: string | null
+  category: string
+  photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: string | null
+  coinsGranted?: number
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  variants?: Prisma.StoreVariantUncheckedCreateNestedManyWithoutProductInput
+  likes?: Prisma.StoreProductLikeUncheckedCreateNestedManyWithoutProductInput
+}
+
+export type StoreProductCreateOrConnectWithoutCommentsInput = {
+  where: Prisma.StoreProductWhereUniqueInput
+  create: Prisma.XOR<Prisma.StoreProductCreateWithoutCommentsInput, Prisma.StoreProductUncheckedCreateWithoutCommentsInput>
+}
+
+export type StoreProductUpsertWithoutCommentsInput = {
+  update: Prisma.XOR<Prisma.StoreProductUpdateWithoutCommentsInput, Prisma.StoreProductUncheckedUpdateWithoutCommentsInput>
+  create: Prisma.XOR<Prisma.StoreProductCreateWithoutCommentsInput, Prisma.StoreProductUncheckedCreateWithoutCommentsInput>
+  where?: Prisma.StoreProductWhereInput
+}
+
+export type StoreProductUpdateToOneWithWhereWithoutCommentsInput = {
+  where?: Prisma.StoreProductWhereInput
+  data: Prisma.XOR<Prisma.StoreProductUpdateWithoutCommentsInput, Prisma.StoreProductUncheckedUpdateWithoutCommentsInput>
+}
+
+export type StoreProductUpdateWithoutCommentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  coinsGranted?: Prisma.IntFieldUpdateOperationsInput | number
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tenant?: Prisma.TenantUpdateOneRequiredWithoutStoreProductsNestedInput
+  variants?: Prisma.StoreVariantUpdateManyWithoutProductNestedInput
+  likes?: Prisma.StoreProductLikeUpdateManyWithoutProductNestedInput
+}
+
+export type StoreProductUncheckedUpdateWithoutCommentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  coinsGranted?: Prisma.IntFieldUpdateOperationsInput | number
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  variants?: Prisma.StoreVariantUncheckedUpdateManyWithoutProductNestedInput
+  likes?: Prisma.StoreProductLikeUncheckedUpdateManyWithoutProductNestedInput
+}
+
+export type StoreProductCreateWithoutVariantsInput = {
+  id?: string
+  name: string
+  description?: string | null
+  markdown?: string | null
+  category: string
+  photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: string | null
+  coinsGranted?: number
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tenant: Prisma.TenantCreateNestedOneWithoutStoreProductsInput
+  likes?: Prisma.StoreProductLikeCreateNestedManyWithoutProductInput
+  comments?: Prisma.StoreProductCommentCreateNestedManyWithoutProductInput
 }
 
 export type StoreProductUncheckedCreateWithoutVariantsInput = {
@@ -619,12 +887,16 @@ export type StoreProductUncheckedCreateWithoutVariantsInput = {
   tenantId: string
   name: string
   description?: string | null
+  markdown?: string | null
   category: string
   photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: string | null
   coinsGranted?: number
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  likes?: Prisma.StoreProductLikeUncheckedCreateNestedManyWithoutProductInput
+  comments?: Prisma.StoreProductCommentUncheckedCreateNestedManyWithoutProductInput
 }
 
 export type StoreProductCreateOrConnectWithoutVariantsInput = {
@@ -647,13 +919,17 @@ export type StoreProductUpdateWithoutVariantsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coinsGranted?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutStoreProductsNestedInput
+  likes?: Prisma.StoreProductLikeUpdateManyWithoutProductNestedInput
+  comments?: Prisma.StoreProductCommentUpdateManyWithoutProductNestedInput
 }
 
 export type StoreProductUncheckedUpdateWithoutVariantsInput = {
@@ -661,20 +937,26 @@ export type StoreProductUncheckedUpdateWithoutVariantsInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coinsGranted?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  likes?: Prisma.StoreProductLikeUncheckedUpdateManyWithoutProductNestedInput
+  comments?: Prisma.StoreProductCommentUncheckedUpdateManyWithoutProductNestedInput
 }
 
 export type StoreProductCreateManyTenantInput = {
   id?: string
   name: string
   description?: string | null
+  markdown?: string | null
   category: string
   photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: string | null
   coinsGranted?: number
   isActive?: boolean
   createdAt?: Date | string
@@ -685,34 +967,44 @@ export type StoreProductUpdateWithoutTenantInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coinsGranted?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   variants?: Prisma.StoreVariantUpdateManyWithoutProductNestedInput
+  likes?: Prisma.StoreProductLikeUpdateManyWithoutProductNestedInput
+  comments?: Prisma.StoreProductCommentUpdateManyWithoutProductNestedInput
 }
 
 export type StoreProductUncheckedUpdateWithoutTenantInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coinsGranted?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   variants?: Prisma.StoreVariantUncheckedUpdateManyWithoutProductNestedInput
+  likes?: Prisma.StoreProductLikeUncheckedUpdateManyWithoutProductNestedInput
+  comments?: Prisma.StoreProductCommentUncheckedUpdateManyWithoutProductNestedInput
 }
 
 export type StoreProductUncheckedUpdateManyWithoutTenantInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   photos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  videoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coinsGranted?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -726,10 +1018,14 @@ export type StoreProductUncheckedUpdateManyWithoutTenantInput = {
 
 export type StoreProductCountOutputType = {
   variants: number
+  likes: number
+  comments: number
 }
 
 export type StoreProductCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   variants?: boolean | StoreProductCountOutputTypeCountVariantsArgs
+  likes?: boolean | StoreProductCountOutputTypeCountLikesArgs
+  comments?: boolean | StoreProductCountOutputTypeCountCommentsArgs
 }
 
 /**
@@ -749,20 +1045,38 @@ export type StoreProductCountOutputTypeCountVariantsArgs<ExtArgs extends runtime
   where?: Prisma.StoreVariantWhereInput
 }
 
+/**
+ * StoreProductCountOutputType without action
+ */
+export type StoreProductCountOutputTypeCountLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.StoreProductLikeWhereInput
+}
+
+/**
+ * StoreProductCountOutputType without action
+ */
+export type StoreProductCountOutputTypeCountCommentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.StoreProductCommentWhereInput
+}
+
 
 export type StoreProductSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   tenantId?: boolean
   name?: boolean
   description?: boolean
+  markdown?: boolean
   category?: boolean
   photos?: boolean
+  videoUrl?: boolean
   coinsGranted?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
   variants?: boolean | Prisma.StoreProduct$variantsArgs<ExtArgs>
+  likes?: boolean | Prisma.StoreProduct$likesArgs<ExtArgs>
+  comments?: boolean | Prisma.StoreProduct$commentsArgs<ExtArgs>
   _count?: boolean | Prisma.StoreProductCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["storeProduct"]>
 
@@ -771,8 +1085,10 @@ export type StoreProductSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   tenantId?: boolean
   name?: boolean
   description?: boolean
+  markdown?: boolean
   category?: boolean
   photos?: boolean
+  videoUrl?: boolean
   coinsGranted?: boolean
   isActive?: boolean
   createdAt?: boolean
@@ -785,8 +1101,10 @@ export type StoreProductSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   tenantId?: boolean
   name?: boolean
   description?: boolean
+  markdown?: boolean
   category?: boolean
   photos?: boolean
+  videoUrl?: boolean
   coinsGranted?: boolean
   isActive?: boolean
   createdAt?: boolean
@@ -799,18 +1117,22 @@ export type StoreProductSelectScalar = {
   tenantId?: boolean
   name?: boolean
   description?: boolean
+  markdown?: boolean
   category?: boolean
   photos?: boolean
+  videoUrl?: boolean
   coinsGranted?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type StoreProductOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "name" | "description" | "category" | "photos" | "coinsGranted" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["storeProduct"]>
+export type StoreProductOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "name" | "description" | "markdown" | "category" | "photos" | "videoUrl" | "coinsGranted" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["storeProduct"]>
 export type StoreProductInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
   variants?: boolean | Prisma.StoreProduct$variantsArgs<ExtArgs>
+  likes?: boolean | Prisma.StoreProduct$likesArgs<ExtArgs>
+  comments?: boolean | Prisma.StoreProduct$commentsArgs<ExtArgs>
   _count?: boolean | Prisma.StoreProductCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type StoreProductIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -825,17 +1147,32 @@ export type $StoreProductPayload<ExtArgs extends runtime.Types.Extensions.Intern
   objects: {
     tenant: Prisma.$TenantPayload<ExtArgs>
     variants: Prisma.$StoreVariantPayload<ExtArgs>[]
+    likes: Prisma.$StoreProductLikePayload<ExtArgs>[]
+    comments: Prisma.$StoreProductCommentPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     tenantId: string
     name: string
+    /**
+     * One plain line, shown on the storefront card.
+     */
     description: string | null
+    /**
+     * The long form, rendered as markdown on the product page. Where a gym
+     * writes ingredients, dosage, or what the kit is actually made of.
+     */
+    markdown: string | null
     /**
      * "SUPPLEMENT" | "ACCESSORY"
      */
     category: string
     photos: runtime.JsonValue
+    /**
+     * A single video, usually YouTube. Stored as the URL a gym pasted; the
+     * player turns it into an embed, so a share link and a watch link both work.
+     */
+    videoUrl: string | null
     /**
      * Coins the buyer earns when an order containing this completes. Per product
      * because a ₹3,000 protein tub and a ₹200 pair of gloves should not reward
@@ -1241,6 +1578,8 @@ export interface Prisma__StoreProductClient<T, Null = never, ExtArgs extends run
   readonly [Symbol.toStringTag]: "PrismaPromise"
   tenant<T extends Prisma.TenantDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantDefaultArgs<ExtArgs>>): Prisma.Prisma__TenantClient<runtime.Types.Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   variants<T extends Prisma.StoreProduct$variantsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StoreProduct$variantsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StoreVariantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  likes<T extends Prisma.StoreProduct$likesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StoreProduct$likesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StoreProductLikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  comments<T extends Prisma.StoreProduct$commentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StoreProduct$commentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StoreProductCommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1274,8 +1613,10 @@ export interface StoreProductFieldRefs {
   readonly tenantId: Prisma.FieldRef<"StoreProduct", 'String'>
   readonly name: Prisma.FieldRef<"StoreProduct", 'String'>
   readonly description: Prisma.FieldRef<"StoreProduct", 'String'>
+  readonly markdown: Prisma.FieldRef<"StoreProduct", 'String'>
   readonly category: Prisma.FieldRef<"StoreProduct", 'String'>
   readonly photos: Prisma.FieldRef<"StoreProduct", 'Json'>
+  readonly videoUrl: Prisma.FieldRef<"StoreProduct", 'String'>
   readonly coinsGranted: Prisma.FieldRef<"StoreProduct", 'Int'>
   readonly isActive: Prisma.FieldRef<"StoreProduct", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"StoreProduct", 'DateTime'>
@@ -1700,6 +2041,54 @@ export type StoreProduct$variantsArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.StoreVariantScalarFieldEnum | Prisma.StoreVariantScalarFieldEnum[]
+}
+
+/**
+ * StoreProduct.likes
+ */
+export type StoreProduct$likesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the StoreProductLike
+   */
+  select?: Prisma.StoreProductLikeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the StoreProductLike
+   */
+  omit?: Prisma.StoreProductLikeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StoreProductLikeInclude<ExtArgs> | null
+  where?: Prisma.StoreProductLikeWhereInput
+  orderBy?: Prisma.StoreProductLikeOrderByWithRelationInput | Prisma.StoreProductLikeOrderByWithRelationInput[]
+  cursor?: Prisma.StoreProductLikeWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.StoreProductLikeScalarFieldEnum | Prisma.StoreProductLikeScalarFieldEnum[]
+}
+
+/**
+ * StoreProduct.comments
+ */
+export type StoreProduct$commentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the StoreProductComment
+   */
+  select?: Prisma.StoreProductCommentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the StoreProductComment
+   */
+  omit?: Prisma.StoreProductCommentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StoreProductCommentInclude<ExtArgs> | null
+  where?: Prisma.StoreProductCommentWhereInput
+  orderBy?: Prisma.StoreProductCommentOrderByWithRelationInput | Prisma.StoreProductCommentOrderByWithRelationInput[]
+  cursor?: Prisma.StoreProductCommentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.StoreProductCommentScalarFieldEnum | Prisma.StoreProductCommentScalarFieldEnum[]
 }
 
 /**

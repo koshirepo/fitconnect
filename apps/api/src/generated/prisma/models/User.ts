@@ -240,6 +240,8 @@ export type UserWhereInput = {
   helpful?: Prisma.ProductReviewHelpfulListRelationFilter
   pushSubscriptions?: Prisma.PushSubscriptionListRelationFilter
   recordedPlatformPayments?: Prisma.PlatformPaymentListRelationFilter
+  tenantLikes?: Prisma.TenantLikeListRelationFilter
+  tenantComments?: Prisma.TenantCommentListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -264,6 +266,8 @@ export type UserOrderByWithRelationInput = {
   helpful?: Prisma.ProductReviewHelpfulOrderByRelationAggregateInput
   pushSubscriptions?: Prisma.PushSubscriptionOrderByRelationAggregateInput
   recordedPlatformPayments?: Prisma.PlatformPaymentOrderByRelationAggregateInput
+  tenantLikes?: Prisma.TenantLikeOrderByRelationAggregateInput
+  tenantComments?: Prisma.TenantCommentOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -291,6 +295,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   helpful?: Prisma.ProductReviewHelpfulListRelationFilter
   pushSubscriptions?: Prisma.PushSubscriptionListRelationFilter
   recordedPlatformPayments?: Prisma.PlatformPaymentListRelationFilter
+  tenantLikes?: Prisma.TenantLikeListRelationFilter
+  tenantComments?: Prisma.TenantCommentListRelationFilter
 }, "id">
 
 export type UserOrderByWithAggregationInput = {
@@ -349,6 +355,8 @@ export type UserCreateInput = {
   helpful?: Prisma.ProductReviewHelpfulCreateNestedManyWithoutUserInput
   pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
   recordedPlatformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutRecordedByUserInput
+  tenantLikes?: Prisma.TenantLikeCreateNestedManyWithoutUserInput
+  tenantComments?: Prisma.TenantCommentCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -373,6 +381,8 @@ export type UserUncheckedCreateInput = {
   helpful?: Prisma.ProductReviewHelpfulUncheckedCreateNestedManyWithoutUserInput
   pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutRecordedByUserInput
+  tenantLikes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutUserInput
+  tenantComments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -397,6 +407,8 @@ export type UserUpdateInput = {
   helpful?: Prisma.ProductReviewHelpfulUpdateManyWithoutUserNestedInput
   pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUpdateManyWithoutRecordedByUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUpdateManyWithoutUserNestedInput
+  tenantComments?: Prisma.TenantCommentUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -421,6 +433,8 @@ export type UserUncheckedUpdateInput = {
   helpful?: Prisma.ProductReviewHelpfulUncheckedUpdateManyWithoutUserNestedInput
   pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutRecordedByUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUncheckedUpdateManyWithoutUserNestedInput
+  tenantComments?: Prisma.TenantCommentUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -677,6 +691,34 @@ export type UserUpdateOneRequiredWithoutPushSubscriptionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPushSubscriptionsInput, Prisma.UserUpdateWithoutPushSubscriptionsInput>, Prisma.UserUncheckedUpdateWithoutPushSubscriptionsInput>
 }
 
+export type UserCreateNestedOneWithoutTenantLikesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutTenantLikesInput, Prisma.UserUncheckedCreateWithoutTenantLikesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTenantLikesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutTenantLikesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutTenantLikesInput, Prisma.UserUncheckedCreateWithoutTenantLikesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTenantLikesInput
+  upsert?: Prisma.UserUpsertWithoutTenantLikesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutTenantLikesInput, Prisma.UserUpdateWithoutTenantLikesInput>, Prisma.UserUncheckedUpdateWithoutTenantLikesInput>
+}
+
+export type UserCreateNestedOneWithoutTenantCommentsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutTenantCommentsInput, Prisma.UserUncheckedCreateWithoutTenantCommentsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTenantCommentsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutTenantCommentsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutTenantCommentsInput, Prisma.UserUncheckedCreateWithoutTenantCommentsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTenantCommentsInput
+  upsert?: Prisma.UserUpsertWithoutTenantCommentsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutTenantCommentsInput, Prisma.UserUpdateWithoutTenantCommentsInput>, Prisma.UserUncheckedUpdateWithoutTenantCommentsInput>
+}
+
 export type UserCreateWithoutPasswordResetTokensInput = {
   id?: string
   name: string
@@ -698,6 +740,8 @@ export type UserCreateWithoutPasswordResetTokensInput = {
   helpful?: Prisma.ProductReviewHelpfulCreateNestedManyWithoutUserInput
   pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
   recordedPlatformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutRecordedByUserInput
+  tenantLikes?: Prisma.TenantLikeCreateNestedManyWithoutUserInput
+  tenantComments?: Prisma.TenantCommentCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPasswordResetTokensInput = {
@@ -721,6 +765,8 @@ export type UserUncheckedCreateWithoutPasswordResetTokensInput = {
   helpful?: Prisma.ProductReviewHelpfulUncheckedCreateNestedManyWithoutUserInput
   pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutRecordedByUserInput
+  tenantLikes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutUserInput
+  tenantComments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPasswordResetTokensInput = {
@@ -760,6 +806,8 @@ export type UserUpdateWithoutPasswordResetTokensInput = {
   helpful?: Prisma.ProductReviewHelpfulUpdateManyWithoutUserNestedInput
   pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUpdateManyWithoutRecordedByUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUpdateManyWithoutUserNestedInput
+  tenantComments?: Prisma.TenantCommentUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
@@ -783,6 +831,8 @@ export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
   helpful?: Prisma.ProductReviewHelpfulUncheckedUpdateManyWithoutUserNestedInput
   pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutRecordedByUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUncheckedUpdateManyWithoutUserNestedInput
+  tenantComments?: Prisma.TenantCommentUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutRefreshTokensInput = {
@@ -806,6 +856,8 @@ export type UserCreateWithoutRefreshTokensInput = {
   helpful?: Prisma.ProductReviewHelpfulCreateNestedManyWithoutUserInput
   pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
   recordedPlatformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutRecordedByUserInput
+  tenantLikes?: Prisma.TenantLikeCreateNestedManyWithoutUserInput
+  tenantComments?: Prisma.TenantCommentCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutRefreshTokensInput = {
@@ -829,6 +881,8 @@ export type UserUncheckedCreateWithoutRefreshTokensInput = {
   helpful?: Prisma.ProductReviewHelpfulUncheckedCreateNestedManyWithoutUserInput
   pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutRecordedByUserInput
+  tenantLikes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutUserInput
+  tenantComments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutRefreshTokensInput = {
@@ -868,6 +922,8 @@ export type UserUpdateWithoutRefreshTokensInput = {
   helpful?: Prisma.ProductReviewHelpfulUpdateManyWithoutUserNestedInput
   pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUpdateManyWithoutRecordedByUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUpdateManyWithoutUserNestedInput
+  tenantComments?: Prisma.TenantCommentUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRefreshTokensInput = {
@@ -891,6 +947,8 @@ export type UserUncheckedUpdateWithoutRefreshTokensInput = {
   helpful?: Prisma.ProductReviewHelpfulUncheckedUpdateManyWithoutUserNestedInput
   pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutRecordedByUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUncheckedUpdateManyWithoutUserNestedInput
+  tenantComments?: Prisma.TenantCommentUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutMembershipsInput = {
@@ -914,6 +972,8 @@ export type UserCreateWithoutMembershipsInput = {
   helpful?: Prisma.ProductReviewHelpfulCreateNestedManyWithoutUserInput
   pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
   recordedPlatformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutRecordedByUserInput
+  tenantLikes?: Prisma.TenantLikeCreateNestedManyWithoutUserInput
+  tenantComments?: Prisma.TenantCommentCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutMembershipsInput = {
@@ -937,6 +997,8 @@ export type UserUncheckedCreateWithoutMembershipsInput = {
   helpful?: Prisma.ProductReviewHelpfulUncheckedCreateNestedManyWithoutUserInput
   pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutRecordedByUserInput
+  tenantLikes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutUserInput
+  tenantComments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutMembershipsInput = {
@@ -976,6 +1038,8 @@ export type UserUpdateWithoutMembershipsInput = {
   helpful?: Prisma.ProductReviewHelpfulUpdateManyWithoutUserNestedInput
   pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUpdateManyWithoutRecordedByUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUpdateManyWithoutUserNestedInput
+  tenantComments?: Prisma.TenantCommentUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutMembershipsInput = {
@@ -999,6 +1063,8 @@ export type UserUncheckedUpdateWithoutMembershipsInput = {
   helpful?: Prisma.ProductReviewHelpfulUncheckedUpdateManyWithoutUserNestedInput
   pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutRecordedByUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUncheckedUpdateManyWithoutUserNestedInput
+  tenantComments?: Prisma.TenantCommentUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutReviewsInput = {
@@ -1022,6 +1088,8 @@ export type UserCreateWithoutReviewsInput = {
   helpful?: Prisma.ProductReviewHelpfulCreateNestedManyWithoutUserInput
   pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
   recordedPlatformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutRecordedByUserInput
+  tenantLikes?: Prisma.TenantLikeCreateNestedManyWithoutUserInput
+  tenantComments?: Prisma.TenantCommentCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutReviewsInput = {
@@ -1045,6 +1113,8 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   helpful?: Prisma.ProductReviewHelpfulUncheckedCreateNestedManyWithoutUserInput
   pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutRecordedByUserInput
+  tenantLikes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutUserInput
+  tenantComments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutReviewsInput = {
@@ -1084,6 +1154,8 @@ export type UserUpdateWithoutReviewsInput = {
   helpful?: Prisma.ProductReviewHelpfulUpdateManyWithoutUserNestedInput
   pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUpdateManyWithoutRecordedByUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUpdateManyWithoutUserNestedInput
+  tenantComments?: Prisma.TenantCommentUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReviewsInput = {
@@ -1107,6 +1179,8 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   helpful?: Prisma.ProductReviewHelpfulUncheckedUpdateManyWithoutUserNestedInput
   pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutRecordedByUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUncheckedUpdateManyWithoutUserNestedInput
+  tenantComments?: Prisma.TenantCommentUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutCommentsInput = {
@@ -1130,6 +1204,8 @@ export type UserCreateWithoutCommentsInput = {
   helpful?: Prisma.ProductReviewHelpfulCreateNestedManyWithoutUserInput
   pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
   recordedPlatformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutRecordedByUserInput
+  tenantLikes?: Prisma.TenantLikeCreateNestedManyWithoutUserInput
+  tenantComments?: Prisma.TenantCommentCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutCommentsInput = {
@@ -1153,6 +1229,8 @@ export type UserUncheckedCreateWithoutCommentsInput = {
   helpful?: Prisma.ProductReviewHelpfulUncheckedCreateNestedManyWithoutUserInput
   pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutRecordedByUserInput
+  tenantLikes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutUserInput
+  tenantComments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutCommentsInput = {
@@ -1192,6 +1270,8 @@ export type UserUpdateWithoutCommentsInput = {
   helpful?: Prisma.ProductReviewHelpfulUpdateManyWithoutUserNestedInput
   pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUpdateManyWithoutRecordedByUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUpdateManyWithoutUserNestedInput
+  tenantComments?: Prisma.TenantCommentUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCommentsInput = {
@@ -1215,6 +1295,8 @@ export type UserUncheckedUpdateWithoutCommentsInput = {
   helpful?: Prisma.ProductReviewHelpfulUncheckedUpdateManyWithoutUserNestedInput
   pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutRecordedByUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUncheckedUpdateManyWithoutUserNestedInput
+  tenantComments?: Prisma.TenantCommentUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutHelpfulInput = {
@@ -1238,6 +1320,8 @@ export type UserCreateWithoutHelpfulInput = {
   comments?: Prisma.ProductReviewCommentCreateNestedManyWithoutUserInput
   pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
   recordedPlatformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutRecordedByUserInput
+  tenantLikes?: Prisma.TenantLikeCreateNestedManyWithoutUserInput
+  tenantComments?: Prisma.TenantCommentCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutHelpfulInput = {
@@ -1261,6 +1345,8 @@ export type UserUncheckedCreateWithoutHelpfulInput = {
   comments?: Prisma.ProductReviewCommentUncheckedCreateNestedManyWithoutUserInput
   pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutRecordedByUserInput
+  tenantLikes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutUserInput
+  tenantComments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutHelpfulInput = {
@@ -1300,6 +1386,8 @@ export type UserUpdateWithoutHelpfulInput = {
   comments?: Prisma.ProductReviewCommentUpdateManyWithoutUserNestedInput
   pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUpdateManyWithoutRecordedByUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUpdateManyWithoutUserNestedInput
+  tenantComments?: Prisma.TenantCommentUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutHelpfulInput = {
@@ -1323,6 +1411,8 @@ export type UserUncheckedUpdateWithoutHelpfulInput = {
   comments?: Prisma.ProductReviewCommentUncheckedUpdateManyWithoutUserNestedInput
   pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutRecordedByUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUncheckedUpdateManyWithoutUserNestedInput
+  tenantComments?: Prisma.TenantCommentUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutOrdersInput = {
@@ -1346,6 +1436,8 @@ export type UserCreateWithoutOrdersInput = {
   helpful?: Prisma.ProductReviewHelpfulCreateNestedManyWithoutUserInput
   pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
   recordedPlatformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutRecordedByUserInput
+  tenantLikes?: Prisma.TenantLikeCreateNestedManyWithoutUserInput
+  tenantComments?: Prisma.TenantCommentCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutOrdersInput = {
@@ -1369,6 +1461,8 @@ export type UserUncheckedCreateWithoutOrdersInput = {
   helpful?: Prisma.ProductReviewHelpfulUncheckedCreateNestedManyWithoutUserInput
   pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutRecordedByUserInput
+  tenantLikes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutUserInput
+  tenantComments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutOrdersInput = {
@@ -1408,6 +1502,8 @@ export type UserUpdateWithoutOrdersInput = {
   helpful?: Prisma.ProductReviewHelpfulUpdateManyWithoutUserNestedInput
   pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUpdateManyWithoutRecordedByUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUpdateManyWithoutUserNestedInput
+  tenantComments?: Prisma.TenantCommentUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutOrdersInput = {
@@ -1431,6 +1527,8 @@ export type UserUncheckedUpdateWithoutOrdersInput = {
   helpful?: Prisma.ProductReviewHelpfulUncheckedUpdateManyWithoutUserNestedInput
   pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutRecordedByUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUncheckedUpdateManyWithoutUserNestedInput
+  tenantComments?: Prisma.TenantCommentUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutRecordedPlatformPaymentsInput = {
@@ -1454,6 +1552,8 @@ export type UserCreateWithoutRecordedPlatformPaymentsInput = {
   comments?: Prisma.ProductReviewCommentCreateNestedManyWithoutUserInput
   helpful?: Prisma.ProductReviewHelpfulCreateNestedManyWithoutUserInput
   pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
+  tenantLikes?: Prisma.TenantLikeCreateNestedManyWithoutUserInput
+  tenantComments?: Prisma.TenantCommentCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutRecordedPlatformPaymentsInput = {
@@ -1477,6 +1577,8 @@ export type UserUncheckedCreateWithoutRecordedPlatformPaymentsInput = {
   comments?: Prisma.ProductReviewCommentUncheckedCreateNestedManyWithoutUserInput
   helpful?: Prisma.ProductReviewHelpfulUncheckedCreateNestedManyWithoutUserInput
   pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
+  tenantLikes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutUserInput
+  tenantComments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutRecordedPlatformPaymentsInput = {
@@ -1516,6 +1618,8 @@ export type UserUpdateWithoutRecordedPlatformPaymentsInput = {
   comments?: Prisma.ProductReviewCommentUpdateManyWithoutUserNestedInput
   helpful?: Prisma.ProductReviewHelpfulUpdateManyWithoutUserNestedInput
   pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUpdateManyWithoutUserNestedInput
+  tenantComments?: Prisma.TenantCommentUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRecordedPlatformPaymentsInput = {
@@ -1539,6 +1643,8 @@ export type UserUncheckedUpdateWithoutRecordedPlatformPaymentsInput = {
   comments?: Prisma.ProductReviewCommentUncheckedUpdateManyWithoutUserNestedInput
   helpful?: Prisma.ProductReviewHelpfulUncheckedUpdateManyWithoutUserNestedInput
   pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUncheckedUpdateManyWithoutUserNestedInput
+  tenantComments?: Prisma.TenantCommentUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutAuditLogsInput = {
@@ -1562,6 +1668,8 @@ export type UserCreateWithoutAuditLogsInput = {
   helpful?: Prisma.ProductReviewHelpfulCreateNestedManyWithoutUserInput
   pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
   recordedPlatformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutRecordedByUserInput
+  tenantLikes?: Prisma.TenantLikeCreateNestedManyWithoutUserInput
+  tenantComments?: Prisma.TenantCommentCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutAuditLogsInput = {
@@ -1585,6 +1693,8 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   helpful?: Prisma.ProductReviewHelpfulUncheckedCreateNestedManyWithoutUserInput
   pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutRecordedByUserInput
+  tenantLikes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutUserInput
+  tenantComments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutAuditLogsInput = {
@@ -1624,6 +1734,8 @@ export type UserUpdateWithoutAuditLogsInput = {
   helpful?: Prisma.ProductReviewHelpfulUpdateManyWithoutUserNestedInput
   pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUpdateManyWithoutRecordedByUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUpdateManyWithoutUserNestedInput
+  tenantComments?: Prisma.TenantCommentUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAuditLogsInput = {
@@ -1647,6 +1759,8 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   helpful?: Prisma.ProductReviewHelpfulUncheckedUpdateManyWithoutUserNestedInput
   pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutRecordedByUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUncheckedUpdateManyWithoutUserNestedInput
+  tenantComments?: Prisma.TenantCommentUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutPushSubscriptionsInput = {
@@ -1670,6 +1784,8 @@ export type UserCreateWithoutPushSubscriptionsInput = {
   comments?: Prisma.ProductReviewCommentCreateNestedManyWithoutUserInput
   helpful?: Prisma.ProductReviewHelpfulCreateNestedManyWithoutUserInput
   recordedPlatformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutRecordedByUserInput
+  tenantLikes?: Prisma.TenantLikeCreateNestedManyWithoutUserInput
+  tenantComments?: Prisma.TenantCommentCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPushSubscriptionsInput = {
@@ -1693,6 +1809,8 @@ export type UserUncheckedCreateWithoutPushSubscriptionsInput = {
   comments?: Prisma.ProductReviewCommentUncheckedCreateNestedManyWithoutUserInput
   helpful?: Prisma.ProductReviewHelpfulUncheckedCreateNestedManyWithoutUserInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutRecordedByUserInput
+  tenantLikes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutUserInput
+  tenantComments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPushSubscriptionsInput = {
@@ -1732,6 +1850,8 @@ export type UserUpdateWithoutPushSubscriptionsInput = {
   comments?: Prisma.ProductReviewCommentUpdateManyWithoutUserNestedInput
   helpful?: Prisma.ProductReviewHelpfulUpdateManyWithoutUserNestedInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUpdateManyWithoutRecordedByUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUpdateManyWithoutUserNestedInput
+  tenantComments?: Prisma.TenantCommentUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPushSubscriptionsInput = {
@@ -1755,6 +1875,240 @@ export type UserUncheckedUpdateWithoutPushSubscriptionsInput = {
   comments?: Prisma.ProductReviewCommentUncheckedUpdateManyWithoutUserNestedInput
   helpful?: Prisma.ProductReviewHelpfulUncheckedUpdateManyWithoutUserNestedInput
   recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutRecordedByUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUncheckedUpdateManyWithoutUserNestedInput
+  tenantComments?: Prisma.TenantCommentUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutTenantLikesInput = {
+  id?: string
+  name: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  avatarUrl?: string | null
+  gender?: string | null
+  platformRole?: string
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  memberships?: Prisma.TenantMembershipCreateNestedManyWithoutUserInput
+  refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutActorInput
+  orders?: Prisma.OrderCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ProductReviewCreateNestedManyWithoutUserInput
+  comments?: Prisma.ProductReviewCommentCreateNestedManyWithoutUserInput
+  helpful?: Prisma.ProductReviewHelpfulCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
+  recordedPlatformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutRecordedByUserInput
+  tenantComments?: Prisma.TenantCommentCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutTenantLikesInput = {
+  id?: string
+  name: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  avatarUrl?: string | null
+  gender?: string | null
+  platformRole?: string
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+  refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutActorInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ProductReviewUncheckedCreateNestedManyWithoutUserInput
+  comments?: Prisma.ProductReviewCommentUncheckedCreateNestedManyWithoutUserInput
+  helpful?: Prisma.ProductReviewHelpfulUncheckedCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
+  recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutRecordedByUserInput
+  tenantComments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutTenantLikesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutTenantLikesInput, Prisma.UserUncheckedCreateWithoutTenantLikesInput>
+}
+
+export type UserUpsertWithoutTenantLikesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutTenantLikesInput, Prisma.UserUncheckedUpdateWithoutTenantLikesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutTenantLikesInput, Prisma.UserUncheckedCreateWithoutTenantLikesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutTenantLikesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutTenantLikesInput, Prisma.UserUncheckedUpdateWithoutTenantLikesInput>
+}
+
+export type UserUpdateWithoutTenantLikesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformRole?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  memberships?: Prisma.TenantMembershipUpdateManyWithoutUserNestedInput
+  refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutActorNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ProductReviewUpdateManyWithoutUserNestedInput
+  comments?: Prisma.ProductReviewCommentUpdateManyWithoutUserNestedInput
+  helpful?: Prisma.ProductReviewHelpfulUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
+  recordedPlatformPayments?: Prisma.PlatformPaymentUpdateManyWithoutRecordedByUserNestedInput
+  tenantComments?: Prisma.TenantCommentUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutTenantLikesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformRole?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+  refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutActorNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ProductReviewUncheckedUpdateManyWithoutUserNestedInput
+  comments?: Prisma.ProductReviewCommentUncheckedUpdateManyWithoutUserNestedInput
+  helpful?: Prisma.ProductReviewHelpfulUncheckedUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
+  recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutRecordedByUserNestedInput
+  tenantComments?: Prisma.TenantCommentUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutTenantCommentsInput = {
+  id?: string
+  name: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  avatarUrl?: string | null
+  gender?: string | null
+  platformRole?: string
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  memberships?: Prisma.TenantMembershipCreateNestedManyWithoutUserInput
+  refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutActorInput
+  orders?: Prisma.OrderCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ProductReviewCreateNestedManyWithoutUserInput
+  comments?: Prisma.ProductReviewCommentCreateNestedManyWithoutUserInput
+  helpful?: Prisma.ProductReviewHelpfulCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
+  recordedPlatformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutRecordedByUserInput
+  tenantLikes?: Prisma.TenantLikeCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutTenantCommentsInput = {
+  id?: string
+  name: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  avatarUrl?: string | null
+  gender?: string | null
+  platformRole?: string
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+  refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutActorInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ProductReviewUncheckedCreateNestedManyWithoutUserInput
+  comments?: Prisma.ProductReviewCommentUncheckedCreateNestedManyWithoutUserInput
+  helpful?: Prisma.ProductReviewHelpfulUncheckedCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
+  recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutRecordedByUserInput
+  tenantLikes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutTenantCommentsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutTenantCommentsInput, Prisma.UserUncheckedCreateWithoutTenantCommentsInput>
+}
+
+export type UserUpsertWithoutTenantCommentsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutTenantCommentsInput, Prisma.UserUncheckedUpdateWithoutTenantCommentsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutTenantCommentsInput, Prisma.UserUncheckedCreateWithoutTenantCommentsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutTenantCommentsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutTenantCommentsInput, Prisma.UserUncheckedUpdateWithoutTenantCommentsInput>
+}
+
+export type UserUpdateWithoutTenantCommentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformRole?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  memberships?: Prisma.TenantMembershipUpdateManyWithoutUserNestedInput
+  refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutActorNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ProductReviewUpdateManyWithoutUserNestedInput
+  comments?: Prisma.ProductReviewCommentUpdateManyWithoutUserNestedInput
+  helpful?: Prisma.ProductReviewHelpfulUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
+  recordedPlatformPayments?: Prisma.PlatformPaymentUpdateManyWithoutRecordedByUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutTenantCommentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformRole?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+  refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutActorNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ProductReviewUncheckedUpdateManyWithoutUserNestedInput
+  comments?: Prisma.ProductReviewCommentUncheckedUpdateManyWithoutUserNestedInput
+  helpful?: Prisma.ProductReviewHelpfulUncheckedUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
+  recordedPlatformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutRecordedByUserNestedInput
+  tenantLikes?: Prisma.TenantLikeUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -1773,6 +2127,8 @@ export type UserCountOutputType = {
   helpful: number
   pushSubscriptions: number
   recordedPlatformPayments: number
+  tenantLikes: number
+  tenantComments: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1786,6 +2142,8 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   helpful?: boolean | UserCountOutputTypeCountHelpfulArgs
   pushSubscriptions?: boolean | UserCountOutputTypeCountPushSubscriptionsArgs
   recordedPlatformPayments?: boolean | UserCountOutputTypeCountRecordedPlatformPaymentsArgs
+  tenantLikes?: boolean | UserCountOutputTypeCountTenantLikesArgs
+  tenantComments?: boolean | UserCountOutputTypeCountTenantCommentsArgs
 }
 
 /**
@@ -1868,6 +2226,20 @@ export type UserCountOutputTypeCountRecordedPlatformPaymentsArgs<ExtArgs extends
   where?: Prisma.PlatformPaymentWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountTenantLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TenantLikeWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountTenantCommentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TenantCommentWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1891,6 +2263,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   helpful?: boolean | Prisma.User$helpfulArgs<ExtArgs>
   pushSubscriptions?: boolean | Prisma.User$pushSubscriptionsArgs<ExtArgs>
   recordedPlatformPayments?: boolean | Prisma.User$recordedPlatformPaymentsArgs<ExtArgs>
+  tenantLikes?: boolean | Prisma.User$tenantLikesArgs<ExtArgs>
+  tenantComments?: boolean | Prisma.User$tenantCommentsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1948,6 +2322,8 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   helpful?: boolean | Prisma.User$helpfulArgs<ExtArgs>
   pushSubscriptions?: boolean | Prisma.User$pushSubscriptionsArgs<ExtArgs>
   recordedPlatformPayments?: boolean | Prisma.User$recordedPlatformPaymentsArgs<ExtArgs>
+  tenantLikes?: boolean | Prisma.User$tenantLikesArgs<ExtArgs>
+  tenantComments?: boolean | Prisma.User$tenantCommentsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1966,6 +2342,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     helpful: Prisma.$ProductReviewHelpfulPayload<ExtArgs>[]
     pushSubscriptions: Prisma.$PushSubscriptionPayload<ExtArgs>[]
     recordedPlatformPayments: Prisma.$PlatformPaymentPayload<ExtArgs>[]
+    tenantLikes: Prisma.$TenantLikePayload<ExtArgs>[]
+    tenantComments: Prisma.$TenantCommentPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2386,6 +2764,8 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   helpful<T extends Prisma.User$helpfulArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$helpfulArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProductReviewHelpfulPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   pushSubscriptions<T extends Prisma.User$pushSubscriptionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$pushSubscriptionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PushSubscriptionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   recordedPlatformPayments<T extends Prisma.User$recordedPlatformPaymentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$recordedPlatformPaymentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PlatformPaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  tenantLikes<T extends Prisma.User$tenantLikesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$tenantLikesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TenantLikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  tenantComments<T extends Prisma.User$tenantCommentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$tenantCommentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TenantCommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3054,6 +3434,54 @@ export type User$recordedPlatformPaymentsArgs<ExtArgs extends runtime.Types.Exte
   take?: number
   skip?: number
   distinct?: Prisma.PlatformPaymentScalarFieldEnum | Prisma.PlatformPaymentScalarFieldEnum[]
+}
+
+/**
+ * User.tenantLikes
+ */
+export type User$tenantLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TenantLike
+   */
+  select?: Prisma.TenantLikeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TenantLike
+   */
+  omit?: Prisma.TenantLikeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TenantLikeInclude<ExtArgs> | null
+  where?: Prisma.TenantLikeWhereInput
+  orderBy?: Prisma.TenantLikeOrderByWithRelationInput | Prisma.TenantLikeOrderByWithRelationInput[]
+  cursor?: Prisma.TenantLikeWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TenantLikeScalarFieldEnum | Prisma.TenantLikeScalarFieldEnum[]
+}
+
+/**
+ * User.tenantComments
+ */
+export type User$tenantCommentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TenantComment
+   */
+  select?: Prisma.TenantCommentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TenantComment
+   */
+  omit?: Prisma.TenantCommentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TenantCommentInclude<ExtArgs> | null
+  where?: Prisma.TenantCommentWhereInput
+  orderBy?: Prisma.TenantCommentOrderByWithRelationInput | Prisma.TenantCommentOrderByWithRelationInput[]
+  cursor?: Prisma.TenantCommentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TenantCommentScalarFieldEnum | Prisma.TenantCommentScalarFieldEnum[]
 }
 
 /**

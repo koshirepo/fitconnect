@@ -13,7 +13,7 @@ import { PublicLayout } from "@/components/layout/public-layout";
 import { ErrorBoundary, PageSuspense } from "@/components/error-boundary";
 import { UpdatePrompt } from "@/components/ui/update-prompt";
 import { OfflineBanner } from "@/components/ui/offline-banner";
-import { InstallPrompt } from "@/components/ui/install-prompt";
+import { AppNudges } from "@/components/ui/app-nudges";
 import { SyncStatus } from "@/components/ui/sync-status";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
@@ -75,6 +75,12 @@ const SignupPage = React.lazy(() => import("@/features/public/SignupPage"));
 const CouponsPage = React.lazy(() => import("@/features/coupons/CouponsPage"));
 const StorePage = React.lazy(() => import("@/features/store/StorePage"));
 const PublicStorePage = React.lazy(() => import("@/features/store/PublicStorePage"));
+const StoreProductDetailPage = React.lazy(
+  () => import("@/features/store/StoreProductDetailPage"),
+);
+const PublicStoreProductPage = React.lazy(
+  () => import("@/features/store/PublicStoreProductPage"),
+);
 const StoreManagePage = React.lazy(() => import("@/features/store/StoreManagePage"));
 const StoreProductFormPage = React.lazy(
   () => import("@/features/store/StoreProductFormPage"),
@@ -132,7 +138,8 @@ export default function App() {
 
   // iOS reads the home-screen name and icon from meta tags rather than the
   // manifest, and a member can install from any screen — so this sits at the
-  // root instead of on one page.
+  // root instead of on one page. `AppNudges`, mounted below, owns the same
+  // lookup for its own wording; one call covers both.
   useTenantInstallBranding();
 
   React.useEffect(() => {
@@ -162,6 +169,7 @@ export default function App() {
       {/* The shop window. Public on purpose: a visitor can see what the gym
           sells before deciding to join. Buying lives behind the dashboard. */}
       <Route path="/store" element={<PublicStorePage />} />
+      <Route path="/store/products/:productId" element={<PublicStoreProductPage />} />
       <Route element={<RedirectIfAuth />}>
         <Route path="/login" element={<LoginPage />} />
         {/* Joining is for people without an account; a signed-in member is
@@ -238,6 +246,10 @@ export default function App() {
             </Route>
             <Route element={<RequirePermission anyOf={[Permission.STORE_READ]} />}>
               <Route path="/dashboard/store" element={<StorePage />} />
+              <Route
+                path="/dashboard/store/products/:productId"
+                element={<StoreProductDetailPage />}
+              />
             </Route>
             <Route element={<RequirePermission anyOf={[Permission.STORE_MANAGE]} />}>
               <Route path="/dashboard/store/manage" element={<StoreManagePage />} />
@@ -326,7 +338,7 @@ export default function App() {
       <ErrorBoundary>
         <OfflineBanner />
         <UpdatePrompt />
-        <InstallPrompt />
+        <AppNudges />
         <SyncStatus />
         {authSyncing ? (
           <div className="p-4 md:p-6">
@@ -460,6 +472,10 @@ export default function App() {
                   </Route>
                   <Route element={<RequirePermission anyOf={[Permission.STORE_READ]} />}>
                     <Route path="/store" element={<StorePage />} />
+                    <Route
+                      path="/store/products/:productId"
+                      element={<StoreProductDetailPage />}
+                    />
                   </Route>
                   <Route element={<RequirePermission anyOf={[Permission.STORE_MANAGE]} />}>
                     <Route path="/store/manage" element={<StoreManagePage />} />

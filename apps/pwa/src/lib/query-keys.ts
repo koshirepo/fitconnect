@@ -45,6 +45,14 @@ export const queryKeys = {
       ["store", tenantId, "products", params ?? null] as const,
     product: (tenantId: string, productId: string) =>
       ["store", tenantId, "product", productId] as const,
+    // Under the same "store" prefix as the catalogue, so a sale or an edit that
+    // invalidates the store also refreshes the counts shown beside a product.
+    productComments: (tenantId: string, productId: string) =>
+      ["store", tenantId, "product", productId, "comments"] as const,
+  },
+  /** Reactions to the gym itself, which outlive any one store product. */
+  social: {
+    tenantComments: (tenantId: string) => ["social", tenantId, "comments"] as const,
   },
   attendance: {
     byDate: (tenantId: string, date: string) => ["attendance", tenantId, "date", date] as const,

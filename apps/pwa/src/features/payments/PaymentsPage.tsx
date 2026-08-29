@@ -60,6 +60,9 @@ export default function PaymentsPage() {
   const { can } = usePermissions();
   // Editing, deleting, and exporting payments are the admin-level grants.
   const isAdmin = can(Permission.PAYMENTS_UPDATE);
+  // Approving or rejecting what is still owed is desk work, so a coach gets
+  // those two buttons without the rest of the admin toolkit.
+  const canSettle = isAdmin || can(Permission.PAYMENTS_SETTLE);
   const canViewAllPayments = can(Permission.PAYMENTS_READ);
   const canRecordPayment = can(Permission.PAYMENTS_CREATE);
 
@@ -433,7 +436,7 @@ export default function PaymentsPage() {
                 actions={
                   <>
                     <p className="text-base font-semibold sm:text-lg">{formatCurrency(p.amount)}</p>
-                    {isAdmin && !p._pending && p.status === "PENDING" && (
+                    {canSettle && !p._pending && p.status === "PENDING" && (
                       <>
                         <Button
                           variant="outline"

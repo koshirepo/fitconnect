@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { isAxiosError } from "axios";
 import type { User, TenantMembershipSummary } from "@/types/api";
 import { authApi } from "@/api/auth";
 import { resolveClientPermissions, type Permission } from "@/lib/permissions";
@@ -125,8 +126,13 @@ export const useAuthStore = create<AuthState>()(
             user,
             currentTenantId: user.membership?.tenantId ?? null,
           });
-        } catch {
-          get().logout();
+        } catch (error) {
+          // Only the server saying no ends the session. A timeout or a dead
+          // connection says nothing about whether the session is still good,
+          // and signing someone out over gym wifi — which this ran on every
+          // app start — loses whatever they were in the middle of.
+          const status = isAxiosError(error) ? error.response?.status : undefined;
+          if (status === 401 || status === 403) get().logout();
         }
       },
     }),

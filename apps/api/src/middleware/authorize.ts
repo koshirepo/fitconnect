@@ -3,7 +3,7 @@
  *
  * - Builds middleware that resolves an actor's effective permission set (platform-role grants unioned with tenant-role grants, plus any stored overrides) and gates routes on named capabilities instead of role strings.
  * - Keep authorization wiring here so route files stay declarative and authorization errors remain consistent.
- * - Primary exports: requirePermissions, requireAnyPermission, requireTenantPermissions, requireAnyTenantPermission, requirePlatformRoles, requireTenantRoles.
+ * - Primary exports: requirePermissions, requireAnyPermission, requireTenantPermissions, requireAnyTenantPermission, resolveTenantPermissions, requirePlatformRoles, requireTenantRoles.
  */
 import { PlatformRole, type TenantRole } from "@fitconnect/shared/types/enums";
 import {
@@ -139,6 +139,40 @@ export const requireTenantPermissions = (...permissions: Permission[]) =>
 /** Resolve the tenant membership, then require at least one listed permission. */
 export const requireAnyTenantPermission = (...permissions: Permission[]) =>
   authorize(permissions, { mode: "any", scope: "tenant" });
+
+/**
+ * Resolve a tenant's permissions without demanding any.
+ *
+ * For routes a signed-in non-member is meant to reach — a gym's public wall,
+ * where somebody deciding whether to join can ask a question. `requireTenantPermissions`
+ * would turn exactly that person away, but the route still needs to know
+ * whether the caller happens to be staff, so a gym can moderate its own page.
+ *
+ * Never rejects: the worst case is a caller with only their platform-role
+ * permissions, which is the truth about them.
+ */
+export const resolveTenantPermissions = createMiddleware<AppBindings>(async (c, next) => {
+  const user = c.get("authUser");
+  const tenantId = c.req.param("tenantId") || c.req.header("x-tenant-id") || null;
+  const tenantRole = (tenantId ? user.tenants?.[tenantId] : undefined) as TenantRole | undefined;
+
+  const overrides = await cached(`role-overrides:${tenantId ?? "platform"}`, () =>
+    rolePermissionRepository.listApplicableOverrides(tenantId),
+  );
+
+  if (tenantId && tenantRole) c.set("tenantAccess", { tenantId, role: tenantRole });
+
+  c.set(
+    "permissions",
+    resolveEffectivePermissions({
+      platformRole: user.platformRole,
+      tenantRole: tenantRole ?? null,
+      overrides,
+    }),
+  );
+
+  await next();
+});
 
 // ─── Role middleware (kept for coarse platform gates) ─────────────────────────
 

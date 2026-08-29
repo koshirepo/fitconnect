@@ -112,6 +112,7 @@ export default function PublicStorePage() {
                 product={product}
                 canBuy={false}
                 onAdd={() => {}}
+                onOpen={() => navigate(`/store/products/${product.id}`)}
               />
             ))}
           </div>

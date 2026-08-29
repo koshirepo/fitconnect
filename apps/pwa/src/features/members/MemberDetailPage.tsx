@@ -154,7 +154,10 @@ export default function MemberDetailPage() {
   const loading = memberQuery.isLoading;
   const error = actionError || (memberQuery.isError ? getApiError(memberQuery.error) : "");
   const isMemberProfile = member?.role === "MEMBER";
-  const roleMatrix = useTenantRoleMatrix(currentTenantId).data;
+  // Read only by someone allowed to; for a coach the endpoint is a 403.
+  const roleMatrix = useTenantRoleMatrix(
+    can(Permission.ROLES_READ) ? currentTenantId : null,
+  ).data;
 
   /**
    * The members either side of this one, taken from the list cache so a swipe

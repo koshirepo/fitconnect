@@ -429,6 +429,10 @@ export const ModelName = {
   AuditLog: 'AuditLog',
   PushSubscription: 'PushSubscription',
   StoreProduct: 'StoreProduct',
+  TenantLike: 'TenantLike',
+  TenantComment: 'TenantComment',
+  StoreProductLike: 'StoreProductLike',
+  StoreProductComment: 'StoreProductComment',
   StoreVariant: 'StoreVariant',
   StoreOrder: 'StoreOrder',
   StoreOrderItem: 'StoreOrderItem'
@@ -447,7 +451,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "idempotencyKey" | "passwordResetToken" | "refreshToken" | "tenant" | "role" | "rolePermissionOverride" | "tenantSettings" | "tenantCharge" | "tenantMembership" | "subscription" | "shift" | "todo" | "payment" | "coupon" | "couponRedemption" | "coinLedgerEntry" | "membershipFreeze" | "product" | "productReview" | "productReviewComment" | "productReviewHelpful" | "order" | "orderItem" | "workoutPlan" | "workoutPlanAssignment" | "badge" | "platformPayment" | "attendance" | "auditLog" | "pushSubscription" | "storeProduct" | "storeVariant" | "storeOrder" | "storeOrderItem"
+    modelProps: "user" | "idempotencyKey" | "passwordResetToken" | "refreshToken" | "tenant" | "role" | "rolePermissionOverride" | "tenantSettings" | "tenantCharge" | "tenantMembership" | "subscription" | "shift" | "todo" | "payment" | "coupon" | "couponRedemption" | "coinLedgerEntry" | "membershipFreeze" | "product" | "productReview" | "productReviewComment" | "productReviewHelpful" | "order" | "orderItem" | "workoutPlan" | "workoutPlanAssignment" | "badge" | "platformPayment" | "attendance" | "auditLog" | "pushSubscription" | "storeProduct" | "tenantLike" | "tenantComment" | "storeProductLike" | "storeProductComment" | "storeVariant" | "storeOrder" | "storeOrderItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2819,6 +2823,302 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    TenantLike: {
+      payload: Prisma.$TenantLikePayload<ExtArgs>
+      fields: Prisma.TenantLikeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TenantLikeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantLikePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TenantLikeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantLikePayload>
+        }
+        findFirst: {
+          args: Prisma.TenantLikeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantLikePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TenantLikeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantLikePayload>
+        }
+        findMany: {
+          args: Prisma.TenantLikeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantLikePayload>[]
+        }
+        create: {
+          args: Prisma.TenantLikeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantLikePayload>
+        }
+        createMany: {
+          args: Prisma.TenantLikeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TenantLikeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantLikePayload>[]
+        }
+        delete: {
+          args: Prisma.TenantLikeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantLikePayload>
+        }
+        update: {
+          args: Prisma.TenantLikeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantLikePayload>
+        }
+        deleteMany: {
+          args: Prisma.TenantLikeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TenantLikeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TenantLikeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantLikePayload>[]
+        }
+        upsert: {
+          args: Prisma.TenantLikeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantLikePayload>
+        }
+        aggregate: {
+          args: Prisma.TenantLikeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTenantLike>
+        }
+        groupBy: {
+          args: Prisma.TenantLikeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TenantLikeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TenantLikeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TenantLikeCountAggregateOutputType> | number
+        }
+      }
+    }
+    TenantComment: {
+      payload: Prisma.$TenantCommentPayload<ExtArgs>
+      fields: Prisma.TenantCommentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TenantCommentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantCommentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TenantCommentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantCommentPayload>
+        }
+        findFirst: {
+          args: Prisma.TenantCommentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantCommentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TenantCommentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantCommentPayload>
+        }
+        findMany: {
+          args: Prisma.TenantCommentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantCommentPayload>[]
+        }
+        create: {
+          args: Prisma.TenantCommentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantCommentPayload>
+        }
+        createMany: {
+          args: Prisma.TenantCommentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TenantCommentCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantCommentPayload>[]
+        }
+        delete: {
+          args: Prisma.TenantCommentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantCommentPayload>
+        }
+        update: {
+          args: Prisma.TenantCommentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantCommentPayload>
+        }
+        deleteMany: {
+          args: Prisma.TenantCommentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TenantCommentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TenantCommentUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantCommentPayload>[]
+        }
+        upsert: {
+          args: Prisma.TenantCommentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantCommentPayload>
+        }
+        aggregate: {
+          args: Prisma.TenantCommentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTenantComment>
+        }
+        groupBy: {
+          args: Prisma.TenantCommentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TenantCommentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TenantCommentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TenantCommentCountAggregateOutputType> | number
+        }
+      }
+    }
+    StoreProductLike: {
+      payload: Prisma.$StoreProductLikePayload<ExtArgs>
+      fields: Prisma.StoreProductLikeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.StoreProductLikeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreProductLikePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.StoreProductLikeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreProductLikePayload>
+        }
+        findFirst: {
+          args: Prisma.StoreProductLikeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreProductLikePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.StoreProductLikeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreProductLikePayload>
+        }
+        findMany: {
+          args: Prisma.StoreProductLikeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreProductLikePayload>[]
+        }
+        create: {
+          args: Prisma.StoreProductLikeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreProductLikePayload>
+        }
+        createMany: {
+          args: Prisma.StoreProductLikeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.StoreProductLikeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreProductLikePayload>[]
+        }
+        delete: {
+          args: Prisma.StoreProductLikeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreProductLikePayload>
+        }
+        update: {
+          args: Prisma.StoreProductLikeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreProductLikePayload>
+        }
+        deleteMany: {
+          args: Prisma.StoreProductLikeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.StoreProductLikeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.StoreProductLikeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreProductLikePayload>[]
+        }
+        upsert: {
+          args: Prisma.StoreProductLikeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreProductLikePayload>
+        }
+        aggregate: {
+          args: Prisma.StoreProductLikeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateStoreProductLike>
+        }
+        groupBy: {
+          args: Prisma.StoreProductLikeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StoreProductLikeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.StoreProductLikeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StoreProductLikeCountAggregateOutputType> | number
+        }
+      }
+    }
+    StoreProductComment: {
+      payload: Prisma.$StoreProductCommentPayload<ExtArgs>
+      fields: Prisma.StoreProductCommentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.StoreProductCommentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreProductCommentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.StoreProductCommentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreProductCommentPayload>
+        }
+        findFirst: {
+          args: Prisma.StoreProductCommentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreProductCommentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.StoreProductCommentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreProductCommentPayload>
+        }
+        findMany: {
+          args: Prisma.StoreProductCommentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreProductCommentPayload>[]
+        }
+        create: {
+          args: Prisma.StoreProductCommentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreProductCommentPayload>
+        }
+        createMany: {
+          args: Prisma.StoreProductCommentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.StoreProductCommentCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreProductCommentPayload>[]
+        }
+        delete: {
+          args: Prisma.StoreProductCommentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreProductCommentPayload>
+        }
+        update: {
+          args: Prisma.StoreProductCommentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreProductCommentPayload>
+        }
+        deleteMany: {
+          args: Prisma.StoreProductCommentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.StoreProductCommentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.StoreProductCommentUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreProductCommentPayload>[]
+        }
+        upsert: {
+          args: Prisma.StoreProductCommentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoreProductCommentPayload>
+        }
+        aggregate: {
+          args: Prisma.StoreProductCommentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateStoreProductComment>
+        }
+        groupBy: {
+          args: Prisma.StoreProductCommentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StoreProductCommentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.StoreProductCommentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StoreProductCommentCountAggregateOutputType> | number
+        }
+      }
+    }
     StoreVariant: {
       payload: Prisma.$StoreVariantPayload<ExtArgs>
       fields: Prisma.StoreVariantFieldRefs
@@ -3581,8 +3881,10 @@ export const StoreProductScalarFieldEnum = {
   tenantId: 'tenantId',
   name: 'name',
   description: 'description',
+  markdown: 'markdown',
   category: 'category',
   photos: 'photos',
+  videoUrl: 'videoUrl',
   coinsGranted: 'coinsGranted',
   isActive: 'isActive',
   createdAt: 'createdAt',
@@ -3590,6 +3892,50 @@ export const StoreProductScalarFieldEnum = {
 } as const
 
 export type StoreProductScalarFieldEnum = (typeof StoreProductScalarFieldEnum)[keyof typeof StoreProductScalarFieldEnum]
+
+
+export const TenantLikeScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  userId: 'userId',
+  createdAt: 'createdAt'
+} as const
+
+export type TenantLikeScalarFieldEnum = (typeof TenantLikeScalarFieldEnum)[keyof typeof TenantLikeScalarFieldEnum]
+
+
+export const TenantCommentScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  userId: 'userId',
+  body: 'body',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TenantCommentScalarFieldEnum = (typeof TenantCommentScalarFieldEnum)[keyof typeof TenantCommentScalarFieldEnum]
+
+
+export const StoreProductLikeScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  membershipId: 'membershipId',
+  createdAt: 'createdAt'
+} as const
+
+export type StoreProductLikeScalarFieldEnum = (typeof StoreProductLikeScalarFieldEnum)[keyof typeof StoreProductLikeScalarFieldEnum]
+
+
+export const StoreProductCommentScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  membershipId: 'membershipId',
+  body: 'body',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type StoreProductCommentScalarFieldEnum = (typeof StoreProductCommentScalarFieldEnum)[keyof typeof StoreProductCommentScalarFieldEnum]
 
 
 export const StoreVariantScalarFieldEnum = {
@@ -3930,6 +4276,10 @@ export type GlobalOmitConfig = {
   auditLog?: Prisma.AuditLogOmit
   pushSubscription?: Prisma.PushSubscriptionOmit
   storeProduct?: Prisma.StoreProductOmit
+  tenantLike?: Prisma.TenantLikeOmit
+  tenantComment?: Prisma.TenantCommentOmit
+  storeProductLike?: Prisma.StoreProductLikeOmit
+  storeProductComment?: Prisma.StoreProductCommentOmit
   storeVariant?: Prisma.StoreVariantOmit
   storeOrder?: Prisma.StoreOrderOmit
   storeOrderItem?: Prisma.StoreOrderItemOmit

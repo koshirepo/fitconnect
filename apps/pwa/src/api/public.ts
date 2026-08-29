@@ -1,5 +1,9 @@
 import { api } from "./client";
-import type { StoreProduct } from "@fitconnect/shared/types/models";
+import type {
+  SocialComment,
+  SocialState,
+  StoreProduct,
+} from "@fitconnect/shared/types/models";
 import type {
   PublicTenantDetail,
   PublicGymSummary,
@@ -45,6 +49,28 @@ export const publicApi = {
     api.get<ApiResponse<{ tenant: { id: string; name: string; slug: string }; products: StoreProduct[] }>>(
       "/public/store",
       { params: { host } },
+    ),
+
+  /** One product, with what members said about it. Reading needs no account. */
+  getStoreProduct: (productId: string, host = currentHost()) =>
+    api.get<
+      ApiResponse<{
+        tenant: { id: string; name: string; slug: string };
+        product: StoreProduct;
+        comments: SocialComment[];
+      }>
+    >(`/public/store/products/${productId}`, { params: { host } }),
+
+  /**
+   * Likes and comments on the gym itself.
+   *
+   * `liked` is always false here — there is nobody signed in to have liked it.
+   * A signed-in visitor gets their own answer from the tenant-scoped endpoint.
+   */
+  getSocial: (host = currentHost()) =>
+    api.get<ApiResponse<{ tenantId: string } & SocialState & { comments: SocialComment[] }>>(
+      "/public/social",
+      { params: { host, _: Date.now() } },
     ),
 
   getTenantBranding: (host = typeof window !== "undefined" ? window.location.host : "") =>

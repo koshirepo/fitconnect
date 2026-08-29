@@ -3,31 +3,41 @@
  *
  * - A supplement is bought as a flavour and a size, and a glove as a size and a colour, so the card sells the variant rather than the product. Each is priced and stocked on its own.
  * - A variant with nothing left is shown rather than hidden: "Chocolate 1kg — out of stock" tells a member something, while a silently missing row reads as a gym that never stocked it.
+ * - The name and the photo open the full product page. What is on the card is the buying decision — price, size, stock — and everything else about the product, its other photos, its video, and what members said about it, lives one tap away rather than crowding the grid.
  * - Primary exports: StoreVariantPicker.
  */
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
-import { Coins, Plus } from "lucide-react";
+import { Coins, Heart, MessageSquare, Plus } from "lucide-react";
 import type { StoreProduct, StoreVariant } from "@fitconnect/shared/types/models";
 
 export function StoreVariantPicker({
   product,
   canBuy,
   onAdd,
+  onOpen,
 }: {
   product: StoreProduct;
   /** False for someone browsing without the right to purchase. */
   canBuy: boolean;
   onAdd: (variant: StoreVariant) => void;
+  /** Opens the full product page. Omitted where there is nowhere to go. */
+  onOpen?: () => void;
 }) {
   const photo = Array.isArray(product.photos) ? product.photos[0] : undefined;
 
   return (
     <Card className="overflow-hidden">
       {photo && (
-        <div className="aspect-video w-full overflow-hidden bg-muted">
+        <button
+          type="button"
+          onClick={onOpen}
+          disabled={!onOpen}
+          className="aspect-video w-full overflow-hidden bg-muted"
+          aria-label={`Open ${product.name}`}
+        >
           <img
             src={photo}
             alt={product.name}
@@ -35,12 +45,20 @@ export function StoreVariantPicker({
             decoding="async"
             className="h-full w-full object-cover"
           />
-        </div>
+        </button>
       )}
 
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-base">{product.name}</CardTitle>
+          <CardTitle className="text-base">
+            {onOpen ? (
+              <button type="button" onClick={onOpen} className="text-left hover:underline">
+                {product.name}
+              </button>
+            ) : (
+              product.name
+            )}
+          </CardTitle>
           {product.coinsGranted > 0 && (
             <Badge variant="accent" className="shrink-0 text-xs">
               <Coins className="mr-1 h-3 w-3" />+{product.coinsGranted}
@@ -49,6 +67,21 @@ export function StoreVariantPicker({
         </div>
         {product.description && (
           <p className="text-xs text-muted-foreground">{product.description}</p>
+        )}
+
+        {/* Counts only. The card is for choosing; reacting happens on the
+            product page, where there is room for what people wrote. */}
+        {(product.likeCount > 0 || product.commentCount > 0) && (
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <Heart className="h-3 w-3" />
+              {product.likeCount}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <MessageSquare className="h-3 w-3" />
+              {product.commentCount}
+            </span>
+          </div>
         )}
       </CardHeader>
 

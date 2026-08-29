@@ -47,6 +47,13 @@ export const Permission = {
   PAYMENTS_READ: "payments:read",
   PAYMENTS_READ_SELF: "payments:read:self",
   PAYMENTS_CREATE: "payments:create",
+  /**
+   * Settle a payment that is still pending — approve the money as received, or
+   * mark that it never arrived. Separate from `PAYMENTS_UPDATE` because taking
+   * cash at the desk is floor work, while rewriting an amount or a validity
+   * window, or refunding, is the gym's own books.
+   */
+  PAYMENTS_SETTLE: "payments:settle",
   PAYMENTS_UPDATE: "payments:update",
   PAYMENTS_DELETE: "payments:delete",
   PAYMENTS_ANALYTICS_READ: "payments:analytics:read",
@@ -202,6 +209,7 @@ const COACH_PERMISSIONS: Permission[] = [
   Permission.ATTENDANCE_QR_MANAGE,
   Permission.PAYMENTS_READ,
   Permission.PAYMENTS_CREATE,
+  Permission.PAYMENTS_SETTLE,
   Permission.WORKOUTS_CREATE,
   Permission.WORKOUTS_UPDATE,
   Permission.WORKOUTS_ASSIGN,
@@ -505,6 +513,7 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [Permission.PAYMENTS_READ]: "View all payments",
   [Permission.PAYMENTS_READ_SELF]: "View own payments",
   [Permission.PAYMENTS_CREATE]: "Record payments",
+  [Permission.PAYMENTS_SETTLE]: "Approve or reject pending payments",
   [Permission.PAYMENTS_UPDATE]: "Edit payments",
   [Permission.PAYMENTS_DELETE]: "Delete payments",
   [Permission.PAYMENTS_ANALYTICS_READ]: "View finance reports",

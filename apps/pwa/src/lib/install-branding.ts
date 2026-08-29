@@ -4,6 +4,7 @@
  * - Android and desktop Chrome read the web app manifest, which the Pages Function at `functions/manifest.webmanifest.ts` already serves per gym. Safari does not: it takes the home-screen title from `apple-mobile-web-app-title` and the icon from `apple-touch-icon`, both of which are static in `index.html`.
  * - This rewrites those two tags in place once the gym is known, so a member installing from a gym subdomain gets that gym's name and logo rather than the platform's.
  * - A gym with no logo is left on the default icon already in the document, which is exactly what installs show today.
+ * - The same lookup backs the install banner's own wording, so it can offer "Install Rudra Gym" rather than the platform name. It is returned as state rather than read straight from the cache: on a first visit the cache is cold, which is exactly the visit where the offer to install matters most.
  * - Primary exports: useTenantInstallBranding.
  */
 import * as React from "react";
@@ -35,13 +36,50 @@ function applyAppleMeta(branding: TenantBranding) {
 }
 
 /**
- * Apply the current gym's branding to the install tags.
+ * One lookup per host, shared by every caller of the hook.
+ *
+ * Both the app root and the install banner ask for branding, and without this
+ * a cold cache would fetch it twice on the same page load.
+ */
+const inFlight = new Map<string, Promise<TenantBranding | null>>();
+
+function loadBranding(host: string): Promise<TenantBranding | null> {
+  const existing = inFlight.get(host);
+  if (existing) return existing;
+
+  const request = publicApi
+    .getTenantBranding(host)
+    .then((response) => {
+      const tenant = response.data.data.tenant as TenantBranding | undefined;
+      if (!tenant?.name) return null;
+      writeCachedTenantBranding(tenant, host);
+      return tenant;
+    })
+    .catch(() => {
+      // Branding is decoration here; the platform tags in the document stand.
+      return null;
+    })
+    .finally(() => {
+      inFlight.delete(host);
+    });
+
+  inFlight.set(host, request);
+  return request;
+}
+
+/**
+ * Apply the current gym's branding to the install tags, and hand that branding
+ * back for anything else that has to name the gym.
  *
  * Runs once per mount from wherever it is called, because a member can install
  * from any screen, not only the one that happens to fetch branding for its own
- * rendering.
+ * rendering. Returns null on the app's own root, where there is no gym.
  */
-export function useTenantInstallBranding() {
+export function useTenantInstallBranding(): TenantBranding | null {
+  const [branding, setBranding] = React.useState<TenantBranding | null>(() =>
+    isTenantSubdomain() ? readCachedTenantBranding() : null,
+  );
+
   React.useEffect(() => {
     if (!isTenantSubdomain()) return;
 
@@ -53,21 +91,16 @@ export function useTenantInstallBranding() {
     }
 
     let active = true;
-    publicApi
-      .getTenantBranding(host)
-      .then((response) => {
-        if (!active) return;
-        const tenant = response.data.data.tenant as TenantBranding | undefined;
-        if (!tenant?.name) return;
-        writeCachedTenantBranding(tenant, host);
-        applyAppleMeta(tenant);
-      })
-      .catch(() => {
-        // Branding is decoration here; the platform tags in the document stand.
-      });
+    void loadBranding(host).then((tenant) => {
+      if (!active || !tenant) return;
+      applyAppleMeta(tenant);
+      setBranding(tenant);
+    });
 
     return () => {
       active = false;
     };
   }, []);
+
+  return branding;
 }

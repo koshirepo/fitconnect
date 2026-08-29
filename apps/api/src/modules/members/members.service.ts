@@ -369,10 +369,15 @@ export const memberService = {
       );
     }
 
+    // Held outside the block so the membership's due date can be set from it
+    // once the payment lands.
+    let subscriptionValidUntil: Date | null = null;
+
     if (subscription) {
       const validFrom = now;
       const validUntil = new Date(now);
       validUntil.setDate(validUntil.getDate() + subscription.durationDays);
+      subscriptionValidUntil = validUntil;
 
       paymentPromises.push(
         prisma.payment.create({
@@ -392,6 +397,16 @@ export const memberService = {
     }
 
     const payments = await Promise.all(paymentPromises);
+
+    // The admission's own plan payment has to move `dueDate` too. Every other
+    // way a payment is recorded refreshes it; without this an admission taken
+    // with a plan leaves the member with no end date until their first renewal.
+    if (subscriptionValidUntil) {
+      await prisma.tenantMembership.update({
+        where: { id: membership.id },
+        data: { dueDate: subscriptionValidUntil },
+      });
+    }
 
     // Fetch tenant name and template overrides for notifications
     const [tenant, settings] = await Promise.all([

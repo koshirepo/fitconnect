@@ -201,6 +201,32 @@ export type PushSubscription = Prisma.PushSubscriptionModel
  */
 export type StoreProduct = Prisma.StoreProductModel
 /**
+ * Model TenantLike
+ * Approval of a gym itself, from its public profile.
+ * 
+ * Keyed by user rather than membership, unlike the product tables: the people
+ * who react to a gym's page include prospects deciding whether to join, and a
+ * membership id would shut exactly those people out.
+ */
+export type TenantLike = Prisma.TenantLikeModel
+/**
+ * Model TenantComment
+ * What somebody said about a gym on its public page.
+ */
+export type TenantComment = Prisma.TenantCommentModel
+/**
+ * Model StoreProductLike
+ * A member's approval of a product. One per member per product — the unique
+ * key is what makes the button a toggle rather than a counter anyone can run up.
+ */
+export type StoreProductLike = Prisma.StoreProductLikeModel
+/**
+ * Model StoreProductComment
+ * What a member said about a product. Plain text on purpose: this is a gym's
+ * shop, not a forum, and anything richer would need moderation nobody staffs.
+ */
+export type StoreProductComment = Prisma.StoreProductCommentModel
+/**
  * Model StoreVariant
  * One buyable combination: chocolate 1kg, or black large. Price and stock live
  * here because the combinations sell independently of each other.

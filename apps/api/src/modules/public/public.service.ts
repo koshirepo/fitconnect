@@ -7,6 +7,8 @@
  */
 import { normalizeTenantHost, publicRepository } from "./public.repository";
 import { storeRepository } from "../store/store.repository";
+import { socialRepository } from "../social/social.repository";
+import { socialService } from "../social/social.service";
 
 export const publicService = {
   /**
@@ -48,6 +50,54 @@ export const publicService = {
         products,
       },
     };
+  },
+
+  /**
+   * One product's page, for a visitor.
+   *
+   * Comments come with it rather than as a second request: they are the reason
+   * somebody opens a product page they cannot buy from, and splitting them out
+   * would mean a visible gap under the photos on every load.
+   */
+  async getStoreProductByHost(host: string, productId: string) {
+    const slug = normalizeTenantHost(host);
+    if (!slug) return { error: "Tenant host is invalid.", status: 404 as const };
+
+    const tenant = await publicRepository.findTenantBySlug(slug);
+    if (!tenant) return { error: "Tenant not found.", status: 404 as const };
+
+    const product = await storeRepository.findProduct(tenant.id, productId);
+    // A retired product is "not found" to a visitor. They have no way to tell
+    // that apart from a product the gym never stocked, and no reason to.
+    if (!product || !product.isActive) return { error: "Product not found.", status: 404 as const };
+
+    const { comments } = await socialRepository.listProductComments(productId, 1, 50);
+
+    return {
+      data: {
+        tenant: { id: tenant.id, name: tenant.name, slug: tenant.slug },
+        product: { ...product, variants: product.variants.filter((v) => v.isActive) },
+        comments,
+      },
+    };
+  },
+
+  /**
+   * What people have said about the gym itself.
+   *
+   * Readable with no account, because the audience for a gym's wall is largely
+   * people who have not joined it yet. Writing still needs one — `liked` is
+   * false here for want of anybody to have liked it.
+   */
+  async getSocialByHost(host: string) {
+    const slug = normalizeTenantHost(host);
+    if (!slug) return { error: "Tenant host is invalid.", status: 404 as const };
+
+    const tenant = await publicRepository.findTenantBySlug(slug);
+    if (!tenant) return { error: "Tenant not found.", status: 404 as const };
+
+    const result = await socialService.listTenantComments(tenant.id, null, 1, 50);
+    return { data: { tenantId: tenant.id, ...result.data } };
   },
 
   async getTenantBrandingByHost(host: string) {

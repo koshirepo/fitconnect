@@ -3,6 +3,7 @@
  *
  * - A product is named once and sold as variants, so this edits both together: the supplement and its flavours and sizes, or the gloves and their sizes and colours.
  * - Creating requires at least one variant, because a product with nothing sellable is a page a member can reach and not buy from. Editing an existing product manages its variants one at a time, since each carries its own stock that a bulk replace would quietly discard.
+ * - Photos upload as they are chosen rather than on save, so a rejected form does not lose the six images somebody just picked. The long description is markdown, matching how a gym already writes its own profile.
  * - Attributes are free-form pairs. Supplements and accessories do not share axes, and a gym may invent its own — "Strength", "Pack size" — so the form asks for names rather than offering a fixed list.
  * - Primary exports: StoreProductFormPage.
  */
@@ -23,6 +24,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
+import { PhotoListInput } from "@/components/ui/photo-list-input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -79,6 +82,9 @@ export default function StoreProductFormPage() {
 
   const [name, setName] = React.useState("");
   const [description, setDescription] = React.useState("");
+  const [markdown, setMarkdown] = React.useState("");
+  const [photos, setPhotos] = React.useState<string[]>([]);
+  const [videoUrl, setVideoUrl] = React.useState("");
   const [category, setCategory] = React.useState<"SUPPLEMENT" | "ACCESSORY">("SUPPLEMENT");
   const [coinsGranted, setCoinsGranted] = React.useState("0");
   const [variants, setVariants] = React.useState<VariantDraft[]>([emptyVariant()]);
@@ -93,6 +99,9 @@ export default function StoreProductFormPage() {
     if (!isEdit || seeded || !product) return;
     setName(product.name);
     setDescription(product.description ?? "");
+    setMarkdown(product.markdown ?? "");
+    setPhotos(Array.isArray(product.photos) ? product.photos : []);
+    setVideoUrl(product.videoUrl ?? "");
     setCategory(product.category === "ACCESSORY" ? "ACCESSORY" : "SUPPLEMENT");
     setCoinsGranted(String(product.coinsGranted));
     setSeeded(true);
@@ -112,6 +121,9 @@ export default function StoreProductFormPage() {
       await createProduct.mutateAsync({
         name: name.trim(),
         ...(description.trim() ? { description: description.trim() } : {}),
+        ...(markdown.trim() ? { markdown: markdown.trim() } : {}),
+        ...(videoUrl.trim() ? { videoUrl: videoUrl.trim() } : {}),
+        photos,
         category,
         coinsGranted: Number(coinsGranted) || 0,
         variants: payloads,
@@ -136,6 +148,11 @@ export default function StoreProductFormPage() {
         payload: {
           name: name.trim(),
           description: description.trim() || undefined,
+          // Null, not undefined: clearing a body or a video has to be
+          // distinguishable from leaving it alone, and omitting it means the latter.
+          markdown: markdown.trim() || null,
+          videoUrl: videoUrl.trim() || null,
+          photos,
           category,
           coinsGranted: Number(coinsGranted) || 0,
         },
@@ -262,6 +279,50 @@ export default function StoreProductFormPage() {
               </p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Photos and video</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-1.5">
+            <Label>Photos</Label>
+            <PhotoListInput value={photos} onChange={setPhotos} max={8} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="video">Video link</Label>
+            <Input
+              id="video"
+              type="url"
+              inputMode="url"
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder="https://youtu.be/..."
+            />
+            <p className="text-xs text-muted-foreground">
+              Paste a YouTube link however you copied it — a share link, a watch link, or a
+              Shorts link all work.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Full description</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <MarkdownEditor
+            id="markdown"
+            value={markdown}
+            onChange={setMarkdown}
+            minHeight={220}
+            hint="Shown on the product page. Ingredients, dosage, what the kit is made of."
+            placeholder="Ingredients, dosage, what it is made of — written in Markdown."
+          />
         </CardContent>
       </Card>
 

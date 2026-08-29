@@ -407,10 +407,31 @@ export const paymentService = {
     status: PaymentStatus,
     actorUserId?: string,
     scheduleBackgroundTask?: BackgroundTaskScheduler,
+    /**
+     * Whether the caller holds `PAYMENTS_UPDATE` rather than only
+     * `PAYMENTS_SETTLE`. A settler closes out money that is still owed; an
+     * editor may also reverse money already taken.
+     */
+    canEditSettled = true,
   ) {
     const existing = await paymentRepository.findPayment(paymentId, tenantId);
     if (!existing) {
       return { error: "Payment not found.", status: 404 as const };
+    }
+
+    if (!canEditSettled) {
+      if (existing.status !== "PENDING") {
+        return {
+          error: "Only a pending payment can be settled. Ask an admin to change a settled one.",
+          status: 403 as const,
+        };
+      }
+      if (status !== "COMPLETED" && status !== "FAILED") {
+        return {
+          error: "A pending payment can only be approved or marked failed.",
+          status: 403 as const,
+        };
+      }
     }
 
     const payment = await paymentRepository.updatePaymentStatus(paymentId, status);

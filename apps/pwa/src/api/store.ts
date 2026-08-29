@@ -18,6 +18,10 @@ export type StoreProductPayload = {
   name: string;
   description?: string;
   category: "SUPPLEMENT" | "ACCESSORY";
+  // Null clears the stored value, undefined leaves it alone — the update
+  // endpoint tells the two apart, so the payload type has to as well.
+  markdown?: string | null;
+  videoUrl?: string | null;
   photos?: string[];
   coinsGranted?: number;
   isActive?: boolean;

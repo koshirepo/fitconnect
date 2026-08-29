@@ -83,6 +83,10 @@ export const ModelName = {
   AuditLog: 'AuditLog',
   PushSubscription: 'PushSubscription',
   StoreProduct: 'StoreProduct',
+  TenantLike: 'TenantLike',
+  TenantComment: 'TenantComment',
+  StoreProductLike: 'StoreProductLike',
+  StoreProductComment: 'StoreProductComment',
   StoreVariant: 'StoreVariant',
   StoreOrder: 'StoreOrder',
   StoreOrderItem: 'StoreOrderItem'
@@ -605,8 +609,10 @@ export const StoreProductScalarFieldEnum = {
   tenantId: 'tenantId',
   name: 'name',
   description: 'description',
+  markdown: 'markdown',
   category: 'category',
   photos: 'photos',
+  videoUrl: 'videoUrl',
   coinsGranted: 'coinsGranted',
   isActive: 'isActive',
   createdAt: 'createdAt',
@@ -614,6 +620,50 @@ export const StoreProductScalarFieldEnum = {
 } as const
 
 export type StoreProductScalarFieldEnum = (typeof StoreProductScalarFieldEnum)[keyof typeof StoreProductScalarFieldEnum]
+
+
+export const TenantLikeScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  userId: 'userId',
+  createdAt: 'createdAt'
+} as const
+
+export type TenantLikeScalarFieldEnum = (typeof TenantLikeScalarFieldEnum)[keyof typeof TenantLikeScalarFieldEnum]
+
+
+export const TenantCommentScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  userId: 'userId',
+  body: 'body',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TenantCommentScalarFieldEnum = (typeof TenantCommentScalarFieldEnum)[keyof typeof TenantCommentScalarFieldEnum]
+
+
+export const StoreProductLikeScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  membershipId: 'membershipId',
+  createdAt: 'createdAt'
+} as const
+
+export type StoreProductLikeScalarFieldEnum = (typeof StoreProductLikeScalarFieldEnum)[keyof typeof StoreProductLikeScalarFieldEnum]
+
+
+export const StoreProductCommentScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  membershipId: 'membershipId',
+  body: 'body',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type StoreProductCommentScalarFieldEnum = (typeof StoreProductCommentScalarFieldEnum)[keyof typeof StoreProductCommentScalarFieldEnum]
 
 
 export const StoreVariantScalarFieldEnum = {

@@ -171,9 +171,14 @@ export const paymentController = {
       parsed.data.status,
       c.get("authUser").id,
       (promise) => c.executionCtx.waitUntil(promise),
+      can(c, Permission.PAYMENTS_UPDATE),
     );
 
-    if ("error" in result) return notFound(c, result.error!);
+    if ("error" in result) {
+      return result.status === 403
+        ? forbidden(c, result.error!)
+        : notFound(c, result.error!);
+    }
 
     await auditLog({
       action: "UPDATE",

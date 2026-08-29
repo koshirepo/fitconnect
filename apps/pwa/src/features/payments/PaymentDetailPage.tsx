@@ -75,6 +75,9 @@ export default function PaymentDetailPage() {
   const { currentTenantId, user } = useAuthStore();
   const { can } = usePermissions();
   const isAdmin = can(Permission.PAYMENTS_UPDATE);
+  // Settling a pending payment is desk work a coach does; editing, refunding,
+  // and deleting stay with the people who keep the books.
+  const canSettle = isAdmin || can(Permission.PAYMENTS_SETTLE);
   const canRecordPayment = can(Permission.PAYMENTS_CREATE);
 
   const paymentQuery = usePayment(paymentId);
@@ -259,15 +262,15 @@ export default function PaymentDetailPage() {
             {formatDateTime(payment.createdAt)}
           </p>
         </div>
-        {isAdmin && (
+        {canSettle && (
           <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-            {!editing && (
+            {isAdmin && !editing && (
               <Button variant="outline" size="sm" onClick={startEditing}>
                 <Pencil className="h-4 w-4" />
                 Edit
               </Button>
             )}
-            {editing && (
+            {isAdmin && editing && (
               <>
                 <Button variant="outline" size="sm" onClick={cancelEditing} disabled={saving}>
                   Cancel
@@ -298,7 +301,7 @@ export default function PaymentDetailPage() {
                 </Button>
               </>
             )}
-            {payment.status === "COMPLETED" && (
+            {isAdmin && payment.status === "COMPLETED" && (
               <Button
                 size="sm"
                 variant="outline"
@@ -309,7 +312,7 @@ export default function PaymentDetailPage() {
                 Refund
               </Button>
             )}
-            {!editing && (
+            {isAdmin && !editing && (
               <Button
                 size="sm"
                 variant="destructive"

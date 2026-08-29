@@ -63,7 +63,16 @@ api.interceptors.response.use(
     };
 
     const status = error.response?.status;
-    if ((status === 401 || status === 403) && !originalRequest._retry) {
+    // Only 401. The API answers 401 for a missing, invalid, or expired token
+    // and 403 for a caller who is signed in but not permitted — and refreshing
+    // cannot turn the second into a yes. Treating 403 as an expiry meant a
+    // coach, who meets 403 on any screen holding one control they lack rights
+    // to, rotated their refresh token on every such response: each rotation
+    // wrote the auth store, re-rendered every subscriber, and re-ran the
+    // queries that produced the next 403. Two of those racing left the second
+    // holding a token the first had already revoked, which logged the coach
+    // out mid-page.
+    if (status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });

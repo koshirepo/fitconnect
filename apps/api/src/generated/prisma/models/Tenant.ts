@@ -274,6 +274,8 @@ export type TenantWhereInput = {
   membershipFreezes?: Prisma.MembershipFreezeListRelationFilter
   storeProducts?: Prisma.StoreProductListRelationFilter
   storeOrders?: Prisma.StoreOrderListRelationFilter
+  likes?: Prisma.TenantLikeListRelationFilter
+  comments?: Prisma.TenantCommentListRelationFilter
 }
 
 export type TenantOrderByWithRelationInput = {
@@ -311,6 +313,8 @@ export type TenantOrderByWithRelationInput = {
   membershipFreezes?: Prisma.MembershipFreezeOrderByRelationAggregateInput
   storeProducts?: Prisma.StoreProductOrderByRelationAggregateInput
   storeOrders?: Prisma.StoreOrderOrderByRelationAggregateInput
+  likes?: Prisma.TenantLikeOrderByRelationAggregateInput
+  comments?: Prisma.TenantCommentOrderByRelationAggregateInput
 }
 
 export type TenantWhereUniqueInput = Prisma.AtLeast<{
@@ -351,6 +355,8 @@ export type TenantWhereUniqueInput = Prisma.AtLeast<{
   membershipFreezes?: Prisma.MembershipFreezeListRelationFilter
   storeProducts?: Prisma.StoreProductListRelationFilter
   storeOrders?: Prisma.StoreOrderListRelationFilter
+  likes?: Prisma.TenantLikeListRelationFilter
+  comments?: Prisma.TenantCommentListRelationFilter
 }, "id" | "slug" | "phone">
 
 export type TenantOrderByWithAggregationInput = {
@@ -428,6 +434,8 @@ export type TenantCreateInput = {
   membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateInput = {
@@ -465,6 +473,8 @@ export type TenantUncheckedCreateInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUpdateInput = {
@@ -502,6 +512,8 @@ export type TenantUpdateInput = {
   membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateInput = {
@@ -539,6 +551,8 @@ export type TenantUncheckedUpdateInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateManyInput = {
@@ -925,6 +939,34 @@ export type TenantUpdateOneRequiredWithoutStoreProductsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.TenantUpdateToOneWithWhereWithoutStoreProductsInput, Prisma.TenantUpdateWithoutStoreProductsInput>, Prisma.TenantUncheckedUpdateWithoutStoreProductsInput>
 }
 
+export type TenantCreateNestedOneWithoutLikesInput = {
+  create?: Prisma.XOR<Prisma.TenantCreateWithoutLikesInput, Prisma.TenantUncheckedCreateWithoutLikesInput>
+  connectOrCreate?: Prisma.TenantCreateOrConnectWithoutLikesInput
+  connect?: Prisma.TenantWhereUniqueInput
+}
+
+export type TenantUpdateOneRequiredWithoutLikesNestedInput = {
+  create?: Prisma.XOR<Prisma.TenantCreateWithoutLikesInput, Prisma.TenantUncheckedCreateWithoutLikesInput>
+  connectOrCreate?: Prisma.TenantCreateOrConnectWithoutLikesInput
+  upsert?: Prisma.TenantUpsertWithoutLikesInput
+  connect?: Prisma.TenantWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.TenantUpdateToOneWithWhereWithoutLikesInput, Prisma.TenantUpdateWithoutLikesInput>, Prisma.TenantUncheckedUpdateWithoutLikesInput>
+}
+
+export type TenantCreateNestedOneWithoutCommentsInput = {
+  create?: Prisma.XOR<Prisma.TenantCreateWithoutCommentsInput, Prisma.TenantUncheckedCreateWithoutCommentsInput>
+  connectOrCreate?: Prisma.TenantCreateOrConnectWithoutCommentsInput
+  connect?: Prisma.TenantWhereUniqueInput
+}
+
+export type TenantUpdateOneRequiredWithoutCommentsNestedInput = {
+  create?: Prisma.XOR<Prisma.TenantCreateWithoutCommentsInput, Prisma.TenantUncheckedCreateWithoutCommentsInput>
+  connectOrCreate?: Prisma.TenantCreateOrConnectWithoutCommentsInput
+  upsert?: Prisma.TenantUpsertWithoutCommentsInput
+  connect?: Prisma.TenantWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.TenantUpdateToOneWithWhereWithoutCommentsInput, Prisma.TenantUpdateWithoutCommentsInput>, Prisma.TenantUncheckedUpdateWithoutCommentsInput>
+}
+
 export type TenantCreateNestedOneWithoutStoreOrdersInput = {
   create?: Prisma.XOR<Prisma.TenantCreateWithoutStoreOrdersInput, Prisma.TenantUncheckedCreateWithoutStoreOrdersInput>
   connectOrCreate?: Prisma.TenantCreateOrConnectWithoutStoreOrdersInput
@@ -973,6 +1015,8 @@ export type TenantCreateWithoutRolesInput = {
   membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutRolesInput = {
@@ -1009,6 +1053,8 @@ export type TenantUncheckedCreateWithoutRolesInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutRolesInput = {
@@ -1061,6 +1107,8 @@ export type TenantUpdateWithoutRolesInput = {
   membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutRolesInput = {
@@ -1097,6 +1145,8 @@ export type TenantUncheckedUpdateWithoutRolesInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutRolePermissionsInput = {
@@ -1133,6 +1183,8 @@ export type TenantCreateWithoutRolePermissionsInput = {
   membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutRolePermissionsInput = {
@@ -1169,6 +1221,8 @@ export type TenantUncheckedCreateWithoutRolePermissionsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutRolePermissionsInput = {
@@ -1221,6 +1275,8 @@ export type TenantUpdateWithoutRolePermissionsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutRolePermissionsInput = {
@@ -1257,6 +1313,8 @@ export type TenantUncheckedUpdateWithoutRolePermissionsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutSettingsInput = {
@@ -1293,6 +1351,8 @@ export type TenantCreateWithoutSettingsInput = {
   membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutSettingsInput = {
@@ -1329,6 +1389,8 @@ export type TenantUncheckedCreateWithoutSettingsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutSettingsInput = {
@@ -1381,6 +1443,8 @@ export type TenantUpdateWithoutSettingsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutSettingsInput = {
@@ -1417,6 +1481,8 @@ export type TenantUncheckedUpdateWithoutSettingsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutChargesInput = {
@@ -1453,6 +1519,8 @@ export type TenantCreateWithoutChargesInput = {
   membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutChargesInput = {
@@ -1489,6 +1557,8 @@ export type TenantUncheckedCreateWithoutChargesInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutChargesInput = {
@@ -1541,6 +1611,8 @@ export type TenantUpdateWithoutChargesInput = {
   membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutChargesInput = {
@@ -1577,6 +1649,8 @@ export type TenantUncheckedUpdateWithoutChargesInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutMembershipsInput = {
@@ -1613,6 +1687,8 @@ export type TenantCreateWithoutMembershipsInput = {
   membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutMembershipsInput = {
@@ -1649,6 +1725,8 @@ export type TenantUncheckedCreateWithoutMembershipsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutMembershipsInput = {
@@ -1701,6 +1779,8 @@ export type TenantUpdateWithoutMembershipsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutMembershipsInput = {
@@ -1737,6 +1817,8 @@ export type TenantUncheckedUpdateWithoutMembershipsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutSubscriptionsInput = {
@@ -1773,6 +1855,8 @@ export type TenantCreateWithoutSubscriptionsInput = {
   membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutSubscriptionsInput = {
@@ -1809,6 +1893,8 @@ export type TenantUncheckedCreateWithoutSubscriptionsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutSubscriptionsInput = {
@@ -1861,6 +1947,8 @@ export type TenantUpdateWithoutSubscriptionsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutSubscriptionsInput = {
@@ -1897,6 +1985,8 @@ export type TenantUncheckedUpdateWithoutSubscriptionsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutShiftsInput = {
@@ -1933,6 +2023,8 @@ export type TenantCreateWithoutShiftsInput = {
   membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutShiftsInput = {
@@ -1969,6 +2061,8 @@ export type TenantUncheckedCreateWithoutShiftsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutShiftsInput = {
@@ -2021,6 +2115,8 @@ export type TenantUpdateWithoutShiftsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutShiftsInput = {
@@ -2057,6 +2153,8 @@ export type TenantUncheckedUpdateWithoutShiftsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutTodosInput = {
@@ -2093,6 +2191,8 @@ export type TenantCreateWithoutTodosInput = {
   membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutTodosInput = {
@@ -2129,6 +2229,8 @@ export type TenantUncheckedCreateWithoutTodosInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutTodosInput = {
@@ -2181,6 +2283,8 @@ export type TenantUpdateWithoutTodosInput = {
   membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutTodosInput = {
@@ -2217,6 +2321,8 @@ export type TenantUncheckedUpdateWithoutTodosInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutPaymentsInput = {
@@ -2253,6 +2359,8 @@ export type TenantCreateWithoutPaymentsInput = {
   membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutPaymentsInput = {
@@ -2289,6 +2397,8 @@ export type TenantUncheckedCreateWithoutPaymentsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutPaymentsInput = {
@@ -2341,6 +2451,8 @@ export type TenantUpdateWithoutPaymentsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutPaymentsInput = {
@@ -2377,6 +2489,8 @@ export type TenantUncheckedUpdateWithoutPaymentsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutCouponsInput = {
@@ -2413,6 +2527,8 @@ export type TenantCreateWithoutCouponsInput = {
   membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutCouponsInput = {
@@ -2449,6 +2565,8 @@ export type TenantUncheckedCreateWithoutCouponsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutCouponsInput = {
@@ -2501,6 +2619,8 @@ export type TenantUpdateWithoutCouponsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutCouponsInput = {
@@ -2537,6 +2657,8 @@ export type TenantUncheckedUpdateWithoutCouponsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutCouponRedemptionsInput = {
@@ -2573,6 +2695,8 @@ export type TenantCreateWithoutCouponRedemptionsInput = {
   membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutCouponRedemptionsInput = {
@@ -2609,6 +2733,8 @@ export type TenantUncheckedCreateWithoutCouponRedemptionsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutCouponRedemptionsInput = {
@@ -2661,6 +2787,8 @@ export type TenantUpdateWithoutCouponRedemptionsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutCouponRedemptionsInput = {
@@ -2697,6 +2825,8 @@ export type TenantUncheckedUpdateWithoutCouponRedemptionsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutCoinLedgerInput = {
@@ -2733,6 +2863,8 @@ export type TenantCreateWithoutCoinLedgerInput = {
   membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutCoinLedgerInput = {
@@ -2769,6 +2901,8 @@ export type TenantUncheckedCreateWithoutCoinLedgerInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutCoinLedgerInput = {
@@ -2821,6 +2955,8 @@ export type TenantUpdateWithoutCoinLedgerInput = {
   membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutCoinLedgerInput = {
@@ -2857,6 +2993,8 @@ export type TenantUncheckedUpdateWithoutCoinLedgerInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutMembershipFreezesInput = {
@@ -2893,6 +3031,8 @@ export type TenantCreateWithoutMembershipFreezesInput = {
   coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutMembershipFreezesInput = {
@@ -2929,6 +3069,8 @@ export type TenantUncheckedCreateWithoutMembershipFreezesInput = {
   coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutMembershipFreezesInput = {
@@ -2981,6 +3123,8 @@ export type TenantUpdateWithoutMembershipFreezesInput = {
   coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutMembershipFreezesInput = {
@@ -3017,6 +3161,8 @@ export type TenantUncheckedUpdateWithoutMembershipFreezesInput = {
   coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutWorkoutPlansInput = {
@@ -3053,6 +3199,8 @@ export type TenantCreateWithoutWorkoutPlansInput = {
   membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutWorkoutPlansInput = {
@@ -3089,6 +3237,8 @@ export type TenantUncheckedCreateWithoutWorkoutPlansInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutWorkoutPlansInput = {
@@ -3141,6 +3291,8 @@ export type TenantUpdateWithoutWorkoutPlansInput = {
   membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutWorkoutPlansInput = {
@@ -3177,6 +3329,8 @@ export type TenantUncheckedUpdateWithoutWorkoutPlansInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutBadgesInput = {
@@ -3213,6 +3367,8 @@ export type TenantCreateWithoutBadgesInput = {
   membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutBadgesInput = {
@@ -3249,6 +3405,8 @@ export type TenantUncheckedCreateWithoutBadgesInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutBadgesInput = {
@@ -3301,6 +3459,8 @@ export type TenantUpdateWithoutBadgesInput = {
   membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutBadgesInput = {
@@ -3337,6 +3497,8 @@ export type TenantUncheckedUpdateWithoutBadgesInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutPlatformPaymentsInput = {
@@ -3373,6 +3535,8 @@ export type TenantCreateWithoutPlatformPaymentsInput = {
   membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutPlatformPaymentsInput = {
@@ -3409,6 +3573,8 @@ export type TenantUncheckedCreateWithoutPlatformPaymentsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutPlatformPaymentsInput = {
@@ -3461,6 +3627,8 @@ export type TenantUpdateWithoutPlatformPaymentsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutPlatformPaymentsInput = {
@@ -3497,6 +3665,8 @@ export type TenantUncheckedUpdateWithoutPlatformPaymentsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutAttendancesInput = {
@@ -3533,6 +3703,8 @@ export type TenantCreateWithoutAttendancesInput = {
   membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutAttendancesInput = {
@@ -3569,6 +3741,8 @@ export type TenantUncheckedCreateWithoutAttendancesInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutAttendancesInput = {
@@ -3621,6 +3795,8 @@ export type TenantUpdateWithoutAttendancesInput = {
   membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutAttendancesInput = {
@@ -3657,6 +3833,8 @@ export type TenantUncheckedUpdateWithoutAttendancesInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutAuditLogsInput = {
@@ -3693,6 +3871,8 @@ export type TenantCreateWithoutAuditLogsInput = {
   membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutAuditLogsInput = {
@@ -3729,6 +3909,8 @@ export type TenantUncheckedCreateWithoutAuditLogsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutAuditLogsInput = {
@@ -3781,6 +3963,8 @@ export type TenantUpdateWithoutAuditLogsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutAuditLogsInput = {
@@ -3817,6 +4001,8 @@ export type TenantUncheckedUpdateWithoutAuditLogsInput = {
   membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutStoreProductsInput = {
@@ -3853,6 +4039,8 @@ export type TenantCreateWithoutStoreProductsInput = {
   coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutTenantInput
   membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutStoreProductsInput = {
@@ -3889,6 +4077,8 @@ export type TenantUncheckedCreateWithoutStoreProductsInput = {
   coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutTenantInput
   membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
   storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutStoreProductsInput = {
@@ -3941,6 +4131,8 @@ export type TenantUpdateWithoutStoreProductsInput = {
   coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutTenantNestedInput
   membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutStoreProductsInput = {
@@ -3977,6 +4169,344 @@ export type TenantUncheckedUpdateWithoutStoreProductsInput = {
   coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutTenantNestedInput
   membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
   storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
+}
+
+export type TenantCreateWithoutLikesInput = {
+  id?: string
+  name: string
+  slug: string
+  email?: string | null
+  phone?: string | null
+  logoUrl?: string | null
+  address?: string | null
+  estd?: Date | string | null
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  markdown?: string | null
+  description?: string | null
+  platformExpiresAt?: Date | string | null
+  memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutTenantInput
+  workoutPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutTenantInput
+  badges?: Prisma.BadgeCreateNestedManyWithoutTenantInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTenantInput
+  settings?: Prisma.TenantSettingsCreateNestedOneWithoutTenantInput
+  charges?: Prisma.TenantChargeCreateNestedManyWithoutTenantInput
+  platformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutTenantInput
+  attendances?: Prisma.AttendanceCreateNestedManyWithoutTenantInput
+  todos?: Prisma.TodoCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideCreateNestedManyWithoutTenantInput
+  roles?: Prisma.RoleCreateNestedManyWithoutTenantInput
+  coupons?: Prisma.CouponCreateNestedManyWithoutTenantInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutTenantInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutTenantInput
+  membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
+  storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
+  storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
+}
+
+export type TenantUncheckedCreateWithoutLikesInput = {
+  id?: string
+  name: string
+  slug: string
+  email?: string | null
+  phone?: string | null
+  logoUrl?: string | null
+  address?: string | null
+  estd?: Date | string | null
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  markdown?: string | null
+  description?: string | null
+  platformExpiresAt?: Date | string | null
+  memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutTenantInput
+  workoutPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutTenantInput
+  badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutTenantInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTenantInput
+  settings?: Prisma.TenantSettingsUncheckedCreateNestedOneWithoutTenantInput
+  charges?: Prisma.TenantChargeUncheckedCreateNestedManyWithoutTenantInput
+  platformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutTenantInput
+  attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutTenantInput
+  todos?: Prisma.TodoUncheckedCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedCreateNestedManyWithoutTenantInput
+  roles?: Prisma.RoleUncheckedCreateNestedManyWithoutTenantInput
+  coupons?: Prisma.CouponUncheckedCreateNestedManyWithoutTenantInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutTenantInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutTenantInput
+  membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
+  storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
+  storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
+}
+
+export type TenantCreateOrConnectWithoutLikesInput = {
+  where: Prisma.TenantWhereUniqueInput
+  create: Prisma.XOR<Prisma.TenantCreateWithoutLikesInput, Prisma.TenantUncheckedCreateWithoutLikesInput>
+}
+
+export type TenantUpsertWithoutLikesInput = {
+  update: Prisma.XOR<Prisma.TenantUpdateWithoutLikesInput, Prisma.TenantUncheckedUpdateWithoutLikesInput>
+  create: Prisma.XOR<Prisma.TenantCreateWithoutLikesInput, Prisma.TenantUncheckedCreateWithoutLikesInput>
+  where?: Prisma.TenantWhereInput
+}
+
+export type TenantUpdateToOneWithWhereWithoutLikesInput = {
+  where?: Prisma.TenantWhereInput
+  data: Prisma.XOR<Prisma.TenantUpdateWithoutLikesInput, Prisma.TenantUncheckedUpdateWithoutLikesInput>
+}
+
+export type TenantUpdateWithoutLikesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  estd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutTenantNestedInput
+  workoutPlans?: Prisma.WorkoutPlanUpdateManyWithoutTenantNestedInput
+  badges?: Prisma.BadgeUpdateManyWithoutTenantNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutTenantNestedInput
+  settings?: Prisma.TenantSettingsUpdateOneWithoutTenantNestedInput
+  charges?: Prisma.TenantChargeUpdateManyWithoutTenantNestedInput
+  platformPayments?: Prisma.PlatformPaymentUpdateManyWithoutTenantNestedInput
+  attendances?: Prisma.AttendanceUpdateManyWithoutTenantNestedInput
+  todos?: Prisma.TodoUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUpdateManyWithoutTenantNestedInput
+  roles?: Prisma.RoleUpdateManyWithoutTenantNestedInput
+  coupons?: Prisma.CouponUpdateManyWithoutTenantNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutTenantNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutTenantNestedInput
+  membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
+  storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
+  storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
+}
+
+export type TenantUncheckedUpdateWithoutLikesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  estd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutTenantNestedInput
+  workoutPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutTenantNestedInput
+  badges?: Prisma.BadgeUncheckedUpdateManyWithoutTenantNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTenantNestedInput
+  settings?: Prisma.TenantSettingsUncheckedUpdateOneWithoutTenantNestedInput
+  charges?: Prisma.TenantChargeUncheckedUpdateManyWithoutTenantNestedInput
+  platformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutTenantNestedInput
+  attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutTenantNestedInput
+  todos?: Prisma.TodoUncheckedUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedUpdateManyWithoutTenantNestedInput
+  roles?: Prisma.RoleUncheckedUpdateManyWithoutTenantNestedInput
+  coupons?: Prisma.CouponUncheckedUpdateManyWithoutTenantNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutTenantNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutTenantNestedInput
+  membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
+  storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
+  storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
+}
+
+export type TenantCreateWithoutCommentsInput = {
+  id?: string
+  name: string
+  slug: string
+  email?: string | null
+  phone?: string | null
+  logoUrl?: string | null
+  address?: string | null
+  estd?: Date | string | null
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  markdown?: string | null
+  description?: string | null
+  platformExpiresAt?: Date | string | null
+  memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutTenantInput
+  workoutPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutTenantInput
+  badges?: Prisma.BadgeCreateNestedManyWithoutTenantInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTenantInput
+  settings?: Prisma.TenantSettingsCreateNestedOneWithoutTenantInput
+  charges?: Prisma.TenantChargeCreateNestedManyWithoutTenantInput
+  platformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutTenantInput
+  attendances?: Prisma.AttendanceCreateNestedManyWithoutTenantInput
+  todos?: Prisma.TodoCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideCreateNestedManyWithoutTenantInput
+  roles?: Prisma.RoleCreateNestedManyWithoutTenantInput
+  coupons?: Prisma.CouponCreateNestedManyWithoutTenantInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutTenantInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutTenantInput
+  membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
+  storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
+  storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+}
+
+export type TenantUncheckedCreateWithoutCommentsInput = {
+  id?: string
+  name: string
+  slug: string
+  email?: string | null
+  phone?: string | null
+  logoUrl?: string | null
+  address?: string | null
+  estd?: Date | string | null
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  markdown?: string | null
+  description?: string | null
+  platformExpiresAt?: Date | string | null
+  memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutTenantInput
+  workoutPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutTenantInput
+  badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutTenantInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTenantInput
+  settings?: Prisma.TenantSettingsUncheckedCreateNestedOneWithoutTenantInput
+  charges?: Prisma.TenantChargeUncheckedCreateNestedManyWithoutTenantInput
+  platformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutTenantInput
+  attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutTenantInput
+  todos?: Prisma.TodoUncheckedCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedCreateNestedManyWithoutTenantInput
+  roles?: Prisma.RoleUncheckedCreateNestedManyWithoutTenantInput
+  coupons?: Prisma.CouponUncheckedCreateNestedManyWithoutTenantInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutTenantInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutTenantInput
+  membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
+  storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
+  storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+}
+
+export type TenantCreateOrConnectWithoutCommentsInput = {
+  where: Prisma.TenantWhereUniqueInput
+  create: Prisma.XOR<Prisma.TenantCreateWithoutCommentsInput, Prisma.TenantUncheckedCreateWithoutCommentsInput>
+}
+
+export type TenantUpsertWithoutCommentsInput = {
+  update: Prisma.XOR<Prisma.TenantUpdateWithoutCommentsInput, Prisma.TenantUncheckedUpdateWithoutCommentsInput>
+  create: Prisma.XOR<Prisma.TenantCreateWithoutCommentsInput, Prisma.TenantUncheckedCreateWithoutCommentsInput>
+  where?: Prisma.TenantWhereInput
+}
+
+export type TenantUpdateToOneWithWhereWithoutCommentsInput = {
+  where?: Prisma.TenantWhereInput
+  data: Prisma.XOR<Prisma.TenantUpdateWithoutCommentsInput, Prisma.TenantUncheckedUpdateWithoutCommentsInput>
+}
+
+export type TenantUpdateWithoutCommentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  estd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutTenantNestedInput
+  workoutPlans?: Prisma.WorkoutPlanUpdateManyWithoutTenantNestedInput
+  badges?: Prisma.BadgeUpdateManyWithoutTenantNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutTenantNestedInput
+  settings?: Prisma.TenantSettingsUpdateOneWithoutTenantNestedInput
+  charges?: Prisma.TenantChargeUpdateManyWithoutTenantNestedInput
+  platformPayments?: Prisma.PlatformPaymentUpdateManyWithoutTenantNestedInput
+  attendances?: Prisma.AttendanceUpdateManyWithoutTenantNestedInput
+  todos?: Prisma.TodoUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUpdateManyWithoutTenantNestedInput
+  roles?: Prisma.RoleUpdateManyWithoutTenantNestedInput
+  coupons?: Prisma.CouponUpdateManyWithoutTenantNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutTenantNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutTenantNestedInput
+  membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
+  storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
+  storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+}
+
+export type TenantUncheckedUpdateWithoutCommentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  estd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutTenantNestedInput
+  workoutPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutTenantNestedInput
+  badges?: Prisma.BadgeUncheckedUpdateManyWithoutTenantNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTenantNestedInput
+  settings?: Prisma.TenantSettingsUncheckedUpdateOneWithoutTenantNestedInput
+  charges?: Prisma.TenantChargeUncheckedUpdateManyWithoutTenantNestedInput
+  platformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutTenantNestedInput
+  attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutTenantNestedInput
+  todos?: Prisma.TodoUncheckedUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedUpdateManyWithoutTenantNestedInput
+  roles?: Prisma.RoleUncheckedUpdateManyWithoutTenantNestedInput
+  coupons?: Prisma.CouponUncheckedUpdateManyWithoutTenantNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutTenantNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutTenantNestedInput
+  membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
+  storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
+  storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutStoreOrdersInput = {
@@ -4013,6 +4543,8 @@ export type TenantCreateWithoutStoreOrdersInput = {
   coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutTenantInput
   membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutStoreOrdersInput = {
@@ -4049,6 +4581,8 @@ export type TenantUncheckedCreateWithoutStoreOrdersInput = {
   coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutTenantInput
   membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
   storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutStoreOrdersInput = {
@@ -4101,6 +4635,8 @@ export type TenantUpdateWithoutStoreOrdersInput = {
   coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutTenantNestedInput
   membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutStoreOrdersInput = {
@@ -4137,6 +4673,8 @@ export type TenantUncheckedUpdateWithoutStoreOrdersInput = {
   coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutTenantNestedInput
   membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
   storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 
@@ -4164,6 +4702,8 @@ export type TenantCountOutputType = {
   membershipFreezes: number
   storeProducts: number
   storeOrders: number
+  likes: number
+  comments: number
 }
 
 export type TenantCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -4186,6 +4726,8 @@ export type TenantCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions
   membershipFreezes?: boolean | TenantCountOutputTypeCountMembershipFreezesArgs
   storeProducts?: boolean | TenantCountOutputTypeCountStoreProductsArgs
   storeOrders?: boolean | TenantCountOutputTypeCountStoreOrdersArgs
+  likes?: boolean | TenantCountOutputTypeCountLikesArgs
+  comments?: boolean | TenantCountOutputTypeCountCommentsArgs
 }
 
 /**
@@ -4331,6 +4873,20 @@ export type TenantCountOutputTypeCountStoreOrdersArgs<ExtArgs extends runtime.Ty
   where?: Prisma.StoreOrderWhereInput
 }
 
+/**
+ * TenantCountOutputType without action
+ */
+export type TenantCountOutputTypeCountLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TenantLikeWhereInput
+}
+
+/**
+ * TenantCountOutputType without action
+ */
+export type TenantCountOutputTypeCountCommentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TenantCommentWhereInput
+}
+
 
 export type TenantSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -4367,6 +4923,8 @@ export type TenantSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   membershipFreezes?: boolean | Prisma.Tenant$membershipFreezesArgs<ExtArgs>
   storeProducts?: boolean | Prisma.Tenant$storeProductsArgs<ExtArgs>
   storeOrders?: boolean | Prisma.Tenant$storeOrdersArgs<ExtArgs>
+  likes?: boolean | Prisma.Tenant$likesArgs<ExtArgs>
+  comments?: boolean | Prisma.Tenant$commentsArgs<ExtArgs>
   _count?: boolean | Prisma.TenantCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["tenant"]>
 
@@ -4443,6 +5001,8 @@ export type TenantInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   membershipFreezes?: boolean | Prisma.Tenant$membershipFreezesArgs<ExtArgs>
   storeProducts?: boolean | Prisma.Tenant$storeProductsArgs<ExtArgs>
   storeOrders?: boolean | Prisma.Tenant$storeOrdersArgs<ExtArgs>
+  likes?: boolean | Prisma.Tenant$likesArgs<ExtArgs>
+  comments?: boolean | Prisma.Tenant$commentsArgs<ExtArgs>
   _count?: boolean | Prisma.TenantCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type TenantIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -4471,6 +5031,8 @@ export type $TenantPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     membershipFreezes: Prisma.$MembershipFreezePayload<ExtArgs>[]
     storeProducts: Prisma.$StoreProductPayload<ExtArgs>[]
     storeOrders: Prisma.$StoreOrderPayload<ExtArgs>[]
+    likes: Prisma.$TenantLikePayload<ExtArgs>[]
+    comments: Prisma.$TenantCommentPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -4910,6 +5472,8 @@ export interface Prisma__TenantClient<T, Null = never, ExtArgs extends runtime.T
   membershipFreezes<T extends Prisma.Tenant$membershipFreezesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$membershipFreezesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MembershipFreezePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   storeProducts<T extends Prisma.Tenant$storeProductsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$storeProductsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StoreProductPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   storeOrders<T extends Prisma.Tenant$storeOrdersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$storeOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StoreOrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  likes<T extends Prisma.Tenant$likesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$likesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TenantLikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  comments<T extends Prisma.Tenant$commentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$commentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TenantCommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5816,6 +6380,54 @@ export type Tenant$storeOrdersArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.StoreOrderScalarFieldEnum | Prisma.StoreOrderScalarFieldEnum[]
+}
+
+/**
+ * Tenant.likes
+ */
+export type Tenant$likesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TenantLike
+   */
+  select?: Prisma.TenantLikeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TenantLike
+   */
+  omit?: Prisma.TenantLikeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TenantLikeInclude<ExtArgs> | null
+  where?: Prisma.TenantLikeWhereInput
+  orderBy?: Prisma.TenantLikeOrderByWithRelationInput | Prisma.TenantLikeOrderByWithRelationInput[]
+  cursor?: Prisma.TenantLikeWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TenantLikeScalarFieldEnum | Prisma.TenantLikeScalarFieldEnum[]
+}
+
+/**
+ * Tenant.comments
+ */
+export type Tenant$commentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TenantComment
+   */
+  select?: Prisma.TenantCommentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TenantComment
+   */
+  omit?: Prisma.TenantCommentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TenantCommentInclude<ExtArgs> | null
+  where?: Prisma.TenantCommentWhereInput
+  orderBy?: Prisma.TenantCommentOrderByWithRelationInput | Prisma.TenantCommentOrderByWithRelationInput[]
+  cursor?: Prisma.TenantCommentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TenantCommentScalarFieldEnum | Prisma.TenantCommentScalarFieldEnum[]
 }
 
 /**

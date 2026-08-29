@@ -40,6 +40,24 @@ export const publicController = {
    return ok(c, result.data);
   },
 
+  /** One product's page, for a visitor: media, body, and what members said. */
+  async getTenantStoreProduct(c: Context) {
+   const host = c.req.query("host") ?? c.req.header("host") ?? "";
+   if (!host) return notFound(c, "Tenant host is required.");
+   const result = await publicService.getStoreProductByHost(host, c.req.param("productId")!);
+   if ("error" in result) return notFound(c, result.error ?? "Product not found.");
+   return ok(c, result.data);
+  },
+
+  /** The gym's own wall — likes and comments — readable without an account. */
+  async getTenantSocial(c: Context) {
+   const host = c.req.query("host") ?? c.req.header("host") ?? "";
+   if (!host) return notFound(c, "Tenant host is required.");
+   const result = await publicService.getSocialByHost(host);
+   if ("error" in result) return notFound(c, result.error ?? "Tenant not found.");
+   return ok(c, result.data);
+  },
+
   async getTenantBranding(c: Context) {
    const host = c.req.query("host") ?? c.req.header("host") ?? "";
    if (!host) return notFound(c, "Tenant host is required.");

@@ -108,7 +108,12 @@ export default function MembersPage() {
   const canAddMember = can(Permission.MEMBERS_CREATE);
 
   // All assignable roles — the built-ins plus any custom roles the gym created.
-  const roleMatrix = useTenantRoleMatrix(currentTenantId).data;
+  // Only for a caller allowed to read them: the endpoint answers 403 to anyone
+  // else, and a coach opening this screen would spend a request on being told
+  // no every time.
+  const roleMatrix = useTenantRoleMatrix(
+    can(Permission.ROLES_READ) ? currentTenantId : null,
+  ).data;
   const assignableRoles = React.useMemo(
     () => (roleMatrix?.roles ?? []).filter((role) => !role.isSystem || ["MEMBER", "COACH", "ADMIN"].includes(role.role)),
     [roleMatrix],
@@ -162,8 +167,12 @@ export default function MembersPage() {
   // Also covers a refetch that has nothing to show yet: `useAllMembers` passes
   // `forceRefresh`, so an invalidation re-reads every page, and until the first
   // one lands there are no rows to render.
+  // Guarded by the tenant id: with no gym selected the query never runs, and a
+  // query that never runs stays `pending` forever — which showed a skeleton
+  // that never resolved for anyone signed in without a membership.
   const loading =
-    membersQuery.isPending || (membersQuery.isFetching && members.length === 0);
+    Boolean(currentTenantId) &&
+    (membersQuery.isPending || (membersQuery.isFetching && members.length === 0));
 
   const removeMember = useRemoveMember();
 

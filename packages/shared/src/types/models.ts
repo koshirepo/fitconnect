@@ -1012,15 +1012,50 @@ export interface FreezeStatus {
 export interface StoreProduct {
   id: string;
   name: string;
+  /** One plain line, shown on the storefront card. */
   description?: string | null;
+  /** The long form, rendered as markdown on the product page. */
+  markdown?: string | null;
   /** "SUPPLEMENT" | "ACCESSORY" */
   category: string;
   photos: string[];
+  /** A single video, usually YouTube, stored as the gym pasted it. */
+  videoUrl?: string | null;
   /** Coins the buyer earns per unit. Zero means no gift. */
   coinsGranted: number;
   isActive: boolean;
   createdAt: string;
   variants: StoreVariant[];
+  /** Counts rather than the rows: a card renders a number, not a list. */
+  likeCount: number;
+  commentCount: number;
+}
+
+/**
+ * Somebody's opinion, on a product or on a gym.
+ *
+ * One shape for both, because the two are the same thing to a reader: a name, a
+ * face, and what they wrote. Only the author key differs, and that is the
+ * server's problem — a product comment is tied to a membership, a gym comment
+ * to an account, because the people with something to say about a gym include
+ * those who have not joined it.
+ */
+export interface SocialComment {
+  id: string;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+  author: {
+    id: string;
+    name: string;
+    avatarUrl?: string | null;
+  };
+}
+
+/** What a like button needs to render itself after any change. */
+export interface SocialState {
+  liked: boolean;
+  likeCount: number;
 }
 
 /** One buyable combination — a flavour and a size, or a size and a colour. */

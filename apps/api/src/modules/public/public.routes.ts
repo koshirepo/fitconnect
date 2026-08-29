@@ -3,7 +3,7 @@
  *
  * - Declares the Hono routes and middleware chain for public gym discovery and tenant profile exposure. This route set is mounted from `/public` in the application entrypoint.
  * - Keep routing and authorization wiring here, and delegate request handling to the companion controller instead of placing business logic in route callbacks.
- * - Relative endpoints declared in this file: GET /gyms, GET /gyms/:slug, GET /signup/options, POST /signup, POST /signup/verify, GET /id-card/:token.
+ * - Relative endpoints declared in this file: GET /branding, GET /store, GET /store/products/:productId, GET /social, GET /gyms, GET /gyms/:slug, GET /signup/options, POST /signup, POST /signup/verify, GET /id-card/:token.
  * - Primary exports: publicRoutes.
  */
 import { Hono } from "hono";
@@ -20,6 +20,9 @@ export const publicRoutes = new Hono<AppBindings>();
 publicRoutes.get("/branding", publicController.getTenantBranding);
 /** The gym's shop window. Browsing needs no account; buying still does. */
 publicRoutes.get("/store", publicController.getTenantStore);
+publicRoutes.get("/store/products/:productId", publicController.getTenantStoreProduct);
+/** Likes and comments on the gym itself. Reading is open; writing needs an account. */
+publicRoutes.get("/social", publicController.getTenantSocial);
 publicRoutes.get("/gyms", publicController.listGyms);
 publicRoutes.get("/gyms/resolve", publicController.getTenantByHost);
 publicRoutes.get("/gyms/:slug", publicController.getTenantBySlug);

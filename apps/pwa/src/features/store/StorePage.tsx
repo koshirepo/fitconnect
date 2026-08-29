@@ -4,9 +4,11 @@
  * - Browse what the gym sells, pick a variant, and pay — online through Razorpay, or with coins and a coupon if those clear the bill.
  * - The basket holds variant ids and quantities only. Every total shown next to the pay button is the API's own figure from `startCheckout`, not one this screen worked out: a browser that priced its own basket could pay whatever it liked.
  * - Stock is claimed when checkout opens, so closing the payment window releases it again rather than leaving the tub reserved for nobody.
+ * - A product page hands a chosen variant back through `?add=`. The basket lives here and only here, so the other screen names what the member picked rather than keeping a second basket that could disagree with this one.
  * - Primary exports: StorePage.
  */
 import * as React from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { usePermissions } from "@/features/auth/permission-gate";
@@ -59,6 +61,7 @@ export default function StorePage() {
   const verifyCheckout = useVerifyStoreCheckout();
   const cancelOrder = useCancelStoreOrder();
 
+  const [searchParams, setSearchParams] = useSearchParams();
   const [basket, setBasket] = React.useState<BasketEntry[]>([]);
   const [couponCode, setCouponCode] = React.useState("");
   const [coinsToSpend, setCoinsToSpend] = React.useState("");
@@ -93,6 +96,35 @@ export default function StorePage() {
       ];
     });
   };
+
+  /**
+   * A variant chosen on the product page.
+   *
+   * Consumed once and stripped from the URL, so a refresh — or a back button
+   * landing here again — does not quietly add a second tub to the basket.
+   */
+  React.useEffect(() => {
+    const variantId = searchParams.get("add");
+    if (!variantId || products.length === 0) return;
+
+    for (const product of products) {
+      const variant = product.variants.find((candidate) => candidate.id === variantId);
+      if (variant) {
+        addToBasket(product, variant);
+        break;
+      }
+    }
+
+    setSearchParams(
+      (params) => {
+        params.delete("add");
+        return params;
+      },
+      { replace: true },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs on the
+    // arrival of the products this id has to be resolved against.
+  }, [products, searchParams]);
 
   const changeQuantity = (variantId: string, delta: number) => {
     setBasket((prev) =>
@@ -216,6 +248,7 @@ export default function StorePage() {
               product={product}
               canBuy={canBuy}
               onAdd={(variant) => addToBasket(product, variant)}
+              onOpen={() => navigate(`/store/products/${product.id}`)}
             />
           ))}
         </div>

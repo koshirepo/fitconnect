@@ -46,6 +46,8 @@ model User {
   helpful                  ProductReviewHelpful[]
   pushSubscriptions        PushSubscription[]
   recordedPlatformPayments PlatformPayment[]
+  tenantLikes              TenantLike[]
+  tenantComments           TenantComment[]
 
   @@index([email])
 }
@@ -131,6 +133,8 @@ model Tenant {
   membershipFreezes MembershipFreeze[]
   storeProducts    StoreProduct[]
   storeOrders      StoreOrder[]
+  likes            TenantLike[]
+  comments         TenantComment[]
 
   @@index([slug])
 }
@@ -269,6 +273,8 @@ model TenantMembership {
   coinLedger        CoinLedgerEntry[]
   freezes           MembershipFreeze[]
   storeOrders       StoreOrder[]              @relation("StoreOrderBuyer")
+  storeLikes        StoreProductLike[]
+  storeComments     StoreProductComment[]
   soldStoreOrders   StoreOrder[]              @relation("StoreOrderSeller")
 
   @@unique([tenantId, userId])
@@ -299,7 +305,7 @@ model Subscription {
   updatedAt    DateTime @updatedAt
 
   payments Payment[]
-  badges   Badge[]
+  badges   Badge[]
   /// Coupons restricted to this plan.
   coupons      Coupon[]
 
@@ -703,7 +709,7 @@ model Badge {
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
   users       TenantMembership[]
-  subscriptions Subscription[]
+  subscriptions Subscription[]
   /// Coupons that require this badge.
   coupons     Coupon[]
 
@@ -796,10 +802,17 @@ model StoreProduct {
   tenantId    String
   tenant      Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name        String
+  /// One plain line, shown on the storefront card.
   description String?
+  /// The long form, rendered as markdown on the product page. Where a gym
+  /// writes ingredients, dosage, or what the kit is actually made of.
+  markdown    String?
   /// "SUPPLEMENT" | "ACCESSORY"
   category    String
   photos      Json    @default("[]")
+  /// A single video, usually YouTube. Stored as the URL a gym pasted; the
+  /// player turns it into an embed, so a share link and a watch link both work.
+  videoUrl    String?
   /// Coins the buyer earns when an order containing this completes. Per product
   /// because a ₹3,000 protein tub and a ₹200 pair of gloves should not reward
   /// the same. Zero turns the gift off.
@@ -810,10 +823,76 @@ model StoreProduct {
   updatedAt DateTime @updatedAt
 
   variants StoreVariant[]
+  likes    StoreProductLike[]
+  comments StoreProductComment[]
 
   @@index([tenantId])
   @@index([tenantId, isActive])
   @@index([tenantId, category])
+}
+
+/// Approval of a gym itself, from its public profile.
+///
+/// Keyed by user rather than membership, unlike the product tables: the people
+/// who react to a gym's page include prospects deciding whether to join, and a
+/// membership id would shut exactly those people out.
+model TenantLike {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, userId])
+  @@index([tenantId])
+  @@index([userId])
+}
+
+/// What somebody said about a gym on its public page.
+model TenantComment {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, createdAt])
+  @@index([userId])
+}
+
+/// A member's approval of a product. One per member per product — the unique
+/// key is what makes the button a toggle rather than a counter anyone can run up.
+model StoreProductLike {
+  id           String           @id @default(cuid())
+  productId    String
+  product      StoreProduct     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  membershipId String
+  membership   TenantMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  createdAt    DateTime         @default(now())
+
+  @@unique([productId, membershipId])
+  @@index([productId])
+  @@index([membershipId])
+}
+
+/// What a member said about a product. Plain text on purpose: this is a gym's
+/// shop, not a forum, and anything richer would need moderation nobody staffs.
+model StoreProductComment {
+  id           String           @id @default(cuid())
+  productId    String
+  product      StoreProduct     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  membershipId String
+  membership   TenantMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  body         String
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([productId, createdAt])
+  @@index([membershipId])
 }
 
 /// One buyable combination: chocolate 1kg, or black large. Price and stock live

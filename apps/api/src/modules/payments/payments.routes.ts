@@ -96,10 +96,13 @@ paymentRoutes.get(
   paymentController.getPaymentById,
 );
 
+// Settling is the desk's job, so a coach reaches this too. What they may
+// settle it to is narrower than what an editor may, and the service decides
+// that from the caller's capabilities rather than the door being open at all.
 paymentRoutes.patch(
   "/:tenantId/payments/:paymentId",
   authenticate,
-  requireTenantPermissions(Permission.PAYMENTS_UPDATE),
+  requireAnyTenantPermission(Permission.PAYMENTS_UPDATE, Permission.PAYMENTS_SETTLE),
   paymentController.updatePaymentStatus,
 );
 
