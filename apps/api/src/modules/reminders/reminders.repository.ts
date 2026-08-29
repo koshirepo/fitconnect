@@ -90,6 +90,36 @@ export const reminderRepository = {
     });
   },
 
+  /** One reminder, with the member it went to and the payment that closed it. */
+  findById(tenantId: string, reminderId: string) {
+    return prisma.paymentReminder.findFirst({
+      where: { id: reminderId, tenantId },
+      select: {
+        id: true,
+        channel: true,
+        reason: true,
+        message: true,
+        sentAt: true,
+        paymentId: true,
+        targetPaymentId: true,
+        membershipId: true,
+        member: {
+          select: {
+            id: true,
+            memberId: true,
+            status: true,
+            dueDate: true,
+            user: { select: { name: true, phone: true, avatarUrl: true } },
+          },
+        },
+        actor: { select: { id: true, user: { select: { name: true } } } },
+        payment: {
+          select: { id: true, amount: true, description: true, status: true, paidAt: true },
+        },
+      },
+    });
+  },
+
   /** What it took to collect one payment. */
   listForPayment(paymentId: string) {
     return prisma.paymentReminder.findMany({
@@ -101,6 +131,39 @@ export const reminderRepository = {
         reason: true,
         message: true,
         sentAt: true,
+        actor: { select: { id: true, user: { select: { name: true } } } },
+      },
+    });
+  },
+
+  /**
+   * Every reminder a gym sent inside a window, oldest first.
+   *
+   * Capped rather than paged: the calendar reads one month at a time, and a
+   * month that somehow exceeds the cap is a sign of a misfiring cron, which
+   * the count in the response makes visible instead of hiding behind pages.
+   */
+  listForTenantRange(tenantId: string, from: Date, to: Date, limit = 2000) {
+    return prisma.paymentReminder.findMany({
+      where: { tenantId, sentAt: { gte: from, lt: to } },
+      orderBy: { sentAt: "asc" },
+      take: limit,
+      select: {
+        id: true,
+        channel: true,
+        reason: true,
+        message: true,
+        sentAt: true,
+        paymentId: true,
+        membershipId: true,
+        member: {
+          select: {
+            id: true,
+            memberId: true,
+            status: true,
+            user: { select: { name: true, avatarUrl: true } },
+          },
+        },
         actor: { select: { id: true, user: { select: { name: true } } } },
       },
     });

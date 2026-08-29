@@ -229,8 +229,10 @@ export default function LandingPage() {
               {gyms.map((g) => {
                 const gymUrl = buildTenantPublicUrl(g.slug);
 
+                // Same tab: a gym's page is where the visitor was heading, not
+                // a detour they should have to close afterwards.
                 return (
-                  <a key={g.id} href={gymUrl} className="group block" target="_blank" rel="noreferrer noopener">
+                  <a key={g.id} href={gymUrl} className="group block">
                     <Card className="h-full hover:border-primary/40 transition-colors">
                       <CardContent className="pt-6">
                         <div className="flex items-center gap-4">

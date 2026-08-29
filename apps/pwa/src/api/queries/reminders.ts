@@ -10,6 +10,28 @@ import { remindersApi, type LogReminderPayload } from "@/api/reminders";
 import { queryKeys } from "@/lib/query-keys";
 import { unwrap, useCurrentTenantId, useTenantQuery } from "./shared";
 
+/**
+ * A month of everything the gym sent.
+ *
+ * The month is part of the cache key, so paging back and forth reuses months
+ * already fetched rather than refetching each time.
+ */
+export function useReminderCalendar(month: string) {
+  return useTenantQuery(
+    (tenantId) => queryKeys.reminders.calendar(tenantId, month),
+    async (tenantId) => unwrap(await remindersApi.calendar(tenantId, month)),
+  );
+}
+
+/** One reminder, for the page that shows a single message. */
+export function useReminder(reminderId: string | undefined) {
+  return useTenantQuery(
+    (tenantId) => queryKeys.reminders.detail(tenantId, reminderId ?? "none"),
+    async (tenantId) => unwrap(await remindersApi.getById(tenantId, reminderId!)).reminder,
+    { enabled: Boolean(reminderId) },
+  );
+}
+
 export function useMemberReminders(
   membershipId: string | undefined,
   options: { enabled?: boolean } = {},

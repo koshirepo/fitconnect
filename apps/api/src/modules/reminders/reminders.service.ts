@@ -131,6 +131,83 @@ export const reminderService = {
     return { data: { reminder } };
   },
 
+  /**
+   * One month of a gym's reminders, bucketed by the day they went out.
+   *
+   * Days are keyed by local calendar date rather than by UTC instant: the
+   * calendar is read by people standing in the gym, and a reminder sent at
+   * 04:30 UTC belongs to the morning they saw it, not the day before.
+   */
+  async calendarForMonth(tenantId: string, month: string) {
+    const [year, monthIndex] = month.split("-").map(Number);
+    if (!year || !monthIndex || monthIndex < 1 || monthIndex > 12) {
+      return { error: "Month must look like 2026-08.", status: 400 as const };
+    }
+
+    const from = new Date(year, monthIndex - 1, 1);
+    const to = new Date(year, monthIndex, 1);
+
+    const rows = await reminderRepository.listForTenantRange(tenantId, from, to);
+
+    const days: Record<
+      string,
+      {
+        count: number;
+        push: number;
+        whatsapp: number;
+        reminders: {
+          id: string;
+          membershipId: string;
+          memberId: number | null;
+          memberName: string;
+          channel: string;
+          reason: string;
+          message: string | null;
+          sentAt: Date;
+          settled: boolean;
+          actorName: string | null;
+        }[];
+      }
+    > = {};
+
+    for (const row of rows) {
+      const sent = row.sentAt;
+      const key = `${sent.getFullYear()}-${String(sent.getMonth() + 1).padStart(2, "0")}-${String(
+        sent.getDate(),
+      ).padStart(2, "0")}`;
+
+      const bucket = (days[key] ??= { count: 0, push: 0, whatsapp: 0, reminders: [] });
+      bucket.count += 1;
+      if (row.channel === "WHATSAPP") bucket.whatsapp += 1;
+      else bucket.push += 1;
+
+      bucket.reminders.push({
+        id: row.id,
+        membershipId: row.membershipId,
+        memberId: row.member?.memberId ?? null,
+        memberName: row.member?.user.name ?? "Removed member",
+        channel: row.channel,
+        reason: row.reason,
+        message: row.message,
+        sentAt: row.sentAt,
+        settled: Boolean(row.paymentId),
+        actorName: row.actor?.user.name ?? null,
+      });
+    }
+
+    return { data: { month, total: rows.length, days } };
+  },
+
+  /** One reminder in full, for the page that shows a single message. */
+  async getById(tenantId: string, reminderId: string) {
+    const reminder = await reminderRepository.findById(tenantId, reminderId);
+    if (!reminder) {
+      return { error: "Reminder not found.", status: 404 as const };
+    }
+
+    return { data: { reminder } };
+  },
+
   /** A member's chase history, newest first. */
   async listForMember(tenantId: string, membershipId: string) {
     const membership = await prisma.tenantMembership.findFirst({

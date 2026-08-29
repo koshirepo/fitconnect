@@ -10,13 +10,43 @@ import { reminderService } from "./reminders.service";
 import { reminderRepository } from "./reminders.repository";
 import { logReminderSchema } from "./reminders.schema";
 import { parseBody } from "../../lib/http";
-import { ok, notFound } from "../../lib/response";
+import { ok, notFound, badRequest } from "../../lib/response";
 import { prisma } from "../../lib/prisma";
 import type { AppBindings } from "../../types/app-context";
 
 type AppContext = Context<AppBindings>;
 
 export const reminderController = {
+  /**
+   * A month of everything this gym sent, bucketed by day.
+   *
+   * The month comes from the query string in the same `YYYY-MM` form the
+   * attendance calendar already uses, so the two screens page alike.
+   */
+  async calendar(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    const now = new Date();
+    const month =
+      c.req.query("month") ??
+      `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+    const result = await reminderService.calendarForMonth(tenantId, month);
+    if ("error" in result) return badRequest(c, result.error!);
+
+    return ok(c, result.data);
+  },
+
+  /** One reminder, for the detail page. */
+  async getById(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    const reminderId = c.req.param("reminderId")!;
+
+    const result = await reminderService.getById(tenantId, reminderId);
+    if ("error" in result) return notFound(c, result.error!);
+
+    return ok(c, result.data);
+  },
+
   /** Everything sent to one member, newest first. */
   async listForMember(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;

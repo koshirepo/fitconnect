@@ -39,6 +39,12 @@ const BadgesPage = React.lazy(() => import("@/features/badges/BadgesPage"));
 const BadgeFormPage = React.lazy(() => import("@/features/badges/BadgeFormPage"));
 const AttendancePage = React.lazy(() => import("@/features/attendance/AttendancePage"));
 const AttendanceCalendarPage = React.lazy(() => import("@/features/attendance/AttendanceCalendarPage"));
+const ReminderCalendarPage = React.lazy(
+  () => import("@/features/reminders/ReminderCalendarPage"),
+);
+const ReminderDetailPage = React.lazy(
+  () => import("@/features/reminders/ReminderDetailPage"),
+);
 const AttendanceQrPage = React.lazy(() => import("@/features/attendance/AttendanceQrPage"));
 const WorkoutsPage = React.lazy(() => import("@/features/workouts/WorkoutsPage"));
 const WorkoutFormPage = React.lazy(() => import("@/features/workouts/WorkoutFormPage"));
@@ -300,6 +306,10 @@ export default function App() {
             <Route element={<RequirePermission anyOf={[Permission.ATTENDANCE_CALENDAR_READ]} />}>
               <Route path="/dashboard/attendance/calendar" element={<AttendanceCalendarPage />} />
             </Route>
+            <Route element={<RequirePermission anyOf={[Permission.PAYMENTS_READ]} />}>
+              <Route path="/dashboard/reminders" element={<ReminderCalendarPage />} />
+              <Route path="/dashboard/reminders/:reminderId" element={<ReminderDetailPage />} />
+            </Route>
 
             <Route element={<RequirePermission anyOf={[Permission.PAYMENTS_ANALYTICS_READ]} />}>
               <Route path="/dashboard/finance" element={<FinanceReportsPage />} />
@@ -530,6 +540,10 @@ export default function App() {
                       path="/attendance/calendar"
                       element={<AttendanceCalendarPage />}
                     />
+                  </Route>
+                  <Route element={<RequirePermission anyOf={[Permission.PAYMENTS_READ]} />}>
+                    <Route path="/reminders" element={<ReminderCalendarPage />} />
+                    <Route path="/reminders/:reminderId" element={<ReminderDetailPage />} />
                   </Route>
 
                   <Route element={<RequirePermission anyOf={[Permission.SETTINGS_UPDATE]} />}>

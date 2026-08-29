@@ -13,6 +13,7 @@ import {
   Building2,
   Users,
   Dumbbell,
+  BellRing,
   CreditCard,
   Package,
   Tag,
@@ -109,6 +110,12 @@ const tenantNav: NavItem[] = [
     label: "Payments",
     icon: CreditCard,
     anyOf: [Permission.PAYMENTS_READ, Permission.PAYMENTS_READ_SELF],
+  },
+  {
+    to: "/reminders",
+    label: "Reminders",
+    icon: BellRing,
+    anyOf: [Permission.PAYMENTS_READ],
   },
   {
     to: "/subscriptions",

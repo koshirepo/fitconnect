@@ -52,6 +52,10 @@ export const queryKeys = {
   },
   /** The record of chasing a member for money, by member and by payment. */
   reminders: {
+    detail: (tenantId: string, reminderId: string) =>
+      ["reminders", tenantId, "detail", reminderId] as const,
+    calendar: (tenantId: string, month: string) =>
+      ["reminders", tenantId, "calendar", month] as const,
     member: (tenantId: string, membershipId: string) =>
       ["reminders", tenantId, "member", membershipId] as const,
     payment: (tenantId: string, paymentId: string) =>
