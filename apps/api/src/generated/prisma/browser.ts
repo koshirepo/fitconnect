@@ -100,6 +100,14 @@ export type Todo = Prisma.TodoModel
  */
 export type Payment = Prisma.PaymentModel
 /**
+ * Model PaymentReminder
+ * One chase for money: a push the cron sent, or a WhatsApp message a member of
+ * staff pressed send on. Rows start unlinked and are attached to the payment
+ * that eventually arrives, so a settled payment carries the history of what it
+ * took to collect it.
+ */
+export type PaymentReminder = Prisma.PaymentReminderModel
+/**
  * Model Coupon
  * A coupon grants exactly one kind of benefit, named by `type`: money off,
  * coins to spend later, or extra days of validity. The conditions below

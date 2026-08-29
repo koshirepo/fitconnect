@@ -10,6 +10,7 @@ import { prisma } from "../../lib/prisma";
 import { emailService } from "../../lib/email";
 import { memberRepository } from "./members.repository";
 import { tenantRepository } from "../tenants/tenants.repository";
+import { reminderService } from "../reminders/reminders.service";
 
 type BackgroundTaskScheduler = (promise: Promise<unknown>) => void;
 
@@ -31,6 +32,7 @@ async function enforceOverdueMembershipsForTenant(
   )) as Array<{
     id: string;
     memberId: number;
+    userId: string;
     user: { name: string; email: string };
   }>;
   const suspended: { id: string; memberId: number; name: string }[] = [];
@@ -50,7 +52,7 @@ async function enforceOverdueMembershipsForTenant(
   }
 
   const backgroundWork = Promise.allSettled(
-    overdueMembers.map((member) =>
+    overdueMembers.flatMap((member) => [
       emailService
         .sendSuspensionEmail(
           member.user.email,
@@ -61,7 +63,25 @@ async function enforceOverdueMembershipsForTenant(
         .catch((err) => {
           console.error("Suspension email failed.", err);
         }),
-    ),
+      // The last thing this member hears from the app. Forced past the usual
+      // "is this membership active" guard precisely because it is not any more:
+      // the suspension has already been written by the time this runs, and the
+      // point of the message is to say so.
+      reminderService.sendPush(
+        {
+          tenantId,
+          membershipId: member.id,
+          userId: member.userId,
+          reason: "SUSPENDED",
+        },
+        {
+          title: `Your ${gymName} membership is now inactive`,
+          body: `It has been more than ${overdueDays} days since it expired. Renew to reactivate it.`,
+          url: "/dashboard/subscriptions",
+        },
+        { force: true },
+      ),
+    ]),
   ).then(() => undefined);
 
   if (scheduleBackgroundTask) {

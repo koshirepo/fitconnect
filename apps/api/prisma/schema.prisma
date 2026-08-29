@@ -135,6 +135,7 @@ model Tenant {
   storeOrders      StoreOrder[]
   likes            TenantLike[]
   comments         TenantComment[]
+  paymentReminders PaymentReminder[]
 
   @@index([slug])
 }
@@ -276,6 +277,8 @@ model TenantMembership {
   storeLikes        StoreProductLike[]
   storeComments     StoreProductComment[]
   soldStoreOrders   StoreOrder[]              @relation("StoreOrderSeller")
+  paymentReminders  PaymentReminder[]
+  sentReminders     PaymentReminder[]         @relation("ReminderActor")
 
   @@unique([tenantId, userId])
   @@unique([tenantId, memberId])
@@ -406,6 +409,44 @@ model Payment {
   /// one gym newest-first.
   @@index([tenantId, status])
   @@index([tenantId, createdAt])
+
+  reminders PaymentReminder[]
+}
+
+/// One chase for money: a push the cron sent, or a WhatsApp message a member of
+/// staff pressed send on. Rows start unlinked and are attached to the payment
+/// that eventually arrives, so a settled payment carries the history of what it
+/// took to collect it.
+model PaymentReminder {
+  id           String           @id @default(cuid())
+  tenantId     String
+  tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  membershipId String
+  member       TenantMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  /// PUSH or WHATSAPP. WhatsApp is recorded at the moment staff open the
+  /// message; the app cannot know whether it was then sent or read.
+  channel      String
+  /// Why it went out: RENEWAL_DUE, EXPIRED, PENDING_PAYMENT, or SUSPENDED.
+  reason       String
+  /// The message as it went out, for the history to show something concrete.
+  message      String?
+  /// Who pressed send. Null for anything the cron did on its own.
+  actorId      String?
+  actor        TenantMembership? @relation("ReminderActor", fields: [actorId], references: [id], onDelete: SetNull)
+  /// The pending payment this was chasing, when it was chasing one.
+  targetPaymentId String?
+  /// The payment that arrived afterwards and closed the chase. Null while the
+  /// money is still outstanding.
+  paymentId    String?
+  payment      Payment?         @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  sentAt       DateTime         @default(now())
+
+  @@index([tenantId])
+  @@index([paymentId])
+  /// The two reads: a member's history, and the unlinked rows a new payment
+  /// has to claim.
+  @@index([membershipId, paymentId])
+  @@index([membershipId, reason, sentAt])
 }
 
 

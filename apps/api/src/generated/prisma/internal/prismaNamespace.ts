@@ -411,6 +411,7 @@ export const ModelName = {
   Shift: 'Shift',
   Todo: 'Todo',
   Payment: 'Payment',
+  PaymentReminder: 'PaymentReminder',
   Coupon: 'Coupon',
   CouponRedemption: 'CouponRedemption',
   CoinLedgerEntry: 'CoinLedgerEntry',
@@ -451,7 +452,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "idempotencyKey" | "passwordResetToken" | "refreshToken" | "tenant" | "role" | "rolePermissionOverride" | "tenantSettings" | "tenantCharge" | "tenantMembership" | "subscription" | "shift" | "todo" | "payment" | "coupon" | "couponRedemption" | "coinLedgerEntry" | "membershipFreeze" | "product" | "productReview" | "productReviewComment" | "productReviewHelpful" | "order" | "orderItem" | "workoutPlan" | "workoutPlanAssignment" | "badge" | "platformPayment" | "attendance" | "auditLog" | "pushSubscription" | "storeProduct" | "tenantLike" | "tenantComment" | "storeProductLike" | "storeProductComment" | "storeVariant" | "storeOrder" | "storeOrderItem"
+    modelProps: "user" | "idempotencyKey" | "passwordResetToken" | "refreshToken" | "tenant" | "role" | "rolePermissionOverride" | "tenantSettings" | "tenantCharge" | "tenantMembership" | "subscription" | "shift" | "todo" | "payment" | "paymentReminder" | "coupon" | "couponRedemption" | "coinLedgerEntry" | "membershipFreeze" | "product" | "productReview" | "productReviewComment" | "productReviewHelpful" | "order" | "orderItem" | "workoutPlan" | "workoutPlanAssignment" | "badge" | "platformPayment" | "attendance" | "auditLog" | "pushSubscription" | "storeProduct" | "tenantLike" | "tenantComment" | "storeProductLike" | "storeProductComment" | "storeVariant" | "storeOrder" | "storeOrderItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1488,6 +1489,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.PaymentCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.PaymentCountAggregateOutputType> | number
+        }
+      }
+    }
+    PaymentReminder: {
+      payload: Prisma.$PaymentReminderPayload<ExtArgs>
+      fields: Prisma.PaymentReminderFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PaymentReminderFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentReminderPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PaymentReminderFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentReminderPayload>
+        }
+        findFirst: {
+          args: Prisma.PaymentReminderFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentReminderPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PaymentReminderFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentReminderPayload>
+        }
+        findMany: {
+          args: Prisma.PaymentReminderFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentReminderPayload>[]
+        }
+        create: {
+          args: Prisma.PaymentReminderCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentReminderPayload>
+        }
+        createMany: {
+          args: Prisma.PaymentReminderCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PaymentReminderCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentReminderPayload>[]
+        }
+        delete: {
+          args: Prisma.PaymentReminderDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentReminderPayload>
+        }
+        update: {
+          args: Prisma.PaymentReminderUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentReminderPayload>
+        }
+        deleteMany: {
+          args: Prisma.PaymentReminderDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PaymentReminderUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PaymentReminderUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentReminderPayload>[]
+        }
+        upsert: {
+          args: Prisma.PaymentReminderUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PaymentReminderPayload>
+        }
+        aggregate: {
+          args: Prisma.PaymentReminderAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePaymentReminder>
+        }
+        groupBy: {
+          args: Prisma.PaymentReminderGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PaymentReminderGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PaymentReminderCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PaymentReminderCountAggregateOutputType> | number
         }
       }
     }
@@ -3611,6 +3686,22 @@ export const PaymentScalarFieldEnum = {
 export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]
 
 
+export const PaymentReminderScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  membershipId: 'membershipId',
+  channel: 'channel',
+  reason: 'reason',
+  message: 'message',
+  actorId: 'actorId',
+  targetPaymentId: 'targetPaymentId',
+  paymentId: 'paymentId',
+  sentAt: 'sentAt'
+} as const
+
+export type PaymentReminderScalarFieldEnum = (typeof PaymentReminderScalarFieldEnum)[keyof typeof PaymentReminderScalarFieldEnum]
+
+
 export const CouponScalarFieldEnum = {
   id: 'id',
   tenantId: 'tenantId',
@@ -4258,6 +4349,7 @@ export type GlobalOmitConfig = {
   shift?: Prisma.ShiftOmit
   todo?: Prisma.TodoOmit
   payment?: Prisma.PaymentOmit
+  paymentReminder?: Prisma.PaymentReminderOmit
   coupon?: Prisma.CouponOmit
   couponRedemption?: Prisma.CouponRedemptionOmit
   coinLedgerEntry?: Prisma.CoinLedgerEntryOmit

@@ -234,19 +234,27 @@ export default function LandingPage() {
                     <Card className="h-full hover:border-primary/40 transition-colors">
                       <CardContent className="pt-6">
                         <div className="flex items-center gap-4">
-                          <AvatarCard name={g.name} avatarUrl={g.logoUrl} variant="md">
+                          {/* The identity block takes the room that is left so
+                              every card's chevron lands on the same edge, and a
+                              four-figure member count keeps to one line. */}
+                          <AvatarCard
+                            name={g.name}
+                            avatarUrl={g.logoUrl}
+                            variant="md"
+                            className="min-w-0 flex-1"
+                          >
                             {g.address && (
                               <p className="text-sm text-muted-foreground flex items-center gap-1 truncate">
                                 <MapPin className="h-3 w-3 shrink-0" />
                                 {g.address}
                               </p>
                             )}
-                            <p className="text-xs text-muted-foreground mt-1">
-                              <Users className="inline h-3 w-3 mr-1" />
+                            <p className="mt-1 flex items-center gap-1 text-xs whitespace-nowrap text-muted-foreground">
+                              <Users className="h-3 w-3 shrink-0" />
                               {g._count.memberships} members
                             </p>
                           </AvatarCard>
-                          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                          <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
                         </div>
                       </CardContent>
                     </Card>

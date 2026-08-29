@@ -34,6 +34,7 @@ import { SwipePane } from "@/components/ui/swipe-pane";
 import { useToast } from "@/components/ui/toast";
 import { formatShiftLabel, formatShiftWindow } from "@/lib/shifts";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import { useLogReminder, useMemberReminders } from "@/api/queries/reminders";
 import { getTenantDashboardPath } from "@/lib/subdomain";
 import { resolveAssetUrl } from "@/lib/assets";
 import {
@@ -103,6 +104,19 @@ const fmt = (amount: number) =>
     minimumFractionDigits: 0,
   }).format(amount);
 
+/** What each reminder was about, in the words the desk uses. */
+const REMINDER_REASON_LABELS: Record<string, string> = {
+  RENEWAL_DUE: "Renewal due",
+  EXPIRED: "Membership expired",
+  PENDING_PAYMENT: "Pending payment",
+  SUSPENDED: "Marked inactive",
+};
+
+/** Who sent a manual reminder, when the record knows. */
+function whatsappSender(reminder: { actor?: { user: { name: string } } | null }) {
+  return reminder.actor ? `WhatsApp · ${reminder.actor.user.name}` : "WhatsApp";
+}
+
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 function getMonthStr(d: Date) {
@@ -130,6 +144,9 @@ export default function MemberDetailPage() {
   const canManageBadges = can(Permission.BADGES_ASSIGN);
   const canChangeStatus = can(Permission.MEMBERS_STATUS_UPDATE);
   const canDeleteMember = can(Permission.MEMBERS_DELETE);
+  // The chase history is part of this member's money story, so it follows the
+  // same grant as the payments themselves.
+  const canSeeMoney = can(Permission.PAYMENTS_READ);
 
   const isEditMode = location.pathname.endsWith("/edit");
 
@@ -406,15 +423,40 @@ export default function MemberDetailPage() {
     [tenantSettings],
   );
 
-  const paymentReminderUrl = React.useMemo(() => {
+  const paymentReminderText = React.useMemo(() => {
     if (!isMemberProfile || !isDue || !member?.phone) return null;
-    const text = renderWhatsAppTemplateBody(paymentReminderTemplateBody, {
+    return renderWhatsAppTemplateBody(paymentReminderTemplateBody, {
       memberName: member.name,
       gymName,
       expirySuffix: lastExpiry ? ` on ${lastExpiry}` : "",
     });
-    return buildWhatsAppUrl(member.phone, text);
   }, [isDue, isMemberProfile, member, paymentReminderTemplateBody, gymName, lastExpiry]);
+
+  const paymentReminderUrl = React.useMemo(
+    () => (paymentReminderText && member?.phone
+      ? buildWhatsAppUrl(member.phone, paymentReminderText)
+      : null),
+    [member, paymentReminderText],
+  );
+
+  // The chase history for this member, and the recorder for the button below.
+  const remindersQuery = useMemberReminders(membershipId, { enabled: canSeeMoney });
+  const logReminder = useLogReminder();
+  const reminders = remindersQuery.data?.reminders ?? [];
+  const outstandingReminders = remindersQuery.data?.outstanding ?? 0;
+
+  /** Record the WhatsApp reminder as it opens; never block the send. */
+  const recordReminderSend = () => {
+    if (!membershipId) return;
+    logReminder.mutate({
+      membershipId,
+      payload: {
+        channel: "WHATSAPP",
+        reason: "RENEWAL_DUE",
+        ...(paymentReminderText ? { message: paymentReminderText } : {}),
+      },
+    });
+  };
 
   if (loading) return <DetailPageSkeleton />;
 
@@ -768,6 +810,7 @@ export default function MemberDetailPage() {
             href={paymentReminderUrl}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={recordReminderSend}
             className="flex items-center justify-center gap-2 rounded-lg bg-yellow-50 border border-yellow-200 px-4 py-3 text-sm font-medium text-yellow-800 hover:bg-yellow-100 transition-colors"
           >
             <AlertTriangle className="h-4 w-4" />
@@ -850,7 +893,12 @@ export default function MemberDetailPage() {
             </Button>
           )}
           {isMemberProfile && paymentReminderUrl && (
-            <a href={paymentReminderUrl} target="_blank" rel="noopener noreferrer">
+            <a
+              href={paymentReminderUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={recordReminderSend}
+            >
               <Button
                 size="sm"
                 variant="outline"
@@ -1058,6 +1106,48 @@ export default function MemberDetailPage() {
         </Card>
       )}
 
+      {/* What it has taken to collect from this member. */}
+      {isMemberProfile && canSeeMoney && reminders.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <MessageCircle className="h-5 w-5" />
+              Reminders sent
+            </CardTitle>
+            <CardDescription>
+              {outstandingReminders > 0
+                ? `${outstandingReminders} still unanswered — the rest are linked to the payments that followed.`
+                : "All linked to the payments that followed them."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {reminders.slice(0, 10).map((reminder) => (
+              <div
+                key={reminder.id}
+                className="flex items-start justify-between gap-3 border-b pb-2 last:border-0 last:pb-0"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">
+                    {REMINDER_REASON_LABELS[reminder.reason] ?? reminder.reason}
+                    <span className="ml-2 text-xs font-normal text-muted-foreground">
+                      {reminder.channel === "WHATSAPP" ? whatsappSender(reminder) : "Push"}
+                    </span>
+                  </p>
+                  {reminder.message && (
+                    <p className="truncate text-xs text-muted-foreground">{reminder.message}</p>
+                  )}
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="text-xs text-muted-foreground">{formatDate(reminder.sentAt)}</p>
+                  {reminder.paymentId && (
+                    <p className="text-[10px] text-emerald-600">settled</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
       {isMemberProfile && (
         <Card ref={paymentsSectionRef}>
           <CardHeader>

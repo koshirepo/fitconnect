@@ -7,7 +7,7 @@ import { useAuthStore } from "@/stores/auth";
 import { paymentsApi } from "@/api/payments";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAllMembers, useMember } from "@/api/queries/members";
-import { useSubscriptions } from "@/api/queries/payments";
+import { usePayments, useSubscriptions } from "@/api/queries/payments";
 import { useTenantSettings } from "@/api/queries/catalog";
 import { useCoinBalance, useCouponQuote } from "@/api/queries/coupons";
 import { getApiError } from "@/api/client";
@@ -124,6 +124,12 @@ export default function RecordPaymentPage() {
   const rosterQuery = useAllMembers({ enabled: !membershipId });
   const subscriptionsQuery = useSubscriptions();
   const settingsQuery = useTenantSettings();
+  // What this member already owes. Collected with the plan by default, because
+  // the desk taking money is the moment those dues are actually settleable.
+  const duesQuery = usePayments(
+    { page: 1, limit: 20, status: "PENDING", membershipId: fMembershipId || undefined },
+    { enabled: Boolean(fMembershipId) },
+  );
 
   const members = React.useMemo(() => rosterQuery.data ?? [], [rosterQuery.data]);
   const subscriptions = React.useMemo<Subscription[]>(
@@ -131,6 +137,23 @@ export default function RecordPaymentPage() {
     [subscriptionsQuery.data],
   );
   const tenantSettings: TenantSettings | null = settingsQuery.data ?? null;
+
+  /** Unpaid rows for this member, newest last, as the server has them. */
+  const outstandingDues = React.useMemo(
+    () => (duesQuery.data?.data.payments ?? []).filter((row) => row.status === "PENDING"),
+    [duesQuery.data],
+  );
+  const [settleDueIds, setSettleDueIds] = React.useState<string[]>([]);
+
+  // Every due is ticked when the member changes: the common case is settling
+  // everything, and unticking one is a deliberate act.
+  React.useEffect(() => {
+    setSettleDueIds(outstandingDues.map((row) => row.id));
+  }, [outstandingDues]);
+
+  const duesTotal = outstandingDues
+    .filter((row) => settleDueIds.includes(row.id))
+    .reduce((sum, row) => sum + row.amount, 0);
 
   const selectedMemberDetail = selectedMemberQuery.data ?? null;
   const selectedMember = React.useMemo<TenantMember | null>(() => {
@@ -336,6 +359,9 @@ export default function RecordPaymentPage() {
           ? { coinsToSpend: quote.coinsRedeemed }
           : {}),
         status: fStatus,
+        // The dues this collection also closes. The server re-reads each one,
+        // so a row paid elsewhere since the form loaded is simply skipped.
+        ...(settleDueIds.length > 0 ? { settlePendingIds: settleDueIds } : {}),
         note: fNote || undefined,
         validUntil: fValidUntil,
         // Display metadata for offline pending list (stripped by Zod on server)
@@ -582,6 +608,52 @@ export default function RecordPaymentPage() {
               )}
             </div>
 
+            {/* Dues already on the account, collected with this payment. */}
+            {outstandingDues.length > 0 && (
+              <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50/60 p-3 dark:border-amber-900/50 dark:bg-amber-950/20">
+                <p className="text-sm font-medium">Pending dues on this account</p>
+                {outstandingDues.map((due) => (
+                  <label key={due.id} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      className="size-4"
+                      checked={settleDueIds.includes(due.id)}
+                      onChange={(e) =>
+                        setSettleDueIds((prev) =>
+                          e.target.checked
+                            ? [...prev, due.id]
+                            : prev.filter((id) => id !== due.id),
+                        )
+                      }
+                    />
+                    <span className="flex-1 truncate">{due.description ?? "Pending payment"}</span>
+                    <span className="font-medium">{formatCurrency(due.amount)}</span>
+                  </label>
+                ))}
+                <p className="text-xs text-muted-foreground">
+                  Ticked dues are settled along with this payment. Untick one to leave it
+                  outstanding.
+                </p>
+              </div>
+            )}
+
+            {/* What the member actually hands over. */}
+            {duesTotal > 0 && (
+              <div className="space-y-1 rounded-lg border p-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Plan</span>
+                  <span>{formatCurrency(totalAmount)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Pending dues</span>
+                  <span>{formatCurrency(duesTotal)}</span>
+                </div>
+                <div className="flex justify-between border-t pt-1 font-semibold">
+                  <span>Total to collect</span>
+                  <span>{formatCurrency(totalAmount + duesTotal)}</span>
+                </div>
+              </div>
+            )}
             {/* Part payment — blank means paid in full. */}
             {fStatus === "COMPLETED" && (
               <div className="space-y-2">

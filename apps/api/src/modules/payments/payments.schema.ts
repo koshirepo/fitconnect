@@ -37,6 +37,16 @@ export const createPaymentSchema = z
     couponCode: z.string().max(32).optional(),
     /** Coins to spend. Clamped to the balance and to what is owed. */
     coinsToSpend: z.number().int().min(0).optional(),
+    /**
+     * Dues this collection also settles, so the desk takes the plan and the
+     * arrears in one go.
+     *
+     * Ids rather than a flag: the form shows exactly which rows it is about to
+     * close, and a due raised between loading the form and submitting it is not
+     * silently swept into the total. The server re-reads every id and ignores
+     * any that is no longer pending.
+     */
+    settlePendingIds: z.array(z.string()).max(20).optional(),
     validFrom: z.coerce.date().optional(),
     validUntil: z.coerce.date().optional(),
   })

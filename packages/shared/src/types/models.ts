@@ -454,9 +454,14 @@ export interface CheckoutSession {
   paymentId: string;
   orderId: string;
   keyId: string;
+  /** What the member pays: the plan plus any dues settled with it. */
   amount: number;
   currency: string;
   planTitle: string;
+  /** The plan's own price, when the order also covers arrears. */
+  planAmount?: number;
+  outstandingAmount?: number;
+  outstanding?: { id: string; amount: number; description?: string | null }[];
 }
 
 export interface VerifyCheckoutPayload {
@@ -552,6 +557,13 @@ export interface CreatePaymentPayload {
   note?: string;
   status?: "PENDING" | "COMPLETED";
   amount: number;
+  /** Handed over now, when it is less than `amount`; the rest becomes a due. */
+  paidAmount?: number;
+  /** The code itself — the server prices it, never the client. */
+  couponCode?: string;
+  coinsToSpend?: number;
+  /** Existing dues this collection settles alongside the plan. */
+  settlePendingIds?: string[];
   validFrom?: string;
   validUntil?: string;
 }

@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { usePaymentReminders } from "@/api/queries/reminders";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DetailPageSkeleton } from "@/components/ui/skeleton";
@@ -38,6 +39,14 @@ import {
 } from "lucide-react";
 import type { Payment, PaymentStatus } from "@/types/api";
 import AvatarCard from "@/components/ui/avatarCard";
+
+/** What each reminder was about, in the words the desk uses. */
+const REMINDER_REASON_LABELS: Record<string, string> = {
+  RENEWAL_DUE: "Renewal due",
+  EXPIRED: "Membership expired",
+  PENDING_PAYMENT: "Pending payment",
+  SUSPENDED: "Marked inactive",
+};
 
 const statusLabel: Record<PaymentStatus, string> = {
   PENDING: "Pending",
@@ -81,6 +90,10 @@ export default function PaymentDetailPage() {
   const canRecordPayment = can(Permission.PAYMENTS_CREATE);
 
   const paymentQuery = usePayment(paymentId);
+  // What it took to collect this one: the pushes the cron sent and the
+  // WhatsApp messages the desk sent, all claimed by this payment when it landed.
+  const remindersQuery = usePaymentReminders(paymentId);
+  const reminders = remindersQuery.data ?? [];
 
   /**
    * The payments either side of this one, read from the ledger cache so a
@@ -503,6 +516,42 @@ export default function PaymentDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* The chase behind this payment, when there was one. */}
+      {reminders.length > 0 && (
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm font-medium">
+              Collected after {reminders.length}{" "}
+              {reminders.length === 1 ? "reminder" : "reminders"}
+            </p>
+            <div className="mt-2 space-y-2">
+              {reminders.map((reminder) => (
+                <div key={reminder.id} className="flex items-start justify-between gap-3 text-sm">
+                  <div className="min-w-0">
+                    <p>
+                      {REMINDER_REASON_LABELS[reminder.reason] ?? reminder.reason}
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {reminder.channel === "WHATSAPP"
+                          ? reminder.actor
+                            ? `WhatsApp · ${reminder.actor.user.name}`
+                            : "WhatsApp"
+                          : "Push"}
+                      </span>
+                    </p>
+                    {reminder.message && (
+                      <p className="truncate text-xs text-muted-foreground">{reminder.message}</p>
+                    )}
+                  </div>
+                  <p className="shrink-0 text-xs text-muted-foreground">
+                    {formatDateTime(reminder.sentAt)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* ── Member's other payments ────────────────────────────────── */}
       {payment.member && (

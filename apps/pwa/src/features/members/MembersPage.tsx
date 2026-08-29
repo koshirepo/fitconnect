@@ -7,6 +7,7 @@ import { useAuthStore } from "@/stores/auth";
 import { useAllMembers, useRemoveMember } from "@/api/queries/members";
 import { useBadges, useTenantSettings } from "@/api/queries/catalog";
 import { useTenantRoleMatrix } from "@/api/queries/roles";
+import { useLogReminder } from "@/api/queries/reminders";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -175,22 +176,28 @@ export default function MembersPage() {
     (membersQuery.isPending || (membersQuery.isFetching && members.length === 0));
 
   const removeMember = useRemoveMember();
+  // A WhatsApp reminder is the one chase the server cannot see, so the app
+  // records it as the link opens. Failing to record never blocks the send.
+  const logReminder = useLogReminder();
 
   const paymentReminderTemplateBody = React.useMemo(
     () => getTenantWhatsAppTemplateBody(tenantSettings, "payment_reminder"),
     [tenantSettings],
   );
 
-  const getPaymentReminderUrl = React.useCallback(
-    (member: TenantMember) => {
-      const text = renderWhatsAppTemplateBody(paymentReminderTemplateBody, {
+  const getPaymentReminderText = React.useCallback(
+    (member: TenantMember) =>
+      renderWhatsAppTemplateBody(paymentReminderTemplateBody, {
         memberName: member.name,
         gymName,
         expirySuffix: member.dueDate ? ` on ${formatDate(member.dueDate)}` : "",
-      });
-      return buildWhatsAppUrl(member.phone, text);
-    },
+      }),
     [paymentReminderTemplateBody, gymName],
+  );
+
+  const getPaymentReminderUrl = React.useCallback(
+    (member: TenantMember) => buildWhatsAppUrl(member.phone, getPaymentReminderText(member)),
+    [getPaymentReminderText],
   );
 
   const pendingReminderTemplateBody = React.useMemo(
@@ -198,19 +205,23 @@ export default function MembersPage() {
     [tenantSettings],
   );
 
-  const getPendingPaymentReminderUrl = React.useCallback(
-    (member: TenantMember) => {
-      const text = renderWhatsAppTemplateBody(pendingReminderTemplateBody, {
+  const getPendingPaymentReminderText = React.useCallback(
+    (member: TenantMember) =>
+      renderWhatsAppTemplateBody(pendingReminderTemplateBody, {
         memberName: member.name,
         gymName,
         amountLine:
           member.pendingPaymentAmount !== undefined
             ? ` The outstanding amount is ${formatCurrency(member.pendingPaymentAmount)}.`
             : "",
-      });
-      return buildWhatsAppUrl(member.phone, text);
-    },
+      }),
     [pendingReminderTemplateBody, gymName],
+  );
+
+  const getPendingPaymentReminderUrl = React.useCallback(
+    (member: TenantMember) =>
+      buildWhatsAppUrl(member.phone, getPendingPaymentReminderText(member)),
+    [getPendingPaymentReminderText],
   );
 
   // Pending offline members
@@ -305,6 +316,18 @@ export default function MembersPage() {
   const clearFilters = () =>
     updateParams({ status: "", badge: "", gender: "", search: "", role: "MEMBER" });
 
+  const recordWhatsApp = (
+    member: DisplayMember,
+    reason: "PENDING_PAYMENT" | "RENEWAL_DUE",
+    message: string | null,
+  ) => {
+    if (member._pending) return;
+    logReminder.mutate({
+      membershipId: member.id,
+      payload: { channel: "WHATSAPP", reason, ...(message ? { message } : {}) },
+    });
+  };
+
   const renderMemberActions = (m: DisplayMember) => (
     <>
       {!m._pending && m.hasPendingPayment && m.phone && (
@@ -313,6 +336,7 @@ export default function MembersPage() {
           target="_blank"
           rel="noopener noreferrer"
           title="Remind about the pending payment via WhatsApp"
+          onClick={() => recordWhatsApp(m, "PENDING_PAYMENT", getPendingPaymentReminderText(m))}
         >
           <Button
             variant="ghost"
@@ -329,6 +353,7 @@ export default function MembersPage() {
           target="_blank"
           rel="noopener noreferrer"
           title="Send payment reminder via WhatsApp"
+          onClick={() => recordWhatsApp(m, "RENEWAL_DUE", getPaymentReminderText(m))}
         >
           <Button
             variant="ghost"

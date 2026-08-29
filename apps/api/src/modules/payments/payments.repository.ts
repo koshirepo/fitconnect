@@ -617,6 +617,71 @@ export const paymentRepository = {
    * so an order maps to several rows. The single-plan checkout returns one row
    * through the same query, which is why both paths can share it.
    */
+  /**
+   * What this member still owes and could pay for now.
+   *
+   * Rows already attached to a gateway order are left out: those belong to a
+   * checkout that may yet complete, and sweeping them into a second order is
+   * how a member ends up paying the same due twice.
+   */
+  findSettleablePending(tenantId: string, membershipId: string) {
+    return prisma.payment.findMany({
+      where: { tenantId, membershipId, status: "PENDING", gatewayOrderId: null },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, amount: true, description: true, createdAt: true },
+    });
+  },
+
+  /**
+   * Put existing dues on the order that is about to pay for them.
+   *
+   * Settlement already walks every row of an order, so attaching them here is
+   * all it takes for the plan and the arrears to complete together.
+   */
+  attachToGatewayOrder(
+    paymentIds: string[],
+    gatewayOrderId: string,
+    gatewayAccount: string,
+  ) {
+    if (paymentIds.length === 0) return Promise.resolve({ count: 0 });
+    return prisma.payment.updateMany({
+      where: { id: { in: paymentIds }, status: "PENDING" },
+      data: { gateway: "RAZORPAY", gatewayOrderId, gatewayAccount },
+    });
+  },
+
+  /**
+   * Settle dues collected at the desk alongside a new payment.
+   *
+   * Scoped by membership and by PENDING as well as by id, so a stale form
+   * cannot complete a row that has since been paid, refunded, or moved.
+   */
+  async settlePendingAtDesk(
+    tenantId: string,
+    membershipId: string,
+    paymentIds: string[],
+    collectorId?: string,
+  ) {
+    if (paymentIds.length === 0) return [];
+
+    const rows = await prisma.payment.findMany({
+      where: { id: { in: paymentIds }, tenantId, membershipId, status: "PENDING" },
+      select: { id: true, amount: true, description: true },
+    });
+
+    if (rows.length === 0) return [];
+
+    await prisma.payment.updateMany({
+      where: { id: { in: rows.map((row) => row.id) } },
+      data: {
+        status: "COMPLETED",
+        paidAt: new Date(),
+        ...(collectorId ? { collectorId } : {}),
+      },
+    });
+
+    return rows;
+  },
   findPaymentsByOrderId(gatewayOrderId: string, tenantId: string) {
     return prisma.payment.findMany({
       where: { gatewayOrderId, tenantId },

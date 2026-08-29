@@ -371,6 +371,7 @@ export type PaymentWhereInput = {
   charge?: Prisma.XOR<Prisma.TenantChargeNullableScalarRelationFilter, Prisma.TenantChargeWhereInput> | null
   freezes?: Prisma.MembershipFreezeListRelationFilter
   storeOrder?: Prisma.XOR<Prisma.StoreOrderNullableScalarRelationFilter, Prisma.StoreOrderWhereInput> | null
+  reminders?: Prisma.PaymentReminderListRelationFilter
 }
 
 export type PaymentOrderByWithRelationInput = {
@@ -403,6 +404,7 @@ export type PaymentOrderByWithRelationInput = {
   charge?: Prisma.TenantChargeOrderByWithRelationInput
   freezes?: Prisma.MembershipFreezeOrderByRelationAggregateInput
   storeOrder?: Prisma.StoreOrderOrderByWithRelationInput
+  reminders?: Prisma.PaymentReminderOrderByRelationAggregateInput
 }
 
 export type PaymentWhereUniqueInput = Prisma.AtLeast<{
@@ -438,6 +440,7 @@ export type PaymentWhereUniqueInput = Prisma.AtLeast<{
   charge?: Prisma.XOR<Prisma.TenantChargeNullableScalarRelationFilter, Prisma.TenantChargeWhereInput> | null
   freezes?: Prisma.MembershipFreezeListRelationFilter
   storeOrder?: Prisma.XOR<Prisma.StoreOrderNullableScalarRelationFilter, Prisma.StoreOrderWhereInput> | null
+  reminders?: Prisma.PaymentReminderListRelationFilter
 }, "id">
 
 export type PaymentOrderByWithAggregationInput = {
@@ -523,6 +526,7 @@ export type PaymentCreateInput = {
   charge?: Prisma.TenantChargeCreateNestedOneWithoutPaymentsInput
   freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutPaymentInput
   storeOrder?: Prisma.StoreOrderCreateNestedOneWithoutPaymentInput
+  reminders?: Prisma.PaymentReminderCreateNestedManyWithoutPaymentInput
 }
 
 export type PaymentUncheckedCreateInput = {
@@ -550,6 +554,7 @@ export type PaymentUncheckedCreateInput = {
   updatedAt?: Date | string
   freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutPaymentInput
   storeOrder?: Prisma.StoreOrderUncheckedCreateNestedOneWithoutPaymentInput
+  reminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutPaymentInput
 }
 
 export type PaymentUpdateInput = {
@@ -577,6 +582,7 @@ export type PaymentUpdateInput = {
   charge?: Prisma.TenantChargeUpdateOneWithoutPaymentsNestedInput
   freezes?: Prisma.MembershipFreezeUpdateManyWithoutPaymentNestedInput
   storeOrder?: Prisma.StoreOrderUpdateOneWithoutPaymentNestedInput
+  reminders?: Prisma.PaymentReminderUpdateManyWithoutPaymentNestedInput
 }
 
 export type PaymentUncheckedUpdateInput = {
@@ -604,6 +610,7 @@ export type PaymentUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutPaymentNestedInput
   storeOrder?: Prisma.StoreOrderUncheckedUpdateOneWithoutPaymentNestedInput
+  reminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutPaymentNestedInput
 }
 
 export type PaymentCreateManyInput = {
@@ -775,14 +782,14 @@ export type PaymentSumOrderByAggregateInput = {
   coinsRedeemed?: Prisma.SortOrder
 }
 
-export type PaymentScalarRelationFilter = {
-  is?: Prisma.PaymentWhereInput
-  isNot?: Prisma.PaymentWhereInput
-}
-
 export type PaymentNullableScalarRelationFilter = {
   is?: Prisma.PaymentWhereInput | null
   isNot?: Prisma.PaymentWhereInput | null
+}
+
+export type PaymentScalarRelationFilter = {
+  is?: Prisma.PaymentWhereInput
+  isNot?: Prisma.PaymentWhereInput
 }
 
 export type PaymentCreateNestedManyWithoutTenantInput = {
@@ -1003,6 +1010,22 @@ export type NullableIntFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type PaymentCreateNestedOneWithoutRemindersInput = {
+  create?: Prisma.XOR<Prisma.PaymentCreateWithoutRemindersInput, Prisma.PaymentUncheckedCreateWithoutRemindersInput>
+  connectOrCreate?: Prisma.PaymentCreateOrConnectWithoutRemindersInput
+  connect?: Prisma.PaymentWhereUniqueInput
+}
+
+export type PaymentUpdateOneWithoutRemindersNestedInput = {
+  create?: Prisma.XOR<Prisma.PaymentCreateWithoutRemindersInput, Prisma.PaymentUncheckedCreateWithoutRemindersInput>
+  connectOrCreate?: Prisma.PaymentCreateOrConnectWithoutRemindersInput
+  upsert?: Prisma.PaymentUpsertWithoutRemindersInput
+  disconnect?: Prisma.PaymentWhereInput | boolean
+  delete?: Prisma.PaymentWhereInput | boolean
+  connect?: Prisma.PaymentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PaymentUpdateToOneWithWhereWithoutRemindersInput, Prisma.PaymentUpdateWithoutRemindersInput>, Prisma.PaymentUncheckedUpdateWithoutRemindersInput>
+}
+
 export type PaymentCreateNestedOneWithoutFreezesInput = {
   create?: Prisma.XOR<Prisma.PaymentCreateWithoutFreezesInput, Prisma.PaymentUncheckedCreateWithoutFreezesInput>
   connectOrCreate?: Prisma.PaymentCreateOrConnectWithoutFreezesInput
@@ -1057,6 +1080,7 @@ export type PaymentCreateWithoutTenantInput = {
   charge?: Prisma.TenantChargeCreateNestedOneWithoutPaymentsInput
   freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutPaymentInput
   storeOrder?: Prisma.StoreOrderCreateNestedOneWithoutPaymentInput
+  reminders?: Prisma.PaymentReminderCreateNestedManyWithoutPaymentInput
 }
 
 export type PaymentUncheckedCreateWithoutTenantInput = {
@@ -1083,6 +1107,7 @@ export type PaymentUncheckedCreateWithoutTenantInput = {
   updatedAt?: Date | string
   freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutPaymentInput
   storeOrder?: Prisma.StoreOrderUncheckedCreateNestedOneWithoutPaymentInput
+  reminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutPaymentInput
 }
 
 export type PaymentCreateOrConnectWithoutTenantInput = {
@@ -1162,6 +1187,7 @@ export type PaymentCreateWithoutChargeInput = {
   subscription?: Prisma.SubscriptionCreateNestedOneWithoutPaymentsInput
   freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutPaymentInput
   storeOrder?: Prisma.StoreOrderCreateNestedOneWithoutPaymentInput
+  reminders?: Prisma.PaymentReminderCreateNestedManyWithoutPaymentInput
 }
 
 export type PaymentUncheckedCreateWithoutChargeInput = {
@@ -1188,6 +1214,7 @@ export type PaymentUncheckedCreateWithoutChargeInput = {
   updatedAt?: Date | string
   freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutPaymentInput
   storeOrder?: Prisma.StoreOrderUncheckedCreateNestedOneWithoutPaymentInput
+  reminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutPaymentInput
 }
 
 export type PaymentCreateOrConnectWithoutChargeInput = {
@@ -1239,6 +1266,7 @@ export type PaymentCreateWithoutMemberInput = {
   charge?: Prisma.TenantChargeCreateNestedOneWithoutPaymentsInput
   freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutPaymentInput
   storeOrder?: Prisma.StoreOrderCreateNestedOneWithoutPaymentInput
+  reminders?: Prisma.PaymentReminderCreateNestedManyWithoutPaymentInput
 }
 
 export type PaymentUncheckedCreateWithoutMemberInput = {
@@ -1265,6 +1293,7 @@ export type PaymentUncheckedCreateWithoutMemberInput = {
   updatedAt?: Date | string
   freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutPaymentInput
   storeOrder?: Prisma.StoreOrderUncheckedCreateNestedOneWithoutPaymentInput
+  reminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutPaymentInput
 }
 
 export type PaymentCreateOrConnectWithoutMemberInput = {
@@ -1300,6 +1329,7 @@ export type PaymentCreateWithoutCollectedByInput = {
   charge?: Prisma.TenantChargeCreateNestedOneWithoutPaymentsInput
   freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutPaymentInput
   storeOrder?: Prisma.StoreOrderCreateNestedOneWithoutPaymentInput
+  reminders?: Prisma.PaymentReminderCreateNestedManyWithoutPaymentInput
 }
 
 export type PaymentUncheckedCreateWithoutCollectedByInput = {
@@ -1326,6 +1356,7 @@ export type PaymentUncheckedCreateWithoutCollectedByInput = {
   updatedAt?: Date | string
   freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutPaymentInput
   storeOrder?: Prisma.StoreOrderUncheckedCreateNestedOneWithoutPaymentInput
+  reminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutPaymentInput
 }
 
 export type PaymentCreateOrConnectWithoutCollectedByInput = {
@@ -1393,6 +1424,7 @@ export type PaymentCreateWithoutSubscriptionInput = {
   charge?: Prisma.TenantChargeCreateNestedOneWithoutPaymentsInput
   freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutPaymentInput
   storeOrder?: Prisma.StoreOrderCreateNestedOneWithoutPaymentInput
+  reminders?: Prisma.PaymentReminderCreateNestedManyWithoutPaymentInput
 }
 
 export type PaymentUncheckedCreateWithoutSubscriptionInput = {
@@ -1419,6 +1451,7 @@ export type PaymentUncheckedCreateWithoutSubscriptionInput = {
   updatedAt?: Date | string
   freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutPaymentInput
   storeOrder?: Prisma.StoreOrderUncheckedCreateNestedOneWithoutPaymentInput
+  reminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutPaymentInput
 }
 
 export type PaymentCreateOrConnectWithoutSubscriptionInput = {
@@ -1446,6 +1479,130 @@ export type PaymentUpdateManyWithWhereWithoutSubscriptionInput = {
   data: Prisma.XOR<Prisma.PaymentUpdateManyMutationInput, Prisma.PaymentUncheckedUpdateManyWithoutSubscriptionInput>
 }
 
+export type PaymentCreateWithoutRemindersInput = {
+  id?: string
+  amount: number
+  status?: string
+  description?: string | null
+  listAmount?: number | null
+  discountAmount?: number
+  coinsRedeemed?: number
+  note?: string | null
+  paidAt?: Date | string | null
+  validFrom?: Date | string | null
+  validUntil?: Date | string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  gatewayAccount?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tenant: Prisma.TenantCreateNestedOneWithoutPaymentsInput
+  member: Prisma.TenantMembershipCreateNestedOneWithoutPaymentsInput
+  collectedBy?: Prisma.TenantMembershipCreateNestedOneWithoutCollectedPaymentsInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutPaymentsInput
+  charge?: Prisma.TenantChargeCreateNestedOneWithoutPaymentsInput
+  freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutPaymentInput
+  storeOrder?: Prisma.StoreOrderCreateNestedOneWithoutPaymentInput
+}
+
+export type PaymentUncheckedCreateWithoutRemindersInput = {
+  id?: string
+  amount: number
+  status?: string
+  tenantId: string
+  membershipId: string
+  collectorId?: string | null
+  subscriptionId?: string | null
+  chargeId?: string | null
+  description?: string | null
+  listAmount?: number | null
+  discountAmount?: number
+  coinsRedeemed?: number
+  note?: string | null
+  paidAt?: Date | string | null
+  validFrom?: Date | string | null
+  validUntil?: Date | string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  gatewayAccount?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutPaymentInput
+  storeOrder?: Prisma.StoreOrderUncheckedCreateNestedOneWithoutPaymentInput
+}
+
+export type PaymentCreateOrConnectWithoutRemindersInput = {
+  where: Prisma.PaymentWhereUniqueInput
+  create: Prisma.XOR<Prisma.PaymentCreateWithoutRemindersInput, Prisma.PaymentUncheckedCreateWithoutRemindersInput>
+}
+
+export type PaymentUpsertWithoutRemindersInput = {
+  update: Prisma.XOR<Prisma.PaymentUpdateWithoutRemindersInput, Prisma.PaymentUncheckedUpdateWithoutRemindersInput>
+  create: Prisma.XOR<Prisma.PaymentCreateWithoutRemindersInput, Prisma.PaymentUncheckedCreateWithoutRemindersInput>
+  where?: Prisma.PaymentWhereInput
+}
+
+export type PaymentUpdateToOneWithWhereWithoutRemindersInput = {
+  where?: Prisma.PaymentWhereInput
+  data: Prisma.XOR<Prisma.PaymentUpdateWithoutRemindersInput, Prisma.PaymentUncheckedUpdateWithoutRemindersInput>
+}
+
+export type PaymentUpdateWithoutRemindersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  amount?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  discountAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  coinsRedeemed?: Prisma.IntFieldUpdateOperationsInput | number
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  validFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  validUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tenant?: Prisma.TenantUpdateOneRequiredWithoutPaymentsNestedInput
+  member?: Prisma.TenantMembershipUpdateOneRequiredWithoutPaymentsNestedInput
+  collectedBy?: Prisma.TenantMembershipUpdateOneWithoutCollectedPaymentsNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutPaymentsNestedInput
+  charge?: Prisma.TenantChargeUpdateOneWithoutPaymentsNestedInput
+  freezes?: Prisma.MembershipFreezeUpdateManyWithoutPaymentNestedInput
+  storeOrder?: Prisma.StoreOrderUpdateOneWithoutPaymentNestedInput
+}
+
+export type PaymentUncheckedUpdateWithoutRemindersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  amount?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  membershipId?: Prisma.StringFieldUpdateOperationsInput | string
+  collectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  chargeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  discountAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  coinsRedeemed?: Prisma.IntFieldUpdateOperationsInput | number
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  validFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  validUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayAccount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutPaymentNestedInput
+  storeOrder?: Prisma.StoreOrderUncheckedUpdateOneWithoutPaymentNestedInput
+}
+
 export type PaymentCreateWithoutFreezesInput = {
   id?: string
   amount: number
@@ -1470,6 +1627,7 @@ export type PaymentCreateWithoutFreezesInput = {
   subscription?: Prisma.SubscriptionCreateNestedOneWithoutPaymentsInput
   charge?: Prisma.TenantChargeCreateNestedOneWithoutPaymentsInput
   storeOrder?: Prisma.StoreOrderCreateNestedOneWithoutPaymentInput
+  reminders?: Prisma.PaymentReminderCreateNestedManyWithoutPaymentInput
 }
 
 export type PaymentUncheckedCreateWithoutFreezesInput = {
@@ -1496,6 +1654,7 @@ export type PaymentUncheckedCreateWithoutFreezesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   storeOrder?: Prisma.StoreOrderUncheckedCreateNestedOneWithoutPaymentInput
+  reminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutPaymentInput
 }
 
 export type PaymentCreateOrConnectWithoutFreezesInput = {
@@ -1538,6 +1697,7 @@ export type PaymentUpdateWithoutFreezesInput = {
   subscription?: Prisma.SubscriptionUpdateOneWithoutPaymentsNestedInput
   charge?: Prisma.TenantChargeUpdateOneWithoutPaymentsNestedInput
   storeOrder?: Prisma.StoreOrderUpdateOneWithoutPaymentNestedInput
+  reminders?: Prisma.PaymentReminderUpdateManyWithoutPaymentNestedInput
 }
 
 export type PaymentUncheckedUpdateWithoutFreezesInput = {
@@ -1564,6 +1724,7 @@ export type PaymentUncheckedUpdateWithoutFreezesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   storeOrder?: Prisma.StoreOrderUncheckedUpdateOneWithoutPaymentNestedInput
+  reminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutPaymentNestedInput
 }
 
 export type PaymentCreateWithoutStoreOrderInput = {
@@ -1590,6 +1751,7 @@ export type PaymentCreateWithoutStoreOrderInput = {
   subscription?: Prisma.SubscriptionCreateNestedOneWithoutPaymentsInput
   charge?: Prisma.TenantChargeCreateNestedOneWithoutPaymentsInput
   freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutPaymentInput
+  reminders?: Prisma.PaymentReminderCreateNestedManyWithoutPaymentInput
 }
 
 export type PaymentUncheckedCreateWithoutStoreOrderInput = {
@@ -1616,6 +1778,7 @@ export type PaymentUncheckedCreateWithoutStoreOrderInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutPaymentInput
+  reminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutPaymentInput
 }
 
 export type PaymentCreateOrConnectWithoutStoreOrderInput = {
@@ -1658,6 +1821,7 @@ export type PaymentUpdateWithoutStoreOrderInput = {
   subscription?: Prisma.SubscriptionUpdateOneWithoutPaymentsNestedInput
   charge?: Prisma.TenantChargeUpdateOneWithoutPaymentsNestedInput
   freezes?: Prisma.MembershipFreezeUpdateManyWithoutPaymentNestedInput
+  reminders?: Prisma.PaymentReminderUpdateManyWithoutPaymentNestedInput
 }
 
 export type PaymentUncheckedUpdateWithoutStoreOrderInput = {
@@ -1684,6 +1848,7 @@ export type PaymentUncheckedUpdateWithoutStoreOrderInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutPaymentNestedInput
+  reminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutPaymentNestedInput
 }
 
 export type PaymentCreateManyTenantInput = {
@@ -1734,6 +1899,7 @@ export type PaymentUpdateWithoutTenantInput = {
   charge?: Prisma.TenantChargeUpdateOneWithoutPaymentsNestedInput
   freezes?: Prisma.MembershipFreezeUpdateManyWithoutPaymentNestedInput
   storeOrder?: Prisma.StoreOrderUpdateOneWithoutPaymentNestedInput
+  reminders?: Prisma.PaymentReminderUpdateManyWithoutPaymentNestedInput
 }
 
 export type PaymentUncheckedUpdateWithoutTenantInput = {
@@ -1760,6 +1926,7 @@ export type PaymentUncheckedUpdateWithoutTenantInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutPaymentNestedInput
   storeOrder?: Prisma.StoreOrderUncheckedUpdateOneWithoutPaymentNestedInput
+  reminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutPaymentNestedInput
 }
 
 export type PaymentUncheckedUpdateManyWithoutTenantInput = {
@@ -1834,6 +2001,7 @@ export type PaymentUpdateWithoutChargeInput = {
   subscription?: Prisma.SubscriptionUpdateOneWithoutPaymentsNestedInput
   freezes?: Prisma.MembershipFreezeUpdateManyWithoutPaymentNestedInput
   storeOrder?: Prisma.StoreOrderUpdateOneWithoutPaymentNestedInput
+  reminders?: Prisma.PaymentReminderUpdateManyWithoutPaymentNestedInput
 }
 
 export type PaymentUncheckedUpdateWithoutChargeInput = {
@@ -1860,6 +2028,7 @@ export type PaymentUncheckedUpdateWithoutChargeInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutPaymentNestedInput
   storeOrder?: Prisma.StoreOrderUncheckedUpdateOneWithoutPaymentNestedInput
+  reminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutPaymentNestedInput
 }
 
 export type PaymentUncheckedUpdateManyWithoutChargeInput = {
@@ -1958,6 +2127,7 @@ export type PaymentUpdateWithoutMemberInput = {
   charge?: Prisma.TenantChargeUpdateOneWithoutPaymentsNestedInput
   freezes?: Prisma.MembershipFreezeUpdateManyWithoutPaymentNestedInput
   storeOrder?: Prisma.StoreOrderUpdateOneWithoutPaymentNestedInput
+  reminders?: Prisma.PaymentReminderUpdateManyWithoutPaymentNestedInput
 }
 
 export type PaymentUncheckedUpdateWithoutMemberInput = {
@@ -1984,6 +2154,7 @@ export type PaymentUncheckedUpdateWithoutMemberInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutPaymentNestedInput
   storeOrder?: Prisma.StoreOrderUncheckedUpdateOneWithoutPaymentNestedInput
+  reminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutPaymentNestedInput
 }
 
 export type PaymentUncheckedUpdateManyWithoutMemberInput = {
@@ -2034,6 +2205,7 @@ export type PaymentUpdateWithoutCollectedByInput = {
   charge?: Prisma.TenantChargeUpdateOneWithoutPaymentsNestedInput
   freezes?: Prisma.MembershipFreezeUpdateManyWithoutPaymentNestedInput
   storeOrder?: Prisma.StoreOrderUpdateOneWithoutPaymentNestedInput
+  reminders?: Prisma.PaymentReminderUpdateManyWithoutPaymentNestedInput
 }
 
 export type PaymentUncheckedUpdateWithoutCollectedByInput = {
@@ -2060,6 +2232,7 @@ export type PaymentUncheckedUpdateWithoutCollectedByInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutPaymentNestedInput
   storeOrder?: Prisma.StoreOrderUncheckedUpdateOneWithoutPaymentNestedInput
+  reminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutPaymentNestedInput
 }
 
 export type PaymentUncheckedUpdateManyWithoutCollectedByInput = {
@@ -2134,6 +2307,7 @@ export type PaymentUpdateWithoutSubscriptionInput = {
   charge?: Prisma.TenantChargeUpdateOneWithoutPaymentsNestedInput
   freezes?: Prisma.MembershipFreezeUpdateManyWithoutPaymentNestedInput
   storeOrder?: Prisma.StoreOrderUpdateOneWithoutPaymentNestedInput
+  reminders?: Prisma.PaymentReminderUpdateManyWithoutPaymentNestedInput
 }
 
 export type PaymentUncheckedUpdateWithoutSubscriptionInput = {
@@ -2160,6 +2334,7 @@ export type PaymentUncheckedUpdateWithoutSubscriptionInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutPaymentNestedInput
   storeOrder?: Prisma.StoreOrderUncheckedUpdateOneWithoutPaymentNestedInput
+  reminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutPaymentNestedInput
 }
 
 export type PaymentUncheckedUpdateManyWithoutSubscriptionInput = {
@@ -2193,10 +2368,12 @@ export type PaymentUncheckedUpdateManyWithoutSubscriptionInput = {
 
 export type PaymentCountOutputType = {
   freezes: number
+  reminders: number
 }
 
 export type PaymentCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   freezes?: boolean | PaymentCountOutputTypeCountFreezesArgs
+  reminders?: boolean | PaymentCountOutputTypeCountRemindersArgs
 }
 
 /**
@@ -2214,6 +2391,13 @@ export type PaymentCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Exte
  */
 export type PaymentCountOutputTypeCountFreezesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.MembershipFreezeWhereInput
+}
+
+/**
+ * PaymentCountOutputType without action
+ */
+export type PaymentCountOutputTypeCountRemindersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PaymentReminderWhereInput
 }
 
 
@@ -2247,6 +2431,7 @@ export type PaymentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   charge?: boolean | Prisma.Payment$chargeArgs<ExtArgs>
   freezes?: boolean | Prisma.Payment$freezesArgs<ExtArgs>
   storeOrder?: boolean | Prisma.Payment$storeOrderArgs<ExtArgs>
+  reminders?: boolean | Prisma.Payment$remindersArgs<ExtArgs>
   _count?: boolean | Prisma.PaymentCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["payment"]>
 
@@ -2344,6 +2529,7 @@ export type PaymentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
   charge?: boolean | Prisma.Payment$chargeArgs<ExtArgs>
   freezes?: boolean | Prisma.Payment$freezesArgs<ExtArgs>
   storeOrder?: boolean | Prisma.Payment$storeOrderArgs<ExtArgs>
+  reminders?: boolean | Prisma.Payment$remindersArgs<ExtArgs>
   _count?: boolean | Prisma.PaymentCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type PaymentIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2374,6 +2560,11 @@ export type $PaymentPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
      * Set when this row is a gym-store sale rather than a membership payment.
      */
     storeOrder: Prisma.$StoreOrderPayload<ExtArgs> | null
+    /**
+     * The shapes the hot reads actually use: one gym filtered by status, and
+     * one gym newest-first.
+     */
+    reminders: Prisma.$PaymentReminderPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2824,6 +3015,7 @@ export interface Prisma__PaymentClient<T, Null = never, ExtArgs extends runtime.
   charge<T extends Prisma.Payment$chargeArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Payment$chargeArgs<ExtArgs>>): Prisma.Prisma__TenantChargeClient<runtime.Types.Result.GetResult<Prisma.$TenantChargePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   freezes<T extends Prisma.Payment$freezesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Payment$freezesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MembershipFreezePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   storeOrder<T extends Prisma.Payment$storeOrderArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Payment$storeOrderArgs<ExtArgs>>): Prisma.Prisma__StoreOrderClient<runtime.Types.Result.GetResult<Prisma.$StoreOrderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  reminders<T extends Prisma.Payment$remindersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Payment$remindersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PaymentReminderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3371,6 +3563,30 @@ export type Payment$storeOrderArgs<ExtArgs extends runtime.Types.Extensions.Inte
    */
   include?: Prisma.StoreOrderInclude<ExtArgs> | null
   where?: Prisma.StoreOrderWhereInput
+}
+
+/**
+ * Payment.reminders
+ */
+export type Payment$remindersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PaymentReminder
+   */
+  select?: Prisma.PaymentReminderSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PaymentReminder
+   */
+  omit?: Prisma.PaymentReminderOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PaymentReminderInclude<ExtArgs> | null
+  where?: Prisma.PaymentReminderWhereInput
+  orderBy?: Prisma.PaymentReminderOrderByWithRelationInput | Prisma.PaymentReminderOrderByWithRelationInput[]
+  cursor?: Prisma.PaymentReminderWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PaymentReminderScalarFieldEnum | Prisma.PaymentReminderScalarFieldEnum[]
 }
 
 /**

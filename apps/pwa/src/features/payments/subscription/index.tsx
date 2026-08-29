@@ -80,7 +80,12 @@ export default function SubscriptionsPage() {
         amount: session.amount,
         currency: session.currency,
         name: gymName,
-        description: session.planTitle,
+        // The order can cover arrears as well as the plan, and the Razorpay
+        // window is where the member sees what they are about to pay for.
+        description:
+          session.outstandingAmount && session.outstandingAmount > 0
+            ? `${session.planTitle} + pending dues`
+            : session.planTitle,
         prefill: {
           name: user?.name,
           email: user?.email,

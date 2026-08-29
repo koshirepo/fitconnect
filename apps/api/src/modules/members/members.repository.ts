@@ -686,6 +686,9 @@ export const memberRepository = {
         id: true,
         memberId: true,
         dueDate: true,
+        // The push that accompanies the suspension email is addressed to the
+        // account, not the membership, so the id comes back with the row.
+        userId: true,
         user: { select: { name: true, email: true } },
       },
     });

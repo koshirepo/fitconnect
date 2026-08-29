@@ -11,6 +11,7 @@ import { pushService } from "../push/push.service";
 import { couponService, type Quote } from "../coupons/coupons.service";
 import { freezeService } from "../freezes/freezes.service";
 import { referralRewardService } from "../members/referral-rewards.service";
+import { reminderService } from "../reminders/reminders.service";
 import { paymentRepository } from "./payments.repository";
 import { flattenNestedMember } from "../../lib/flatten";
 import type {
@@ -334,6 +335,31 @@ export const paymentService = {
       });
     }
 
+    // Arrears the desk is collecting in the same breath as the plan. Settled
+    // as their own rows rather than folded into the amount above: each keeps
+    // its description and its date, so the ledger still says what was paid for.
+    const settledPending =
+      input.status === "COMPLETED" && input.settlePendingIds?.length
+        ? await paymentRepository.settlePendingAtDesk(
+            tenantId,
+            input.membershipId,
+            input.settlePendingIds,
+            collector?.id,
+          )
+        : [];
+
+    if (settledPending.length > 0) {
+      await paymentRepository.refreshDueDate(input.membershipId);
+    }
+
+    // Whatever it took to get this member to pay now belongs to the payment
+    // that ended the chase, so the desk can see the cost of collecting it.
+    await reminderService.attachToPayment(
+      input.membershipId,
+      payment.id,
+      payment.status,
+    );
+
     // Only a completed row is money in hand; a PENDING one notifies when it
     // is settled, not when it is written.
     if (payment.status === "COMPLETED") {
@@ -359,6 +385,16 @@ export const paymentService = {
         balancePayment: balancePayment
           ? { id: balancePayment.id, amount: balancePayment.amount }
           : null,
+        /** Dues closed alongside this payment, and what they came to. */
+        settledPending,
+        /**
+         * What actually changed hands: this payment plus any arrears settled
+         * with it. The receipt and the confirmation both show this rather than
+         * the plan price on its own.
+         */
+        collectedTotal:
+          (input.status === "COMPLETED" ? payment.amount : 0) +
+          settledPending.reduce((sum, row) => sum + row.amount, 0),
       },
     };
   },
@@ -440,6 +476,10 @@ export const paymentService = {
     if (existing.membershipId) {
       await paymentRepository.refreshDueDate(existing.membershipId);
     }
+
+    // A pending row settling is the other way a chase ends, and the reminders
+    // that produced it belong to this payment just as much.
+    await reminderService.attachToPayment(existing.membershipId, paymentId, status);
 
     // Money coming back takes the coupon with it: the redemption slot is
     // freed, granted coins are clawed back, and spent coins are returned.

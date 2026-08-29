@@ -65,6 +65,7 @@ export const ModelName = {
   Shift: 'Shift',
   Todo: 'Todo',
   Payment: 'Payment',
+  PaymentReminder: 'PaymentReminder',
   Coupon: 'Coupon',
   CouponRedemption: 'CouponRedemption',
   CoinLedgerEntry: 'CoinLedgerEntry',
@@ -337,6 +338,22 @@ export const PaymentScalarFieldEnum = {
 } as const
 
 export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]
+
+
+export const PaymentReminderScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  membershipId: 'membershipId',
+  channel: 'channel',
+  reason: 'reason',
+  message: 'message',
+  actorId: 'actorId',
+  targetPaymentId: 'targetPaymentId',
+  paymentId: 'paymentId',
+  sentAt: 'sentAt'
+} as const
+
+export type PaymentReminderScalarFieldEnum = (typeof PaymentReminderScalarFieldEnum)[keyof typeof PaymentReminderScalarFieldEnum]
 
 
 export const CouponScalarFieldEnum = {

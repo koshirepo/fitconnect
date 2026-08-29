@@ -295,9 +295,19 @@ export const gatewayService = {
       };
     }
 
-    // The amount comes from the plan, never from the request body: a client
-    // that could name its own price could buy a year for a rupee.
-    const amount = subscription.amount;
+    // Arrears go into the same order as the plan. A member with an unpaid due
+    // should settle it while they are already paying, and one order means one
+    // settlement path rather than two that can half-succeed.
+    const outstanding = await paymentRepository.findSettleablePending(
+      tenantId,
+      membership.id,
+    );
+    const outstandingAmount = outstanding.reduce((sum, row) => sum + row.amount, 0);
+
+    // The amount comes from the plan and the member's own unpaid rows, never
+    // from the request body: a client that could name its own price could buy
+    // a year for a rupee.
+    const amount = subscription.amount + outstandingAmount;
 
     let order;
     try {
@@ -328,11 +338,21 @@ export const gatewayService = {
       subscriptionId: subscription.id,
       description: subscription.title,
       status: "PENDING",
-      amount,
+      // The plan's own price. The arrears keep their own rows on the same
+      // order, so this one still says what the plan cost.
+      amount: subscription.amount,
       gateway: "RAZORPAY",
       gatewayOrderId: order.id,
       gatewayAccount: credentials.source,
     });
+
+    // Settlement walks every row of an order, so attaching the dues is all it
+    // takes for them to complete with the plan.
+    await paymentRepository.attachToGatewayOrder(
+      outstanding.map((row) => row.id),
+      order.id,
+      credentials.source,
+    );
 
     return {
       data: {
@@ -345,6 +365,14 @@ export const gatewayService = {
           amount,
           currency: order.currency,
           planTitle: subscription.title,
+          /** The split behind `amount`, for the screen that shows it. */
+          planAmount: subscription.amount,
+          outstandingAmount,
+          outstanding: outstanding.map((row) => ({
+            id: row.id,
+            amount: row.amount,
+            description: row.description,
+          })),
         },
       },
     };

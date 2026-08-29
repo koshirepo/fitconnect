@@ -50,6 +50,13 @@ export const queryKeys = {
     productComments: (tenantId: string, productId: string) =>
       ["store", tenantId, "product", productId, "comments"] as const,
   },
+  /** The record of chasing a member for money, by member and by payment. */
+  reminders: {
+    member: (tenantId: string, membershipId: string) =>
+      ["reminders", tenantId, "member", membershipId] as const,
+    payment: (tenantId: string, paymentId: string) =>
+      ["reminders", tenantId, "payment", paymentId] as const,
+  },
   /** Reactions to the gym itself, which outlive any one store product. */
   social: {
     tenantComments: (tenantId: string) => ["social", tenantId, "comments"] as const,
