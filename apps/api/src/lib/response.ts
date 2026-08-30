@@ -97,3 +97,40 @@ export const validationError = (c: Context, details: unknown) =>
 /** 500 Internal Server Error */
 export const internalError = (c: Context) =>
   error(c, 500, "INTERNAL_ERROR", "Internal server error.");
+
+/**
+ * Map a service failure onto the matching HTTP response.
+ *
+ * Services in this codebase report failure as `{ error, status }`, and several
+ * controllers were funnelling all of it through `badRequest`. A refusal then
+ * arrived as 400 rather than 403, a missing record as 400 rather than 404, and
+ * a dead payment gateway as 400 rather than 502 — so a client could not tell
+ * "you may not" from "you typed it wrong", and an outage looked like a bad
+ * request in the logs.
+ *
+ * Anything unrecognised is treated as an upstream failure rather than the
+ * caller's fault, which is the safer of the two guesses.
+ */
+export const failWith = (
+  c: Context,
+  result: { error?: string; status?: number },
+) => {
+  const message = result.error ?? "Request failed.";
+
+  switch (result.status) {
+    case 400:
+      return badRequest(c, message);
+    case 401:
+      return unauthorized(c, message);
+    case 403:
+      return forbidden(c, message);
+    case 404:
+      return notFound(c, message);
+    case 409:
+      return conflict(c, message);
+    case 429:
+      return tooManyRequests(c, message);
+    default:
+      return error(c, (result.status ?? 502) as ContentfulStatusCode, "GATEWAY_ERROR", message);
+  }
+};

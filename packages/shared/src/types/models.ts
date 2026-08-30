@@ -201,6 +201,8 @@ export interface TenantProfile {
   status: AccountStatus;
   joinedAt: string;
   dueDate?: string | null;
+  /** Badges this member holds. Ids alone — the names live on the badge list. */
+  badgeIds?: string[];
   shift?: Shift | null;
   payments?: PaymentSummary[];
 }

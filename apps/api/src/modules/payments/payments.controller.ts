@@ -18,7 +18,8 @@ import {
   okMessage,
   conflict,
   badRequest,
-} from "../../lib/response";
+  failWith,
+}  from "../../lib/response";
 import {
   createPaymentSchema,
   updatePaymentStatusSchema,
@@ -241,7 +242,7 @@ export const paymentController = {
     if (!parsed.ok) return parsed.response;
 
     const result = await paymentService.createSubscription(tenantId, parsed.data);
-    if ("error" in result) return badRequest(c, result.error!);
+    if ("error" in result) return failWith(c, result);
 
     await auditLog({
       action: "CREATE",

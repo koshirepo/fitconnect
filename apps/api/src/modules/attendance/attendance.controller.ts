@@ -10,7 +10,7 @@ import { attendanceService } from "./attendance.service";
 import { auditLog } from "../../lib/audit";
 import { parseBody } from "../../lib/http";
 import { parsePagination } from "../../lib/pagination";
-import { ok, okMessage, okPaginated, notFound, badRequest } from "../../lib/response";
+import { ok, okMessage, okPaginated, notFound, badRequest, failWith } from "../../lib/response";
 import {
   markAttendanceSchema,
   markAllAttendanceSchema,
@@ -78,7 +78,7 @@ export const attendanceController = {
       parsed.data,
       true,
     );
-    if ("error" in result) return badRequest(c, result.error!);
+    if ("error" in result) return failWith(c, result);
 
     await auditLog({
       action: "CREATE",
@@ -200,7 +200,7 @@ export const attendanceController = {
       user.id,
       canReadAll,
     );
-    if ("error" in result) return badRequest(c, result.error!);
+    if ("error" in result) return failWith(c, result);
     const { data, total } = result;
     return okPaginated(c, data, { page, limit, total });
   },
@@ -213,7 +213,7 @@ export const attendanceController = {
     const canReadAll = can(c, Permission.ATTENDANCE_READ);
 
     const result = await attendanceService.summary(tenantId, membershipId, user.id, canReadAll);
-    if ("error" in result) return badRequest(c, result.error!);
+    if ("error" in result) return failWith(c, result);
     return ok(c, result.data);
   },
 
@@ -246,7 +246,7 @@ export const attendanceController = {
       user.id,
       canReadAll,
     );
-    if ("error" in result) return badRequest(c, result.error!);
+    if ("error" in result) return failWith(c, result);
     c.header("Cache-Control", "private, max-age=60");
     return ok(c, result.data);
   },

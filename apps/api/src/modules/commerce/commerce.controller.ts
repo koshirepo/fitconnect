@@ -9,7 +9,7 @@ import type { Context } from "hono";
 import { parseBody } from "../../lib/http";
 import { parsePagination } from "../../lib/pagination";
 import { auditLog } from "../../lib/audit";
-import { ok, okPaginated, badRequest, notFound, conflict } from "../../lib/response";
+import { ok, okPaginated, badRequest, notFound, conflict, failWith } from "../../lib/response";
 import { commerceService } from "./commerce.service";
 import {
   createProductSchema,
@@ -55,7 +55,7 @@ export const commerceController = {
 
     const userId = c.get("optionalAuthUser")?.id;
     const result = await commerceService.placeOrder(parsed.data, userId);
-    if ("error" in result) return badRequest(c, result.error!);
+    if ("error" in result) return failWith(c, result);
     return ok(c, result.data, 201);
   },
 
@@ -119,7 +119,7 @@ export const commerceController = {
     const parsed = await parseBody(c, createProductSchema);
     if (!parsed.ok) return parsed.response;
     const result = await commerceService.createProduct(parsed.data);
-    if ("error" in result) return badRequest(c, result.error!);
+    if ("error" in result) return failWith(c, result);
 
     await auditLog({
       action: "CREATE",

@@ -10,7 +10,7 @@ import { reminderService } from "./reminders.service";
 import { reminderRepository } from "./reminders.repository";
 import { logReminderSchema } from "./reminders.schema";
 import { parseBody } from "../../lib/http";
-import { ok, notFound, badRequest } from "../../lib/response";
+import { ok, notFound, badRequest, failWith } from "../../lib/response";
 import { prisma } from "../../lib/prisma";
 import type { AppBindings } from "../../types/app-context";
 
@@ -31,7 +31,7 @@ export const reminderController = {
       `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
     const result = await reminderService.calendarForMonth(tenantId, month);
-    if ("error" in result) return badRequest(c, result.error!);
+    if ("error" in result) return failWith(c, result);
 
     return ok(c, result.data);
   },
