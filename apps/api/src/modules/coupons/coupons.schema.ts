@@ -91,7 +91,13 @@ export const updateCouponSchema = z
 
 /** What a screen asks for when previewing a price before saving a payment. */
 export const quoteSchema = z.object({
-  membershipId: z.string().min(1),
+  /**
+   * Null while somebody is still being admitted: the membership does not exist
+   * yet, and the desk has to see the price before taking the money. A prospect
+   * has no history to check and no coins, so the per-member rules are satisfied
+   * by definition rather than skipped.
+   */
+  membershipId: z.string().min(1).nullable(),
   subscriptionId: z.string().nullable().optional(),
   chargeIds: z.array(z.string()).max(50).optional(),
   amount: z.number().int().min(1).optional(),

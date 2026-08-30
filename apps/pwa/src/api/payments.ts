@@ -105,12 +105,24 @@ export const paymentsApi = {
       `/tenants/${tenantId}/payments/gateway/test`,
     ),
 
-  /** Open a Razorpay order for the signed-in member. */
-  createCheckout: (tenantId: string, subscriptionId: string) =>
-    api.post<ApiResponse<{ checkout: CheckoutSession }>>(
-      `/tenants/${tenantId}/payments/checkout`,
-      { subscriptionId },
-    ),
+  /**
+   * Open a Razorpay order for the signed-in member.
+   *
+   * A coupon and coins are named, never priced: the server works out what
+   * they are worth, and `checkout` comes back null when they cleared the
+   * bill outright and there was nothing left to charge.
+   */
+  createCheckout: (
+    tenantId: string,
+    payload: { subscriptionId: string; couponCode?: string; coinsToSpend?: number },
+  ) =>
+    api.post<
+      ApiResponse<{
+        checkout: CheckoutSession | null;
+        paymentId?: string;
+        settled?: boolean;
+      }>
+    >(`/tenants/${tenantId}/payments/checkout`, payload),
 
   /** Settle a payment with the signature the checkout widget returned. */
   verifyCheckout: (tenantId: string, data: VerifyCheckoutPayload) =>

@@ -403,6 +403,11 @@ export const memberRepository = {
     return prisma.tenantMembership.findUnique({
       where: { tenantId_userId: { tenantId, userId } },
       select: {
+        // Ids alone. The badges screen already holds the names and colours; what
+        // it could not tell was which of them are this member's, so it fell back
+        // to how many people hold each — which on a member's own screen reads as
+        // "you have this".
+        badges: { select: { id: true } },
         id: true,
         memberId: true,
         role: true,

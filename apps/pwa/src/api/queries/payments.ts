@@ -158,8 +158,10 @@ export function useTestPaymentGateway() {
 
 export function useCreateCheckout() {
   return useTenantMutation(
-    async (id, subscriptionId: string) =>
-      unwrap(await paymentsApi.createCheckout(id, subscriptionId)).checkout,
+    async (
+      id,
+      input: { subscriptionId: string; couponCode?: string; coinsToSpend?: number },
+    ) => unwrap(await paymentsApi.createCheckout(id, input)),
   );
 }
 

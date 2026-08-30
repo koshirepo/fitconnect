@@ -166,12 +166,27 @@ export function RequirePermission({
   return <Outlet />;
 }
 
-/** Redirects home if already authenticated (for login page) */
+/**
+ * Sends somebody who is *already* signed in away from the sign-in and join
+ * pages.
+ *
+ * The test is taken once, when the page is opened, and not again. Self-signup
+ * adopts its session the moment the account exists — deliberately, so a member
+ * whose payment is still pending is signed in too — and a guard that re-read
+ * the store would evict the page at exactly that moment: mid-join, before the
+ * payment window had opened and before the outcome screen could say what
+ * happened. Signing in *while here* is the whole point of being here.
+ */
 export function RedirectIfAuth() {
-  const { isAuthenticated } = useAuthStore();
   const target = isTenantSubdomain() ? "/" : "/dashboard";
 
-  if (isAuthenticated) {
+  // Read from the store rather than subscribed to it: this has to be the
+  // value at mount, and a subscription would make it the current one.
+  const [wasAuthenticated] = React.useState(
+    () => useAuthStore.getState().isAuthenticated,
+  );
+
+  if (wasAuthenticated) {
     return <Navigate to={target} replace />;
   }
   return <Outlet />;

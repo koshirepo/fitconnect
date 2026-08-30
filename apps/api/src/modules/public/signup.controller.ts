@@ -17,7 +17,7 @@ import {
 } from "../../lib/response";
 import { uploadFile } from "../../lib/storage";
 import { signupService } from "./signup.service";
-import { selfSignupSchema, verifySignupSchema } from "./signup.schema";
+import { signupQuoteSchema, selfSignupSchema, verifySignupSchema } from "./signup.schema";
 
 /** Extensions for the image types the signup schema admits. */
 const EXT_MAP: Record<string, string> = {
@@ -99,6 +99,22 @@ export const signupController = {
    */
   async getOptions(c: Context) {
     const result = await signupService.getOptions(requestHost(c));
+    if ("error" in result) return fail(c, result);
+    return ok(c, result.data);
+  },
+
+  /**
+   * Price a joining offer before anybody has joined.
+   *
+   * Read-only and writes nothing, but still rate-limited: it is an
+   * unauthenticated endpoint that says whether a code is real, which is
+   * exactly the shape of thing worth guessing at in bulk.
+   */
+  async quote(c: Context) {
+    const parsed = await parseBody(c, signupQuoteSchema);
+    if (!parsed.ok) return parsed.response;
+
+    const result = await signupService.quoteByHost(requestHost(c), parsed.data);
     if ("error" in result) return fail(c, result);
     return ok(c, result.data);
   },

@@ -26,7 +26,6 @@ import {
   writeCachedTenantBranding,
   type TenantBranding,
 } from "@/lib/tenant-branding";
-import { resolveAssetUrl } from "@/lib/assets";
 import { getApiError } from "@/api/client";
 import { haptics } from "@/lib/haptics";
 import { useAuthStore } from "@/stores/auth";
@@ -178,9 +177,8 @@ export default function PublicStorePage() {
     };
   }, [brand]);
 
-  const brandLogo = brand?.logoUrl
-    ? (resolveAssetUrl(brand.logoUrl) ?? brand.logoUrl)
-    : null;
+  // The mark belongs to the shared header now; the name is still wanted here
+  // for the search placeholder and the collection reference.
   const storeTitle = brand?.name ?? gymName;
 
   const addToBasket = React.useCallback(
@@ -400,16 +398,7 @@ export default function PublicStorePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-muted/40">
-        <header className="gradient-brand px-4 py-6 md:px-6 md:py-8">
-          <div className="mx-auto flex max-w-6xl items-center gap-4">
-            <div className="h-16 w-16 shrink-0 animate-pulse rounded-2xl bg-white/20 md:h-20 md:w-20" />
-            <div className="min-w-0 flex-1 space-y-2">
-              <div className="h-7 w-48 animate-pulse rounded bg-white/20" />
-              <div className="h-4 w-64 animate-pulse rounded bg-white/15" />
-            </div>
-          </div>
-        </header>
+      <div>
         <div className="mx-auto max-w-6xl p-4 md:p-6">
           <CardsGridSkeleton count={8} className="gap-3 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4" />
         </div>
@@ -419,60 +408,13 @@ export default function PublicStorePage() {
 
   return (
     <div className="min-h-screen bg-muted/40">
-      {/* The gym's own shopfront sign. A storefront that opens on a bare grid
-          could belong to anybody; the mark and the name are what say whose shop
-          this is, and they are the first thing above the fold. */}
-      <header className="gradient-brand relative overflow-hidden text-primary-foreground">
-        {/* A soft wash so the text keeps its contrast over either brand colour. */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
-
-        <div className="relative mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate("/")}
-              aria-label={storeTitle ? `Back to ${storeTitle}` : "Back to the gym"}
-              className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white/15 ring-1 ring-white/25 backdrop-blur transition-transform hover:scale-105 md:h-20 md:w-20"
-            >
-              {brandLogo ? (
-                <img
-                  src={brandLogo}
-                  alt={storeTitle ? `${storeTitle} logo` : "Gym logo"}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <ShoppingBag className="h-8 w-8" />
-              )}
-            </button>
-
-            <div className="min-w-0">
-              {/* The name is the way back. A shopfront sign is what you press
-                  to leave the shop, so it does the job the back button was
-                  doing without spending a row on saying so. */}
-              <h1 className="truncate text-2xl font-bold tracking-tight md:text-3xl">
-                <button
-                  onClick={() => navigate("/")}
-                  className="rounded text-left hover:underline focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none"
-                >
-                  {storeTitle ? `${storeTitle} Store` : "Store"}
-                </button>
-              </h1>
-              <p className="mt-0.5 line-clamp-2 text-sm text-primary-foreground/80">
-                {brand?.description || "Supplements and kit, sold at the gym"}
-              </p>
-              {products.length > 0 && (
-                <p className="mt-1 text-xs text-primary-foreground/70">
-                  {products.length} product{products.length === 1 ? "" : "s"} · collect at
-                  the counter
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* No heading of its own: the shared frame above carries the gym's mark
+          and name, and a second one under it would only repeat them. What is
+          left is the shop's own furniture — search, categories, the cart. */}
 
       {/* Search and categories stay put while the grid scrolls, which is the
           whole ergonomics of browsing a catalogue. */}
-      <div className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
+      <div className="sticky top-[57px] z-30 border-b border-border bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3 md:px-6">
 
           <div className="relative min-w-0 flex-1">
@@ -689,26 +631,6 @@ export default function PublicStorePage() {
         )}
       </div>
 
-      {/* A shop that ends in nothing looks broken. This is also the only
-          place a visitor is told where to collect from and who to call. */}
-      {(brand?.phone || brand?.address) && (
-        <footer className="mt-8 border-t border-border bg-background">
-          <div className="mx-auto max-w-6xl px-4 py-6 text-sm text-muted-foreground md:px-6">
-            <p className="font-medium text-foreground">
-              Collect from {storeTitle || "the gym"}
-            </p>
-            {brand.address && <p className="mt-1">{brand.address}</p>}
-            {brand.phone && (
-              <a
-                href={"tel:" + brand.phone}
-                className="mt-1 inline-block hover:text-foreground"
-              >
-                {brand.phone}
-              </a>
-            )}
-          </div>
-        </footer>
-      )}
 
       {/* ── Basket ─────────────────────────────────────────────────────────── */}
       {basketOpen && (

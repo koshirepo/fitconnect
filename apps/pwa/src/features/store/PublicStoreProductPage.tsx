@@ -137,10 +137,6 @@ export default function PublicStoreProductPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-4 md:p-6">
-      <Button variant="outline" size="sm" onClick={() => navigate("/store")}>
-        <ArrowLeft className="h-4 w-4" />
-        Back to store
-      </Button>
 
       <ProductOverview
         product={product}
@@ -205,6 +201,7 @@ export default function PublicStoreProductPage() {
             comments={shownComments}
             loading={asMember && memberFeed.isPending}
             canComment={asMember}
+            submitting={addComment.isPending}
             canDelete={(comment) => asMember && comment.author.id === currentUserId}
             onSubmit={handleComment}
             onDelete={handleDeleteComment}

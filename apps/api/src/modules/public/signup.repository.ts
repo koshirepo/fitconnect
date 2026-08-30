@@ -110,7 +110,15 @@ export const signupRepository = {
   createPendingPayments(input: {
     tenantId: string;
     membershipId: string;
-    subscription: { id: string; title: string; amount: number };
+    subscription: {
+      id: string;
+      title: string;
+      /** What is actually owed, after any joining offer. */
+      amount: number;
+      /** The price before it, kept beside the discount so a receipt adds up. */
+      listAmount?: number;
+      discountAmount?: number;
+    };
     charges: { id: string; name: string; amount: number }[];
     gateway: { orderId: string; account: string } | null;
   }) {
@@ -143,6 +151,12 @@ export const signupRepository = {
           membershipId: input.membershipId,
           subscriptionId: input.subscription.id,
           amount: input.subscription.amount,
+          ...(input.subscription.discountAmount
+            ? {
+                listAmount: input.subscription.listAmount,
+                discountAmount: input.subscription.discountAmount,
+              }
+            : {}),
           description: input.subscription.title,
           status: "PENDING",
           ...gatewayColumns,

@@ -44,16 +44,27 @@ export function CommentThread({
   signedOutHint?: React.ReactNode;
 }) {
   const [draft, setDraft] = React.useState("");
+  // Owned here rather than taken on trust from the caller. `submitting` was
+  // the only guard, no page passed it, and undefined is falsy — so a second
+  // click while the first was still in flight posted the comment twice.
+  const [posting, setPosting] = React.useState(false);
+
+  const busy = submitting || posting;
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     const body = draft.trim();
-    if (!body || submitting) return;
+    if (!body || busy) return;
 
-    await onSubmit(body);
-    // Cleared only once the write resolved: a failed post that wiped the box
-    // would lose what somebody typed.
-    setDraft("");
+    setPosting(true);
+    try {
+      await onSubmit(body);
+      // Cleared only once the write resolved: a failed post that wiped the
+      // box would lose what somebody typed.
+      setDraft("");
+    } finally {
+      setPosting(false);
+    }
   };
 
   return (
@@ -71,8 +82,8 @@ export function CommentThread({
             <span className="text-xs text-muted-foreground">
               {draft.length}/{MAX_LENGTH}
             </span>
-            <Button type="submit" size="sm" disabled={!draft.trim() || submitting}>
-              {submitting ? "Posting..." : "Post comment"}
+            <Button type="submit" size="sm" disabled={!draft.trim() || busy}>
+              {busy ? "Posting..." : "Post comment"}
             </Button>
           </div>
         </form>

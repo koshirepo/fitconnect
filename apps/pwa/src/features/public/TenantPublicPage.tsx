@@ -118,7 +118,7 @@ export default function TenantPublicPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(1200px_500px_at_15%_-20%,rgba(59,130,246,0.12),transparent),radial-gradient(900px_500px_at_100%_0%,rgba(16,185,129,0.1),transparent)] bg-background text-foreground">
+    <div className="bg-[radial-gradient(1200px_500px_at_15%_-20%,rgba(59,130,246,0.12),transparent),radial-gradient(900px_500px_at_100%_0%,rgba(16,185,129,0.1),transparent)] text-foreground">
       <section className="border-b">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 lg:grid-cols-5 lg:py-16 lg:px-8">
           <div className="space-y-6 lg:col-span-3">
@@ -199,10 +199,7 @@ export default function TenantPublicPage() {
                 <ShoppingBag className="h-4 w-4" />
                 Visit Store
               </Button>
-              <Button variant="outline" onClick={() => navigate("/")}>
-                <ArrowLeft className="h-4 w-4" />
-                Back to Home
-              </Button>
+
             </div>
           </div>
 

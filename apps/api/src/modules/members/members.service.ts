@@ -25,6 +25,7 @@ import { prisma } from "../../lib/prisma";
 import { emailService } from "../../lib/email";
 import { settingsRepository } from "../settings/settings.repository";
 import { pushService } from "../push/push.service";
+import { couponService } from "../coupons/coupons.service";
 import { buildIdCardUrl, idCardService } from "../public/id-card.service";
 import { renderWhatsAppTemplate } from "@fitconnect/shared/whatsapp-templates";
 
@@ -344,6 +345,36 @@ export const memberService = {
       input.referredByMembershipId,
     );
 
+
+    /**
+     * A joining offer, priced the same way the payment screen prices one.
+     *
+     * The whole admission is quoted at once — plan and charges together —
+     * because that is what a "₹500 off joining" offer means to the person
+     * paying it. The discount is then written against the plan payment, or
+     * against the first charge when the admission has no plan, so a single
+     * row carries the reduction and the redemption can point at it.
+     */
+    const quote =
+      input.couponCode && (subscription || charges.length > 0)
+        ? await couponService.quote({
+            tenantId,
+            membershipId: membership.id,
+            ...(input.subscriptionId ? { subscriptionId: input.subscriptionId } : {}),
+            ...(input.chargeIds?.length ? { chargeIds: input.chargeIds } : {}),
+            code: input.couponCode,
+          })
+        : null;
+
+    // A coupon that does not apply fails the admission rather than being
+    // silently dropped: somebody typed it, and quietly charging full price
+    // is the one outcome nobody wants to discover later.
+    if (quote && "error" in quote) {
+      return { error: quote.error, status: quote.status };
+    }
+
+    const discount = quote?.data.discountAmount ?? 0;
+
     // Create payments for charges and subscription in parallel
     const now = new Date();
     const paymentPromises: Promise<{
@@ -352,14 +383,22 @@ export const memberService = {
       description: string | null;
     }>[] = [];
 
-    for (const charge of charges) {
+    for (const [index, charge] of charges.entries()) {
+      // The plan takes the discount when there is one. When there is not,
+      // it falls to the first charge, so a joining offer on an
+      // admission-fee-only signup still comes off something.
+      const chargeDiscount = !subscription && index === 0 ? discount : 0;
+
       paymentPromises.push(
         prisma.payment.create({
           data: {
             tenantId,
             membershipId: membership.id,
             chargeId: charge.id,
-            amount: charge.amount,
+            amount: Math.max(0, charge.amount - chargeDiscount),
+            ...(chargeDiscount > 0
+              ? { listAmount: charge.amount, discountAmount: chargeDiscount }
+              : {}),
             description: charge.name,
             status: "COMPLETED",
             paidAt: now,
@@ -368,6 +407,7 @@ export const memberService = {
         }),
       );
     }
+
 
     // Held outside the block so the membership's due date can be set from it
     // once the payment lands.
@@ -385,7 +425,12 @@ export const memberService = {
             tenantId,
             membershipId: membership.id,
             subscriptionId: subscription.id,
-            amount: subscription.amount,
+            // `amount` stays what was actually collected, so every revenue
+            // query keeps working; the list price sits beside it.
+            amount: Math.max(0, subscription.amount - discount),
+            ...(discount > 0
+              ? { listAmount: subscription.amount, discountAmount: discount }
+              : {}),
             status: "COMPLETED",
             paidAt: now,
             validFrom,
@@ -397,6 +442,36 @@ export const memberService = {
     }
 
     const payments = await Promise.all(paymentPromises);
+
+    // Recorded only now: a redemption has to be traceable to the payment it
+    // affected. A coupon exhausted between the quote and here fails the
+    // redemption rather than the admission — the member is already in.
+    if (quote && quote.data.coupon) {
+      // The discounted row: the plan payment when there is a plan, the first
+      // charge otherwise. Both are the last and first of `payments`
+      // respectively, but naming it by the discount is what keeps this
+      // correct if the order ever changes.
+      const discountedPayment = subscription
+        ? payments[payments.length - 1]
+        : payments[0];
+
+      if (discountedPayment) {
+        const redeemed = await couponService.redeem({
+          tenantId,
+          membershipId: membership.id,
+          quote: quote.data,
+          paymentId: discountedPayment.id,
+          ...(actorUserId ? { appliedById: actorUserId } : {}),
+        });
+
+        if (!redeemed.ok) {
+          console.warn("Coupon redemption failed after admission.", {
+            paymentId: discountedPayment.id,
+            reason: redeemed.reason,
+          });
+        }
+      }
+    }
 
     // The admission's own plan payment has to move `dueDate` too. Every other
     // way a payment is recorded refreshes it; without this an admission taken
@@ -699,6 +774,7 @@ Your membership card: ${idCardUrl}`
       data: {
         profile: {
           ...flattenMemberUser(profile),
+          badgeIds: profile.badges.map((badge) => badge.id),
           idCardUrl: token && tenant?.slug ? buildIdCardUrl(tenant.slug, token) : null,
         },
       },

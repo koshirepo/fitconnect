@@ -183,6 +183,10 @@ export const updateGatewaySchema = z
  */
 export const checkoutSchema = z.object({
   subscriptionId: z.string().min(1),
+  /** A code the member typed. Priced by the server, never by the browser. */
+  couponCode: z.string().trim().min(1).max(40).optional(),
+  /** Coins to put against the bill. Clamped to the balance and the total. */
+  coinsToSpend: z.number().int().min(0).optional(),
 });
 
 /** The three values Razorpay's checkout widget hands back to the browser. */

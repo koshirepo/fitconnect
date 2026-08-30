@@ -215,6 +215,11 @@ export interface AddMemberPayload {
   avatarUrl?: string;
   subscriptionId?: string;
   chargeIds?: string[];
+  /**
+   * A joining offer. The code only — the server decides what it is worth, so
+   * a browser can never name its own discount.
+   */
+  couponCode?: string;
   shiftId?: string;
   referredByMembershipId?: string;
 }
@@ -503,6 +508,11 @@ export interface SelfSignupPayload {
   avatarDataUrl: string;
   subscriptionId: string;
   chargeIds?: string[];
+  /**
+   * A joining offer. The code only — the server decides what it is worth, so
+   * a browser can never name its own discount.
+   */
+  couponCode?: string;
   shiftId?: string;
   /**
    * Solved Turnstile token, verified server-side before the account is created.

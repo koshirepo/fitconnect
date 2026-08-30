@@ -42,7 +42,7 @@ export const couponsApi = {
   quote: (
     tenantId: string,
     payload: {
-      membershipId: string;
+      membershipId: string | null;
       subscriptionId?: string | null;
       chargeIds?: string[];
       amount?: number;

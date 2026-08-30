@@ -8,6 +8,21 @@
 import { prisma } from "../../lib/prisma";
 import type { PlatformRole } from "@fitconnect/shared/types/enums";
 
+/**
+ * Which memberships count as "this user belongs to that gym".
+ *
+ * Every lookup here used to demand ACTIVE, which quietly locked out the two
+ * groups who most need to get in: somebody who has just signed up and not paid
+ * yet, and a member whose plan has lapsed. Both are SUSPENDED, so the session
+ * carried no gym at all — "No Gym Selected" on their own dashboard, and a 403
+ * from every tenant route, including the one that takes the payment that would
+ * make them active again.
+ *
+ * Safe because SUSPENDED never means "removed": `removeMember` deletes the row.
+ * It only ever means owing money, and what a member may then do is decided by
+ * their permissions, not by whether the app admits their gym exists.
+ */
+const SESSION_MEMBERSHIP_STATUSES: string[] = ["ACTIVE", "SUSPENDED"];
 export const authRepository = {
   /**
    * Run the `find user by email` persistence operation for the auth module.
@@ -18,7 +33,7 @@ export const authRepository = {
       where: { email },
       include: {
         memberships: {
-          where: { status: "ACTIVE" },
+          where: { status: { in: SESSION_MEMBERSHIP_STATUSES } },
           select: {
             id: true,
             tenantId: true,
@@ -43,7 +58,7 @@ export const authRepository = {
       where: { id },
       include: {
         memberships: {
-          where: { status: "ACTIVE" },
+          where: { status: { in: SESSION_MEMBERSHIP_STATUSES } },
           select: {
             id: true,
             tenantId: true,
@@ -114,7 +129,7 @@ export const authRepository = {
             platformRole: true,
             status: true,
             memberships: {
-              where: { status: "ACTIVE" },
+              where: { status: { in: SESSION_MEMBERSHIP_STATUSES } },
               select: { tenantId: true, role: true },
             },
           },
@@ -166,7 +181,7 @@ export const authRepository = {
    */
   getUserMembership(userId: string) {
     return prisma.tenantMembership.findFirst({
-      where: { userId, status: "ACTIVE" },
+      where: { userId, status: { in: SESSION_MEMBERSHIP_STATUSES } },
       select: {
         id: true,
         tenantId: true,
@@ -182,7 +197,7 @@ export const authRepository = {
    */
   getUserMemberships(userId: string) {
     return prisma.tenantMembership.findMany({
-      where: { userId, status: "ACTIVE" },
+      where: { userId, status: { in: SESSION_MEMBERSHIP_STATUSES } },
       select: { tenantId: true, role: true },
     });
   },

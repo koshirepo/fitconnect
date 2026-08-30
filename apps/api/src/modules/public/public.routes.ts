@@ -48,6 +48,7 @@ publicRoutes.get("/gyms/:slug", publicController.getTenantBySlug);
  * exactly as it did before they existed.
  */
 publicRoutes.get("/signup/options", signupController.getOptions);
+publicRoutes.post("/signup/quote", rateLimitSignup, signupController.quote);
 publicRoutes.post("/signup", rateLimitSignup, verifyTurnstile, signupController.register);
 publicRoutes.post("/signup/verify", rateLimitSignup, signupController.verify);
 

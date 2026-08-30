@@ -23,6 +23,7 @@ import { useViewTransitionLocation } from "@/lib/use-view-transition-location";
 import { useTenantInstallBranding } from "@/lib/install-branding";
 import { useBrandTheme } from "@/lib/brand-theme";
 import { ApexPathNormalizer, TenantPathNormalizer } from "@/features/auth/tenant-path-normalizer";
+import { TenantPublicLayout } from "@/components/layout/tenant-public-layout";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useAuthStore } from "@/stores/auth";
 
@@ -180,25 +181,34 @@ export default function App() {
 
   const tenantRoutes = (
     <Routes location={viewLocation}>
-      <Route path="/" element={<TenantPublicPage />} />
       {/* QR check-in links are generated from window.location.origin, so they
-          land on the gym subdomain and need the route here too. */}
+          land on the gym subdomain and need the route here too. Deliberately
+          outside the shared frame: it is a poster propped on a desk, not a
+          page to navigate away from. */}
       <Route path="/attendance/qr/:tenantId" element={<AttendanceQrPage />} />
-      {/* The shop window. Public on purpose: a visitor can see what the gym
-          sells before deciding to join. Buying lives behind the dashboard. */}
-      <Route path="/store" element={<PublicStorePage />} />
-      <Route path="/store/products/:productId" element={<PublicStoreProductPage />} />
-      <Route element={<RedirectIfAuth />}>
-        <Route path="/login" element={<LoginPage />} />
-        {/* Joining is for people without an account; a signed-in member is
-            sent to their dashboard instead. */}
-        <Route path="/signup" element={<SignupPage />} />
-      </Route>
-      {/* Opened from a WhatsApp message or an email; the token is the
-          credential, so this sits outside every auth guard. */}
+      {/* Opened from a WhatsApp message; the token is the credential, and the
+          card is meant to be shown rather than browsed, so it keeps its own
+          bare page. */}
       <Route path="/id-card/:token" element={<IdCardPage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+      {/* Everything a visitor actually browses shares one frame. To them this
+          is one website, and a header that moves between pages reads as
+          several sites badly linked together. */}
+      <Route element={<TenantPublicLayout />}>
+        <Route path="/" element={<TenantPublicPage />} />
+        {/* The shop window. Public on purpose: a visitor can see what the gym
+            sells, and buy, before deciding to join. */}
+        <Route path="/store" element={<PublicStorePage />} />
+        <Route path="/store/products/:productId" element={<PublicStoreProductPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route element={<RedirectIfAuth />}>
+          <Route path="/login" element={<LoginPage />} />
+          {/* Joining is for people without an account; a signed-in member is
+              sent to their dashboard instead. */}
+          <Route path="/signup" element={<SignupPage />} />
+        </Route>
+      </Route>
 
       <Route element={<RequireAuth />}>
         <Route element={<AppLayout />}>

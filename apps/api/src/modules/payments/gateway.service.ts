@@ -17,6 +17,7 @@ import {
   type RazorpayCredentials,
 } from "../../lib/razorpay";
 import { paymentRepository } from "./payments.repository";
+import { couponService } from "../coupons/coupons.service";
 import { pushService } from "../push/push.service";
 import { referralRewardService } from "../members/referral-rewards.service";
 import type {
@@ -304,10 +305,79 @@ export const gatewayService = {
     );
     const outstandingAmount = outstanding.reduce((sum, row) => sum + row.amount, 0);
 
+    /**
+     * A coupon and any coins, priced here rather than by the caller.
+     *
+     * This path had neither, which made the renewal screen the one place a
+     * member could not spend what the app had given them — while the
+     * referral notification told them to spend it on exactly this. The
+     * quote covers the plan alone: arrears are money already owed at a
+     * price already agreed, and discounting them here would rewrite it.
+     */
+    const quote =
+      input.couponCode || (input.coinsToSpend ?? 0) > 0
+        ? await couponService.quote({
+            tenantId,
+            membershipId: membership.id,
+            subscriptionId: subscription.id,
+            ...(input.couponCode ? { code: input.couponCode } : {}),
+            ...(input.coinsToSpend ? { coinsToSpend: input.coinsToSpend } : {}),
+          })
+        : null;
+
+    if (quote && "error" in quote) {
+      return { error: quote.error, status: quote.status };
+    }
+
+    // What the plan costs once the coupon and the coins have come off.
+    const planAmount = quote ? quote.data.netAmount : subscription.amount;
+
     // The amount comes from the plan and the member's own unpaid rows, never
     // from the request body: a client that could name its own price could buy
     // a year for a rupee.
-    const amount = subscription.amount + outstandingAmount;
+    const amount = planAmount + outstandingAmount;
+
+    // Coins and a coupon can clear a plan outright. With no arrears there is
+    // nothing left to charge, so the sale completes here rather than opening
+    // a payment window for zero rupees, which Razorpay would refuse anyway.
+    if (amount <= 0) {
+      const validFrom = new Date();
+      const validUntil = new Date(validFrom);
+      validUntil.setDate(validUntil.getDate() + subscription.durationDays);
+
+      const settled = await paymentRepository.createPayment({
+        tenantId,
+        membershipId: membership.id,
+        subscriptionId: subscription.id,
+        description: subscription.title,
+        status: "COMPLETED",
+        amount: 0,
+        ...(quote
+          ? {
+              listAmount: quote.data.listAmount,
+              discountAmount: quote.data.discountAmount,
+              coinsRedeemed: quote.data.coinsRedeemed,
+            }
+          : {}),
+        paidAt: validFrom,
+        validFrom,
+        validUntil,
+      });
+
+      if (quote) {
+        await couponService.redeem({
+          tenantId,
+          membershipId: membership.id,
+          quote: quote.data,
+          paymentId: settled.id,
+        });
+      }
+
+      await paymentRepository.refreshDueDate(membership.id);
+      await paymentRepository.reactivateIfPaidUp(membership.id);
+
+      return { data: { checkout: null, paymentId: settled.id, settled: true } };
+    }
 
     let order;
     try {
@@ -338,13 +408,40 @@ export const gatewayService = {
       subscriptionId: subscription.id,
       description: subscription.title,
       status: "PENDING",
-      // The plan's own price. The arrears keep their own rows on the same
-      // order, so this one still says what the plan cost.
-      amount: subscription.amount,
+      // What the plan costs after any coupon and coins. The arrears keep
+      // their own rows on the same order, so this one still says what the
+      // plan cost — and what came off it sits beside it.
+      amount: planAmount,
+      ...(quote
+        ? {
+            listAmount: quote.data.listAmount,
+            discountAmount: quote.data.discountAmount,
+            coinsRedeemed: quote.data.coinsRedeemed,
+          }
+        : {}),
       gateway: "RAZORPAY",
       gatewayOrderId: order.id,
       gatewayAccount: credentials.source,
     });
+
+    // Recorded against the payment it affected. The coins leave the balance
+    // now rather than at settlement: an abandoned checkout releases them
+    // through the same reversal an abandoned counter payment uses.
+    if (quote) {
+      const redeemed = await couponService.redeem({
+        tenantId,
+        membershipId: membership.id,
+        quote: quote.data,
+        paymentId: payment.id,
+      });
+
+      if (!redeemed.ok) {
+        console.warn("Coupon redemption failed while opening a checkout.", {
+          paymentId: payment.id,
+          reason: redeemed.reason,
+        });
+      }
+    }
 
     // Settlement walks every row of an order, so attaching the dues is all it
     // takes for them to complete with the plan.

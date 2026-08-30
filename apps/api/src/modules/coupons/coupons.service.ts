@@ -33,7 +33,16 @@ export type Quote = {
 
 type QuoteInput = {
   tenantId: string;
-  membershipId: string;
+  /**
+   * The member, when there is one.
+   *
+   * Null while somebody is still being admitted or signing themselves up:
+   * the row does not exist yet, and the price has to be shown before the
+   * money is taken. A prospective member has no history to check and no
+   * coins to spend, so the per-member rules are satisfied by definition
+   * rather than skipped — see `checkEligibility`.
+   */
+  membershipId: string | null;
   /** The plan being bought, when there is one. */
   subscriptionId?: string | null;
   /** Charges billed alongside it. */
@@ -151,7 +160,7 @@ export const couponService = {
   async checkEligibility(
     tenantId: string,
     coupon: NonNullable<CouponRecord>,
-    membershipId: string,
+    membershipId: string | null,
     listAmount: number,
     subscriptionId?: string | null,
   ): Promise<string | null> {
@@ -177,6 +186,21 @@ export const couponService = {
       if (!coupon.subscriptions.some((plan) => plan.id === subscriptionId)) {
         return "This coupon does not apply to the selected plan.";
       }
+    }
+
+    // Nobody to check against yet. Every rule below is about a member's own
+    // history or attributes, and somebody who has not joined has neither:
+    // no completed subscription, no redemptions, no badges. A gender-scoped
+    // coupon is the one exception — it is refused rather than guessed at,
+    // because the person joining has not said yet.
+    if (!membershipId) {
+      if (coupon.gender) {
+        return "This coupon can only be applied once the member has joined.";
+      }
+      if (coupon.badges.length > 0) {
+        return "This coupon needs a badge only an existing member can hold.";
+      }
+      return null;
     }
 
     const { membership, completedSubscriptionPayments } = await loadEligibility(
@@ -304,7 +328,11 @@ export const couponService = {
     // Coins come off what is left after the discount, so they can never
     // multiply a percentage off, and never take the total below zero.
     if (input.coinsToSpend && input.coinsToSpend > 0) {
-      const balance = await couponService.getCoinBalance(tenantId, membershipId);
+      // A member being created has never earned a coin, so there is nothing
+      // to look up and nothing to spend.
+      const balance = membershipId
+        ? await couponService.getCoinBalance(tenantId, membershipId)
+        : 0;
       const spendable = Math.max(0, Math.min(input.coinsToSpend, balance, quote.netAmount));
       quote = {
         ...quote,

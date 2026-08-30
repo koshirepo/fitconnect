@@ -83,7 +83,13 @@ export function useCouponQuote() {
     async (
       tenantId,
       vars: {
-        membershipId: string;
+        /**
+         * Null while somebody is still being admitted or signing up: the row
+         * does not exist yet, and the price has to be shown before the money is
+         * asked for. The API prices a prospect the same way it prices the
+         * admission itself, so the figure quoted is the figure charged.
+         */
+        membershipId: string | null;
         subscriptionId?: string | null;
         chargeIds?: string[];
         amount?: number;

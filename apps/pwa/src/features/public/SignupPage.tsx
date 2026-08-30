@@ -23,6 +23,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { FormPageSkeleton } from "@/components/ui/skeleton";
 import {
   AlertCircle,
@@ -121,7 +123,59 @@ export default function SignupPage() {
   const chargesTotal = charges
     .filter((charge) => selectedChargeIds.includes(charge.id))
     .reduce((sum, charge) => sum + charge.amount, 0);
-  const grandTotal = (selectedPlan?.amount ?? 0) + chargesTotal;
+  const listTotal = (selectedPlan?.amount ?? 0) + chargesTotal;
+
+  /**
+   * A joining offer, priced by the gym rather than by this form.
+   *
+   * Somebody deciding whether to join needs the real number before they
+   * commit, and the rules that decide it live in the API. The code is sent
+   * again with the signup, where it is priced a second time and has to
+   * agree — a browser can never name its own discount.
+   */
+  const [couponCode, setCouponCode] = React.useState("");
+  const [couponError, setCouponError] = React.useState("");
+  const [checkingCoupon, setCheckingCoupon] = React.useState(false);
+  const [discount, setDiscount] = React.useState(0);
+
+  const grandTotal = Math.max(0, listTotal - discount);
+
+  const applyCoupon = async () => {
+    const code = couponCode.trim();
+    setCouponError("");
+
+    if (!code || !selectedPlan) {
+      setDiscount(0);
+      return;
+    }
+
+    setCheckingCoupon(true);
+    try {
+      const res = await publicApi.quoteSignup({
+        subscriptionId: selectedPlan.id,
+        ...(selectedChargeIds.length ? { chargeIds: selectedChargeIds } : {}),
+        couponCode: code,
+      });
+      const quoted = res.data.data.quote.discountAmount;
+      setDiscount(quoted);
+      if (quoted === 0) {
+        setCouponError("That code is valid but takes nothing off this plan.");
+      }
+    } catch (caught) {
+      setDiscount(0);
+      setCouponError(getApiError(caught));
+    } finally {
+      setCheckingCoupon(false);
+    }
+  };
+
+  // Changing the plan or the extras invalidates whatever was quoted against
+  // the old basket. Clearing is honest; silently re-quoting would move a
+  // number somebody had already decided on.
+  React.useEffect(() => {
+    setDiscount(0);
+    setCouponError("");
+  }, [selectedPlanId, selectedChargeIds]);
 
   const brandLogo = resolveAssetUrl(options?.tenant.logoUrl ?? null);
 
@@ -173,6 +227,9 @@ export default function SignupPage() {
         avatarDataUrl: await toDataUrl(memberData.photoFile),
         subscriptionId: selectedPlan.id,
         ...(selectedChargeIds.length > 0 ? { chargeIds: selectedChargeIds } : {}),
+        ...(couponCode.trim() && discount > 0
+          ? { couponCode: couponCode.trim() }
+          : {}),
         ...(memberData.shiftId ? { shiftId: memberData.shiftId } : {}),
         ...(turnstileToken ? { "cf-turnstile-response": turnstileToken } : {}),
       });
@@ -261,7 +318,7 @@ export default function SignupPage() {
 
   if (loadError || !options) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="flex min-h-[70vh] items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardContent className="flex flex-col items-center gap-4 py-10 text-center">
             <AlertCircle className="h-8 w-8 text-destructive" />
@@ -521,11 +578,50 @@ export default function SignupPage() {
                     <span>{formatAmount(selectedPlan.amount)}</span>
                   </div>
                 )}
+                {discount > 0 && (
+                  <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                    <span>Coupon {couponCode.trim().toUpperCase()}</span>
+                    <span>-{formatAmount(discount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between border-t pt-2 text-base font-bold">
                   <span>Total</span>
                   <span>{formatAmount(grandTotal)}</span>
                 </div>
               </div>
+
+              {/* A joining offer is the thing a gym advertises, so the form
+                  it is used on has to have somewhere to type it. */}
+              {selectedPlan && (
+                <div className="mt-4 space-y-2">
+                  <Label htmlFor="signup-coupon">Have a coupon?</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="signup-coupon"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      placeholder="Enter code"
+                      disabled={submitting}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={applyCoupon}
+                      disabled={submitting || checkingCoupon || !couponCode.trim()}
+                    >
+                      {checkingCoupon ? "Checking…" : "Apply"}
+                    </Button>
+                  </div>
+                  {couponError && (
+                    <p className="text-xs text-destructive">{couponError}</p>
+                  )}
+                  {discount > 0 && !couponError && (
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                      {formatAmount(discount)} off applied.
+                    </p>
+                  )}
+                </div>
+              )}
 
               {!options.onlinePaymentsEnabled && (
                 <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-700">

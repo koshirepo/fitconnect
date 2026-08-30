@@ -21,6 +21,14 @@ export const addMemberSchema = z.object({
   avatarUrl: z.string().optional(),
   subscriptionId: z.string().optional(),
   chargeIds: z.array(z.string()).optional(),
+  /**
+   * A joining offer, applied to the admission as a whole.
+   *
+   * No coins here: a member being created has never earned any, so a field
+   * for spending them would only ever be an empty box on the busiest form
+   * in the app.
+   */
+  couponCode: z.string().trim().min(1).max(40).optional(),
   shiftId: z.string().optional(),
   referredByMembershipId: z.string().optional(),
 });

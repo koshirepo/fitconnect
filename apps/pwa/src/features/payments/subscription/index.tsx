@@ -4,6 +4,9 @@ import { Permission } from "@fitconnect/shared/types/permissions";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
 import { useTenantSettings } from "@/api/queries/catalog";
+import { useCoinBalance } from "@/api/queries/coupons";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   useCreateCheckout,
   useDeleteSubscription,
@@ -21,8 +24,17 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import { formatCurrency } from "@/lib/utils";
-import { CreditCard, Pencil, Plus, Power, Trash2, Package } from "lucide-react";
+import { cn, formatCurrency } from "@/lib/utils";
+
+/** Ledger reasons, in the words a member would use. */
+const COIN_REASONS: Record<string, string> = {
+  COUPON: "From a coupon",
+  REFERRAL: "For bringing someone in",
+  REDEEMED: "Spent",
+  REVERSAL: "Returned",
+  ADJUSTMENT: "Adjusted by the gym",
+};
+import { Coins, CreditCard, Pencil, Plus, Power, Trash2, Package } from "lucide-react";
 import type { Subscription } from "@/types/api";
 
 export default function SubscriptionsPage() {
@@ -31,6 +43,14 @@ export default function SubscriptionsPage() {
   const { can } = usePermissions();
   const isAdmin = can(Permission.SUBSCRIPTIONS_UPDATE);
   const gymName = currentMembership()?.tenantName ?? "the gym";
+  const membershipId = currentMembership()?.id ?? null;
+
+  // What this member has to spend. The renewal screen is where the referral
+  // notification sends them, so the balance has to be here and not only on
+  // the profile page.
+  const coinsQuery = useCoinBalance(membershipId ?? undefined);
+  const coinBalance = coinsQuery.data?.balance ?? 0;
+  const coinEntries = coinsQuery.data?.entries ?? [];
 
   const [pageError, setPageError] = React.useState("");
 
@@ -47,6 +67,18 @@ export default function SubscriptionsPage() {
   // possible arrives as a single boolean on the gym's settings.
   const settingsQuery = useTenantSettings();
   const createCheckout = useCreateCheckout();
+
+  /**
+   * The plan a member is part-way through buying.
+   *
+   * Paying used to be one press, which left no moment to spend a coupon or
+   * the coins the app had already told them they had. This is that moment:
+   * a plan is chosen, what it costs is shown, and only then is Razorpay
+   * opened.
+   */
+  const [redeeming, setRedeeming] = React.useState<Subscription | null>(null);
+  const [couponCode, setCouponCode] = React.useState("");
+  const [coinsToSpend, setCoinsToSpend] = React.useState(0);
   const verifyCheckout = useVerifyCheckout();
 
   const canPayOnline =
@@ -70,10 +102,42 @@ export default function SubscriptionsPage() {
    */
   const handlePayNow = async (subscription: Subscription) => {
     setPageError("");
+
+    // An admin paying on somebody's behalf is not spending their own coins, and
+    // a member with neither coins nor a code to try has nothing to look at. Both
+    // go straight to the gateway rather than through an empty step.
+    if (isAdmin) {
+      await startCheckout(subscription, {});
+      return;
+    }
+
+    setCouponCode("");
+    setCoinsToSpend(0);
+    setRedeeming(subscription);
+  };
+
+  /** Open the gateway for a plan, with whatever is being put against it. */
+  const startCheckout = async (
+    subscription: Subscription,
+    redemption: { couponCode?: string; coinsToSpend?: number },
+  ) => {
+    setPageError("");
     setPayingPlanId(subscription.id);
 
     try {
-      const session = await createCheckout.mutateAsync(subscription.id);
+      const { checkout: session } = await createCheckout.mutateAsync({
+        subscriptionId: subscription.id,
+        ...redemption,
+      });
+
+      // A coupon and coins can clear a bill outright, and then the API has
+      // already completed the purchase — there is no window to open.
+      if (!session) {
+        haptics.payment();
+        setRedeeming(null);
+        navigate("/payments");
+        return;
+      }
 
       const result = await openRazorpayCheckout({
         keyId: session.keyId,
@@ -110,6 +174,7 @@ export default function SubscriptionsPage() {
         signature: result.signature,
       });
 
+      setRedeeming(null);
       navigate("/payments");
     } catch (caught) {
       setPageError(getApiError(caught));
@@ -176,6 +241,136 @@ export default function SubscriptionsPage() {
           </Button>
         )}
       </div>
+
+      {/* What this member has to spend, said plainly and on the screen the
+          referral notification sends them to. The balance used to live only on
+          the profile page, which is not where anybody renews. */}
+      {!isAdmin && coinBalance > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Coins className="h-5 w-5" />
+              {coinBalance} coins
+            </CardTitle>
+            <CardDescription>
+              Worth {formatCurrency(coinBalance)} off any plan below. Choose one and
+              you can put them against it.
+            </CardDescription>
+          </CardHeader>
+
+          {coinEntries.length > 0 && (
+            <CardContent>
+              <details className="text-sm">
+                <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                  Where these came from
+                </summary>
+                {/* A balance nobody can explain is a balance nobody trusts. The
+                    ledger was already returned by the API and simply never
+                    shown anywhere. */}
+                <ul className="mt-3 divide-y divide-border">
+                  {coinEntries.slice(0, 12).map((entry) => (
+                    <li key={entry.id} className="flex items-start justify-between gap-3 py-2">
+                      <span className="min-w-0">
+                        <span className="block">{COIN_REASONS[entry.reason] ?? entry.reason}</span>
+                        {entry.note && (
+                          <span className="block text-xs text-muted-foreground">{entry.note}</span>
+                        )}
+                      </span>
+                      <span
+                        className={cn(
+                          "shrink-0 font-medium",
+                          entry.amount >= 0
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : "text-muted-foreground",
+                        )}
+                      >
+                        {entry.amount >= 0 ? "+" : ""}
+                        {entry.amount}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            </CardContent>
+          )}
+        </Card>
+      )}
+
+      {/* The moment between choosing a plan and paying for it. */}
+      {redeeming && (
+        <Card className="border-primary/40">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Paying for {redeeming.title}</CardTitle>
+            <CardDescription>
+              {formatCurrency(redeeming.amount)} for {redeeming.durationDays} days.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="renew-coupon">Coupon code</Label>
+              <Input
+                id="renew-coupon"
+                value={couponCode}
+                onChange={(event) => setCouponCode(event.target.value)}
+                placeholder="Optional"
+              />
+            </div>
+
+            {coinBalance > 0 && (
+              <div className="space-y-1.5">
+                <Label htmlFor="renew-coins">
+                  Coins to spend — {coinsToSpend} of {coinBalance}
+                </Label>
+                {/* Bounded by the balance and by the price: a slider that can
+                    ask for more than either would only ever be corrected by
+                    the server, after the member had already chosen. */}
+                <input
+                  id="renew-coins"
+                  type="range"
+                  min={0}
+                  max={Math.min(coinBalance, redeeming.amount)}
+                  value={coinsToSpend}
+                  onChange={(event) => setCoinsToSpend(Number(event.target.value))}
+                  className="w-full accent-primary"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {coinsToSpend > 0
+                    ? `${formatCurrency(coinsToSpend)} off, leaving about ${formatCurrency(Math.max(0, redeeming.amount - coinsToSpend))} to pay.`
+                    : "Drag to put your coins against this renewal."}
+                </p>
+              </div>
+            )}
+
+            <p className="text-xs text-muted-foreground">
+              The gym works out the final price. Anything you still owe is added to
+              the same payment.
+            </p>
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                disabled={payingPlanId === redeeming.id}
+                onClick={() =>
+                  startCheckout(redeeming, {
+                    ...(couponCode.trim() ? { couponCode: couponCode.trim() } : {}),
+                    ...(coinsToSpend > 0 ? { coinsToSpend } : {}),
+                  })
+                }
+              >
+                {payingPlanId === redeeming.id ? (
+                  <Spinner className="size-4" />
+                ) : (
+                  <CreditCard className="h-4 w-4" />
+                )}
+                Continue to payment
+              </Button>
+              <Button variant="ghost" onClick={() => setRedeeming(null)}>
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {(pageError || loadError) && (
         <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">

@@ -23,11 +23,13 @@ import {
 import { authRepository } from "../auth/auth.repository";
 import { memberRepository } from "../members/members.repository";
 import { gatewayService } from "../payments/gateway.service";
+import { couponService } from "../coupons/coupons.service";
 import { paymentRepository } from "../payments/payments.repository";
 import { pushService } from "../push/push.service";
 import { signupRepository } from "./signup.repository";
 import type {
   SelfSignupServiceInput,
+  SignupQuoteInput,
   VerifySignupInput,
 } from "./signup.schema";
 
@@ -78,6 +80,36 @@ export const signupService = {
    * checkout widget, so a payment can never exist at Razorpay without a local
    * record for the webhook to find.
    */
+  /**
+   * What a joining offer is worth, for the form that is about to use it.
+   *
+   * Quoted as a prospect, which is exactly what the signup itself does, so
+   * the figure shown here is the figure charged. Prices come from the
+   * database; the request only names the plan and the code.
+   */
+  async quoteByHost(host: string, input: SignupQuoteInput) {
+    const tenant = await resolveTenant(host);
+    if (!tenant) return { error: "Gym not found.", status: 404 as const };
+
+    const plan = await signupRepository.findSelectablePlan(
+      tenant.id,
+      input.subscriptionId,
+    );
+    if (!plan) return { error: "That plan is not available.", status: 404 as const };
+
+    const quote = await couponService.quote({
+      tenantId: tenant.id,
+      membershipId: null,
+      subscriptionId: plan.id,
+      ...(input.chargeIds?.length ? { chargeIds: input.chargeIds } : {}),
+      code: input.couponCode,
+    });
+
+    if ("error" in quote) return quote;
+
+    return { data: { quote: quote.data } };
+  },
+
   async register(
     host: string,
     input: SelfSignupServiceInput,
@@ -196,8 +228,37 @@ export const signupService = {
       "SUSPENDED",
     );
 
-    const total =
+    /**
+     * A joining offer, priced against the whole bill.
+     *
+     * Quoted without a membership id: the row exists by this point, but the
+     * person has no history to check and no coins, and quoting as a
+     * prospect keeps this identical to what the signup form was shown
+     * before they committed. A code that does not apply fails the signup
+     * rather than being silently dropped — quietly charging full price is
+     * the one outcome nobody wants to discover after paying.
+     */
+    const quote = input.couponCode
+      ? await couponService.quote({
+          tenantId: tenant.id,
+          membershipId: null,
+          subscriptionId: plan.id,
+          ...(input.chargeIds?.length ? { chargeIds: input.chargeIds } : {}),
+          code: input.couponCode,
+        })
+      : null;
+
+    if (quote && "error" in quote) {
+      return { error: quote.error, status: quote.status };
+    }
+
+    const discount = quote?.data.discountAmount ?? 0;
+
+    const listTotal =
       plan.amount + charges.reduce((sum, charge) => sum + charge.amount, 0);
+    // What the member is actually asked for. The discount comes off the plan
+    // row below, so the two agree.
+    const total = Math.max(0, listTotal - discount);
 
     // One order for the whole bill: the member sees a single amount, and every
     // row it covers settles together.
@@ -226,7 +287,14 @@ export const signupService = {
     const payments = await signupRepository.createPendingPayments({
       tenantId: tenant.id,
       membershipId: membership.id,
-      subscription: { id: plan.id, title: plan.title, amount: plan.amount },
+      subscription: {
+        id: plan.id,
+        title: plan.title,
+        amount: Math.max(0, plan.amount - discount),
+        ...(discount > 0
+          ? { listAmount: plan.amount, discountAmount: discount }
+          : {}),
+      },
       charges,
       gateway:
         order && credentials

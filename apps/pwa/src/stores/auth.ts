@@ -141,8 +141,18 @@ export const useAuthStore = create<AuthState>()(
         });
       },
 
+      /**
+       * Adopt a session issued somewhere other than the login form.
+       *
+       * Self-signup is the one that matters: the API hands back a session for
+       * the account it just created so the new member ends up inside the app
+       * rather than at a sign-in page. Storing the tokens without setting
+       * `isAuthenticated` left them holding a valid session the app did not
+       * believe in — every guard read the flag, so the member was bounced
+       * back out to log in with a password they had never chosen.
+       */
       setTokens: (accessToken: string, refreshToken: string) => {
-        set({ accessToken, refreshToken });
+        set({ accessToken, refreshToken, isAuthenticated: true });
       },
 
       fetchMe: async () => {
@@ -153,6 +163,10 @@ export const useAuthStore = create<AuthState>()(
           set({
             user,
             currentTenantId: user.membership?.tenantId ?? null,
+            // A `me` that answers proves the session is real. Set here too
+            // so a token adopted from elsewhere is confirmed rather than
+            // merely assumed.
+            isAuthenticated: true,
           });
         } catch (error) {
           // Only the server saying no ends the session. A timeout or a dead

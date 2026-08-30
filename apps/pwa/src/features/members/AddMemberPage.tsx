@@ -9,6 +9,9 @@ import { useAllMembers } from "@/api/queries/members";
 import { useQueryClient } from "@tanstack/react-query";
 import { getApiError } from "@/api/client";
 import { haptics } from "@/lib/haptics";
+import { useCouponQuote } from "@/api/queries/coupons";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { storeFileOffline } from "@/lib/offline-files";
 import { queueMutation } from "@/lib/api-cache";
 import { getTenantDashboardPath } from "@/lib/subdomain";
@@ -139,6 +142,55 @@ export default function AddMemberPage() {
   const subscriptionTotal = selectedSubscription?.amount ?? 0;
   const grandTotal = selectedChargesTotal + subscriptionTotal;
 
+  /**
+   * A joining offer, priced by the server before anything is saved.
+   *
+   * Quoted rather than guessed: the coupon rules live in the API, and an
+   * admin taking cash needs the real figure in front of them, not one this
+   * screen worked out. The member does not exist yet, so the quote is asked
+   * for as a prospect — which is exactly how the admission itself prices it.
+   */
+  const couponQuote = useCouponQuote();
+  const [couponCode, setCouponCode] = React.useState("");
+  const [couponError, setCouponError] = React.useState("");
+  const [discount, setDiscount] = React.useState(0);
+
+  const applyCoupon = async () => {
+    const code = couponCode.trim();
+    setCouponError("");
+
+    if (!code) {
+      setDiscount(0);
+      return;
+    }
+
+    try {
+      const quote = await couponQuote.mutateAsync({
+        membershipId: null,
+        ...(selectedSubscriptionId ? { subscriptionId: selectedSubscriptionId } : {}),
+        ...(selectedChargeIds.length ? { chargeIds: selectedChargeIds } : {}),
+        code,
+      });
+      setDiscount(quote.discountAmount);
+      if (quote.discountAmount === 0) {
+        setCouponError("That code is valid but takes nothing off this admission.");
+      }
+    } catch (caught) {
+      setDiscount(0);
+      setCouponError(getApiError(caught));
+    }
+  };
+
+  // A plan or charge changing invalidates whatever was quoted against the
+  // old basket. Clearing is the honest response; re-quoting silently would
+  // change a number the admin had already read out to somebody.
+  React.useEffect(() => {
+    setDiscount(0);
+    setCouponError("");
+  }, [selectedSubscriptionId, selectedChargeIds]);
+
+  const payableTotal = Math.max(0, grandTotal - discount);
+
   const handleFinalSubmit = async () => {
     if (!currentTenantId || !memberData) return;
     setError("");
@@ -155,6 +207,9 @@ export default function AddMemberPage() {
           : {}),
         ...(selectedChargeIds.length > 0
           ? { chargeIds: selectedChargeIds }
+          : {}),
+        ...(couponCode.trim() && discount > 0
+          ? { couponCode: couponCode.trim() }
           : {}),
         ...(memberData.shiftId ? { shiftId: memberData.shiftId } : {}),
         ...(memberData.referredByMembershipId
@@ -503,10 +558,48 @@ export default function AddMemberPage() {
                         <span>{formatAmount(selectedSubscription.amount)}</span>
                       </div>
                     )}
+                    {discount > 0 && (
+                      <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                        <span>Coupon {couponCode.trim().toUpperCase()}</span>
+                        <span>-{formatAmount(discount)}</span>
+                      </div>
+                    )}
                     <div className="border-t pt-2 flex justify-between font-bold text-base">
                       <span>Total</span>
-                      <span>{formatAmount(grandTotal)}</span>
+                      <span>{formatAmount(payableTotal)}</span>
                     </div>
+                  </div>
+
+                  {/* Priced by the API, not by this screen: an admin about to
+                      take cash needs the figure the server will actually
+                      charge. */}
+                  <div className="mt-4 space-y-2">
+                    <Label htmlFor="admission-coupon">Coupon code</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="admission-coupon"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value)}
+                        placeholder="Optional"
+                        disabled={submitting}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={applyCoupon}
+                        disabled={submitting || couponQuote.isPending || !couponCode.trim()}
+                      >
+                        {couponQuote.isPending ? "Checking…" : "Apply"}
+                      </Button>
+                    </div>
+                    {couponError && (
+                      <p className="text-xs text-destructive">{couponError}</p>
+                    )}
+                    {discount > 0 && !couponError && (
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                        {formatAmount(discount)} off applied.
+                      </p>
+                    )}
                   </div>
 
                   {error && (

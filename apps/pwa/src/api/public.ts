@@ -137,6 +137,22 @@ export const publicApi = {
     }),
 
   // ─── Self-signup ────────────────────────────────────────────────────────────
+
+  /**
+   * What a joining offer is worth, before anybody has joined.
+   *
+   * The server prices it as a prospect — the same way the signup itself
+   * will — so the figure shown on the form is the figure charged.
+   */
+  quoteSignup: (
+    payload: { subscriptionId: string; chargeIds?: string[]; couponCode: string },
+    host = currentHost(),
+  ) =>
+    api.post<ApiResponse<{ quote: { listAmount: number; discountAmount: number; netAmount: number } }>>(
+      "/public/signup/quote",
+      payload,
+      { params: { host } },
+    ),
   // The gym comes from the host, exactly as it does for branding, so a visitor
   // can only ever join the gym whose site they are standing on.
 

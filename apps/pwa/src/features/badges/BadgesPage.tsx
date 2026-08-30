@@ -9,7 +9,7 @@ import {
   useBadgesInfinite,
   useDeleteBadge,
 } from "@/api/queries/catalog";
-import { useAllMembers } from "@/api/queries/members";
+import { useAllMembers, useMyProfile } from "@/api/queries/members";
 import { flattenPages } from "@/api/queries/shared";
 import { getApiError } from "@/api/client";
 import { useToast } from "@/components/ui/toast";
@@ -48,6 +48,14 @@ export default function BadgesPage() {
   // ─── Badge list ─────────────────────────────────────────────────────────────
   // Authors see inactive badges too, so the flag is part of the cache key.
   const badgesQuery = useBadgesInfinite({ includeInactive: isAdmin });
+
+  // Which of these are actually this member's. Only asked for when it will
+  // be used: an admin is looking at the gym's badges, not their own.
+  const myProfile = useMyProfile({ enabled: !isAdmin });
+  const myBadgeIds = React.useMemo(
+    () => new Set(myProfile.data?.badgeIds ?? []),
+    [myProfile.data],
+  );
   const badges = React.useMemo(
     () => flattenPages<Badge>(badgesQuery.data?.pages),
     [badgesQuery.data],
@@ -226,9 +234,20 @@ export default function BadgesPage() {
                         )}
                       </div>
                     </div>
-                    {badge._count && (
-                      <BadgeUI variant="secondary">{badge._count.assignments} assigned</BadgeUI>
-                    )}
+                    {/* An admin wants to know how many people hold this. A
+                        member wants to know whether *they* do — and a bare
+                        "assigned" on their own screen said they did, whatever
+                        the number beside it. */}
+                    {isAdmin
+                      ? badge._count && (
+                          <BadgeUI variant="secondary">
+                            {badge._count.assignments}
+                            {badge._count.assignments === 1 ? " member" : " members"}
+                          </BadgeUI>
+                        )
+                      : myBadgeIds.has(badge.id) && (
+                          <BadgeUI variant="success">Earned</BadgeUI>
+                        )}
                   </div>
                 </CardHeader>
                 <CardContent>

@@ -48,7 +48,28 @@ export const selfSignupSchema = z.object({
    * would otherwise fail the whole signup at the database.
    */
   chargeIds: z.array(z.string()).max(50).optional(),
+  /**
+   * A joining offer.
+   *
+   * The code only; what it is worth is decided here, the same as every
+   * other price on this path. No coins — somebody joining has never earned
+   * any.
+   */
+  couponCode: z.string().trim().min(1).max(40).optional(),
   shiftId: z.string().optional(),
+});
+
+/**
+ * Pricing a joining offer before anybody has joined.
+ *
+ * The same shape the signup takes, minus the person: what a code is worth
+ * has to be visible before the money is asked for, and on this path there is
+ * no account to attribute the question to.
+ */
+export const signupQuoteSchema = z.object({
+  subscriptionId: z.string().min(1),
+  chargeIds: z.array(z.string()).max(50).optional(),
+  couponCode: z.string().trim().min(1).max(40),
 });
 
 export const verifySignupSchema = z.object({
@@ -58,6 +79,7 @@ export const verifySignupSchema = z.object({
 });
 
 export type SelfSignupInput = z.infer<typeof selfSignupSchema>;
+export type SignupQuoteInput = z.infer<typeof signupQuoteSchema>;
 export type VerifySignupInput = z.infer<typeof verifySignupSchema>;
 
 /** What the service registers: the parsed body with the photo already stored. */
