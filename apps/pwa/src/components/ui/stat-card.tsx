@@ -10,6 +10,7 @@
  */
 import * as React from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 export type StatCardProps = {
   icon: React.ElementType;
@@ -19,6 +20,17 @@ export type StatCardProps = {
   subtext?: string;
   /** Tailwind text colour for the value. */
   color?: string;
+  /**
+   * Makes the whole tile a button.
+   *
+   * A figure that names a subset of what is on screen invites a click, so a
+   * tile that has somewhere to go should look and behave like it does — and one
+   * that does not should stay a plain card rather than a dead target.
+   */
+  onClick?: () => void;
+  /** Marks the tile as the filter currently applied. */
+  active?: boolean;
+  className?: string;
 };
 
 export function StatCard({
@@ -27,9 +39,33 @@ export function StatCard({
   value,
   subtext,
   color = "text-foreground",
+  onClick,
+  active,
+  className,
 }: StatCardProps) {
   return (
-    <Card>
+    <Card
+      {...(onClick
+        ? {
+            role: "button",
+            tabIndex: 0,
+            "aria-pressed": Boolean(active),
+            onClick,
+            onKeyDown: (event: React.KeyboardEvent) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onClick();
+              }
+            },
+          }
+        : {})}
+      className={cn(
+        onClick &&
+          "cursor-pointer transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+        active && "border-primary bg-primary/5",
+        className,
+      )}
+    >
       <CardContent className="pt-5 pb-4">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-muted p-2.5">

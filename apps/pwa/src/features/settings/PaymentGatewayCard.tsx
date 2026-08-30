@@ -256,8 +256,6 @@ export default function PaymentGatewayCard() {
                   )}
                   <a
                     href="https://dashboard.razorpay.com/app/website-app-settings/api-keys"
-                    target="_blank"
-                    rel="noreferrer noopener"
                     className="ml-auto inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
                   >
                     Razorpay dashboard

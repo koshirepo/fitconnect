@@ -9,12 +9,14 @@
 import type { Context } from "hono";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { storeService } from "./store.service";
-import { storeCheckoutService, storeSaleService } from "./store-sale.service";
+import { storeCheckoutService, storeGuestService, storeSaleService } from "./store-sale.service";
 import {
   adjustStockSchema,
   counterSaleSchema,
   storeCheckoutSchema,
   storeCheckoutVerifySchema,
+  storeReserveSchema,
+  guestCounterSaleSchema,
   createProductSchema,
   createVariantSchema,
   listProductsSchema,
@@ -274,6 +276,98 @@ export const storeCheckoutController = {
     }
 
     return ok(c, result.data, 201);
+  },
+
+  /**
+   * Reserve a basket and pay at the counter.
+   *
+   * The same object a visitor creates from the public storefront — nothing
+   * charged, no stock moved until handover — but attached to the membership.
+   * Coupons and coins are deliberately not applied: nothing has been paid, and
+   * a coin spent against a bill nobody has settled is a coin that has to be
+   * clawed back if the member never turns up. The desk applies them when it
+   * rings the order through.
+   */
+  async reserve(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    const parsed = await parseBody(c, storeReserveSchema);
+    if (!parsed.ok) return parsed.response;
+
+    const user = c.get("authUser");
+    const membership = await paymentRepository.findMembershipByUser(tenantId, user.id);
+    if (!membership) return forbidden(c, "You are not a member of this gym.");
+
+    const result = await storeGuestService.place(tenantId, parsed.data, membership.id);
+    if ("error" in result) {
+      if (result.status === 409) return conflict(c, result.error!);
+      if (result.status === 404) return notFound(c, result.error!);
+      return badRequest(c, result.error!);
+    }
+
+    return ok(c, result.data, 201);
+  },
+
+  /** Selling to a walk-in: no membership, so no coupon and no coins. */
+  async sellToGuest(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    const parsed = await parseBody(c, guestCounterSaleSchema);
+    if (!parsed.ok) return parsed.response;
+
+    const user = c.get("authUser");
+    const seller = await paymentRepository.findMembershipByUser(tenantId, user.id);
+
+    const result = await storeGuestService.sellAtCounter(
+      tenantId,
+      parsed.data,
+      seller?.id ?? null,
+    );
+    if ("error" in result) {
+      if (result.status === 409) return conflict(c, result.error!);
+      if (result.status === 404) return notFound(c, result.error!);
+      return badRequest(c, result.error!);
+    }
+
+    return ok(c, result.data, 201);
+  },
+
+  /** The desk's queue: everything reserved and not yet handed over. */
+  async listOrders(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    const result = await storeGuestService.listOrders(tenantId, {
+      ...(c.req.query("status") ? { status: c.req.query("status")! } : {}),
+      ...(c.req.query("channel") ? { channel: c.req.query("channel")! } : {}),
+    });
+    return ok(c, result.data);
+  },
+
+  /**
+   * Hand a reservation over: take the money, move the stock.
+   *
+   * Can fail on stock — somebody else bought the last tub while it sat
+   * reserved — and then the order stays pending rather than completing against
+   * stock that is not there.
+   */
+  async completeOrder(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    const orderId = c.req.param("orderId")!;
+
+    const user = c.get("authUser");
+    const seller = await paymentRepository.findMembershipByUser(tenantId, user.id);
+
+    const result = await storeGuestService.complete(tenantId, orderId, seller?.id ?? null);
+    if ("error" in result) {
+      if (result.status === 409) return conflict(c, result.error!);
+      return notFound(c, result.error!);
+    }
+    return ok(c, result.data);
+  },
+
+  /** Drop a reservation nobody came for. Nothing to release: it took no stock. */
+  async cancelReservation(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    const result = await storeGuestService.cancel(tenantId, c.req.param("orderId")!);
+    if ("error" in result) return notFound(c, result.error!);
+    return ok(c, result.data);
   },
 
   async verify(c: AppContext) {

@@ -30,6 +30,21 @@ export type TenantBrandingPayload = {
   estd?: string | null;
 };
 
+/** What a guest sees when they come back to check on a reservation. */
+export type GuestOrderSummary = {
+  id: string;
+  status: string;
+  totalAmount: number;
+  createdAt: string;
+  buyerName: string | null;
+  items: {
+    productName: string;
+    variantName: string;
+    quantity: number;
+    lineTotal: number;
+  }[];
+};
+
 /** The gym subdomain this browser is on, which is what identifies the tenant. */
 const currentHost = () => (typeof window !== "undefined" ? window.location.host : "");
 
@@ -48,6 +63,44 @@ export const publicApi = {
   getStore: (host = currentHost()) =>
     api.get<ApiResponse<{ tenant: { id: string; name: string; slug: string }; products: StoreProduct[] }>>(
       "/public/store",
+      { params: { host } },
+    ),
+
+  /**
+   * Reserve a basket without an account.
+   *
+   * The gym comes from the host, like every other call here. Collection-only,
+   * so there is no address — the phone number is what the desk calls and what
+   * the buyer quotes when they arrive.
+   */
+  placeGuestOrder: (
+    payload: {
+      items: { variantId: string; quantity: number }[];
+      buyerName: string;
+      buyerPhone: string;
+      buyerEmail?: string;
+      note?: string;
+    },
+    host = currentHost(),
+  ) =>
+    api.post<
+      ApiResponse<{
+        orderId: string;
+        reference: string;
+        total: number;
+        subtotal: number;
+        placedAt: string;
+      }>
+    >("/public/store/orders", payload, { params: { host } }),
+
+  /** Checking on a reservation with the reference and the phone number. */
+  lookupGuestOrder: (
+    payload: { orderId: string; buyerPhone: string },
+    host = currentHost(),
+  ) =>
+    api.post<ApiResponse<{ order: GuestOrderSummary }>>(
+      "/public/store/orders/lookup",
+      payload,
       { params: { host } },
     ),
 

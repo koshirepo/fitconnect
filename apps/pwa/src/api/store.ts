@@ -37,6 +37,36 @@ export type StoreVariantPayload = {
   isActive?: boolean;
 };
 
+/** One row in the desk's order queue. */
+export type StoreOrderRow = {
+  id: string;
+  status: string;
+  channel: string;
+  subtotalAmount: number;
+  discountAmount: number;
+  coinsRedeemed: number;
+  totalAmount: number;
+  coinsEarned: number;
+  buyerName: string | null;
+  buyerPhone: string | null;
+  note: string | null;
+  createdAt: string;
+  paymentId: string | null;
+  member: {
+    id: string;
+    memberId: number;
+    user: { name: string; phone: string | null };
+  } | null;
+  soldBy: { user: { name: string } } | null;
+  items: {
+    productName: string;
+    variantName: string;
+    quantity: number;
+    unitPrice: number;
+    lineTotal: number;
+  }[];
+};
+
 export const storeApi = {
   listProducts: (tenantId: string, params?: { category?: string; includeInactive?: boolean }) =>
     api.get<ApiResponse<{ products: StoreProduct[] }>>(
@@ -112,6 +142,23 @@ export const storeApi = {
     payload: { items: StoreBasketLine[]; couponCode?: string; coinsToSpend?: number },
   ) => api.post<ApiResponse<StoreSaleResult>>(`/tenants/${tenantId}/store/checkout`, payload),
 
+  /**
+   * A member reserving to pay at the counter.
+   *
+   * No coupon and no coins: nothing is charged yet, so there is nothing for
+   * them to come off. The desk applies them when it rings the order through.
+   */
+  reserve: (tenantId: string, payload: { items: StoreBasketLine[]; note?: string }) =>
+    api.post<
+      ApiResponse<{
+        orderId: string;
+        reference: string;
+        total: number;
+        subtotal: number;
+        placedAt: string;
+      }>
+    >(`/tenants/${tenantId}/store/reserve`, payload),
+
   verifyCheckout: (
     tenantId: string,
     payload: { orderId: string; paymentId: string; signature: string },
@@ -119,6 +166,47 @@ export const storeApi = {
     api.post<ApiResponse<{ orderId: string; alreadySettled: boolean }>>(
       `/tenants/${tenantId}/store/checkout/verify`,
       payload,
+    ),
+
+  /** Selling to a walk-in at the counter: their details, no coupon or coins. */
+  sellToGuest: (
+    tenantId: string,
+    payload: {
+      items: StoreBasketLine[];
+      buyerName: string;
+      buyerPhone: string;
+      buyerEmail?: string;
+      note?: string;
+    },
+  ) =>
+    api.post<
+      ApiResponse<{
+        orderId: string;
+        reference: string;
+        subtotal: number;
+        total: number;
+      }>
+    >(`/tenants/${tenantId}/store/sales/guest`, payload),
+
+  /** The desk's queue of reservations, newest first. */
+  listOrders: (tenantId: string, params: { status?: string; channel?: string } = {}) =>
+    api.get<ApiResponse<{ orders: StoreOrderRow[] }>>(
+      `/tenants/${tenantId}/store/orders`,
+      { params },
+    ),
+
+  /** Hand a reservation over: take the money, move the stock. */
+  completeOrder: (tenantId: string, orderId: string) =>
+    api.post<ApiResponse<{ orderId: string; completed: boolean }>>(
+      `/tenants/${tenantId}/store/orders/${orderId}/complete`,
+      {},
+    ),
+
+  /** Drop a reservation nobody came for. */
+  rejectOrder: (tenantId: string, orderId: string) =>
+    api.post<ApiResponse<{ orderId: string; cancelled: boolean }>>(
+      `/tenants/${tenantId}/store/orders/${orderId}/reject`,
+      {},
     ),
 
   /** Releases the stock a closed payment window was holding. */

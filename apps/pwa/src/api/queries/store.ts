@@ -146,6 +146,60 @@ export function useStartStoreCheckout() {
   );
 }
 
+/** Selling to a walk-in at the counter. */
+export function useSellToGuest() {
+  const tenantId = useCurrentTenantId();
+  return useTenantMutation(
+    async (
+      id,
+      input: {
+        items: StoreBasketLine[];
+        buyerName: string;
+        buyerPhone: string;
+        buyerEmail?: string;
+        note?: string;
+      },
+    ) => unwrap(await storeApi.sellToGuest(id, input)),
+    // Stock moved.
+    { invalidates: [storeRoot(tenantId)] },
+  );
+}
+
+/** The desk's order queue. */
+export function useStoreOrders(filters: { status?: string; channel?: string } = {}) {
+  return useTenantQuery(
+    (tenantId) => [...storeRoot(tenantId), "orders", filters],
+    async (tenantId) => unwrap(await storeApi.listOrders(tenantId, filters)).orders,
+  );
+}
+
+/** Handing a reservation over. Moves stock, so it invalidates the catalogue. */
+export function useCompleteStoreOrder() {
+  const tenantId = useCurrentTenantId();
+  return useTenantMutation(
+    async (id, orderId: string) => unwrap(await storeApi.completeOrder(id, orderId)),
+    { invalidates: [storeRoot(tenantId)] },
+  );
+}
+
+export function useRejectStoreOrder() {
+  const tenantId = useCurrentTenantId();
+  return useTenantMutation(
+    async (id, orderId: string) => unwrap(await storeApi.rejectOrder(id, orderId)),
+    { invalidates: [storeRoot(tenantId)] },
+  );
+}
+
+/** A member reserving to pay at the counter. */
+export function useReserveStoreOrder() {
+  const tenantId = useCurrentTenantId();
+  return useTenantMutation(
+    async (id, input: { items: StoreBasketLine[]; note?: string }) =>
+      unwrap(await storeApi.reserve(id, input)),
+    { invalidates: [storeRoot(tenantId)] },
+  );
+}
+
 export function useVerifyStoreCheckout() {
   const tenantId = useCurrentTenantId();
   return useTenantMutation(

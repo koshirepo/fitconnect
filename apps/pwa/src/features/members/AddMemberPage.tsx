@@ -178,10 +178,7 @@ export default function AddMemberPage() {
           if (waText && memberData.phone) {
             const digits = memberData.phone.replace(/\D/g, "");
             const phone = digits.startsWith("91") ? digits : `91${digits}`;
-            window.open(
-              `https://wa.me/${phone}?text=${encodeURIComponent(waText)}`,
-              "_blank",
-            );
+            window.location.assign(`https://wa.me/${phone}?text=${encodeURIComponent(waText)}`);
           }
         }
 

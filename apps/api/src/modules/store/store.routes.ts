@@ -9,7 +9,8 @@
 import { Hono } from "hono";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { authenticate } from "../../middleware/authenticate";
-import { requireTenantPermissions } from "../../middleware/authorize";
+import { idempotency } from "../../middleware/idempotency";
+import { requireAnyTenantPermission, requireTenantPermissions } from "../../middleware/authorize";
 import {
   storeCheckoutController,
   storeController,
@@ -118,11 +119,58 @@ storeRoutes.post(
   storeCheckoutController.start,
 );
 
+/** Reserve now, pay at the counter. Same grant as buying online. */
+storeRoutes.post(
+  "/:tenantId/store/reserve",
+  authenticate,
+  requireTenantPermissions(Permission.STORE_BUY_SELF),
+  storeCheckoutController.reserve,
+);
+
 storeRoutes.post(
   "/:tenantId/store/checkout/verify",
   authenticate,
   requireTenantPermissions(Permission.STORE_BUY_SELF),
   storeCheckoutController.verify,
+);
+
+/** The same till, for a buyer who has not joined the gym. */
+storeRoutes.post(
+  "/:tenantId/store/sales/guest",
+  authenticate,
+  idempotency,
+  requireTenantPermissions(Permission.STORE_SELL),
+  storeCheckoutController.sellToGuest,
+);
+
+/**
+ * The counter's side of a reservation.
+ *
+ * `STORE_SELL`, the same grant that rings up a counter sale: handing goods over
+ * and taking money for them is the same act whether the basket was chosen at
+ * the desk or on a phone an hour earlier.
+ */
+storeRoutes.get(
+  "/:tenantId/store/orders",
+  authenticate,
+  requireAnyTenantPermission(Permission.STORE_SELL, Permission.STORE_MANAGE),
+  storeCheckoutController.listOrders,
+);
+
+storeRoutes.post(
+  "/:tenantId/store/orders/:orderId/complete",
+  authenticate,
+  // Replaying a lost response must not sell the same basket twice.
+  idempotency,
+  requireTenantPermissions(Permission.STORE_SELL),
+  storeCheckoutController.completeOrder,
+);
+
+storeRoutes.post(
+  "/:tenantId/store/orders/:orderId/reject",
+  authenticate,
+  requireTenantPermissions(Permission.STORE_SELL),
+  storeCheckoutController.cancelReservation,
 );
 
 /** Releases the stock a closed payment window was holding. */

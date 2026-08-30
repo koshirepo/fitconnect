@@ -140,3 +140,56 @@ export const storeCheckoutVerifySchema = z.object({
 
 export type StoreCheckoutInput = z.infer<typeof storeCheckoutSchema>;
 export type StoreCheckoutVerifyInput = z.infer<typeof storeCheckoutVerifySchema>;
+
+/**
+ * A reservation placed from the public storefront by somebody who has not
+ * joined the gym.
+ *
+ * No coupon and no coins: both hang off a membership this buyer does not have.
+ * No address either — the store is collection-only, so the phone number is what
+ * the desk calls and what the buyer quotes when they arrive.
+ */
+export const guestOrderSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        variantId: z.string().min(1),
+        quantity: z.number().int().min(1).max(99),
+      }),
+    )
+    .min(1)
+    .max(20),
+  buyerName: z.string().trim().min(2).max(120),
+  buyerPhone: z.string().trim().min(10).max(15),
+  buyerEmail: z.string().trim().email().max(200).optional(),
+  note: z.string().trim().max(500).optional(),
+});
+
+/**
+ * Selling to a walk-in at the counter.
+ *
+ * The buyer's own details instead of a membership, and no coupon or coins,
+ * because both hang off a membership this buyer does not have.
+ */
+export const guestCounterSaleSchema = guestOrderSchema;
+
+export type GuestCounterSaleInput = z.infer<typeof guestCounterSaleSchema>;
+
+/**
+ * A member reserving to pay at the counter.
+ *
+ * Just the basket: the buyer is whoever is signed in, and no coupon or coins,
+ * because nothing is being charged yet.
+ */
+export const storeReserveSchema = guestOrderSchema.pick({ items: true, note: true });
+
+export type StoreReserveInput = z.infer<typeof storeReserveSchema>;
+
+/** Coming back to check on a reservation: the reference plus the phone. */
+export const guestOrderLookupSchema = z.object({
+  orderId: z.string().min(1),
+  buyerPhone: z.string().trim().min(10).max(15),
+});
+
+export type GuestOrderInput = z.infer<typeof guestOrderSchema>;
+export type GuestOrderLookupInput = z.infer<typeof guestOrderLookupSchema>;

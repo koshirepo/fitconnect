@@ -7,7 +7,17 @@
  * - Primary exports: PublicStoreProductPage.
  */
 import * as React from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { Plus } from "lucide-react";
+import {
+  useAddProductComment,
+  useDeleteProductComment,
+  useProductComments,
+  useToggleProductLike,
+} from "@/api/queries/social";
+import { useCurrentTenantId } from "@/api/queries/shared";
+import { LikeButton } from "@/components/social/LikeButton";
+import { useToast } from "@/components/ui/toast";
 import { ArrowLeft, Heart, Package } from "lucide-react";
 import { publicApi } from "@/api/public";
 import { getApiError } from "@/api/client";
@@ -23,7 +33,23 @@ import { ProductOverview } from "./ProductOverview";
 export default function PublicStoreProductPage() {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
+  const toast = useToast();
   const { isAuthenticated } = useAuthStore();
+  const currentUserId = useAuthStore((state) => state.user?.id);
+
+  // A signed-in member on this page is still a member: the storefront is public
+  // but the reader need not be anonymous. When a membership at this gym is in
+  // the session, the page uses the same authenticated feed the dashboard does,
+  // so liking, commenting, and buying all work from the public url. A visitor
+  // has no tenant id, the tenant-scoped queries stay disabled, and the public
+  // read-only copy below is what renders.
+  const memberTenantId = useCurrentTenantId();
+  const asMember = Boolean(isAuthenticated && memberTenantId);
+
+  const memberFeed = useProductComments(asMember ? productId : undefined);
+  const toggleLike = useToggleProductLike(productId);
+  const addComment = useAddProductComment(productId);
+  const deleteComment = useDeleteProductComment();
 
   const [product, setProduct] = React.useState<StoreProduct | null>(null);
   const [comments, setComments] = React.useState<SocialComment[]>([]);
@@ -79,7 +105,35 @@ export default function PublicStoreProductPage() {
     );
   }
 
-  const signIn = () => navigate(isAuthenticated ? "/dashboard/store" : "/login");
+  const feed = memberFeed.data;
+  /** The member feed once it lands, the public snapshot until then. */
+  const shownComments = asMember && feed ? feed.comments : comments;
+
+  const handleLike = async (liked: boolean) => {
+    try {
+      await toggleLike.mutateAsync(liked);
+    } catch (caught) {
+      toast.error(getApiError(caught));
+    }
+  };
+
+  const handleComment = async (body: string) => {
+    try {
+      await addComment.mutateAsync(body);
+      toast.success("Comment posted.");
+    } catch (caught) {
+      toast.error(getApiError(caught));
+    }
+  };
+
+  const handleDeleteComment = async (comment: SocialComment) => {
+    try {
+      await deleteComment.mutateAsync(comment.id);
+      toast.success("Comment deleted.");
+    } catch (caught) {
+      toast.error(getApiError(caught));
+    }
+  };
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-4 md:p-6">
@@ -91,43 +145,88 @@ export default function PublicStoreProductPage() {
       <ProductOverview
         product={product}
         action={
-          /* The count without the button: a visitor can see that forty people
-             liked this, and what they are missing by not having an account. */
-          <span className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm text-muted-foreground">
-            <Heart className="h-4 w-4" />
-            {product.likeCount}
-          </span>
+          asMember ? (
+            <LikeButton
+              liked={feed?.liked ?? false}
+              count={feed?.likeCount ?? product.likeCount}
+              onToggle={handleLike}
+              disabled={memberFeed.isPending}
+              label="product"
+            />
+          ) : (
+            /* The count without the button: a visitor can see that forty people
+               liked this, and what they are missing by not having an account. */
+            <span className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm text-muted-foreground">
+              <Heart className="h-4 w-4" />
+              {product.likeCount}
+            </span>
+          )
+        }
+        renderVariantAction={
+          asMember
+            ? (variant) => (
+                <Button
+                  size="icon"
+                  variant="outline"
+                  disabled={variant.stock <= 0}
+                  // The storefront owns the basket; this hands it the variant,
+                  // exactly as the dashboard product page does.
+                  onClick={() =>
+                    navigate(`/store?add=${encodeURIComponent(variant.id)}`)
+                  }
+                  aria-label={`Add ${variant.name} to basket`}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </Button>
+              )
+            : undefined
         }
       />
 
-      <Card>
-        <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
-          <p className="text-sm text-muted-foreground">
-            {isAuthenticated
-              ? "Open the store from your dashboard to buy this."
-              : "Sign in as a member to buy this, or to join the conversation."}
-          </p>
-          <Button size="sm" onClick={signIn}>
-            {isAuthenticated ? "Go to store" : "Sign in"}
-          </Button>
-        </CardContent>
-      </Card>
+      {!asMember && (
+        <Card>
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+            <p className="text-sm text-muted-foreground">
+              Sign in as a member to buy this, or to join the conversation.
+            </p>
+            <Button size="sm" onClick={() => navigate("/login")}>
+              Sign in
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Comments ({comments.length})</CardTitle>
+          <CardTitle className="text-base">Comments ({shownComments.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <CommentThread
-            comments={comments}
-            canComment={false}
-            canDelete={() => false}
-            onSubmit={async () => {}}
-            onDelete={() => {}}
+            comments={shownComments}
+            loading={asMember && memberFeed.isPending}
+            canComment={asMember}
+            canDelete={(comment) => asMember && comment.author.id === currentUserId}
+            onSubmit={handleComment}
+            onDelete={handleDeleteComment}
             emptyDescription="No member has written about this yet."
             signedOutHint={
+              // This page never takes a comment — writing one needs a
+              // membership, which the public storefront cannot check. But
+              // telling somebody who is already signed in to sign in reads as a
+              // broken session, so they are pointed at the screen that does
+              // take one instead.
               <p className="rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground">
-                Sign in as a member of this gym to leave a comment.
+                {isAuthenticated ? (
+                  <>
+                    You are signed in, but not as a member of this gym.{" "}
+                    <Link to="/signup" className="text-primary hover:underline">
+                      Join it
+                    </Link>{" "}
+                    to like, comment, and buy.
+                  </>
+                ) : (
+                  "Sign in as a member of this gym to leave a comment."
+                )}
               </p>
             }
           />

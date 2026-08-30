@@ -220,8 +220,6 @@ export default function TenantDetails() {
         <div className="flex flex-wrap gap-2">
           <a
             href={buildTenantPublicUrl(tenant.slug)}
-            target="_blank"
-            rel="noreferrer"
             className={cn(buttonVariants({ variant: "outline" }))}
           >
             <Globe className="mr-2 h-4 w-4" />

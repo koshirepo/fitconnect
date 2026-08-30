@@ -212,8 +212,6 @@ export default function ProfilePage() {
             <CardContent>
               <a
                 href={profile.idCardUrl}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="block"
               >
                 <Button variant="outline" className="w-full">

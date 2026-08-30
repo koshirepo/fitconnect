@@ -155,6 +155,8 @@ export interface TenantMember {
   hasPendingPayment?: boolean;
   /** Sum of those pending rows, in rupees. */
   pendingPaymentAmount?: number;
+  /** Badges awarded to this member. Ids alone — the roster filters on them. */
+  badgeIds?: string[];
   shift?: Shift | null;
   referralCount?: number;
   referredBy?: MemberReferral | null;

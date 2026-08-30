@@ -590,3 +590,382 @@ export const storeCheckoutService = {
     return { data: { orderId: order.id, cancelled: true } };
   },
 };
+
+// ─── Guests ───────────────────────────────────────────────────────────────────
+
+/**
+ * Buying without joining.
+ *
+ * A visitor on the public storefront has no membership, so none of the things
+ * that hang off one apply: no coupon, no coins earned, no coins spent. What is
+ * left is a basket, a name, and a phone number.
+ *
+ * The store is collection-only, so a guest order is a reservation the desk
+ * fulfils. It is written with channel `PICKUP` and, deliberately, claims no
+ * stock: nothing has been paid, and holding the last tub for somebody who may
+ * never arrive costs a sale to somebody standing at the counter. Stock moves
+ * when a coach or an admin completes the order, which is also when the money
+ * is taken.
+ *
+ * Guest sales write no `Payment` row — relaxing `Payment.membershipId` would
+ * mean rebuilding a table four others reference and making `payment.member`
+ * optional across the API — so their revenue reaches finance from `StoreOrder`.
+ */
+export const storeGuestService = {
+  /** Price a guest basket. No coupon and no coins: both belong to a member. */
+  async quote(tenantId: string, items: { variantId: string; quantity: number }[]) {
+    const resolved = await resolveLines(tenantId, items);
+    if ("error" in resolved) return resolved;
+
+    const problem = validateBasket(resolved.lines);
+    if (problem) {
+      if (problem.reason === "EMPTY") {
+        return { error: "Add something to the basket first.", status: 400 as const };
+      }
+      if (problem.reason === "INSUFFICIENT_STOCK") {
+        const line = resolved.lines.find((l) => l.variantId === problem.variantId);
+        return {
+          error: `Only ${problem.available} of ${line?.variantName ?? "that item"} left.`,
+          status: 409 as const,
+        };
+      }
+      return { error: "That quantity is not valid.", status: 400 as const };
+    }
+
+    const priced = priceBasket({
+      lines: resolved.lines,
+      coupon: null,
+      coinsAvailable: 0,
+      coinsRequested: 0,
+    });
+
+    return { lines: resolved.lines, priced };
+  },
+
+  /**
+   * Reserve a basket for collection.
+   *
+   * Prices from the database, never from the request — the rule every other
+   * sale in this file follows, and the reason a visitor cannot name their own
+   * total.
+   */
+  async place(
+    tenantId: string,
+    input: {
+      items: { variantId: string; quantity: number }[];
+      buyerName?: string;
+      buyerPhone?: string;
+      buyerEmail?: string;
+      note?: string;
+    },
+    /**
+     * Set when a member chose to pay at the counter rather than online.
+     *
+     * The same reservation either way — nothing charged, no stock moved until
+     * handover — but attached to the membership, so it reaches their order
+     * history and the desk knows who is coming for it without being told a
+     * name and a phone number they already hold.
+     */
+    membershipId: string | null = null,
+  ) {
+    const priced = await storeGuestService.quote(tenantId, input.items);
+    if ("error" in priced) return priced;
+
+    const order = await prisma.storeOrder.create({
+      data: {
+        tenantId,
+        membershipId,
+        soldById: null,
+        // Contact details belong to a guest order only: a member is already
+        // reachable through their own record, and a stale copy here would be
+        // one more place for a changed phone number to be wrong.
+        ...(membershipId
+          ? {}
+          : {
+              buyerName: input.buyerName ?? null,
+              buyerPhone: input.buyerPhone ?? null,
+              ...(input.buyerEmail ? { buyerEmail: input.buyerEmail } : {}),
+            }),
+        status: "PENDING",
+        channel: "PICKUP",
+        subtotalAmount: priced.priced.subtotal,
+        discountAmount: 0,
+        coinsRedeemed: 0,
+        totalAmount: priced.priced.total,
+        // What the basket is worth in coins, frozen now so editing a product
+        // later cannot rewrite what the buyer was promised. The ledger entry
+        // itself waits until the money is actually taken.
+        coinsEarned: priced.priced.coinsEarned,
+        ...(input.note ? { note: input.note } : {}),
+        items: {
+          create: priced.lines.map((line) => ({
+            variantId: line.variantId,
+            productName: line.productName,
+            variantName: line.variantName,
+            attributes: line.attributes as object,
+            quantity: line.quantity,
+            unitPrice: line.unitPrice,
+            lineTotal: line.unitPrice * line.quantity,
+          })),
+        },
+      },
+      select: { id: true, createdAt: true },
+    });
+
+    return {
+      data: {
+        orderId: order.id,
+        total: priced.priced.total,
+        subtotal: priced.priced.subtotal,
+        placedAt: order.createdAt,
+        // The desk needs something the buyer can quote when they arrive, and an
+        // order id is not something anybody reads down a phone.
+        reference: order.id.slice(-6).toUpperCase(),
+      },
+    };
+  },
+
+  /**
+   * Hand a reserved order over: take the money at the counter, move the stock.
+   *
+   * Stock is claimed here rather than at reservation, so a no-show costs the
+   * gym nothing. It can therefore fail at this point — somebody else bought the
+   * last tub in the meantime — and the order stays pending rather than
+   * completing against stock that is not there.
+   */
+  async complete(tenantId: string, orderId: string, sellerMembershipId: string | null) {
+    const order = await prisma.storeOrder.findFirst({
+      where: { id: orderId, tenantId, status: "PENDING", channel: "PICKUP" },
+      select: {
+        id: true,
+        membershipId: true,
+        totalAmount: true,
+        coinsEarned: true,
+        items: { select: { variantId: true, quantity: true, variantName: true } },
+      },
+    });
+    if (!order) {
+      return { error: "That reservation was not found, or is already closed.", status: 404 as const };
+    }
+
+    const claim = await claimStock(order.items);
+    if ("error" in claim) return claim;
+
+    // Conditional on still being pending: two staff pressing Complete at once
+    // must not both move stock.
+    const completed = await prisma.storeOrder.updateMany({
+      where: { id: order.id, status: "PENDING" },
+      data: { status: "COMPLETED", soldById: sellerMembershipId },
+    });
+
+    if (completed.count === 0) {
+      await releaseStock(claim.claimed);
+      return { data: { orderId: order.id, completed: false } };
+    }
+
+    // A member order can carry a payment row, so it does: that is how store
+    // revenue reaches the finance page through the same ledger as memberships
+    // and charges. A guest has no membership to hang one off, and their
+    // revenue is read from the order itself.
+    if (order.membershipId) {
+      const payment = await paymentRepository.createPayment({
+        tenantId,
+        membershipId: order.membershipId,
+        description: "Gym store purchase",
+        status: "COMPLETED",
+        amount: order.totalAmount,
+        paidAt: new Date(),
+      });
+
+      await prisma.storeOrder.update({
+        where: { id: order.id },
+        data: { paymentId: payment.id },
+      });
+
+      // Coins are granted now rather than at reservation: an order nobody
+      // collected should reward nobody.
+      await writeCoinEntries({
+        tenantId,
+        membershipId: order.membershipId,
+        paymentId: payment.id,
+        coinsRedeemed: 0,
+        coinsEarned: order.coinsEarned,
+        ...(sellerMembershipId ? { createdById: sellerMembershipId } : {}),
+      });
+    }
+
+    return { data: { orderId: order.id, completed: true } };
+  },
+
+  /**
+   * Sell to somebody at the counter who is not a member.
+   *
+   * A walk-in buying a shaker should not have to join the gym first. Same act
+   * as the member counter sale — stock moves and the money is in the till, so
+   * the order is complete the moment it is written — minus the two things that
+   * need a membership: no coupon, no coins, and no payment row, so this
+   * revenue is read from the order itself.
+   *
+   * The name and phone are kept because a gym asked to take something back
+   * needs to know who it sold it to.
+   */
+  async sellAtCounter(
+    tenantId: string,
+    input: {
+      items: { variantId: string; quantity: number }[];
+      buyerName: string;
+      buyerPhone: string;
+      buyerEmail?: string;
+      note?: string;
+    },
+    sellerMembershipId: string | null,
+  ) {
+    const priced = await storeGuestService.quote(tenantId, input.items);
+    if ("error" in priced) return priced;
+
+    const claim = await claimStock(priced.lines);
+    if ("error" in claim) return claim;
+
+    try {
+      const order = await prisma.storeOrder.create({
+        data: {
+          tenantId,
+          membershipId: null,
+          soldById: sellerMembershipId,
+          buyerName: input.buyerName,
+          buyerPhone: input.buyerPhone,
+          ...(input.buyerEmail ? { buyerEmail: input.buyerEmail } : {}),
+          status: "COMPLETED",
+          channel: "COUNTER",
+          subtotalAmount: priced.priced.subtotal,
+          discountAmount: 0,
+          coinsRedeemed: 0,
+          totalAmount: priced.priced.total,
+          // Coins need a membership to land in. Nothing is promised here, so
+          // nothing is recorded as owed.
+          coinsEarned: 0,
+          ...(input.note ? { note: input.note } : {}),
+          items: {
+            create: priced.lines.map((line) => ({
+              variantId: line.variantId,
+              productName: line.productName,
+              variantName: line.variantName,
+              attributes: line.attributes as object,
+              quantity: line.quantity,
+              unitPrice: line.unitPrice,
+              lineTotal: line.unitPrice * line.quantity,
+            })),
+          },
+        },
+        select: { id: true },
+      });
+
+      return {
+        data: {
+          orderId: order.id,
+          reference: order.id.slice(-6).toUpperCase(),
+          subtotal: priced.priced.subtotal,
+          total: priced.priced.total,
+        },
+      };
+    } catch (error) {
+      // Nothing was sold, so the stock goes back rather than sitting claimed
+      // against an order that does not exist.
+      await releaseStock(claim.claimed);
+      throw error;
+    }
+  },
+
+  /**
+   * The queue the desk works from: what has been reserved and not yet handed
+   * over, newest first, with the buyer named whichever way they are known.
+   */
+  async listOrders(
+    tenantId: string,
+    filters: { status?: string; channel?: string } = {},
+  ) {
+    const orders = await prisma.storeOrder.findMany({
+      where: {
+        tenantId,
+        ...(filters.status ? { status: filters.status } : {}),
+        ...(filters.channel ? { channel: filters.channel } : {}),
+      },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      select: {
+        id: true,
+        status: true,
+        channel: true,
+        subtotalAmount: true,
+        discountAmount: true,
+        coinsRedeemed: true,
+        totalAmount: true,
+        coinsEarned: true,
+        buyerName: true,
+        buyerPhone: true,
+        note: true,
+        createdAt: true,
+        paymentId: true,
+        member: {
+          select: {
+            id: true,
+            memberId: true,
+            user: { select: { name: true, phone: true } },
+          },
+        },
+        soldBy: { select: { user: { select: { name: true } } } },
+        items: {
+          select: {
+            productName: true,
+            variantName: true,
+            quantity: true,
+            unitPrice: true,
+            lineTotal: true,
+          },
+        },
+      },
+    });
+
+    return { data: { orders } };
+  },
+
+  /**
+   * Drop a reservation.
+   *
+   * Nothing is released, because a reservation never took stock in the first
+   * place. That asymmetry with the member checkout's `cancel` is deliberate and
+   * is the whole reason reservations are safe to leave lying around.
+   */
+  async cancel(tenantId: string, orderId: string) {
+    const cancelled = await prisma.storeOrder.updateMany({
+      where: { id: orderId, tenantId, status: "PENDING", channel: "PICKUP" },
+      data: { status: "CANCELLED" },
+    });
+
+    if (cancelled.count === 0) {
+      return { error: "That reservation was not found, or is already closed.", status: 404 as const };
+    }
+
+    return { data: { orderId, cancelled: true } };
+  },
+
+  /** What the buyer sees when they come back to check on it. */
+  async lookup(tenantId: string, orderId: string, buyerPhone: string) {
+    const order = await prisma.storeOrder.findFirst({
+      where: { id: orderId, tenantId, buyerPhone },
+      select: {
+        id: true,
+        status: true,
+        totalAmount: true,
+        createdAt: true,
+        buyerName: true,
+        items: {
+          select: { productName: true, variantName: true, quantity: true, lineTotal: true },
+        },
+      },
+    });
+    if (!order) return { error: "No order matches that reference and phone number.", status: 404 as const };
+
+    return { data: { order } };
+  },
+};

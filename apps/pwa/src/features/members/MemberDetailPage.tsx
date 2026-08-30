@@ -561,8 +561,6 @@ export default function MemberDetailPage() {
         <div className="mt-3">
           <a
             href={member.idCardUrl}
-            target="_blank"
-            rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent"
           >
             <CreditCard className="h-3.5 w-3.5" />
@@ -745,8 +743,6 @@ export default function MemberDetailPage() {
           {member.phone && (
             <a
               href={`https://wa.me/91${member.phone.replace(/\D/g, "")}`}
-              target="_blank"
-              rel="noopener noreferrer"
               className="flex flex-col items-center gap-1"
             >
               <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors">
@@ -808,8 +804,6 @@ export default function MemberDetailPage() {
         {isMemberProfile && paymentReminderUrl && (
           <a
             href={paymentReminderUrl}
-            target="_blank"
-            rel="noopener noreferrer"
             onClick={recordReminderSend}
             className="flex items-center justify-center gap-2 rounded-lg bg-yellow-50 border border-yellow-200 px-4 py-3 text-sm font-medium text-yellow-800 hover:bg-yellow-100 transition-colors"
           >
@@ -848,8 +842,6 @@ export default function MemberDetailPage() {
           {member.phone && (
             <a
               href={`https://wa.me/91${member.phone.replace(/\D/g, "")}`}
-              target="_blank"
-              rel="noopener noreferrer"
             >
               <Button size="sm" variant="outline">
                 <MessageCircle className="h-4 w-4 mr-2 text-[#25D366]" />
@@ -895,8 +887,6 @@ export default function MemberDetailPage() {
           {isMemberProfile && paymentReminderUrl && (
             <a
               href={paymentReminderUrl}
-              target="_blank"
-              rel="noopener noreferrer"
               onClick={recordReminderSend}
             >
               <Button

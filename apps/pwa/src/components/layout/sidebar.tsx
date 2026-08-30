@@ -17,6 +17,7 @@ import {
   CreditCard,
   Package,
   Tag,
+  ClipboardList,
   ShoppingBag,
   ScrollText,
   Award,
@@ -47,6 +48,14 @@ type NavItem = {
   icon: typeof LayoutDashboard;
   anyOf?: Permission[];
   excludePrefixes?: string[];
+  /**
+   * Link to the path as written, without the gym-subdomain /dashboard prefix.
+   *
+   * For the storefront, which is a public page on the same host: everybody buys
+   * there, member and visitor alike, so it must not be rewritten into the
+   * staff-only dashboard store.
+   */
+  public?: boolean;
   /**
    * Match this path exactly rather than as a prefix. Needed for Dashboard,
    * because on a gym subdomain every other page is nested under `/dashboard`
@@ -130,10 +139,20 @@ const tenantNav: NavItem[] = [
     anyOf: [Permission.COUPONS_READ],
   },
   {
+    // The shop itself. Public, and the only place anybody buys anything.
     to: "/store",
     label: "Store",
     icon: ShoppingBag,
     anyOf: [Permission.STORE_READ],
+    public: true,
+  },
+  {
+    // The other side of the counter: orders to hand over, payments to settle,
+    // stock to correct. Not a shop, so it is not called one.
+    to: "/store",
+    label: "Store admin",
+    icon: ClipboardList,
+    anyOf: [Permission.STORE_MANAGE, Permission.STORE_SELL],
   },
   {
     to: "/attendance",
@@ -257,7 +276,7 @@ export function Sidebar() {
                 className="h-7 w-7 rounded-md shrink-0 object-cover"
               />
             </Link>
-            <a href={tenantPublicUrl} target="_blank" rel="noreferrer noopener">
+            <a href={tenantPublicUrl}>
               <span className="text-lg font-bold tracking-tight truncate text-gradient-brand">
                 {currentTenant?.name ?? (membership ? membership.tenantName : "FitConnect")}
               </span>
@@ -315,8 +334,8 @@ export function Sidebar() {
                 .filter((item) => !item.anyOf?.length || canAny(...item.anyOf))
                 .map((item) => (
                   <NavLink
-                    key={item.to}
-                    to={getTenantRoute(item.to)}
+                    key={`${item.to}:${item.label}`}
+                    to={item.public ? item.to : getTenantRoute(item.to)}
                     end={item.exact}
                     onClick={() => isMobile && setSidebarOpen(false)}
                     className={({ isActive }) =>
@@ -374,7 +393,7 @@ export function Sidebar() {
               <MenuItem
                 onClick={() => {
                   if (isMobile) setSidebarOpen(false);
-                  window.open(tenantPublicUrl, "_blank", "noreferrer noopener");
+                  window.location.assign(tenantPublicUrl);
                 }}
               >
                 <Globe />

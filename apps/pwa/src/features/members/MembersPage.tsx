@@ -283,23 +283,18 @@ export default function MembersPage() {
   const scopedMembers: DisplayMember[] = React.useMemo(() => {
     const trimmedSearch = search.trim().toLowerCase();
 
-    return [...pendingMemberItems, ...members]
+    const rows: DisplayMember[] = [...pendingMemberItems, ...members];
+
+    return rows
       .filter((member) => {
         if (roleFilter && member.role !== roleFilter) return false;
         if (genderFilter && member.gender !== genderFilter) return false;
 
-        if (badgeFilter) {
-          const badgeIds = (member as DisplayMember & { badgeIds?: string[]; badges?: { id: string }[] })
-            .badgeIds ??
-            ((member as DisplayMember & { badges?: { id: string }[] })?.badges ?? [])
-              .map((badge) => badge.id);
-
-          const hasBadgeData =
-            "badgeIds" in member ||
-            "badges" in member ||
-            (Array.isArray(badgeIds) && badgeIds.length > 0);
-
-          if (hasBadgeData && !badgeIds.includes(badgeFilter)) return false;
+        // A member queued offline has no badges yet and no row to read them
+        // from, so they are exempt from the badge filter rather than vanishing
+        // mid-sync. Every other filter still applies to them.
+        if (badgeFilter && !member._pending) {
+          if (!(member.badgeIds ?? []).includes(badgeFilter)) return false;
         }
 
         if (!trimmedSearch) return true;
@@ -385,8 +380,6 @@ export default function MembersPage() {
       {!m._pending && m.hasPendingPayment && m.phone && (
         <a
           href={getPendingPaymentReminderUrl(m) ?? undefined}
-          target="_blank"
-          rel="noopener noreferrer"
           title="Remind about the pending payment via WhatsApp"
           onClick={() => recordWhatsApp(m, "PENDING_PAYMENT", getPendingPaymentReminderText(m))}
         >
@@ -402,8 +395,6 @@ export default function MembersPage() {
       {!m._pending && m.isDue && m.phone && (
         <a
           href={getPaymentReminderUrl(m) ?? undefined}
-          target="_blank"
-          rel="noopener noreferrer"
           title="Send payment reminder via WhatsApp"
           onClick={() => recordWhatsApp(m, "RENEWAL_DUE", getPaymentReminderText(m))}
         >
@@ -430,8 +421,6 @@ export default function MembersPage() {
       {!m._pending && m.phone && (
         <a
           href={buildWhatsAppUrl(m.phone, `Hi ${m.name}`) ?? undefined}
-          target="_blank"
-          rel="noopener noreferrer"
           title="Chat on WhatsApp"
         >
           <Button

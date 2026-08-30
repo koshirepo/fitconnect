@@ -373,6 +373,10 @@ export const memberRepository = {
           dueDate: true,
           joinedAt: true,
           shift: { select: shiftSelect },
+          // Ids only. The roster filters by badge in the browser, and an id is
+          // all that takes — names and colours belong to the badge list the
+          // screen already holds.
+          badges: { select: { id: true } },
           user: {
             select: {
               id: true,

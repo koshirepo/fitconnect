@@ -189,8 +189,6 @@ export function TenantPublicProfileCard({
           </div>
           <a
             href={publicUrl}
-            target="_blank"
-            rel="noreferrer"
             className={buttonVariants({ variant: "outline", size: "sm" })}
           >
             <ExternalLink className="mr-2 h-4 w-4" />

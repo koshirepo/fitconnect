@@ -589,6 +589,7 @@ Your membership card: ${idCardUrl}`
             ...flat,
             isDue,
             dueDate: m.dueDate,
+            badgeIds: m.badges.map((badge) => badge.id),
             hasPendingPayment: pendingPaymentAmount !== undefined,
             ...(pendingPaymentAmount !== undefined
               ? { pendingPaymentAmount }

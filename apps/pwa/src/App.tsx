@@ -20,7 +20,7 @@ import { ToastProvider } from "@/components/ui/toast";
 import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { isTenantSubdomain } from "@/lib/subdomain";
 import { useTenantInstallBranding } from "@/lib/install-branding";
-import { TenantPathNormalizer } from "@/features/auth/tenant-path-normalizer";
+import { ApexPathNormalizer, TenantPathNormalizer } from "@/features/auth/tenant-path-normalizer";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useAuthStore } from "@/stores/auth";
 
@@ -250,7 +250,13 @@ export default function App() {
             <Route element={<RequirePermission anyOf={[Permission.COUPONS_READ]} />}>
               <Route path="/dashboard/coupons" element={<CouponsPage />} />
             </Route>
-            <Route element={<RequirePermission anyOf={[Permission.STORE_READ]} />}>
+            <Route
+              element={
+                <RequirePermission
+                  anyOf={[Permission.STORE_MANAGE, Permission.STORE_SELL]}
+                />
+              }
+            >
               <Route path="/dashboard/store" element={<StorePage />} />
               <Route
                 path="/dashboard/store/products/:productId"
@@ -480,7 +486,13 @@ export default function App() {
                   <Route element={<RequirePermission anyOf={[Permission.COUPONS_READ]} />}>
                     <Route path="/coupons" element={<CouponsPage />} />
                   </Route>
-                  <Route element={<RequirePermission anyOf={[Permission.STORE_READ]} />}>
+                  <Route
+                    element={
+                      <RequirePermission
+                  anyOf={[Permission.STORE_MANAGE, Permission.STORE_SELL]}
+                />
+                    }
+                  >
                     <Route path="/store" element={<StorePage />} />
                     <Route
                       path="/store/products/:productId"
@@ -668,6 +680,13 @@ export default function App() {
                   </Route>
                 </Route>
               </Route>
+
+              {/* Links written for a gym subdomain — push notifications above
+                  all, whose payloads the server builds without knowing which
+                  host the recipient uses — carry a /dashboard prefix this host
+                  does not have. Strip it rather than dropping the tap on the
+                  landing page. */}
+              <Route path="/dashboard/*" element={<ApexPathNormalizer />} />
 
               {/* Catch-all */}
               <Route path="*" element={<LandingPage />} />

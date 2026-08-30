@@ -1176,10 +1176,12 @@ export type TenantMembershipCreateNestedOneWithoutSoldStoreOrdersInput = {
   connect?: Prisma.TenantMembershipWhereUniqueInput
 }
 
-export type TenantMembershipUpdateOneRequiredWithoutStoreOrdersNestedInput = {
+export type TenantMembershipUpdateOneWithoutStoreOrdersNestedInput = {
   create?: Prisma.XOR<Prisma.TenantMembershipCreateWithoutStoreOrdersInput, Prisma.TenantMembershipUncheckedCreateWithoutStoreOrdersInput>
   connectOrCreate?: Prisma.TenantMembershipCreateOrConnectWithoutStoreOrdersInput
   upsert?: Prisma.TenantMembershipUpsertWithoutStoreOrdersInput
+  disconnect?: Prisma.TenantMembershipWhereInput | boolean
+  delete?: Prisma.TenantMembershipWhereInput | boolean
   connect?: Prisma.TenantMembershipWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.TenantMembershipUpdateToOneWithWhereWithoutStoreOrdersInput, Prisma.TenantMembershipUpdateWithoutStoreOrdersInput>, Prisma.TenantMembershipUncheckedUpdateWithoutStoreOrdersInput>
 }

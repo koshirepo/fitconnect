@@ -6,6 +6,8 @@
  * - Primary exports: publicService.
  */
 import { normalizeTenantHost, publicRepository } from "./public.repository";
+import { storeGuestService } from "../store/store-sale.service";
+import type { GuestOrderInput, GuestOrderLookupInput } from "../store/store.schema";
 import { storeRepository } from "../store/store.repository";
 import { socialRepository } from "../social/social.repository";
 import { socialService } from "../social/social.service";
@@ -132,5 +134,33 @@ export const publicService = {
   async listGyms(page: number, limit: number) {
    const { tenants, total } = await publicRepository.listActiveTenants(page, limit);
    return { data: { gyms: tenants }, total };
+  },
+
+  /**
+   * Reserve from the public storefront, without an account.
+   *
+   * The gym is fixed by the request host rather than taken from the body, the
+   * same rule public signup follows: a caller cannot place an order into a gym
+   * they did not visit.
+   */
+  async placeGuestOrderByHost(host: string, input: GuestOrderInput) {
+    const slug = normalizeTenantHost(host);
+    if (!slug) return { error: "Tenant host is invalid.", status: 404 as const };
+
+    const tenant = await publicRepository.findTenantBySlug(slug);
+    if (!tenant) return { error: "Tenant not found.", status: 404 as const };
+
+    return storeGuestService.place(tenant.id, input);
+  },
+
+  /** Checking on a reservation: the reference the desk gave, plus the phone. */
+  async lookupGuestOrderByHost(host: string, input: GuestOrderLookupInput) {
+    const slug = normalizeTenantHost(host);
+    if (!slug) return { error: "Tenant host is invalid.", status: 404 as const };
+
+    const tenant = await publicRepository.findTenantBySlug(slug);
+    if (!tenant) return { error: "Tenant not found.", status: 404 as const };
+
+    return storeGuestService.lookup(tenant.id, input.orderId, input.buyerPhone);
   },
 };

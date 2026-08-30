@@ -973,9 +973,16 @@ model StoreOrder {
   id           String           @id @default(cuid())
   tenantId     String
   tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  /// Who bought it. Always a member of this gym — there is no guest checkout.
-  membershipId String
-  member       TenantMembership @relation("StoreOrderBuyer", fields: [membershipId], references: [id])
+  /// Who bought it, when the buyer is a member. Null for a guest: somebody who
+  /// bought from the public storefront without joining the gym.
+  membershipId String?
+  member       TenantMembership? @relation("StoreOrderBuyer", fields: [membershipId], references: [id])
+  /// Who to call when a guest order is ready for collection. Set only when the
+  /// membership is null — a member is already reachable through their own
+  /// record. No address, because this store is collection-only.
+  buyerName    String?
+  buyerPhone   String?
+  buyerEmail   String?
   /// Staff who rang it up, for a counter sale. Null for an online purchase.
   soldById     String?
   soldBy       TenantMembership? @relation("StoreOrderSeller", fields: [soldById], references: [id])
@@ -1001,6 +1008,13 @@ model StoreOrder {
   paymentId String?  @unique
   payment   Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
 
+  /// A guest sale writes no Payment row — relaxing Payment.membershipId would
+  /// mean rebuilding a table four others point at — so the gateway trail lives
+  /// here instead. Null on a member order, whose trail is on its payment.
+  gateway          String?
+  gatewayOrderId   String?
+  gatewayPaymentId String?
+
   note      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1011,6 +1025,10 @@ model StoreOrder {
   @@index([tenantId, status])
   @@index([membershipId])
   @@index([tenantId, createdAt])
+  /// The desk looks a guest order up by the phone number the buyer gave.
+  @@index([tenantId, buyerPhone])
+  /// How a settlement finds the order it belongs to.
+  @@index([gatewayOrderId])
 }
 
 /// One line of a store order. The product and variant names and attributes are

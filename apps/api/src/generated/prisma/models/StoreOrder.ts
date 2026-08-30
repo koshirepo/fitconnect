@@ -46,6 +46,9 @@ export type StoreOrderMinAggregateOutputType = {
   id: string | null
   tenantId: string | null
   membershipId: string | null
+  buyerName: string | null
+  buyerPhone: string | null
+  buyerEmail: string | null
   soldById: string | null
   status: string | null
   channel: string | null
@@ -55,6 +58,9 @@ export type StoreOrderMinAggregateOutputType = {
   totalAmount: number | null
   coinsEarned: number | null
   paymentId: string | null
+  gateway: string | null
+  gatewayOrderId: string | null
+  gatewayPaymentId: string | null
   note: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -64,6 +70,9 @@ export type StoreOrderMaxAggregateOutputType = {
   id: string | null
   tenantId: string | null
   membershipId: string | null
+  buyerName: string | null
+  buyerPhone: string | null
+  buyerEmail: string | null
   soldById: string | null
   status: string | null
   channel: string | null
@@ -73,6 +82,9 @@ export type StoreOrderMaxAggregateOutputType = {
   totalAmount: number | null
   coinsEarned: number | null
   paymentId: string | null
+  gateway: string | null
+  gatewayOrderId: string | null
+  gatewayPaymentId: string | null
   note: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -82,6 +94,9 @@ export type StoreOrderCountAggregateOutputType = {
   id: number
   tenantId: number
   membershipId: number
+  buyerName: number
+  buyerPhone: number
+  buyerEmail: number
   soldById: number
   status: number
   channel: number
@@ -91,6 +106,9 @@ export type StoreOrderCountAggregateOutputType = {
   totalAmount: number
   coinsEarned: number
   paymentId: number
+  gateway: number
+  gatewayOrderId: number
+  gatewayPaymentId: number
   note: number
   createdAt: number
   updatedAt: number
@@ -118,6 +136,9 @@ export type StoreOrderMinAggregateInputType = {
   id?: true
   tenantId?: true
   membershipId?: true
+  buyerName?: true
+  buyerPhone?: true
+  buyerEmail?: true
   soldById?: true
   status?: true
   channel?: true
@@ -127,6 +148,9 @@ export type StoreOrderMinAggregateInputType = {
   totalAmount?: true
   coinsEarned?: true
   paymentId?: true
+  gateway?: true
+  gatewayOrderId?: true
+  gatewayPaymentId?: true
   note?: true
   createdAt?: true
   updatedAt?: true
@@ -136,6 +160,9 @@ export type StoreOrderMaxAggregateInputType = {
   id?: true
   tenantId?: true
   membershipId?: true
+  buyerName?: true
+  buyerPhone?: true
+  buyerEmail?: true
   soldById?: true
   status?: true
   channel?: true
@@ -145,6 +172,9 @@ export type StoreOrderMaxAggregateInputType = {
   totalAmount?: true
   coinsEarned?: true
   paymentId?: true
+  gateway?: true
+  gatewayOrderId?: true
+  gatewayPaymentId?: true
   note?: true
   createdAt?: true
   updatedAt?: true
@@ -154,6 +184,9 @@ export type StoreOrderCountAggregateInputType = {
   id?: true
   tenantId?: true
   membershipId?: true
+  buyerName?: true
+  buyerPhone?: true
+  buyerEmail?: true
   soldById?: true
   status?: true
   channel?: true
@@ -163,6 +196,9 @@ export type StoreOrderCountAggregateInputType = {
   totalAmount?: true
   coinsEarned?: true
   paymentId?: true
+  gateway?: true
+  gatewayOrderId?: true
+  gatewayPaymentId?: true
   note?: true
   createdAt?: true
   updatedAt?: true
@@ -258,7 +294,10 @@ export type StoreOrderGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inter
 export type StoreOrderGroupByOutputType = {
   id: string
   tenantId: string
-  membershipId: string
+  membershipId: string | null
+  buyerName: string | null
+  buyerPhone: string | null
+  buyerEmail: string | null
   soldById: string | null
   status: string
   channel: string
@@ -268,6 +307,9 @@ export type StoreOrderGroupByOutputType = {
   totalAmount: number
   coinsEarned: number
   paymentId: string | null
+  gateway: string | null
+  gatewayOrderId: string | null
+  gatewayPaymentId: string | null
   note: string | null
   createdAt: Date
   updatedAt: Date
@@ -299,7 +341,10 @@ export type StoreOrderWhereInput = {
   NOT?: Prisma.StoreOrderWhereInput | Prisma.StoreOrderWhereInput[]
   id?: Prisma.StringFilter<"StoreOrder"> | string
   tenantId?: Prisma.StringFilter<"StoreOrder"> | string
-  membershipId?: Prisma.StringFilter<"StoreOrder"> | string
+  membershipId?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
+  buyerName?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
+  buyerPhone?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
+  buyerEmail?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
   soldById?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
   status?: Prisma.StringFilter<"StoreOrder"> | string
   channel?: Prisma.StringFilter<"StoreOrder"> | string
@@ -309,11 +354,14 @@ export type StoreOrderWhereInput = {
   totalAmount?: Prisma.IntFilter<"StoreOrder"> | number
   coinsEarned?: Prisma.IntFilter<"StoreOrder"> | number
   paymentId?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
+  gateway?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
+  gatewayOrderId?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
+  gatewayPaymentId?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
   note?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
   createdAt?: Prisma.DateTimeFilter<"StoreOrder"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"StoreOrder"> | Date | string
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
-  member?: Prisma.XOR<Prisma.TenantMembershipScalarRelationFilter, Prisma.TenantMembershipWhereInput>
+  member?: Prisma.XOR<Prisma.TenantMembershipNullableScalarRelationFilter, Prisma.TenantMembershipWhereInput> | null
   soldBy?: Prisma.XOR<Prisma.TenantMembershipNullableScalarRelationFilter, Prisma.TenantMembershipWhereInput> | null
   payment?: Prisma.XOR<Prisma.PaymentNullableScalarRelationFilter, Prisma.PaymentWhereInput> | null
   items?: Prisma.StoreOrderItemListRelationFilter
@@ -322,7 +370,10 @@ export type StoreOrderWhereInput = {
 export type StoreOrderOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   tenantId?: Prisma.SortOrder
-  membershipId?: Prisma.SortOrder
+  membershipId?: Prisma.SortOrderInput | Prisma.SortOrder
+  buyerName?: Prisma.SortOrderInput | Prisma.SortOrder
+  buyerPhone?: Prisma.SortOrderInput | Prisma.SortOrder
+  buyerEmail?: Prisma.SortOrderInput | Prisma.SortOrder
   soldById?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   channel?: Prisma.SortOrder
@@ -332,6 +383,9 @@ export type StoreOrderOrderByWithRelationInput = {
   totalAmount?: Prisma.SortOrder
   coinsEarned?: Prisma.SortOrder
   paymentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  gateway?: Prisma.SortOrderInput | Prisma.SortOrder
+  gatewayOrderId?: Prisma.SortOrderInput | Prisma.SortOrder
+  gatewayPaymentId?: Prisma.SortOrderInput | Prisma.SortOrder
   note?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -349,7 +403,10 @@ export type StoreOrderWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.StoreOrderWhereInput[]
   NOT?: Prisma.StoreOrderWhereInput | Prisma.StoreOrderWhereInput[]
   tenantId?: Prisma.StringFilter<"StoreOrder"> | string
-  membershipId?: Prisma.StringFilter<"StoreOrder"> | string
+  membershipId?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
+  buyerName?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
+  buyerPhone?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
+  buyerEmail?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
   soldById?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
   status?: Prisma.StringFilter<"StoreOrder"> | string
   channel?: Prisma.StringFilter<"StoreOrder"> | string
@@ -358,11 +415,14 @@ export type StoreOrderWhereUniqueInput = Prisma.AtLeast<{
   coinsRedeemed?: Prisma.IntFilter<"StoreOrder"> | number
   totalAmount?: Prisma.IntFilter<"StoreOrder"> | number
   coinsEarned?: Prisma.IntFilter<"StoreOrder"> | number
+  gateway?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
+  gatewayOrderId?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
+  gatewayPaymentId?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
   note?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
   createdAt?: Prisma.DateTimeFilter<"StoreOrder"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"StoreOrder"> | Date | string
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
-  member?: Prisma.XOR<Prisma.TenantMembershipScalarRelationFilter, Prisma.TenantMembershipWhereInput>
+  member?: Prisma.XOR<Prisma.TenantMembershipNullableScalarRelationFilter, Prisma.TenantMembershipWhereInput> | null
   soldBy?: Prisma.XOR<Prisma.TenantMembershipNullableScalarRelationFilter, Prisma.TenantMembershipWhereInput> | null
   payment?: Prisma.XOR<Prisma.PaymentNullableScalarRelationFilter, Prisma.PaymentWhereInput> | null
   items?: Prisma.StoreOrderItemListRelationFilter
@@ -371,7 +431,10 @@ export type StoreOrderWhereUniqueInput = Prisma.AtLeast<{
 export type StoreOrderOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   tenantId?: Prisma.SortOrder
-  membershipId?: Prisma.SortOrder
+  membershipId?: Prisma.SortOrderInput | Prisma.SortOrder
+  buyerName?: Prisma.SortOrderInput | Prisma.SortOrder
+  buyerPhone?: Prisma.SortOrderInput | Prisma.SortOrder
+  buyerEmail?: Prisma.SortOrderInput | Prisma.SortOrder
   soldById?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   channel?: Prisma.SortOrder
@@ -381,6 +444,9 @@ export type StoreOrderOrderByWithAggregationInput = {
   totalAmount?: Prisma.SortOrder
   coinsEarned?: Prisma.SortOrder
   paymentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  gateway?: Prisma.SortOrderInput | Prisma.SortOrder
+  gatewayOrderId?: Prisma.SortOrderInput | Prisma.SortOrder
+  gatewayPaymentId?: Prisma.SortOrderInput | Prisma.SortOrder
   note?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -397,7 +463,10 @@ export type StoreOrderScalarWhereWithAggregatesInput = {
   NOT?: Prisma.StoreOrderScalarWhereWithAggregatesInput | Prisma.StoreOrderScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"StoreOrder"> | string
   tenantId?: Prisma.StringWithAggregatesFilter<"StoreOrder"> | string
-  membershipId?: Prisma.StringWithAggregatesFilter<"StoreOrder"> | string
+  membershipId?: Prisma.StringNullableWithAggregatesFilter<"StoreOrder"> | string | null
+  buyerName?: Prisma.StringNullableWithAggregatesFilter<"StoreOrder"> | string | null
+  buyerPhone?: Prisma.StringNullableWithAggregatesFilter<"StoreOrder"> | string | null
+  buyerEmail?: Prisma.StringNullableWithAggregatesFilter<"StoreOrder"> | string | null
   soldById?: Prisma.StringNullableWithAggregatesFilter<"StoreOrder"> | string | null
   status?: Prisma.StringWithAggregatesFilter<"StoreOrder"> | string
   channel?: Prisma.StringWithAggregatesFilter<"StoreOrder"> | string
@@ -407,6 +476,9 @@ export type StoreOrderScalarWhereWithAggregatesInput = {
   totalAmount?: Prisma.IntWithAggregatesFilter<"StoreOrder"> | number
   coinsEarned?: Prisma.IntWithAggregatesFilter<"StoreOrder"> | number
   paymentId?: Prisma.StringNullableWithAggregatesFilter<"StoreOrder"> | string | null
+  gateway?: Prisma.StringNullableWithAggregatesFilter<"StoreOrder"> | string | null
+  gatewayOrderId?: Prisma.StringNullableWithAggregatesFilter<"StoreOrder"> | string | null
+  gatewayPaymentId?: Prisma.StringNullableWithAggregatesFilter<"StoreOrder"> | string | null
   note?: Prisma.StringNullableWithAggregatesFilter<"StoreOrder"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"StoreOrder"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"StoreOrder"> | Date | string
@@ -414,6 +486,9 @@ export type StoreOrderScalarWhereWithAggregatesInput = {
 
 export type StoreOrderCreateInput = {
   id?: string
+  buyerName?: string | null
+  buyerPhone?: string | null
+  buyerEmail?: string | null
   status?: string
   channel: string
   subtotalAmount: number
@@ -421,11 +496,14 @@ export type StoreOrderCreateInput = {
   coinsRedeemed?: number
   totalAmount: number
   coinsEarned?: number
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
   note?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutStoreOrdersInput
-  member: Prisma.TenantMembershipCreateNestedOneWithoutStoreOrdersInput
+  member?: Prisma.TenantMembershipCreateNestedOneWithoutStoreOrdersInput
   soldBy?: Prisma.TenantMembershipCreateNestedOneWithoutSoldStoreOrdersInput
   payment?: Prisma.PaymentCreateNestedOneWithoutStoreOrderInput
   items?: Prisma.StoreOrderItemCreateNestedManyWithoutOrderInput
@@ -434,7 +512,10 @@ export type StoreOrderCreateInput = {
 export type StoreOrderUncheckedCreateInput = {
   id?: string
   tenantId: string
-  membershipId: string
+  membershipId?: string | null
+  buyerName?: string | null
+  buyerPhone?: string | null
+  buyerEmail?: string | null
   soldById?: string | null
   status?: string
   channel: string
@@ -444,6 +525,9 @@ export type StoreOrderUncheckedCreateInput = {
   totalAmount: number
   coinsEarned?: number
   paymentId?: string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
   note?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -452,6 +536,9 @@ export type StoreOrderUncheckedCreateInput = {
 
 export type StoreOrderUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   subtotalAmount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -459,11 +546,14 @@ export type StoreOrderUpdateInput = {
   coinsRedeemed?: Prisma.IntFieldUpdateOperationsInput | number
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   coinsEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutStoreOrdersNestedInput
-  member?: Prisma.TenantMembershipUpdateOneRequiredWithoutStoreOrdersNestedInput
+  member?: Prisma.TenantMembershipUpdateOneWithoutStoreOrdersNestedInput
   soldBy?: Prisma.TenantMembershipUpdateOneWithoutSoldStoreOrdersNestedInput
   payment?: Prisma.PaymentUpdateOneWithoutStoreOrderNestedInput
   items?: Prisma.StoreOrderItemUpdateManyWithoutOrderNestedInput
@@ -472,7 +562,10 @@ export type StoreOrderUpdateInput = {
 export type StoreOrderUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
-  membershipId?: Prisma.StringFieldUpdateOperationsInput | string
+  membershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   soldById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -482,6 +575,9 @@ export type StoreOrderUncheckedUpdateInput = {
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   coinsEarned?: Prisma.IntFieldUpdateOperationsInput | number
   paymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -491,7 +587,10 @@ export type StoreOrderUncheckedUpdateInput = {
 export type StoreOrderCreateManyInput = {
   id?: string
   tenantId: string
-  membershipId: string
+  membershipId?: string | null
+  buyerName?: string | null
+  buyerPhone?: string | null
+  buyerEmail?: string | null
   soldById?: string | null
   status?: string
   channel: string
@@ -501,6 +600,9 @@ export type StoreOrderCreateManyInput = {
   totalAmount: number
   coinsEarned?: number
   paymentId?: string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
   note?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -508,6 +610,9 @@ export type StoreOrderCreateManyInput = {
 
 export type StoreOrderUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   subtotalAmount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -515,6 +620,9 @@ export type StoreOrderUpdateManyMutationInput = {
   coinsRedeemed?: Prisma.IntFieldUpdateOperationsInput | number
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   coinsEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -523,7 +631,10 @@ export type StoreOrderUpdateManyMutationInput = {
 export type StoreOrderUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
-  membershipId?: Prisma.StringFieldUpdateOperationsInput | string
+  membershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   soldById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -533,6 +644,9 @@ export type StoreOrderUncheckedUpdateManyInput = {
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   coinsEarned?: Prisma.IntFieldUpdateOperationsInput | number
   paymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -557,6 +671,9 @@ export type StoreOrderCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   tenantId?: Prisma.SortOrder
   membershipId?: Prisma.SortOrder
+  buyerName?: Prisma.SortOrder
+  buyerPhone?: Prisma.SortOrder
+  buyerEmail?: Prisma.SortOrder
   soldById?: Prisma.SortOrder
   status?: Prisma.SortOrder
   channel?: Prisma.SortOrder
@@ -566,6 +683,9 @@ export type StoreOrderCountOrderByAggregateInput = {
   totalAmount?: Prisma.SortOrder
   coinsEarned?: Prisma.SortOrder
   paymentId?: Prisma.SortOrder
+  gateway?: Prisma.SortOrder
+  gatewayOrderId?: Prisma.SortOrder
+  gatewayPaymentId?: Prisma.SortOrder
   note?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -583,6 +703,9 @@ export type StoreOrderMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   tenantId?: Prisma.SortOrder
   membershipId?: Prisma.SortOrder
+  buyerName?: Prisma.SortOrder
+  buyerPhone?: Prisma.SortOrder
+  buyerEmail?: Prisma.SortOrder
   soldById?: Prisma.SortOrder
   status?: Prisma.SortOrder
   channel?: Prisma.SortOrder
@@ -592,6 +715,9 @@ export type StoreOrderMaxOrderByAggregateInput = {
   totalAmount?: Prisma.SortOrder
   coinsEarned?: Prisma.SortOrder
   paymentId?: Prisma.SortOrder
+  gateway?: Prisma.SortOrder
+  gatewayOrderId?: Prisma.SortOrder
+  gatewayPaymentId?: Prisma.SortOrder
   note?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -601,6 +727,9 @@ export type StoreOrderMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   tenantId?: Prisma.SortOrder
   membershipId?: Prisma.SortOrder
+  buyerName?: Prisma.SortOrder
+  buyerPhone?: Prisma.SortOrder
+  buyerEmail?: Prisma.SortOrder
   soldById?: Prisma.SortOrder
   status?: Prisma.SortOrder
   channel?: Prisma.SortOrder
@@ -610,6 +739,9 @@ export type StoreOrderMinOrderByAggregateInput = {
   totalAmount?: Prisma.SortOrder
   coinsEarned?: Prisma.SortOrder
   paymentId?: Prisma.SortOrder
+  gateway?: Prisma.SortOrder
+  gatewayOrderId?: Prisma.SortOrder
+  gatewayPaymentId?: Prisma.SortOrder
   note?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -802,6 +934,9 @@ export type StoreOrderUpdateOneRequiredWithoutItemsNestedInput = {
 
 export type StoreOrderCreateWithoutTenantInput = {
   id?: string
+  buyerName?: string | null
+  buyerPhone?: string | null
+  buyerEmail?: string | null
   status?: string
   channel: string
   subtotalAmount: number
@@ -809,10 +944,13 @@ export type StoreOrderCreateWithoutTenantInput = {
   coinsRedeemed?: number
   totalAmount: number
   coinsEarned?: number
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
   note?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  member: Prisma.TenantMembershipCreateNestedOneWithoutStoreOrdersInput
+  member?: Prisma.TenantMembershipCreateNestedOneWithoutStoreOrdersInput
   soldBy?: Prisma.TenantMembershipCreateNestedOneWithoutSoldStoreOrdersInput
   payment?: Prisma.PaymentCreateNestedOneWithoutStoreOrderInput
   items?: Prisma.StoreOrderItemCreateNestedManyWithoutOrderInput
@@ -820,7 +958,10 @@ export type StoreOrderCreateWithoutTenantInput = {
 
 export type StoreOrderUncheckedCreateWithoutTenantInput = {
   id?: string
-  membershipId: string
+  membershipId?: string | null
+  buyerName?: string | null
+  buyerPhone?: string | null
+  buyerEmail?: string | null
   soldById?: string | null
   status?: string
   channel: string
@@ -830,6 +971,9 @@ export type StoreOrderUncheckedCreateWithoutTenantInput = {
   totalAmount: number
   coinsEarned?: number
   paymentId?: string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
   note?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -867,7 +1011,10 @@ export type StoreOrderScalarWhereInput = {
   NOT?: Prisma.StoreOrderScalarWhereInput | Prisma.StoreOrderScalarWhereInput[]
   id?: Prisma.StringFilter<"StoreOrder"> | string
   tenantId?: Prisma.StringFilter<"StoreOrder"> | string
-  membershipId?: Prisma.StringFilter<"StoreOrder"> | string
+  membershipId?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
+  buyerName?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
+  buyerPhone?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
+  buyerEmail?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
   soldById?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
   status?: Prisma.StringFilter<"StoreOrder"> | string
   channel?: Prisma.StringFilter<"StoreOrder"> | string
@@ -877,6 +1024,9 @@ export type StoreOrderScalarWhereInput = {
   totalAmount?: Prisma.IntFilter<"StoreOrder"> | number
   coinsEarned?: Prisma.IntFilter<"StoreOrder"> | number
   paymentId?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
+  gateway?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
+  gatewayOrderId?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
+  gatewayPaymentId?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
   note?: Prisma.StringNullableFilter<"StoreOrder"> | string | null
   createdAt?: Prisma.DateTimeFilter<"StoreOrder"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"StoreOrder"> | Date | string
@@ -884,6 +1034,9 @@ export type StoreOrderScalarWhereInput = {
 
 export type StoreOrderCreateWithoutMemberInput = {
   id?: string
+  buyerName?: string | null
+  buyerPhone?: string | null
+  buyerEmail?: string | null
   status?: string
   channel: string
   subtotalAmount: number
@@ -891,6 +1044,9 @@ export type StoreOrderCreateWithoutMemberInput = {
   coinsRedeemed?: number
   totalAmount: number
   coinsEarned?: number
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
   note?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -903,6 +1059,9 @@ export type StoreOrderCreateWithoutMemberInput = {
 export type StoreOrderUncheckedCreateWithoutMemberInput = {
   id?: string
   tenantId: string
+  buyerName?: string | null
+  buyerPhone?: string | null
+  buyerEmail?: string | null
   soldById?: string | null
   status?: string
   channel: string
@@ -912,6 +1071,9 @@ export type StoreOrderUncheckedCreateWithoutMemberInput = {
   totalAmount: number
   coinsEarned?: number
   paymentId?: string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
   note?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -929,6 +1091,9 @@ export type StoreOrderCreateManyMemberInputEnvelope = {
 
 export type StoreOrderCreateWithoutSoldByInput = {
   id?: string
+  buyerName?: string | null
+  buyerPhone?: string | null
+  buyerEmail?: string | null
   status?: string
   channel: string
   subtotalAmount: number
@@ -936,11 +1101,14 @@ export type StoreOrderCreateWithoutSoldByInput = {
   coinsRedeemed?: number
   totalAmount: number
   coinsEarned?: number
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
   note?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutStoreOrdersInput
-  member: Prisma.TenantMembershipCreateNestedOneWithoutStoreOrdersInput
+  member?: Prisma.TenantMembershipCreateNestedOneWithoutStoreOrdersInput
   payment?: Prisma.PaymentCreateNestedOneWithoutStoreOrderInput
   items?: Prisma.StoreOrderItemCreateNestedManyWithoutOrderInput
 }
@@ -948,7 +1116,10 @@ export type StoreOrderCreateWithoutSoldByInput = {
 export type StoreOrderUncheckedCreateWithoutSoldByInput = {
   id?: string
   tenantId: string
-  membershipId: string
+  membershipId?: string | null
+  buyerName?: string | null
+  buyerPhone?: string | null
+  buyerEmail?: string | null
   status?: string
   channel: string
   subtotalAmount: number
@@ -957,6 +1128,9 @@ export type StoreOrderUncheckedCreateWithoutSoldByInput = {
   totalAmount: number
   coinsEarned?: number
   paymentId?: string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
   note?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1006,6 +1180,9 @@ export type StoreOrderUpdateManyWithWhereWithoutSoldByInput = {
 
 export type StoreOrderCreateWithoutPaymentInput = {
   id?: string
+  buyerName?: string | null
+  buyerPhone?: string | null
+  buyerEmail?: string | null
   status?: string
   channel: string
   subtotalAmount: number
@@ -1013,11 +1190,14 @@ export type StoreOrderCreateWithoutPaymentInput = {
   coinsRedeemed?: number
   totalAmount: number
   coinsEarned?: number
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
   note?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutStoreOrdersInput
-  member: Prisma.TenantMembershipCreateNestedOneWithoutStoreOrdersInput
+  member?: Prisma.TenantMembershipCreateNestedOneWithoutStoreOrdersInput
   soldBy?: Prisma.TenantMembershipCreateNestedOneWithoutSoldStoreOrdersInput
   items?: Prisma.StoreOrderItemCreateNestedManyWithoutOrderInput
 }
@@ -1025,7 +1205,10 @@ export type StoreOrderCreateWithoutPaymentInput = {
 export type StoreOrderUncheckedCreateWithoutPaymentInput = {
   id?: string
   tenantId: string
-  membershipId: string
+  membershipId?: string | null
+  buyerName?: string | null
+  buyerPhone?: string | null
+  buyerEmail?: string | null
   soldById?: string | null
   status?: string
   channel: string
@@ -1034,6 +1217,9 @@ export type StoreOrderUncheckedCreateWithoutPaymentInput = {
   coinsRedeemed?: number
   totalAmount: number
   coinsEarned?: number
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
   note?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1058,6 +1244,9 @@ export type StoreOrderUpdateToOneWithWhereWithoutPaymentInput = {
 
 export type StoreOrderUpdateWithoutPaymentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   subtotalAmount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1065,11 +1254,14 @@ export type StoreOrderUpdateWithoutPaymentInput = {
   coinsRedeemed?: Prisma.IntFieldUpdateOperationsInput | number
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   coinsEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutStoreOrdersNestedInput
-  member?: Prisma.TenantMembershipUpdateOneRequiredWithoutStoreOrdersNestedInput
+  member?: Prisma.TenantMembershipUpdateOneWithoutStoreOrdersNestedInput
   soldBy?: Prisma.TenantMembershipUpdateOneWithoutSoldStoreOrdersNestedInput
   items?: Prisma.StoreOrderItemUpdateManyWithoutOrderNestedInput
 }
@@ -1077,7 +1269,10 @@ export type StoreOrderUpdateWithoutPaymentInput = {
 export type StoreOrderUncheckedUpdateWithoutPaymentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
-  membershipId?: Prisma.StringFieldUpdateOperationsInput | string
+  membershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   soldById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1086,6 +1281,9 @@ export type StoreOrderUncheckedUpdateWithoutPaymentInput = {
   coinsRedeemed?: Prisma.IntFieldUpdateOperationsInput | number
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   coinsEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1094,6 +1292,9 @@ export type StoreOrderUncheckedUpdateWithoutPaymentInput = {
 
 export type StoreOrderCreateWithoutItemsInput = {
   id?: string
+  buyerName?: string | null
+  buyerPhone?: string | null
+  buyerEmail?: string | null
   status?: string
   channel: string
   subtotalAmount: number
@@ -1101,11 +1302,14 @@ export type StoreOrderCreateWithoutItemsInput = {
   coinsRedeemed?: number
   totalAmount: number
   coinsEarned?: number
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
   note?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutStoreOrdersInput
-  member: Prisma.TenantMembershipCreateNestedOneWithoutStoreOrdersInput
+  member?: Prisma.TenantMembershipCreateNestedOneWithoutStoreOrdersInput
   soldBy?: Prisma.TenantMembershipCreateNestedOneWithoutSoldStoreOrdersInput
   payment?: Prisma.PaymentCreateNestedOneWithoutStoreOrderInput
 }
@@ -1113,7 +1317,10 @@ export type StoreOrderCreateWithoutItemsInput = {
 export type StoreOrderUncheckedCreateWithoutItemsInput = {
   id?: string
   tenantId: string
-  membershipId: string
+  membershipId?: string | null
+  buyerName?: string | null
+  buyerPhone?: string | null
+  buyerEmail?: string | null
   soldById?: string | null
   status?: string
   channel: string
@@ -1123,6 +1330,9 @@ export type StoreOrderUncheckedCreateWithoutItemsInput = {
   totalAmount: number
   coinsEarned?: number
   paymentId?: string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
   note?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1146,6 +1356,9 @@ export type StoreOrderUpdateToOneWithWhereWithoutItemsInput = {
 
 export type StoreOrderUpdateWithoutItemsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   subtotalAmount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1153,11 +1366,14 @@ export type StoreOrderUpdateWithoutItemsInput = {
   coinsRedeemed?: Prisma.IntFieldUpdateOperationsInput | number
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   coinsEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutStoreOrdersNestedInput
-  member?: Prisma.TenantMembershipUpdateOneRequiredWithoutStoreOrdersNestedInput
+  member?: Prisma.TenantMembershipUpdateOneWithoutStoreOrdersNestedInput
   soldBy?: Prisma.TenantMembershipUpdateOneWithoutSoldStoreOrdersNestedInput
   payment?: Prisma.PaymentUpdateOneWithoutStoreOrderNestedInput
 }
@@ -1165,7 +1381,10 @@ export type StoreOrderUpdateWithoutItemsInput = {
 export type StoreOrderUncheckedUpdateWithoutItemsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
-  membershipId?: Prisma.StringFieldUpdateOperationsInput | string
+  membershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   soldById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1175,6 +1394,9 @@ export type StoreOrderUncheckedUpdateWithoutItemsInput = {
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   coinsEarned?: Prisma.IntFieldUpdateOperationsInput | number
   paymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1182,7 +1404,10 @@ export type StoreOrderUncheckedUpdateWithoutItemsInput = {
 
 export type StoreOrderCreateManyTenantInput = {
   id?: string
-  membershipId: string
+  membershipId?: string | null
+  buyerName?: string | null
+  buyerPhone?: string | null
+  buyerEmail?: string | null
   soldById?: string | null
   status?: string
   channel: string
@@ -1192,6 +1417,9 @@ export type StoreOrderCreateManyTenantInput = {
   totalAmount: number
   coinsEarned?: number
   paymentId?: string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
   note?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1199,6 +1427,9 @@ export type StoreOrderCreateManyTenantInput = {
 
 export type StoreOrderUpdateWithoutTenantInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   subtotalAmount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1206,10 +1437,13 @@ export type StoreOrderUpdateWithoutTenantInput = {
   coinsRedeemed?: Prisma.IntFieldUpdateOperationsInput | number
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   coinsEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  member?: Prisma.TenantMembershipUpdateOneRequiredWithoutStoreOrdersNestedInput
+  member?: Prisma.TenantMembershipUpdateOneWithoutStoreOrdersNestedInput
   soldBy?: Prisma.TenantMembershipUpdateOneWithoutSoldStoreOrdersNestedInput
   payment?: Prisma.PaymentUpdateOneWithoutStoreOrderNestedInput
   items?: Prisma.StoreOrderItemUpdateManyWithoutOrderNestedInput
@@ -1217,7 +1451,10 @@ export type StoreOrderUpdateWithoutTenantInput = {
 
 export type StoreOrderUncheckedUpdateWithoutTenantInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  membershipId?: Prisma.StringFieldUpdateOperationsInput | string
+  membershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   soldById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1227,6 +1464,9 @@ export type StoreOrderUncheckedUpdateWithoutTenantInput = {
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   coinsEarned?: Prisma.IntFieldUpdateOperationsInput | number
   paymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1235,7 +1475,10 @@ export type StoreOrderUncheckedUpdateWithoutTenantInput = {
 
 export type StoreOrderUncheckedUpdateManyWithoutTenantInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  membershipId?: Prisma.StringFieldUpdateOperationsInput | string
+  membershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   soldById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1245,6 +1488,9 @@ export type StoreOrderUncheckedUpdateManyWithoutTenantInput = {
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   coinsEarned?: Prisma.IntFieldUpdateOperationsInput | number
   paymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1253,6 +1499,9 @@ export type StoreOrderUncheckedUpdateManyWithoutTenantInput = {
 export type StoreOrderCreateManyMemberInput = {
   id?: string
   tenantId: string
+  buyerName?: string | null
+  buyerPhone?: string | null
+  buyerEmail?: string | null
   soldById?: string | null
   status?: string
   channel: string
@@ -1262,6 +1511,9 @@ export type StoreOrderCreateManyMemberInput = {
   totalAmount: number
   coinsEarned?: number
   paymentId?: string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
   note?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1270,7 +1522,10 @@ export type StoreOrderCreateManyMemberInput = {
 export type StoreOrderCreateManySoldByInput = {
   id?: string
   tenantId: string
-  membershipId: string
+  membershipId?: string | null
+  buyerName?: string | null
+  buyerPhone?: string | null
+  buyerEmail?: string | null
   status?: string
   channel: string
   subtotalAmount: number
@@ -1279,6 +1534,9 @@ export type StoreOrderCreateManySoldByInput = {
   totalAmount: number
   coinsEarned?: number
   paymentId?: string | null
+  gateway?: string | null
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
   note?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1286,6 +1544,9 @@ export type StoreOrderCreateManySoldByInput = {
 
 export type StoreOrderUpdateWithoutMemberInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   subtotalAmount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1293,6 +1554,9 @@ export type StoreOrderUpdateWithoutMemberInput = {
   coinsRedeemed?: Prisma.IntFieldUpdateOperationsInput | number
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   coinsEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1305,6 +1569,9 @@ export type StoreOrderUpdateWithoutMemberInput = {
 export type StoreOrderUncheckedUpdateWithoutMemberInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   soldById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1314,6 +1581,9 @@ export type StoreOrderUncheckedUpdateWithoutMemberInput = {
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   coinsEarned?: Prisma.IntFieldUpdateOperationsInput | number
   paymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1323,6 +1593,9 @@ export type StoreOrderUncheckedUpdateWithoutMemberInput = {
 export type StoreOrderUncheckedUpdateManyWithoutMemberInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   soldById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1332,6 +1605,9 @@ export type StoreOrderUncheckedUpdateManyWithoutMemberInput = {
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   coinsEarned?: Prisma.IntFieldUpdateOperationsInput | number
   paymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1339,6 +1615,9 @@ export type StoreOrderUncheckedUpdateManyWithoutMemberInput = {
 
 export type StoreOrderUpdateWithoutSoldByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   subtotalAmount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1346,11 +1625,14 @@ export type StoreOrderUpdateWithoutSoldByInput = {
   coinsRedeemed?: Prisma.IntFieldUpdateOperationsInput | number
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   coinsEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutStoreOrdersNestedInput
-  member?: Prisma.TenantMembershipUpdateOneRequiredWithoutStoreOrdersNestedInput
+  member?: Prisma.TenantMembershipUpdateOneWithoutStoreOrdersNestedInput
   payment?: Prisma.PaymentUpdateOneWithoutStoreOrderNestedInput
   items?: Prisma.StoreOrderItemUpdateManyWithoutOrderNestedInput
 }
@@ -1358,7 +1640,10 @@ export type StoreOrderUpdateWithoutSoldByInput = {
 export type StoreOrderUncheckedUpdateWithoutSoldByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
-  membershipId?: Prisma.StringFieldUpdateOperationsInput | string
+  membershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   subtotalAmount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1367,6 +1652,9 @@ export type StoreOrderUncheckedUpdateWithoutSoldByInput = {
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   coinsEarned?: Prisma.IntFieldUpdateOperationsInput | number
   paymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1376,7 +1664,10 @@ export type StoreOrderUncheckedUpdateWithoutSoldByInput = {
 export type StoreOrderUncheckedUpdateManyWithoutSoldByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
-  membershipId?: Prisma.StringFieldUpdateOperationsInput | string
+  membershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   subtotalAmount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1385,6 +1676,9 @@ export type StoreOrderUncheckedUpdateManyWithoutSoldByInput = {
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   coinsEarned?: Prisma.IntFieldUpdateOperationsInput | number
   paymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gateway?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1425,6 +1719,9 @@ export type StoreOrderSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   id?: boolean
   tenantId?: boolean
   membershipId?: boolean
+  buyerName?: boolean
+  buyerPhone?: boolean
+  buyerEmail?: boolean
   soldById?: boolean
   status?: boolean
   channel?: boolean
@@ -1434,11 +1731,14 @@ export type StoreOrderSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   totalAmount?: boolean
   coinsEarned?: boolean
   paymentId?: boolean
+  gateway?: boolean
+  gatewayOrderId?: boolean
+  gatewayPaymentId?: boolean
   note?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
-  member?: boolean | Prisma.TenantMembershipDefaultArgs<ExtArgs>
+  member?: boolean | Prisma.StoreOrder$memberArgs<ExtArgs>
   soldBy?: boolean | Prisma.StoreOrder$soldByArgs<ExtArgs>
   payment?: boolean | Prisma.StoreOrder$paymentArgs<ExtArgs>
   items?: boolean | Prisma.StoreOrder$itemsArgs<ExtArgs>
@@ -1449,6 +1749,9 @@ export type StoreOrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   id?: boolean
   tenantId?: boolean
   membershipId?: boolean
+  buyerName?: boolean
+  buyerPhone?: boolean
+  buyerEmail?: boolean
   soldById?: boolean
   status?: boolean
   channel?: boolean
@@ -1458,11 +1761,14 @@ export type StoreOrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   totalAmount?: boolean
   coinsEarned?: boolean
   paymentId?: boolean
+  gateway?: boolean
+  gatewayOrderId?: boolean
+  gatewayPaymentId?: boolean
   note?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
-  member?: boolean | Prisma.TenantMembershipDefaultArgs<ExtArgs>
+  member?: boolean | Prisma.StoreOrder$memberArgs<ExtArgs>
   soldBy?: boolean | Prisma.StoreOrder$soldByArgs<ExtArgs>
   payment?: boolean | Prisma.StoreOrder$paymentArgs<ExtArgs>
 }, ExtArgs["result"]["storeOrder"]>
@@ -1471,6 +1777,9 @@ export type StoreOrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   id?: boolean
   tenantId?: boolean
   membershipId?: boolean
+  buyerName?: boolean
+  buyerPhone?: boolean
+  buyerEmail?: boolean
   soldById?: boolean
   status?: boolean
   channel?: boolean
@@ -1480,11 +1789,14 @@ export type StoreOrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   totalAmount?: boolean
   coinsEarned?: boolean
   paymentId?: boolean
+  gateway?: boolean
+  gatewayOrderId?: boolean
+  gatewayPaymentId?: boolean
   note?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
-  member?: boolean | Prisma.TenantMembershipDefaultArgs<ExtArgs>
+  member?: boolean | Prisma.StoreOrder$memberArgs<ExtArgs>
   soldBy?: boolean | Prisma.StoreOrder$soldByArgs<ExtArgs>
   payment?: boolean | Prisma.StoreOrder$paymentArgs<ExtArgs>
 }, ExtArgs["result"]["storeOrder"]>
@@ -1493,6 +1805,9 @@ export type StoreOrderSelectScalar = {
   id?: boolean
   tenantId?: boolean
   membershipId?: boolean
+  buyerName?: boolean
+  buyerPhone?: boolean
+  buyerEmail?: boolean
   soldById?: boolean
   status?: boolean
   channel?: boolean
@@ -1502,15 +1817,18 @@ export type StoreOrderSelectScalar = {
   totalAmount?: boolean
   coinsEarned?: boolean
   paymentId?: boolean
+  gateway?: boolean
+  gatewayOrderId?: boolean
+  gatewayPaymentId?: boolean
   note?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type StoreOrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "membershipId" | "soldById" | "status" | "channel" | "subtotalAmount" | "discountAmount" | "coinsRedeemed" | "totalAmount" | "coinsEarned" | "paymentId" | "note" | "createdAt" | "updatedAt", ExtArgs["result"]["storeOrder"]>
+export type StoreOrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "membershipId" | "buyerName" | "buyerPhone" | "buyerEmail" | "soldById" | "status" | "channel" | "subtotalAmount" | "discountAmount" | "coinsRedeemed" | "totalAmount" | "coinsEarned" | "paymentId" | "gateway" | "gatewayOrderId" | "gatewayPaymentId" | "note" | "createdAt" | "updatedAt", ExtArgs["result"]["storeOrder"]>
 export type StoreOrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
-  member?: boolean | Prisma.TenantMembershipDefaultArgs<ExtArgs>
+  member?: boolean | Prisma.StoreOrder$memberArgs<ExtArgs>
   soldBy?: boolean | Prisma.StoreOrder$soldByArgs<ExtArgs>
   payment?: boolean | Prisma.StoreOrder$paymentArgs<ExtArgs>
   items?: boolean | Prisma.StoreOrder$itemsArgs<ExtArgs>
@@ -1518,13 +1836,13 @@ export type StoreOrderInclude<ExtArgs extends runtime.Types.Extensions.InternalA
 }
 export type StoreOrderIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
-  member?: boolean | Prisma.TenantMembershipDefaultArgs<ExtArgs>
+  member?: boolean | Prisma.StoreOrder$memberArgs<ExtArgs>
   soldBy?: boolean | Prisma.StoreOrder$soldByArgs<ExtArgs>
   payment?: boolean | Prisma.StoreOrder$paymentArgs<ExtArgs>
 }
 export type StoreOrderIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
-  member?: boolean | Prisma.TenantMembershipDefaultArgs<ExtArgs>
+  member?: boolean | Prisma.StoreOrder$memberArgs<ExtArgs>
   soldBy?: boolean | Prisma.StoreOrder$soldByArgs<ExtArgs>
   payment?: boolean | Prisma.StoreOrder$paymentArgs<ExtArgs>
 }
@@ -1533,7 +1851,7 @@ export type $StoreOrderPayload<ExtArgs extends runtime.Types.Extensions.Internal
   name: "StoreOrder"
   objects: {
     tenant: Prisma.$TenantPayload<ExtArgs>
-    member: Prisma.$TenantMembershipPayload<ExtArgs>
+    member: Prisma.$TenantMembershipPayload<ExtArgs> | null
     soldBy: Prisma.$TenantMembershipPayload<ExtArgs> | null
     payment: Prisma.$PaymentPayload<ExtArgs> | null
     items: Prisma.$StoreOrderItemPayload<ExtArgs>[]
@@ -1542,9 +1860,18 @@ export type $StoreOrderPayload<ExtArgs extends runtime.Types.Extensions.Internal
     id: string
     tenantId: string
     /**
-     * Who bought it. Always a member of this gym — there is no guest checkout.
+     * Who bought it, when the buyer is a member. Null for a guest: somebody who
+     * bought from the public storefront without joining the gym.
      */
-    membershipId: string
+    membershipId: string | null
+    /**
+     * Who to call when a guest order is ready for collection. Set only when the
+     * membership is null — a member is already reachable through their own
+     * record. No address, because this store is collection-only.
+     */
+    buyerName: string | null
+    buyerPhone: string | null
+    buyerEmail: string | null
     /**
      * Staff who rang it up, for a counter sale. Null for an online purchase.
      */
@@ -1580,6 +1907,14 @@ export type $StoreOrderPayload<ExtArgs extends runtime.Types.Extensions.Internal
      * through the same ledger as memberships and charges.
      */
     paymentId: string | null
+    /**
+     * A guest sale writes no Payment row — relaxing Payment.membershipId would
+     * mean rebuilding a table four others point at — so the gateway trail lives
+     * here instead. Null on a member order, whose trail is on its payment.
+     */
+    gateway: string | null
+    gatewayOrderId: string | null
+    gatewayPaymentId: string | null
     note: string | null
     createdAt: Date
     updatedAt: Date
@@ -1978,7 +2313,7 @@ readonly fields: StoreOrderFieldRefs;
 export interface Prisma__StoreOrderClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   tenant<T extends Prisma.TenantDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantDefaultArgs<ExtArgs>>): Prisma.Prisma__TenantClient<runtime.Types.Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  member<T extends Prisma.TenantMembershipDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantMembershipDefaultArgs<ExtArgs>>): Prisma.Prisma__TenantMembershipClient<runtime.Types.Result.GetResult<Prisma.$TenantMembershipPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  member<T extends Prisma.StoreOrder$memberArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StoreOrder$memberArgs<ExtArgs>>): Prisma.Prisma__TenantMembershipClient<runtime.Types.Result.GetResult<Prisma.$TenantMembershipPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   soldBy<T extends Prisma.StoreOrder$soldByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StoreOrder$soldByArgs<ExtArgs>>): Prisma.Prisma__TenantMembershipClient<runtime.Types.Result.GetResult<Prisma.$TenantMembershipPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   payment<T extends Prisma.StoreOrder$paymentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StoreOrder$paymentArgs<ExtArgs>>): Prisma.Prisma__PaymentClient<runtime.Types.Result.GetResult<Prisma.$PaymentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   items<T extends Prisma.StoreOrder$itemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StoreOrder$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StoreOrderItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -2014,6 +2349,9 @@ export interface StoreOrderFieldRefs {
   readonly id: Prisma.FieldRef<"StoreOrder", 'String'>
   readonly tenantId: Prisma.FieldRef<"StoreOrder", 'String'>
   readonly membershipId: Prisma.FieldRef<"StoreOrder", 'String'>
+  readonly buyerName: Prisma.FieldRef<"StoreOrder", 'String'>
+  readonly buyerPhone: Prisma.FieldRef<"StoreOrder", 'String'>
+  readonly buyerEmail: Prisma.FieldRef<"StoreOrder", 'String'>
   readonly soldById: Prisma.FieldRef<"StoreOrder", 'String'>
   readonly status: Prisma.FieldRef<"StoreOrder", 'String'>
   readonly channel: Prisma.FieldRef<"StoreOrder", 'String'>
@@ -2023,6 +2361,9 @@ export interface StoreOrderFieldRefs {
   readonly totalAmount: Prisma.FieldRef<"StoreOrder", 'Int'>
   readonly coinsEarned: Prisma.FieldRef<"StoreOrder", 'Int'>
   readonly paymentId: Prisma.FieldRef<"StoreOrder", 'String'>
+  readonly gateway: Prisma.FieldRef<"StoreOrder", 'String'>
+  readonly gatewayOrderId: Prisma.FieldRef<"StoreOrder", 'String'>
+  readonly gatewayPaymentId: Prisma.FieldRef<"StoreOrder", 'String'>
   readonly note: Prisma.FieldRef<"StoreOrder", 'String'>
   readonly createdAt: Prisma.FieldRef<"StoreOrder", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"StoreOrder", 'DateTime'>
@@ -2422,6 +2763,25 @@ export type StoreOrderDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.In
    * Limit how many StoreOrders to delete.
    */
   limit?: number
+}
+
+/**
+ * StoreOrder.member
+ */
+export type StoreOrder$memberArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TenantMembership
+   */
+  select?: Prisma.TenantMembershipSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TenantMembership
+   */
+  omit?: Prisma.TenantMembershipOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TenantMembershipInclude<ExtArgs> | null
+  where?: Prisma.TenantMembershipWhereInput
 }
 
 /**

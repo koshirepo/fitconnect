@@ -185,12 +185,16 @@ export default function TenantPublicPage() {
                   Sign In
                 </Button>
               )}
-              {/* The gym's own shop. Signed-in members go straight to it;
-                  a visitor is sent to sign in first, because buying needs an
-                  account to hang the order and the coins off. */}
+              {/* The gym's own shop, in its public form for everybody. This
+                  used to send a signed-in visitor to /dashboard/store, which
+                  sits behind the tenant and permission guards — so anyone
+                  signed in without STORE_READ at *this* gym was redirected away
+                  rather than shown the shop they clicked on. The public
+                  storefront answers for all of them, and a member still reaches
+                  the buying view from their own dashboard. */}
               <Button
                 variant="outline"
-                onClick={() => navigate(isAuthenticated ? "/dashboard/store" : "/store")}
+                onClick={() => navigate("/store")}
               >
                 <ShoppingBag className="h-4 w-4" />
                 Visit Store
@@ -438,8 +442,6 @@ export default function TenantPublicPage() {
               {whatsappUrl && (
                 <a
                   href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
                 >
                   <MessageCircle className="h-4 w-4 text-muted-foreground" />

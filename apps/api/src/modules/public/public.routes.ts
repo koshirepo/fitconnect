@@ -21,6 +21,17 @@ publicRoutes.get("/branding", publicController.getTenantBranding);
 /** The gym's shop window. Browsing needs no account; buying still does. */
 publicRoutes.get("/store", publicController.getTenantStore);
 publicRoutes.get("/store/products/:productId", publicController.getTenantStoreProduct);
+/**
+ * Reserving from the shop window, without an account.
+ *
+ * Unauthenticated by definition — the buyer has no account, which is the point.
+ * What protects it is the same set the public signup relies on: the gym is
+ * fixed by the request host, every price is read from the database rather than
+ * the request, no stock moves until a coach or an admin hands the goods over,
+ * and the per-IP rate limit below caps how fast anyone can write rows.
+ */
+publicRoutes.post("/store/orders", rateLimitSignup, publicController.placeGuestOrder);
+publicRoutes.post("/store/orders/lookup", rateLimitSignup, publicController.lookupGuestOrder);
 /** Likes and comments on the gym itself. Reading is open; writing needs an account. */
 publicRoutes.get("/social", publicController.getTenantSocial);
 publicRoutes.get("/gyms", publicController.listGyms);

@@ -363,7 +363,7 @@ export default function AttendancePage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => window.open(qrUrl, "_blank", "noopener,noreferrer")}
+                  onClick={() => window.location.assign(qrUrl)}
                 >
                   <ExternalLink className="h-4 w-4" />
                   Test

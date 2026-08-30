@@ -8,7 +8,8 @@
 import type { Context } from "hono";
 import { publicService } from "./public.service";
 import { parsePagination } from "../../lib/pagination";
-import { ok, okPaginated, notFound } from "../../lib/response";
+import { ok, okPaginated, notFound, badRequest, conflict } from "../../lib/response";
+import { guestOrderSchema, guestOrderLookupSchema } from "../store/store.schema";
 
 export const publicController = {
   /**
@@ -47,6 +48,49 @@ export const publicController = {
    const result = await publicService.getStoreProductByHost(host, c.req.param("productId")!);
    if ("error" in result) return notFound(c, result.error ?? "Product not found.");
    return ok(c, result.data);
+  },
+
+  /**
+   * Reserve a basket from the public storefront.
+   *
+   * The gym comes from the request host, never the body — a caller cannot place
+   * an order into a gym they did not visit.
+   */
+  async placeGuestOrder(c: Context) {
+    const host = c.req.query("host") ?? c.req.header("host") ?? "";
+    if (!host) return notFound(c, "Tenant host is required.");
+
+    const parsed = guestOrderSchema.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) {
+      return badRequest(c, "Check the details and try again.", parsed.error.issues);
+    }
+
+    const result = await publicService.placeGuestOrderByHost(host, parsed.data);
+    if ("error" in result) {
+      // 409 is the one worth distinguishing: it means the shop sold out from
+      // under the basket, which the page retries differently to a typo.
+      return result.status === 409
+        ? conflict(c, result.error)
+        : result.status === 404
+          ? notFound(c, result.error)
+          : badRequest(c, result.error);
+    }
+    return ok(c, result.data, 201);
+  },
+
+  /** Checking on a reservation with the reference and the phone number. */
+  async lookupGuestOrder(c: Context) {
+    const host = c.req.query("host") ?? c.req.header("host") ?? "";
+    if (!host) return notFound(c, "Tenant host is required.");
+
+    const parsed = guestOrderLookupSchema.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) {
+      return badRequest(c, "Check the details and try again.", parsed.error.issues);
+    }
+
+    const result = await publicService.lookupGuestOrderByHost(host, parsed.data);
+    if ("error" in result) return notFound(c, result.error ?? "Order not found.");
+    return ok(c, result.data);
   },
 
   /** The gym's own wall — likes and comments — readable without an account. */

@@ -389,7 +389,7 @@ export default function RecordPaymentPage() {
         });
         const whatsappUrl = buildWhatsAppUrl(selectedMember.phone, msg);
         if (whatsappUrl) {
-          window.open(whatsappUrl, "_blank");
+          window.location.assign(whatsappUrl);
         }
       }
 
