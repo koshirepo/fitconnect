@@ -16,6 +16,13 @@ export const updateSettingsSchema = z.object({
   overdueDays: z.number().int().min(1).max(365).optional(),
   /** Coins the referrer earns on their referee's first subscription. 0 is off. */
   referralRewardCoins: z.number().int().min(0).max(100000).optional(),
+  /**
+   * Days a coin lives before it is swept away. 0 turns expiry off.
+   *
+   * Capped at five years: a longer window is indistinguishable from never,
+   * and saying "never" plainly is better than a number nobody will outlive.
+   */
+  coinExpiryDays: z.number().int().min(0).max(1825).optional(),
   /** Coins the referred member earns at the same moment. 0 is none. */
   referralRefereeCoins: z.number().int().min(0).max(100000).optional(),
   whatsappTemplates: z.object(whatsappTemplateShape).optional(),

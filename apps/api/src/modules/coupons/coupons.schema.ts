@@ -89,6 +89,19 @@ export const updateCouponSchema = z
     if (data.type) checkTypeShape(data, ctx);
   });
 
+/**
+ * A hand-made movement of somebody's coins.
+ *
+ * The note is required rather than optional: a balance that changed for no
+ * recorded reason is exactly what a ledger exists to prevent.
+ */
+export const coinAdjustSchema = z.object({
+  amount: z.number().int().refine((n) => n !== 0, "Enter an amount to add or take away."),
+  note: z.string().trim().min(3).max(200),
+});
+
+export type CoinAdjustInput = z.infer<typeof coinAdjustSchema>;
+
 /** What a screen asks for when previewing a price before saving a payment. */
 export const quoteSchema = z.object({
   /**

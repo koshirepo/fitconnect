@@ -818,6 +818,7 @@ export const paymentRepository = {
       coinBalance,
       activeFreezes,
       mixMonth,
+      guestSales,
     ] = await Promise.all([
       // Today's stats
       prisma.payment.groupBy({
@@ -926,7 +927,36 @@ export const paymentRepository = {
           AND "createdAt" >= ${startOfMonth}
         GROUP BY kind
       `,
+      // Completed store orders with no membership: the walk-ins and visitors
+      // whose money the payment ledger structurally cannot hold. Small by
+      // nature — one row per guest sale — so it is read whole and bucketed in
+      // memory rather than aggregated four times in SQL.
+      prisma.storeOrder.findMany({
+        where: { tenantId, status: "COMPLETED", membershipId: null },
+        select: { totalAmount: true, createdAt: true },
+      }),
     ]);
+
+    /**
+     * Store revenue that has no payment row.
+     *
+     * A guest order — a walk-in at the till, or a visitor collecting a
+     * reservation — belongs to nobody, and `Payment.membershipId` is
+     * required. Those sales were therefore invisible here: a gym selling
+     * ₹40,000 to walk-ins saw ₹0, because the only place the money was
+     * recorded was `StoreOrder`.
+     *
+     * Counted separately rather than merged into the payment figures, so the
+     * finance page can say where the money came from instead of quietly
+     * inflating a number whose provenance nobody can check.
+     */
+    const guestRevenue = (from: Date) =>
+      guestSales
+        .filter((sale) => sale.createdAt >= from)
+        .reduce((sum, sale) => sum + sale.totalAmount, 0);
+
+    const guestCount = (from: Date) =>
+      guestSales.filter((sale) => sale.createdAt >= from).length;
 
     const mapStats = (rows: typeof daily) => {
       let totalRevenue = 0;
@@ -948,11 +978,33 @@ export const paymentRepository = {
       return { totalRevenue, totalCount, completed, pending, failed };
     };
 
+    const allGuestRevenue = guestSales.reduce(
+      (sum, sale) => sum + sale.totalAmount,
+      0,
+    );
+
+    /** Payment-ledger figures with the guest sales of the same window added. */
+    const withGuests = (rows: typeof daily, from: Date | null) => {
+      const stats = mapStats(rows);
+      const revenue = from === null ? allGuestRevenue : guestRevenue(from);
+      const count = from === null ? guestSales.length : guestCount(from);
+
+      return {
+        ...stats,
+        totalRevenue: stats.totalRevenue + revenue,
+        totalCount: stats.totalCount + count,
+        completed: stats.completed + count,
+        /** Of the revenue above, how much came from buyers with no account. */
+        guestRevenue: revenue,
+        guestCount: count,
+      };
+    };
+
     return {
-      today: mapStats(daily),
-      week: mapStats(weekly),
-      month: mapStats(monthly),
-      allTime: mapStats(allTime),
+      today: withGuests(daily, startOfDay),
+      week: withGuests(weekly, startOfWeek),
+      month: withGuests(monthly, startOfMonth),
+      allTime: withGuests(allTime, null),
       dailyBreakdown: dailyBreakdown.map(
         (d: { day: string; revenue: number | bigint; count: number | bigint }) => ({
         day: d.day,

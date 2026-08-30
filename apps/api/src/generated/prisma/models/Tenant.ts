@@ -262,6 +262,7 @@ export type TenantWhereInput = {
   brandColor?: Prisma.StringNullableFilter<"Tenant"> | string | null
   description?: Prisma.StringNullableFilter<"Tenant"> | string | null
   platformExpiresAt?: Prisma.DateTimeNullableFilter<"Tenant"> | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryListRelationFilter
   memberships?: Prisma.TenantMembershipListRelationFilter
   subscriptions?: Prisma.SubscriptionListRelationFilter
   shifts?: Prisma.ShiftListRelationFilter
@@ -303,6 +304,7 @@ export type TenantOrderByWithRelationInput = {
   brandColor?: Prisma.SortOrderInput | Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   platformExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  webhookDeliveries?: Prisma.WebhookDeliveryOrderByRelationAggregateInput
   memberships?: Prisma.TenantMembershipOrderByRelationAggregateInput
   subscriptions?: Prisma.SubscriptionOrderByRelationAggregateInput
   shifts?: Prisma.ShiftOrderByRelationAggregateInput
@@ -347,6 +349,7 @@ export type TenantWhereUniqueInput = Prisma.AtLeast<{
   brandColor?: Prisma.StringNullableFilter<"Tenant"> | string | null
   description?: Prisma.StringNullableFilter<"Tenant"> | string | null
   platformExpiresAt?: Prisma.DateTimeNullableFilter<"Tenant"> | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryListRelationFilter
   memberships?: Prisma.TenantMembershipListRelationFilter
   subscriptions?: Prisma.SubscriptionListRelationFilter
   shifts?: Prisma.ShiftListRelationFilter
@@ -430,6 +433,7 @@ export type TenantCreateInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
@@ -471,6 +475,7 @@ export type TenantUncheckedCreateInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
@@ -512,6 +517,7 @@ export type TenantUpdateInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
@@ -553,6 +559,7 @@ export type TenantUncheckedUpdateInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
@@ -632,6 +639,11 @@ export type TenantUncheckedUpdateManyInput = {
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
+export type TenantScalarRelationFilter = {
+  is?: Prisma.TenantWhereInput
+  isNot?: Prisma.TenantWhereInput
+}
+
 export type TenantCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
@@ -691,9 +703,18 @@ export type TenantNullableScalarRelationFilter = {
   isNot?: Prisma.TenantWhereInput | null
 }
 
-export type TenantScalarRelationFilter = {
-  is?: Prisma.TenantWhereInput
-  isNot?: Prisma.TenantWhereInput
+export type TenantCreateNestedOneWithoutWebhookDeliveriesInput = {
+  create?: Prisma.XOR<Prisma.TenantCreateWithoutWebhookDeliveriesInput, Prisma.TenantUncheckedCreateWithoutWebhookDeliveriesInput>
+  connectOrCreate?: Prisma.TenantCreateOrConnectWithoutWebhookDeliveriesInput
+  connect?: Prisma.TenantWhereUniqueInput
+}
+
+export type TenantUpdateOneRequiredWithoutWebhookDeliveriesNestedInput = {
+  create?: Prisma.XOR<Prisma.TenantCreateWithoutWebhookDeliveriesInput, Prisma.TenantUncheckedCreateWithoutWebhookDeliveriesInput>
+  connectOrCreate?: Prisma.TenantCreateOrConnectWithoutWebhookDeliveriesInput
+  upsert?: Prisma.TenantUpsertWithoutWebhookDeliveriesInput
+  connect?: Prisma.TenantWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.TenantUpdateToOneWithWhereWithoutWebhookDeliveriesInput, Prisma.TenantUpdateWithoutWebhookDeliveriesInput>, Prisma.TenantUncheckedUpdateWithoutWebhookDeliveriesInput>
 }
 
 export type TenantCreateNestedOneWithoutRolesInput = {
@@ -1024,6 +1045,186 @@ export type TenantUpdateOneRequiredWithoutStoreOrdersNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.TenantUpdateToOneWithWhereWithoutStoreOrdersInput, Prisma.TenantUpdateWithoutStoreOrdersInput>, Prisma.TenantUncheckedUpdateWithoutStoreOrdersInput>
 }
 
+export type TenantCreateWithoutWebhookDeliveriesInput = {
+  id?: string
+  name: string
+  slug: string
+  email?: string | null
+  phone?: string | null
+  logoUrl?: string | null
+  address?: string | null
+  estd?: Date | string | null
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  markdown?: string | null
+  brandColor?: string | null
+  description?: string | null
+  platformExpiresAt?: Date | string | null
+  memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutTenantInput
+  workoutPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutTenantInput
+  badges?: Prisma.BadgeCreateNestedManyWithoutTenantInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTenantInput
+  settings?: Prisma.TenantSettingsCreateNestedOneWithoutTenantInput
+  charges?: Prisma.TenantChargeCreateNestedManyWithoutTenantInput
+  platformPayments?: Prisma.PlatformPaymentCreateNestedManyWithoutTenantInput
+  attendances?: Prisma.AttendanceCreateNestedManyWithoutTenantInput
+  todos?: Prisma.TodoCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideCreateNestedManyWithoutTenantInput
+  roles?: Prisma.RoleCreateNestedManyWithoutTenantInput
+  coupons?: Prisma.CouponCreateNestedManyWithoutTenantInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutTenantInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutTenantInput
+  membershipFreezes?: Prisma.MembershipFreezeCreateNestedManyWithoutTenantInput
+  storeProducts?: Prisma.StoreProductCreateNestedManyWithoutTenantInput
+  storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentCreateNestedManyWithoutTenantInput
+  paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutTenantInput
+}
+
+export type TenantUncheckedCreateWithoutWebhookDeliveriesInput = {
+  id?: string
+  name: string
+  slug: string
+  email?: string | null
+  phone?: string | null
+  logoUrl?: string | null
+  address?: string | null
+  estd?: Date | string | null
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  markdown?: string | null
+  brandColor?: string | null
+  description?: string | null
+  platformExpiresAt?: Date | string | null
+  memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
+  shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutTenantInput
+  workoutPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutTenantInput
+  badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutTenantInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTenantInput
+  settings?: Prisma.TenantSettingsUncheckedCreateNestedOneWithoutTenantInput
+  charges?: Prisma.TenantChargeUncheckedCreateNestedManyWithoutTenantInput
+  platformPayments?: Prisma.PlatformPaymentUncheckedCreateNestedManyWithoutTenantInput
+  attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutTenantInput
+  todos?: Prisma.TodoUncheckedCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedCreateNestedManyWithoutTenantInput
+  roles?: Prisma.RoleUncheckedCreateNestedManyWithoutTenantInput
+  coupons?: Prisma.CouponUncheckedCreateNestedManyWithoutTenantInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutTenantInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutTenantInput
+  membershipFreezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutTenantInput
+  storeProducts?: Prisma.StoreProductUncheckedCreateNestedManyWithoutTenantInput
+  storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutTenantInput
+  likes?: Prisma.TenantLikeUncheckedCreateNestedManyWithoutTenantInput
+  comments?: Prisma.TenantCommentUncheckedCreateNestedManyWithoutTenantInput
+  paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutTenantInput
+}
+
+export type TenantCreateOrConnectWithoutWebhookDeliveriesInput = {
+  where: Prisma.TenantWhereUniqueInput
+  create: Prisma.XOR<Prisma.TenantCreateWithoutWebhookDeliveriesInput, Prisma.TenantUncheckedCreateWithoutWebhookDeliveriesInput>
+}
+
+export type TenantUpsertWithoutWebhookDeliveriesInput = {
+  update: Prisma.XOR<Prisma.TenantUpdateWithoutWebhookDeliveriesInput, Prisma.TenantUncheckedUpdateWithoutWebhookDeliveriesInput>
+  create: Prisma.XOR<Prisma.TenantCreateWithoutWebhookDeliveriesInput, Prisma.TenantUncheckedCreateWithoutWebhookDeliveriesInput>
+  where?: Prisma.TenantWhereInput
+}
+
+export type TenantUpdateToOneWithWhereWithoutWebhookDeliveriesInput = {
+  where?: Prisma.TenantWhereInput
+  data: Prisma.XOR<Prisma.TenantUpdateWithoutWebhookDeliveriesInput, Prisma.TenantUncheckedUpdateWithoutWebhookDeliveriesInput>
+}
+
+export type TenantUpdateWithoutWebhookDeliveriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  estd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutTenantNestedInput
+  workoutPlans?: Prisma.WorkoutPlanUpdateManyWithoutTenantNestedInput
+  badges?: Prisma.BadgeUpdateManyWithoutTenantNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutTenantNestedInput
+  settings?: Prisma.TenantSettingsUpdateOneWithoutTenantNestedInput
+  charges?: Prisma.TenantChargeUpdateManyWithoutTenantNestedInput
+  platformPayments?: Prisma.PlatformPaymentUpdateManyWithoutTenantNestedInput
+  attendances?: Prisma.AttendanceUpdateManyWithoutTenantNestedInput
+  todos?: Prisma.TodoUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUpdateManyWithoutTenantNestedInput
+  roles?: Prisma.RoleUpdateManyWithoutTenantNestedInput
+  coupons?: Prisma.CouponUpdateManyWithoutTenantNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutTenantNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutTenantNestedInput
+  membershipFreezes?: Prisma.MembershipFreezeUpdateManyWithoutTenantNestedInput
+  storeProducts?: Prisma.StoreProductUpdateManyWithoutTenantNestedInput
+  storeOrders?: Prisma.StoreOrderUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUpdateManyWithoutTenantNestedInput
+  paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutTenantNestedInput
+}
+
+export type TenantUncheckedUpdateWithoutWebhookDeliveriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  estd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
+  shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutTenantNestedInput
+  workoutPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutTenantNestedInput
+  badges?: Prisma.BadgeUncheckedUpdateManyWithoutTenantNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTenantNestedInput
+  settings?: Prisma.TenantSettingsUncheckedUpdateOneWithoutTenantNestedInput
+  charges?: Prisma.TenantChargeUncheckedUpdateManyWithoutTenantNestedInput
+  platformPayments?: Prisma.PlatformPaymentUncheckedUpdateManyWithoutTenantNestedInput
+  attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutTenantNestedInput
+  todos?: Prisma.TodoUncheckedUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionOverrideUncheckedUpdateManyWithoutTenantNestedInput
+  roles?: Prisma.RoleUncheckedUpdateManyWithoutTenantNestedInput
+  coupons?: Prisma.CouponUncheckedUpdateManyWithoutTenantNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutTenantNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutTenantNestedInput
+  membershipFreezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutTenantNestedInput
+  storeProducts?: Prisma.StoreProductUncheckedUpdateManyWithoutTenantNestedInput
+  storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutTenantNestedInput
+  likes?: Prisma.TenantLikeUncheckedUpdateManyWithoutTenantNestedInput
+  comments?: Prisma.TenantCommentUncheckedUpdateManyWithoutTenantNestedInput
+  paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutTenantNestedInput
+}
+
 export type TenantCreateWithoutRolesInput = {
   id?: string
   name: string
@@ -1040,6 +1241,7 @@ export type TenantCreateWithoutRolesInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
@@ -1080,6 +1282,7 @@ export type TenantUncheckedCreateWithoutRolesInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
@@ -1136,6 +1339,7 @@ export type TenantUpdateWithoutRolesInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
@@ -1176,6 +1380,7 @@ export type TenantUncheckedUpdateWithoutRolesInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
@@ -1216,6 +1421,7 @@ export type TenantCreateWithoutRolePermissionsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
@@ -1256,6 +1462,7 @@ export type TenantUncheckedCreateWithoutRolePermissionsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
@@ -1312,6 +1519,7 @@ export type TenantUpdateWithoutRolePermissionsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
@@ -1352,6 +1560,7 @@ export type TenantUncheckedUpdateWithoutRolePermissionsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
@@ -1392,6 +1601,7 @@ export type TenantCreateWithoutSettingsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
@@ -1432,6 +1642,7 @@ export type TenantUncheckedCreateWithoutSettingsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
@@ -1488,6 +1699,7 @@ export type TenantUpdateWithoutSettingsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
@@ -1528,6 +1740,7 @@ export type TenantUncheckedUpdateWithoutSettingsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
@@ -1568,6 +1781,7 @@ export type TenantCreateWithoutChargesInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
@@ -1608,6 +1822,7 @@ export type TenantUncheckedCreateWithoutChargesInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
@@ -1664,6 +1879,7 @@ export type TenantUpdateWithoutChargesInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
@@ -1704,6 +1920,7 @@ export type TenantUncheckedUpdateWithoutChargesInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
@@ -1744,6 +1961,7 @@ export type TenantCreateWithoutMembershipsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentCreateNestedManyWithoutTenantInput
@@ -1784,6 +2002,7 @@ export type TenantUncheckedCreateWithoutMembershipsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutTenantInput
@@ -1840,6 +2059,7 @@ export type TenantUpdateWithoutMembershipsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutTenantNestedInput
@@ -1880,6 +2100,7 @@ export type TenantUncheckedUpdateWithoutMembershipsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutTenantNestedInput
@@ -1920,6 +2141,7 @@ export type TenantCreateWithoutSubscriptionsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentCreateNestedManyWithoutTenantInput
@@ -1960,6 +2182,7 @@ export type TenantUncheckedCreateWithoutSubscriptionsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutTenantInput
@@ -2016,6 +2239,7 @@ export type TenantUpdateWithoutSubscriptionsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutTenantNestedInput
@@ -2056,6 +2280,7 @@ export type TenantUncheckedUpdateWithoutSubscriptionsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutTenantNestedInput
@@ -2096,6 +2321,7 @@ export type TenantCreateWithoutShiftsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentCreateNestedManyWithoutTenantInput
@@ -2136,6 +2362,7 @@ export type TenantUncheckedCreateWithoutShiftsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutTenantInput
@@ -2192,6 +2419,7 @@ export type TenantUpdateWithoutShiftsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutTenantNestedInput
@@ -2232,6 +2460,7 @@ export type TenantUncheckedUpdateWithoutShiftsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutTenantNestedInput
@@ -2272,6 +2501,7 @@ export type TenantCreateWithoutTodosInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
@@ -2312,6 +2542,7 @@ export type TenantUncheckedCreateWithoutTodosInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
@@ -2368,6 +2599,7 @@ export type TenantUpdateWithoutTodosInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
@@ -2408,6 +2640,7 @@ export type TenantUncheckedUpdateWithoutTodosInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
@@ -2448,6 +2681,7 @@ export type TenantCreateWithoutPaymentsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
@@ -2488,6 +2722,7 @@ export type TenantUncheckedCreateWithoutPaymentsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
@@ -2544,6 +2779,7 @@ export type TenantUpdateWithoutPaymentsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
@@ -2584,6 +2820,7 @@ export type TenantUncheckedUpdateWithoutPaymentsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
@@ -2624,6 +2861,7 @@ export type TenantCreateWithoutPaymentRemindersInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
@@ -2664,6 +2902,7 @@ export type TenantUncheckedCreateWithoutPaymentRemindersInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
@@ -2720,6 +2959,7 @@ export type TenantUpdateWithoutPaymentRemindersInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
@@ -2760,6 +3000,7 @@ export type TenantUncheckedUpdateWithoutPaymentRemindersInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
@@ -2800,6 +3041,7 @@ export type TenantCreateWithoutCouponsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
@@ -2840,6 +3082,7 @@ export type TenantUncheckedCreateWithoutCouponsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
@@ -2896,6 +3139,7 @@ export type TenantUpdateWithoutCouponsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
@@ -2936,6 +3180,7 @@ export type TenantUncheckedUpdateWithoutCouponsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
@@ -2976,6 +3221,7 @@ export type TenantCreateWithoutCouponRedemptionsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
@@ -3016,6 +3262,7 @@ export type TenantUncheckedCreateWithoutCouponRedemptionsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
@@ -3072,6 +3319,7 @@ export type TenantUpdateWithoutCouponRedemptionsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
@@ -3112,6 +3360,7 @@ export type TenantUncheckedUpdateWithoutCouponRedemptionsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
@@ -3152,6 +3401,7 @@ export type TenantCreateWithoutCoinLedgerInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
@@ -3192,6 +3442,7 @@ export type TenantUncheckedCreateWithoutCoinLedgerInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
@@ -3248,6 +3499,7 @@ export type TenantUpdateWithoutCoinLedgerInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
@@ -3288,6 +3540,7 @@ export type TenantUncheckedUpdateWithoutCoinLedgerInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
@@ -3328,6 +3581,7 @@ export type TenantCreateWithoutMembershipFreezesInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
@@ -3368,6 +3622,7 @@ export type TenantUncheckedCreateWithoutMembershipFreezesInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
@@ -3424,6 +3679,7 @@ export type TenantUpdateWithoutMembershipFreezesInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
@@ -3464,6 +3720,7 @@ export type TenantUncheckedUpdateWithoutMembershipFreezesInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
@@ -3504,6 +3761,7 @@ export type TenantCreateWithoutWorkoutPlansInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
@@ -3544,6 +3802,7 @@ export type TenantUncheckedCreateWithoutWorkoutPlansInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
@@ -3600,6 +3859,7 @@ export type TenantUpdateWithoutWorkoutPlansInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
@@ -3640,6 +3900,7 @@ export type TenantUncheckedUpdateWithoutWorkoutPlansInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
@@ -3680,6 +3941,7 @@ export type TenantCreateWithoutBadgesInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
@@ -3720,6 +3982,7 @@ export type TenantUncheckedCreateWithoutBadgesInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
@@ -3776,6 +4039,7 @@ export type TenantUpdateWithoutBadgesInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
@@ -3816,6 +4080,7 @@ export type TenantUncheckedUpdateWithoutBadgesInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
@@ -3856,6 +4121,7 @@ export type TenantCreateWithoutPlatformPaymentsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
@@ -3896,6 +4162,7 @@ export type TenantUncheckedCreateWithoutPlatformPaymentsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
@@ -3952,6 +4219,7 @@ export type TenantUpdateWithoutPlatformPaymentsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
@@ -3992,6 +4260,7 @@ export type TenantUncheckedUpdateWithoutPlatformPaymentsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
@@ -4032,6 +4301,7 @@ export type TenantCreateWithoutAttendancesInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
@@ -4072,6 +4342,7 @@ export type TenantUncheckedCreateWithoutAttendancesInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
@@ -4128,6 +4399,7 @@ export type TenantUpdateWithoutAttendancesInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
@@ -4168,6 +4440,7 @@ export type TenantUncheckedUpdateWithoutAttendancesInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
@@ -4208,6 +4481,7 @@ export type TenantCreateWithoutAuditLogsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
@@ -4248,6 +4522,7 @@ export type TenantUncheckedCreateWithoutAuditLogsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
@@ -4304,6 +4579,7 @@ export type TenantUpdateWithoutAuditLogsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
@@ -4344,6 +4620,7 @@ export type TenantUncheckedUpdateWithoutAuditLogsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
@@ -4384,6 +4661,7 @@ export type TenantCreateWithoutStoreProductsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
@@ -4424,6 +4702,7 @@ export type TenantUncheckedCreateWithoutStoreProductsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
@@ -4480,6 +4759,7 @@ export type TenantUpdateWithoutStoreProductsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
@@ -4520,6 +4800,7 @@ export type TenantUncheckedUpdateWithoutStoreProductsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
@@ -4560,6 +4841,7 @@ export type TenantCreateWithoutLikesInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
@@ -4600,6 +4882,7 @@ export type TenantUncheckedCreateWithoutLikesInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
@@ -4656,6 +4939,7 @@ export type TenantUpdateWithoutLikesInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
@@ -4696,6 +4980,7 @@ export type TenantUncheckedUpdateWithoutLikesInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
@@ -4736,6 +5021,7 @@ export type TenantCreateWithoutCommentsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
@@ -4776,6 +5062,7 @@ export type TenantUncheckedCreateWithoutCommentsInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
@@ -4832,6 +5119,7 @@ export type TenantUpdateWithoutCommentsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
@@ -4872,6 +5160,7 @@ export type TenantUncheckedUpdateWithoutCommentsInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
@@ -4912,6 +5201,7 @@ export type TenantCreateWithoutStoreOrdersInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftCreateNestedManyWithoutTenantInput
@@ -4952,6 +5242,7 @@ export type TenantUncheckedCreateWithoutStoreOrdersInput = {
   brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedCreateNestedManyWithoutTenantInput
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
   shifts?: Prisma.ShiftUncheckedCreateNestedManyWithoutTenantInput
@@ -5008,6 +5299,7 @@ export type TenantUpdateWithoutStoreOrdersInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUpdateManyWithoutTenantNestedInput
@@ -5048,6 +5340,7 @@ export type TenantUncheckedUpdateWithoutStoreOrdersInput = {
   brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  webhookDeliveries?: Prisma.WebhookDeliveryUncheckedUpdateManyWithoutTenantNestedInput
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
   shifts?: Prisma.ShiftUncheckedUpdateManyWithoutTenantNestedInput
@@ -5078,6 +5371,7 @@ export type TenantUncheckedUpdateWithoutStoreOrdersInput = {
  */
 
 export type TenantCountOutputType = {
+  webhookDeliveries: number
   memberships: number
   subscriptions: number
   shifts: number
@@ -5103,6 +5397,7 @@ export type TenantCountOutputType = {
 }
 
 export type TenantCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  webhookDeliveries?: boolean | TenantCountOutputTypeCountWebhookDeliveriesArgs
   memberships?: boolean | TenantCountOutputTypeCountMembershipsArgs
   subscriptions?: boolean | TenantCountOutputTypeCountSubscriptionsArgs
   shifts?: boolean | TenantCountOutputTypeCountShiftsArgs
@@ -5135,6 +5430,13 @@ export type TenantCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Exten
    * Select specific fields to fetch from the TenantCountOutputType
    */
   select?: Prisma.TenantCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * TenantCountOutputType without action
+ */
+export type TenantCountOutputTypeCountWebhookDeliveriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WebhookDeliveryWhereInput
 }
 
 /**
@@ -5308,6 +5610,7 @@ export type TenantSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   brandColor?: boolean
   description?: boolean
   platformExpiresAt?: boolean
+  webhookDeliveries?: boolean | Prisma.Tenant$webhookDeliveriesArgs<ExtArgs>
   memberships?: boolean | Prisma.Tenant$membershipsArgs<ExtArgs>
   subscriptions?: boolean | Prisma.Tenant$subscriptionsArgs<ExtArgs>
   shifts?: boolean | Prisma.Tenant$shiftsArgs<ExtArgs>
@@ -5390,6 +5693,7 @@ export type TenantSelectScalar = {
 
 export type TenantOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "slug" | "email" | "phone" | "logoUrl" | "address" | "estd" | "status" | "createdAt" | "updatedAt" | "markdown" | "brandColor" | "description" | "platformExpiresAt", ExtArgs["result"]["tenant"]>
 export type TenantInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  webhookDeliveries?: boolean | Prisma.Tenant$webhookDeliveriesArgs<ExtArgs>
   memberships?: boolean | Prisma.Tenant$membershipsArgs<ExtArgs>
   subscriptions?: boolean | Prisma.Tenant$subscriptionsArgs<ExtArgs>
   shifts?: boolean | Prisma.Tenant$shiftsArgs<ExtArgs>
@@ -5421,6 +5725,7 @@ export type TenantIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
 export type $TenantPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Tenant"
   objects: {
+    webhookDeliveries: Prisma.$WebhookDeliveryPayload<ExtArgs>[]
     memberships: Prisma.$TenantMembershipPayload<ExtArgs>[]
     subscriptions: Prisma.$SubscriptionPayload<ExtArgs>[]
     shifts: Prisma.$ShiftPayload<ExtArgs>[]
@@ -5869,6 +6174,7 @@ readonly fields: TenantFieldRefs;
  */
 export interface Prisma__TenantClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  webhookDeliveries<T extends Prisma.Tenant$webhookDeliveriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$webhookDeliveriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WebhookDeliveryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   memberships<T extends Prisma.Tenant$membershipsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$membershipsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TenantMembershipPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   subscriptions<T extends Prisma.Tenant$subscriptionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$subscriptionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SubscriptionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   shifts<T extends Prisma.Tenant$shiftsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$shiftsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShiftPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -6324,6 +6630,30 @@ export type TenantDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Limit how many Tenants to delete.
    */
   limit?: number
+}
+
+/**
+ * Tenant.webhookDeliveries
+ */
+export type Tenant$webhookDeliveriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the WebhookDelivery
+   */
+  select?: Prisma.WebhookDeliverySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the WebhookDelivery
+   */
+  omit?: Prisma.WebhookDeliveryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WebhookDeliveryInclude<ExtArgs> | null
+  where?: Prisma.WebhookDeliveryWhereInput
+  orderBy?: Prisma.WebhookDeliveryOrderByWithRelationInput | Prisma.WebhookDeliveryOrderByWithRelationInput[]
+  cursor?: Prisma.WebhookDeliveryWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.WebhookDeliveryScalarFieldEnum | Prisma.WebhookDeliveryScalarFieldEnum[]
 }
 
 /**

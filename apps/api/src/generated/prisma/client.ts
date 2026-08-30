@@ -69,6 +69,15 @@ export type WebAuthnCredential = Prisma.WebAuthnCredentialModel
  */
 export type WebAuthnChallenge = Prisma.WebAuthnChallengeModel
 /**
+ * Model WebhookDelivery
+ * One webhook delivery, and what was decided about it.
+ * 
+ * A rejected or ignored delivery used to leave no trace, so "why is this
+ * payment still pending" could only be answered from Razorpay's dashboard.
+ * Deliberately small: what arrived, what happened, and why.
+ */
+export type WebhookDelivery = Prisma.WebhookDeliveryModel
+/**
  * Model IdempotencyKey
  * A write the API has already applied, remembered so a replay of the same
  * queued mutation returns the original outcome instead of doing it twice.

@@ -49,7 +49,16 @@ function writeCachedTenantMembers(tenantId: string, members: TenantMember[]) {
       }),
     );
   } catch {
-    // ignore quota issues
+    // A roster too big for the 5MB quota is the case this hits, and the write
+    // that failed leaves whatever was there before — an older, smaller, and now
+    // wrong roster that would be served as though it were current. Dropping it
+    // costs one refetch; keeping it serves stale members indefinitely.
+    try {
+      window.localStorage.removeItem(getTenantMembersCacheKey(tenantId));
+    } catch {
+      // Storage is refusing everything — a private window, or site data
+      // blocked. Nothing is cached, which is the safe state anyway.
+    }
   }
 }
 

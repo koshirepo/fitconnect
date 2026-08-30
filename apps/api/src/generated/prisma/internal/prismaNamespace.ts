@@ -400,6 +400,7 @@ export const ModelName = {
   User: 'User',
   WebAuthnCredential: 'WebAuthnCredential',
   WebAuthnChallenge: 'WebAuthnChallenge',
+  WebhookDelivery: 'WebhookDelivery',
   IdempotencyKey: 'IdempotencyKey',
   PasswordResetToken: 'PasswordResetToken',
   RefreshToken: 'RefreshToken',
@@ -454,7 +455,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "webAuthnCredential" | "webAuthnChallenge" | "idempotencyKey" | "passwordResetToken" | "refreshToken" | "tenant" | "role" | "rolePermissionOverride" | "tenantSettings" | "tenantCharge" | "tenantMembership" | "subscription" | "shift" | "todo" | "payment" | "paymentReminder" | "coupon" | "couponRedemption" | "coinLedgerEntry" | "membershipFreeze" | "product" | "productReview" | "productReviewComment" | "productReviewHelpful" | "order" | "orderItem" | "workoutPlan" | "workoutPlanAssignment" | "badge" | "platformPayment" | "attendance" | "auditLog" | "pushSubscription" | "storeProduct" | "tenantLike" | "tenantComment" | "storeProductLike" | "storeProductComment" | "storeVariant" | "storeOrder" | "storeOrderItem"
+    modelProps: "user" | "webAuthnCredential" | "webAuthnChallenge" | "webhookDelivery" | "idempotencyKey" | "passwordResetToken" | "refreshToken" | "tenant" | "role" | "rolePermissionOverride" | "tenantSettings" | "tenantCharge" | "tenantMembership" | "subscription" | "shift" | "todo" | "payment" | "paymentReminder" | "coupon" | "couponRedemption" | "coinLedgerEntry" | "membershipFreeze" | "product" | "productReview" | "productReviewComment" | "productReviewHelpful" | "order" | "orderItem" | "workoutPlan" | "workoutPlanAssignment" | "badge" | "platformPayment" | "attendance" | "auditLog" | "pushSubscription" | "storeProduct" | "tenantLike" | "tenantComment" | "storeProductLike" | "storeProductComment" | "storeVariant" | "storeOrder" | "storeOrderItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -677,6 +678,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.WebAuthnChallengeCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.WebAuthnChallengeCountAggregateOutputType> | number
+        }
+      }
+    }
+    WebhookDelivery: {
+      payload: Prisma.$WebhookDeliveryPayload<ExtArgs>
+      fields: Prisma.WebhookDeliveryFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WebhookDeliveryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookDeliveryPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WebhookDeliveryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookDeliveryPayload>
+        }
+        findFirst: {
+          args: Prisma.WebhookDeliveryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookDeliveryPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WebhookDeliveryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookDeliveryPayload>
+        }
+        findMany: {
+          args: Prisma.WebhookDeliveryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookDeliveryPayload>[]
+        }
+        create: {
+          args: Prisma.WebhookDeliveryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookDeliveryPayload>
+        }
+        createMany: {
+          args: Prisma.WebhookDeliveryCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WebhookDeliveryCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookDeliveryPayload>[]
+        }
+        delete: {
+          args: Prisma.WebhookDeliveryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookDeliveryPayload>
+        }
+        update: {
+          args: Prisma.WebhookDeliveryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookDeliveryPayload>
+        }
+        deleteMany: {
+          args: Prisma.WebhookDeliveryDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WebhookDeliveryUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WebhookDeliveryUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookDeliveryPayload>[]
+        }
+        upsert: {
+          args: Prisma.WebhookDeliveryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookDeliveryPayload>
+        }
+        aggregate: {
+          args: Prisma.WebhookDeliveryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWebhookDelivery>
+        }
+        groupBy: {
+          args: Prisma.WebhookDeliveryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WebhookDeliveryGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WebhookDeliveryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WebhookDeliveryCountAggregateOutputType> | number
         }
       }
     }
@@ -3648,6 +3723,21 @@ export const WebAuthnChallengeScalarFieldEnum = {
 export type WebAuthnChallengeScalarFieldEnum = (typeof WebAuthnChallengeScalarFieldEnum)[keyof typeof WebAuthnChallengeScalarFieldEnum]
 
 
+export const WebhookDeliveryScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  event: 'event',
+  gatewayOrderId: 'gatewayOrderId',
+  gatewayPaymentId: 'gatewayPaymentId',
+  outcome: 'outcome',
+  detail: 'detail',
+  status: 'status',
+  createdAt: 'createdAt'
+} as const
+
+export type WebhookDeliveryScalarFieldEnum = (typeof WebhookDeliveryScalarFieldEnum)[keyof typeof WebhookDeliveryScalarFieldEnum]
+
+
 export const IdempotencyKeyScalarFieldEnum = {
   key: 'key',
   userId: 'userId',
@@ -3745,9 +3835,11 @@ export const TenantSettingsScalarFieldEnum = {
   whatsappTemplates: 'whatsappTemplates',
   referralRewardCoins: 'referralRewardCoins',
   referralRefereeCoins: 'referralRefereeCoins',
+  coinExpiryDays: 'coinExpiryDays',
   razorpayKeyId: 'razorpayKeyId',
   razorpayKeySecret: 'razorpayKeySecret',
   razorpayWebhookSecret: 'razorpayWebhookSecret',
+  razorpayWebhookId: 'razorpayWebhookId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -4524,6 +4616,7 @@ export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   webAuthnCredential?: Prisma.WebAuthnCredentialOmit
   webAuthnChallenge?: Prisma.WebAuthnChallengeOmit
+  webhookDelivery?: Prisma.WebhookDeliveryOmit
   idempotencyKey?: Prisma.IdempotencyKeyOmit
   passwordResetToken?: Prisma.PasswordResetTokenOmit
   refreshToken?: Prisma.RefreshTokenOmit

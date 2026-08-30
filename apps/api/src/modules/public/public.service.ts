@@ -154,6 +154,31 @@ export const publicService = {
     return storeGuestService.place(tenant.id, input);
   },
 
+  /** Pay for a basket now, without an account. */
+  async startGuestCheckoutByHost(host: string, input: GuestOrderInput) {
+    const slug = normalizeTenantHost(host);
+    if (!slug) return { error: "Tenant host is invalid.", status: 404 as const };
+
+    const tenant = await publicRepository.findTenantBySlug(slug);
+    if (!tenant) return { error: "Tenant not found.", status: 404 as const };
+
+    return storeGuestService.startCheckout(tenant.id, input);
+  },
+
+  /** Settle it against the signature the checkout widget handed back. */
+  async verifyGuestCheckoutByHost(
+    host: string,
+    input: { orderId: string; paymentId: string; signature: string },
+  ) {
+    const slug = normalizeTenantHost(host);
+    if (!slug) return { error: "Tenant host is invalid.", status: 404 as const };
+
+    const tenant = await publicRepository.findTenantBySlug(slug);
+    if (!tenant) return { error: "Tenant not found.", status: 404 as const };
+
+    return storeGuestService.verifyCheckout(tenant.id, input);
+  },
+
   /** Checking on a reservation: the reference the desk gave, plus the phone. */
   async lookupGuestOrderByHost(host: string, input: GuestOrderLookupInput) {
     const slug = normalizeTenantHost(host);

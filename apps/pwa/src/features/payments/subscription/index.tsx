@@ -245,16 +245,20 @@ export default function SubscriptionsPage() {
       {/* What this member has to spend, said plainly and on the screen the
           referral notification sends them to. The balance used to live only on
           the profile page, which is not where anybody renews. */}
-      {!isAdmin && coinBalance > 0 && (
+      {/* Shown at zero too. A card that appears only once somebody already
+          has coins never tells anybody the scheme exists, and "where are my
+          coins" is then a question with no answer on screen. */}
+      {!isAdmin && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Coins className="h-5 w-5" />
-              {coinBalance} coins
+              {coinBalance} coin{coinBalance === 1 ? "" : "s"}
             </CardTitle>
             <CardDescription>
-              Worth {formatCurrency(coinBalance)} off any plan below. Choose one and
-              you can put them against it.
+              {coinBalance > 0
+                ? `Worth ${formatCurrency(coinBalance)} off any plan below — choose one and you can put them against it. They also spend in the gym store.`
+                : "Coins come off the price of a renewal, one rupee each. You earn them by bringing a friend in, from the gym's own offers, and on some things in the store."}
             </CardDescription>
           </CardHeader>
 

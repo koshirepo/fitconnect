@@ -191,3 +191,55 @@ export async function verifyWebhookSignature(
   const expected = await hmacSha256Hex(webhookSecret, rawBody);
   return timingSafeEqual(expected, signature.toLowerCase());
 }
+
+// ─── Webhooks ─────────────────────────────────────────────────────────────────
+
+export type RazorpayWebhook = {
+  id: string;
+  url: string;
+  active: boolean;
+  events: Record<string, boolean> | string[];
+};
+
+/** The three this app acts on. Anything else is noise and retry traffic. */
+export const WEBHOOK_EVENTS = ["payment.captured", "order.paid", "payment.failed"];
+
+/**
+ * Register a webhook for one gym, or update the one already registered.
+ *
+ * The delivery url carries a tenant id, so a gym needs its own webhook rather
+ * than sharing one. Doing that by hand does not scale and does not get done —
+ * a gym that is missed has members whose payments sit pending whenever a
+ * browser closes mid-payment.
+ *
+ * `webhookId` is what makes this idempotent: with it the existing webhook is
+ * updated, without it a new one is created. Registering twice without it would
+ * leave two webhooks delivering the same event.
+ */
+export async function upsertWebhook(
+  credentials: RazorpayCredentials,
+  input: { url: string; secret: string; webhookId?: string | null },
+) {
+  const body = JSON.stringify({
+    url: input.url,
+    secret: input.secret,
+    events: WEBHOOK_EVENTS,
+    active: true,
+  });
+
+  return request<RazorpayWebhook>(
+    credentials,
+    input.webhookId ? `/webhooks/${encodeURIComponent(input.webhookId)}` : "/webhooks",
+    // Razorpay takes a PATCH to change one and a POST to create one.
+    { method: input.webhookId ? "PATCH" : "POST", body },
+  );
+}
+
+/** What this account already has registered, for reconciling by url. */
+export async function listWebhooks(credentials: RazorpayCredentials) {
+  const response = await request<{ items?: RazorpayWebhook[] }>(
+    credentials,
+    "/webhooks",
+  );
+  return response.items ?? [];
+}

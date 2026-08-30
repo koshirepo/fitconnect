@@ -12,7 +12,11 @@ import { useLocation, type Location } from "react-router-dom";
 
 /** Chromium-only today, so it is read defensively rather than typed as present. */
 type DocumentWithViewTransition = Document & {
-  startViewTransition?: (callback: () => void) => { finished: Promise<void> };
+  startViewTransition?: (callback: () => void) => {
+    finished: Promise<void>;
+    ready: Promise<void>;
+    updateCallbackDone: Promise<void>;
+  };
 };
 
 /**
@@ -54,9 +58,20 @@ export function useViewTransitionLocation(): Location {
     // `flushSync` is what makes this work: the callback must have finished
     // painting the new page before it returns, and React would otherwise batch
     // the update to after the transition had already given up waiting.
-    (document as DocumentWithViewTransition).startViewTransition!(() => {
-      flushSync(() => setRendered(location));
-    });
+    const transition = (document as DocumentWithViewTransition).startViewTransition!(
+      () => {
+        flushSync(() => setRendered(location));
+      },
+    );
+
+    // A transition that is skipped — a second navigation arriving before the
+    // first has finished, or the tab being hidden mid-animation — rejects
+    // these. Nothing is wrong when it happens: the page has already been
+    // swapped by the callback above, and only the animation was dropped. Left
+    // unhandled it surfaces as `InvalidStateError: Transition was aborted`
+    // in the console on ordinary fast navigation.
+    transition.ready.catch(() => {});
+    transition.finished.catch(() => {});
   }, [location, rendered]);
 
   return rendered;

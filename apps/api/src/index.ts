@@ -94,6 +94,15 @@ export default {
       }
 
       if (controller.cron === DAILY_TENANT_REPORT_CRON) {
+        // Coins first. Expiring them before the day's reporting means the
+        // outstanding-coin figure a gym reads is the one after the sweep, not a
+        // number that is already a day stale.
+        const { coinAdminService } = await import("./modules/coupons/coupons.service");
+        const expiry = await coinAdminService.expireStale();
+        if (expiry.data.expiredCoins > 0) {
+          console.info("[scheduled-coin-expiry]", expiry.data);
+        }
+
         const result = await reportService.runScheduledTenantReports((promise) =>
           ctx.waitUntil(promise),
         );

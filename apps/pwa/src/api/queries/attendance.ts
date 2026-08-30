@@ -132,6 +132,15 @@ export function useSelfCheckIn() {
   );
 }
 
+/** Checking somebody in from a scanned card. */
+export function useScanCheckIn() {
+  const tenantId = useCurrentTenantId();
+  return useTenantMutation(
+    async (id, code: string) => unwrap(await attendanceApi.scan(id, code)),
+    { invalidates: [["attendance", tenantId ?? "none"]] },
+  );
+}
+
 export function useMarkAttendance() {
   const tenantId = useCurrentTenantId();
   return useTenantMutation(

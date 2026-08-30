@@ -157,9 +157,19 @@ export const badgeRepository = {
    * Run the `list member badges` persistence operation for the badges module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
-  listMemberBadges(membershipId: string) {
+  /**
+   * The badges one member holds, in one gym.
+   *
+   * The tenant is part of the question, not an assumption: a membership id
+   * from another gym would otherwise answer, and a caller who can guess an
+   * id could read across gyms.
+   */
+  listMemberBadges(tenantId: string, membershipId: string) {
     return prisma.badge.findMany({
-      where: { users: { some: { id: membershipId } } },
+      where: {
+        tenantId,
+        users: { some: { id: membershipId, tenantId } },
+      },
       orderBy: { createdAt: "desc" },
       select: { id: true, name: true, description: true, color: true, icon: true },
     });

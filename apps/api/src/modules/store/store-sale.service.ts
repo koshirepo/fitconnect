@@ -9,7 +9,7 @@
  */
 import { priceBasket, validateBasket, type BasketLine } from "@fitconnect/shared/store-pricing";
 import { prisma } from "../../lib/prisma";
-import { createOrder, verifyCheckoutSignature } from "../../lib/razorpay";
+import { createOrder, verifyCheckoutSignature, RazorpayError } from "../../lib/razorpay";
 import { storeRepository } from "./store.repository";
 import { couponService, findCoupon } from "../coupons/coupons.service";
 import { gatewayService } from "../payments/gateway.service";
@@ -946,6 +946,196 @@ export const storeGuestService = {
       return { error: "That reservation was not found, or is already closed.", status: 404 as const };
     }
 
+    return { data: { orderId, cancelled: true } };
+  },
+
+  /**
+   * Pay for a basket now, without an account.
+   *
+   * The counterpart of `place`: that one holds goods for collection and
+   * takes the money at the counter, this one takes it up front. Stock is
+   * therefore claimed here, as it is for a member paying online — somebody
+   * who has paid has bought the thing, and it must not sell from under them.
+   *
+   * The gateway trail lives on the order rather than a payment row, because
+   * a guest has no membership for one to hang off.
+   */
+  async startCheckout(
+    tenantId: string,
+    input: {
+      items: { variantId: string; quantity: number }[];
+      buyerName: string;
+      buyerPhone: string;
+      buyerEmail?: string;
+      note?: string;
+    },
+  ) {
+    const priced = await storeGuestService.quote(tenantId, input.items);
+    if ("error" in priced) return priced;
+
+    const credentials = await gatewayService.resolveCredentials(tenantId);
+    if (!credentials) {
+      return {
+        error: "This gym is not taking card payments yet. Reserve it instead and pay at the counter.",
+        status: 409 as const,
+      };
+    }
+
+    const claim = await claimStock(priced.lines);
+    if ("error" in claim) return claim;
+
+    try {
+      const order = await prisma.storeOrder.create({
+        data: {
+          tenantId,
+          membershipId: null,
+          soldById: null,
+          buyerName: input.buyerName,
+          buyerPhone: input.buyerPhone,
+          ...(input.buyerEmail ? { buyerEmail: input.buyerEmail } : {}),
+          status: "PENDING",
+          channel: "ONLINE",
+          subtotalAmount: priced.priced.subtotal,
+          discountAmount: 0,
+          coinsRedeemed: 0,
+          totalAmount: priced.priced.total,
+          coinsEarned: 0,
+          gateway: "RAZORPAY",
+          ...(input.note ? { note: input.note } : {}),
+          items: {
+            create: priced.lines.map((line) => ({
+              variantId: line.variantId,
+              productName: line.productName,
+              variantName: line.variantName,
+              attributes: line.attributes as object,
+              quantity: line.quantity,
+              unitPrice: line.unitPrice,
+              lineTotal: line.unitPrice * line.quantity,
+            })),
+          },
+        },
+        select: { id: true },
+      });
+
+      const gatewayOrder = await createOrder(credentials, {
+        amount: priced.priced.total,
+        receipt: order.id,
+        notes: { tenantId, kind: "store guest" },
+      });
+
+      await prisma.storeOrder.update({
+        where: { id: order.id },
+        data: { gatewayOrderId: gatewayOrder.id },
+      });
+
+      return {
+        data: {
+          orderId: order.id,
+          reference: order.id.slice(-6).toUpperCase(),
+          total: priced.priced.total,
+          checkout: {
+            orderId: gatewayOrder.id,
+            keyId: credentials.keyId,
+            amount: priced.priced.total,
+            currency: "INR",
+          },
+        },
+      };
+    } catch (error) {
+      // Nothing was sold, so the stock goes back rather than sitting held
+      // against an order nobody can pay for.
+      await releaseStock(claim.claimed);
+      if (error instanceof RazorpayError) {
+        return {
+          error: `Could not start the payment: ${error.message}`,
+          status: 502 as const,
+        };
+      }
+      throw error;
+    }
+  },
+
+  /**
+   * Settle a guest purchase against what Razorpay signed.
+   *
+   * Idempotent through a conditional status update, so a browser returning
+   * at the same moment as the webhook cannot complete the same order twice.
+   */
+  async verifyCheckout(
+    tenantId: string,
+    input: { orderId: string; paymentId: string; signature: string },
+  ) {
+    const credentials = await gatewayService.resolveCredentials(tenantId);
+    if (!credentials) {
+      return { error: "This gym is not taking card payments.", status: 409 as const };
+    }
+
+    const valid = await verifyCheckoutSignature(credentials.keySecret, input);
+    if (!valid) {
+      return { error: "That payment could not be verified.", status: 400 as const };
+    }
+
+    return storeGuestService.settleByGatewayOrder(
+      tenantId,
+      input.orderId,
+      input.paymentId,
+    );
+  },
+
+  /**
+   * Complete a guest order from its Razorpay order id.
+   *
+   * Shared by the browser returning and the webhook arriving, so the two
+   * cannot settle an order differently — and whichever gets here second
+   * finds nothing left to do.
+   */
+  async settleByGatewayOrder(
+    tenantId: string,
+    gatewayOrderId: string,
+    gatewayPaymentId: string,
+  ) {
+    const order = await prisma.storeOrder.findFirst({
+      where: { tenantId, gatewayOrderId, membershipId: null },
+      select: { id: true, status: true },
+    });
+    if (!order) {
+      return { error: "That order was not found.", status: 404 as const };
+    }
+
+    const settled = await prisma.storeOrder.updateMany({
+      where: { id: order.id, status: "PENDING" },
+      data: { status: "COMPLETED", gatewayPaymentId },
+    });
+
+    return {
+      data: {
+        orderId: order.id,
+        reference: order.id.slice(-6).toUpperCase(),
+        alreadySettled: settled.count === 0,
+      },
+    };
+  },
+
+  /**
+   * Give up on a guest order that was paid for online and never settled.
+   *
+   * Unlike a reservation, an online guest order *did* claim stock when it
+   * opened, so failing it has to put that stock back.
+   */
+  async cancelOnlineGuestOrder(tenantId: string, orderId: string) {
+    const order = await prisma.storeOrder.findFirst({
+      where: { id: orderId, tenantId, status: "PENDING", channel: "ONLINE" },
+      select: { id: true, items: { select: { variantId: true, quantity: true } } },
+    });
+    if (!order) return { data: { orderId, cancelled: false } };
+
+    const cancelled = await prisma.storeOrder.updateMany({
+      where: { id: order.id, status: "PENDING" },
+      data: { status: "CANCELLED" },
+    });
+    if (cancelled.count === 0) return { data: { orderId, cancelled: false } };
+
+    await releaseStock(order.items);
     return { data: { orderId, cancelled: true } };
   },
 

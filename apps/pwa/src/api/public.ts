@@ -93,6 +93,42 @@ export const publicApi = {
       }>
     >("/public/store/orders", payload, { params: { host } }),
 
+  /** Pay for a basket now, without an account. */
+  startGuestCheckout: (
+    payload: {
+      items: { variantId: string; quantity: number }[];
+      buyerName: string;
+      buyerPhone: string;
+      buyerEmail?: string;
+      note?: string;
+    },
+    host = currentHost(),
+  ) =>
+    api.post<
+      ApiResponse<{
+        orderId: string;
+        reference: string;
+        total: number;
+        checkout: {
+          orderId: string;
+          keyId: string;
+          amount: number;
+          currency: string;
+        };
+      }>
+    >("/public/store/checkout", payload, { params: { host } }),
+
+  /** Settle it with what the checkout widget handed back. */
+  verifyGuestCheckout: (
+    payload: { orderId: string; paymentId: string; signature: string },
+    host = currentHost(),
+  ) =>
+    api.post<ApiResponse<{ orderId: string; reference: string; alreadySettled: boolean }>>(
+      "/public/store/checkout/verify",
+      payload,
+      { params: { host } },
+    ),
+
   /** Checking on a reservation with the reference and the phone number. */
   lookupGuestOrder: (
     payload: { orderId: string; buyerPhone: string },

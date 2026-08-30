@@ -4,6 +4,7 @@ import { useMyProfile, useUpdateMyProfile } from "@/api/queries/members";
 import { uploadsApi } from "@/api/uploads";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
+import { useAppNavigate } from "@/lib/use-app-navigate";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import AvatarCard from "@/components/ui/avatarCard";
@@ -35,6 +36,7 @@ export default function ProfilePage() {
 
   const coinsQuery = useCoinBalance(profile?.id);
   const coinBalance = coinsQuery.data?.balance ?? 0;
+  const navigate = useAppNavigate();
   const loading = profileQuery.isPending;
 
   // Both saves invalidate the members key, which this profile query lives under,
@@ -186,20 +188,33 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
-        {coinBalance > 0 && (
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle>Your Coins</CardTitle>
-              <CardDescription>Spend them on your next renewal</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{coinBalance}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Worth {formatCurrency(coinBalance)} off a subscription.
-              </p>
-            </CardContent>
-          </Card>
-        )}
+        {/* Shown at zero as well. Hiding the card until somebody already has
+            coins meant the only people told the scheme exists were the ones
+            who had already worked it out. */}
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle>Your Coins</CardTitle>
+            <CardDescription>
+              {coinBalance > 0 ? "Spend them on your next renewal" : "How they work"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{coinBalance}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {coinBalance > 0
+                ? `Worth ${formatCurrency(coinBalance)} off a subscription, or off anything in the store.`
+                : "One coin is one rupee off a renewal. Bring a friend in, use one of the gym's offers, or buy something in the store that earns them."}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              onClick={() => navigate("/subscriptions")}
+            >
+              {coinBalance > 0 ? "Spend them on a plan" : "See the plans"}
+            </Button>
+          </CardContent>
+        </Card>
 
         {profile.id && <FreezeCard membershipId={profile.id} />}
 

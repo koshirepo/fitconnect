@@ -32,6 +32,14 @@ publicRoutes.get("/store/products/:productId", publicController.getTenantStorePr
  */
 publicRoutes.post("/store/orders", rateLimitSignup, publicController.placeGuestOrder);
 publicRoutes.post("/store/orders/lookup", rateLimitSignup, publicController.lookupGuestOrder);
+/**
+ * Paying for a basket now, without an account.
+ *
+ * Prices come from the database and the settlement is only accepted against
+ * a Razorpay signature, so nothing here trusts the caller with a number.
+ */
+publicRoutes.post("/store/checkout", rateLimitSignup, publicController.startGuestCheckout);
+publicRoutes.post("/store/checkout/verify", publicController.verifyGuestCheckout);
 /** Likes and comments on the gym itself. Reading is open; writing needs an account. */
 publicRoutes.get("/social", publicController.getTenantSocial);
 publicRoutes.get("/gyms", publicController.listGyms);

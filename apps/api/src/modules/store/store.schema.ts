@@ -185,6 +185,15 @@ export const storeReserveSchema = guestOrderSchema.pick({ items: true, note: tru
 
 export type StoreReserveInput = z.infer<typeof storeReserveSchema>;
 
+/** Settling a guest purchase against what Razorpay signed. */
+export const guestCheckoutVerifySchema = z.object({
+  orderId: z.string().min(1),
+  paymentId: z.string().min(1),
+  signature: z.string().min(1).max(200),
+});
+
+export type GuestCheckoutVerifyInput = z.infer<typeof guestCheckoutVerifySchema>;
+
 /** Coming back to check on a reservation: the reference plus the phone. */
 export const guestOrderLookupSchema = z.object({
   orderId: z.string().min(1),

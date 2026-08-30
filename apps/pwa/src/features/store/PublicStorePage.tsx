@@ -131,6 +131,12 @@ export default function PublicStorePage() {
   const [buyerEmail, setBuyerEmail] = React.useState("");
   const [placing, setPlacing] = React.useState(false);
   const [reference, setReference] = React.useState<string | null>(null);
+  // Whether that reference is a receipt or a promise to pay. The wording
+  // afterwards is the only thing telling somebody whether they still owe money.
+  const [paid, setPaid] = React.useState(false);
+
+  const guestDetailsValid =
+    buyerName.trim().length >= 2 && buyerPhone.trim().length >= 10;
 
   React.useEffect(() => {
     let active = true;
@@ -370,6 +376,67 @@ export default function PublicStorePage() {
     }
   };
 
+  /**
+   * The visitor path, paid now.
+   *
+   * Stock is claimed when the window opens, exactly as it is for a member:
+   * somebody who has paid has bought the thing, and it must not sell from
+   * under them while they type a card number.
+   */
+  const payAsGuest = async () => {
+    if (!guestDetailsValid) {
+      toast.error("A name and a phone number are needed for the receipt.");
+      return;
+    }
+
+    setPlacing(true);
+    try {
+      const res = await publicApi.startGuestCheckout({
+        items,
+        buyerName: buyerName.trim(),
+        buyerPhone: buyerPhone.trim(),
+        ...(buyerEmail.trim() ? { buyerEmail: buyerEmail.trim() } : {}),
+      });
+      const { checkout, reference: ref } = res.data.data;
+
+      const result = await openRazorpayCheckout({
+        keyId: checkout.keyId,
+        orderId: checkout.orderId,
+        amount: checkout.amount,
+        currency: checkout.currency,
+        name: storeTitle || gymName,
+        description: `${basket.length} item${basket.length === 1 ? "" : "s"}`,
+        prefill: { name: buyerName.trim(), contact: buyerPhone.trim() },
+      });
+
+      if (result.status !== "paid") {
+        toast.error(
+          result.status === "failed"
+            ? `${result.message} Nothing was charged.`
+            : "Payment cancelled. Nothing was charged.",
+        );
+        return;
+      }
+
+      await publicApi.verifyGuestCheckout({
+        orderId: result.orderId,
+        paymentId: result.paymentId,
+        signature: result.signature,
+      });
+
+      haptics.payment();
+      setReference(ref);
+      setPaid(true);
+      clearBasket();
+      setBasketOpen(false);
+      toast.success("Paid. Collect it from the counter.");
+    } catch (caught) {
+      toast.error(getApiError(caught));
+    } finally {
+      setPlacing(false);
+    }
+  };
+
   /** The visitor path: reserve now, pay at the counter on collection. */
   const reserveAsGuest = async () => {
     if (buyerName.trim().length < 2 || buyerPhone.trim().length < 10) {
@@ -387,6 +454,7 @@ export default function PublicStorePage() {
       });
 
       setReference(res.data.data.reference);
+      setPaid(false);
       clearBasket();
       toast.success("Reserved. Pay when you collect it.");
     } catch (caught) {
@@ -504,11 +572,13 @@ export default function PublicStorePage() {
         {reference && (
           <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4">
             <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-              Reserved — quote {reference} at {storeTitle || "the counter"}
+              {paid ? "Paid" : "Reserved"} — quote {reference} at{" "}
+              {storeTitle || "the counter"}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Nothing has been charged yet. Pay when you collect it, and bring the phone
-              number you gave so the desk can find the order.
+              {paid
+                ? "Your order is paid for and waiting. Bring the reference, or the phone number you gave, and the desk will hand it over."
+                : "Nothing has been charged yet. Pay when you collect it, and bring the phone number you gave so the desk can find the order."}
             </p>
           </div>
         )}
@@ -738,8 +808,8 @@ export default function PublicStorePage() {
                 <div className="space-y-3 rounded-lg border border-dashed border-border p-3">
                   {!keyboard.open && (
                     <p className="text-xs text-muted-foreground">
-                      Collection only — the gym holds it at the counter and you pay when
-                      you pick it up.
+                      Everything is collected from the gym. Pay now or at the counter —
+                      either way we need a name and number to hand it to.
                     </p>
                   )}
                   <div className="space-y-1.5">
@@ -806,9 +876,31 @@ export default function PublicStorePage() {
                     )}
                   </div>
                 ) : (
-                  <Button className="w-full" disabled={placing} onClick={reserveAsGuest}>
-                    {placing ? "Working…" : "Reserve for collection"}
-                  </Button>
+                  <div className="space-y-2">
+                    <Button
+                      className="w-full"
+                      disabled={placing || !guestDetailsValid}
+                      onClick={payAsGuest}
+                    >
+                      {placing ? "Working…" : "Pay online now"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      disabled={placing || !guestDetailsValid}
+                      onClick={reserveAsGuest}
+                    >
+                      <Store className="h-4 w-4" />
+                      Reserve and pay at the store
+                    </Button>
+                    {!keyboard.open && (
+                      <p className="text-center text-xs text-muted-foreground">
+                        {guestDetailsValid
+                          ? "Reserving holds nothing back until a coach hands it over, so anything low on stock is safer bought now."
+                          : "Add your name and phone number above to continue."}
+                      </p>
+                    )}
+                  </div>
                 )}
               </footer>
             )}

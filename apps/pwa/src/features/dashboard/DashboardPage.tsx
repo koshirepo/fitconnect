@@ -2,7 +2,7 @@ import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useMembers, useMyProfile } from "@/api/queries/members";
-import { useMyPayments, usePayments } from "@/api/queries/payments";
+import { useMyPayments, usePayments, usePaymentAnalytics } from "@/api/queries/payments";
 import { useWorkoutPlans } from "@/api/queries/catalog";
 import {
   useAdminOrders,
@@ -128,6 +128,12 @@ export default function DashboardPage() {
     enabled: isTenantDashboard && !canViewAllPayments,
   });
   // A one-row page: only the total matters for the member-count tile.
+  // The finance tile sat empty beside three that showed a figure, which
+  // reads as a card that failed to load rather than one with nothing to
+  // say. This is the number a gym owner opens the dashboard for.
+  const analyticsQuery = usePaymentAnalytics({ enabled: canViewFinance });
+  const monthRevenue = analyticsQuery.data?.analytics?.month?.totalRevenue ?? null;
+
   const memberCountQuery = useMembers(
     { page: 1, limit: 1 },
     { enabled: isTenantDashboard && canViewGymMembers },
@@ -452,9 +458,15 @@ export default function DashboardPage() {
         {canViewFinance && (
           <Card className="cursor-pointer" onClick={() => navigate("/finance")}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Finance Analytics</CardTitle>
+              <CardTitle className="text-sm font-medium">This Month</CardTitle>
               <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {monthRevenue === null ? "—" : formatCurrency(monthRevenue)}
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">Collected so far</p>
+            </CardContent>
           </Card>
         )}
       </div>

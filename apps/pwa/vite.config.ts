@@ -25,7 +25,20 @@ export default defineConfig(({ mode }) => {
     }),
     tailwindcss(),
     VitePWA({
-      registerType: "autoUpdate",
+      /**
+       * The app updates itself, but not at a moment of its own choosing.
+       *
+       * "autoUpdate" hands that decision to the browser: the new worker takes
+       * over the instant it downloads, which on this app can mean the page
+       * swapping under somebody halfway through recording a payment. It also
+       * means `onNeedRefresh` never fires, which is why the update prompt in
+       * this codebase had never once appeared.
+       *
+       * "prompt" does not mean the user is asked — it means *we* decide when.
+       * `register-sw.ts` applies the update on its own as soon as the app is
+       * not being used, so it is still automatic from the outside.
+       */
+      registerType: "prompt",
       includeAssets: ["icons/icon.svg", "icons/*.png"],
       workbox: {
         // A generated service worker has no push handling of its own; this
@@ -82,7 +95,9 @@ export default defineConfig(({ mode }) => {
         navigateFallback: "/index.html",
         navigateFallbackAllowlist: navigationAllowlist,
         cleanupOutdatedCaches: true,
-        skipWaiting: true,
+        // Deliberately absent: `skipWaiting` would let a new worker seize
+        // control mid-session. The waiting worker is told to take over by
+        // `register-sw.ts`, at a moment it has chosen.
         clientsClaim: true,
       },
       manifest: {

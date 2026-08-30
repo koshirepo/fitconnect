@@ -11,6 +11,7 @@
 export type * from './models/User'
 export type * from './models/WebAuthnCredential'
 export type * from './models/WebAuthnChallenge'
+export type * from './models/WebhookDelivery'
 export type * from './models/IdempotencyKey'
 export type * from './models/PasswordResetToken'
 export type * from './models/RefreshToken'

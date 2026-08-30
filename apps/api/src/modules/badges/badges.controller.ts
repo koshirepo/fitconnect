@@ -10,7 +10,18 @@ import { badgeService } from "./badges.service";
 import { auditLog } from "../../lib/audit";
 import { parseBody } from "../../lib/http";
 import { parsePagination } from "../../lib/pagination";
-import { ok, okMessage, okPaginated, conflict, notFound, badRequest } from "../../lib/response";
+import {
+  ok,
+  okMessage,
+  okPaginated,
+  conflict,
+  notFound,
+  badRequest,
+  forbidden,
+} from "../../lib/response";
+import { prisma } from "../../lib/prisma";
+import { can } from "../../lib/permissions";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { createBadgeSchema, updateBadgeSchema, assignBadgeSchema } from "./badges.schema";
 import type { AppBindings } from "../../types/app-context";
 
@@ -196,9 +207,24 @@ export const badgeController = {
    * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
    */
   async memberBadges(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
     const membershipId = c.req.param("membershipId")!;
 
-    const result = await badgeService.listMemberBadges(membershipId);
+    // `BADGES_READ` is held by every member, so on its own it let anybody
+    // read anybody else's badges by editing the id in the url — and the
+    // query underneath was not scoped to a gym either, so the id did not
+    // even have to belong to this one. Staff who award badges keep the
+    // gym-wide view; everyone else sees only their own.
+    if (!can(c, Permission.BADGES_ASSIGN)) {
+      const user = c.get("authUser");
+      const own = await prisma.tenantMembership.findFirst({
+        where: { id: membershipId, tenantId, userId: user.id },
+        select: { id: true },
+      });
+      if (!own) return forbidden(c, "You can only see your own badges.");
+    }
+
+    const result = await badgeService.listMemberBadges(tenantId, membershipId);
     return ok(c, result.data);
   },
 };

@@ -250,6 +250,24 @@ export default function IdCardPage() {
         className="w-full rounded-2xl border shadow-lg"
       />
 
+      {/* The code the desk scans.
+          Kept out of the card SVG on purpose: that image is rendered to PNG
+          through a canvas for the download, and an image loaded from another
+          origin would taint the canvas and break it. On the page it does the
+          job anyway — a member holds up their phone, the desk reads it. */}
+      <div className="flex w-full flex-col items-center gap-3 rounded-2xl border bg-card p-5">
+        <p className="text-sm font-medium">Show this at the desk</p>
+        <img
+          src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&data=${encodeURIComponent(window.location.href)}`}
+          alt="Your check-in code"
+          className="h-44 w-44 rounded-lg bg-white p-2"
+        />
+        <p className="text-center text-xs text-muted-foreground">
+          A coach scans this to mark you present. Keep it to yourself — it is
+          your card.
+        </p>
+      </div>
+
       <div className="flex w-full flex-col gap-2">
         <Button onClick={handleDownload} disabled={downloading} className="w-full">
           <Download className="mr-2 h-4 w-4" />

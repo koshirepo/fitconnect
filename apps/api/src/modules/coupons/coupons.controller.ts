@@ -7,11 +7,19 @@
  */
 import type { Context } from "hono";
 import { couponRepository } from "./coupons.repository";
-import { couponService } from "./coupons.service";
-import { createCouponSchema, quoteSchema, updateCouponSchema } from "./coupons.schema";
+import { coinAdminService, couponService } from "./coupons.service";
+import {
+  coinAdjustSchema,
+  createCouponSchema,
+  quoteSchema,
+  updateCouponSchema,
+} from "./coupons.schema";
 import { auditLog } from "../../lib/audit";
 import { parseBody } from "../../lib/http";
-import { badRequest, conflict, notFound, ok } from "../../lib/response";
+import { badRequest, conflict, forbidden, notFound, ok } from "../../lib/response";
+import { prisma } from "../../lib/prisma";
+import { Permission } from "@fitconnect/shared/types/permissions";
+import { can } from "../../lib/permissions";
 import type { AppBindings } from "../../types/app-context";
 
 type AppContext = Context<AppBindings>;
@@ -160,9 +168,62 @@ export const couponController = {
   },
 
   /** A member's coin balance and recent history. */
+  /**
+   * Give coins, or take them back.
+   *
+   * The one movement the ledger documented and nothing ever wrote — which
+   * is why a negative balance from a reversal could never be forgiven.
+   */
+  async adjustCoins(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    const membershipId = c.req.param("membershipId")!;
+
+    const parsed = await parseBody(c, coinAdjustSchema);
+    if (!parsed.ok) return parsed.response;
+
+    const user = c.get("authUser");
+    const result = await coinAdminService.adjust({
+      tenantId,
+      membershipId,
+      amount: parsed.data.amount,
+      note: parsed.data.note,
+      actorUserId: user.id,
+    });
+
+    if ("error" in result) {
+      return result.status === 404
+        ? notFound(c, result.error!)
+        : badRequest(c, result.error!);
+    }
+
+    await auditLog({
+      action: "UPDATE",
+      entity: "CoinLedgerEntry",
+      entityId: membershipId,
+      actorId: user.id,
+      tenantId,
+      metadata: { amount: parsed.data.amount, note: parsed.data.note },
+    });
+
+    return ok(c, result.data);
+  },
+
   async coins(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const membershipId = c.req.param("membershipId")!;
+
+    // `COUPONS_READ` is held by every member, so on its own it let anybody
+    // read anybody else's balance and their whole earning history by
+    // editing the id in the url. Staff who manage coupons keep the gym-wide
+    // view; everyone else may read only their own.
+    if (!can(c, Permission.COUPONS_CREATE)) {
+      const user = c.get("authUser");
+      const own = await prisma.tenantMembership.findFirst({
+        where: { id: membershipId, tenantId, userId: user.id },
+        select: { id: true },
+      });
+      if (!own) return forbidden(c, "You can only see your own coins.");
+    }
 
     const [balance, entries] = await Promise.all([
       couponService.getCoinBalance(tenantId, membershipId),

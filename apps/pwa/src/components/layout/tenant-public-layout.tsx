@@ -8,7 +8,17 @@
  */
 import * as React from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
-import { LogIn, MapPin, MessageCircle, Phone, ShoppingBag } from "lucide-react";
+import {
+  ChevronDown,
+  LayoutDashboard,
+  LogIn,
+  LogOut,
+  MapPin,
+  MessageCircle,
+  Phone,
+  ShoppingBag,
+  User,
+} from "lucide-react";
 
 import { publicApi } from "@/api/public";
 import { useAuthStore } from "@/stores/auth";
@@ -20,7 +30,26 @@ import {
 import { resolveAssetUrl } from "@/lib/assets";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { Button } from "@/components/ui/button";
+import {
+  Menu,
+  MenuContent,
+  MenuItem,
+  MenuSeparator,
+  MenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+
+/** Two letters for the avatar, when there is no picture. */
+function initials(name?: string | null) {
+  if (!name?.trim()) return "?";
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?";
+}
+
+/** Role keys are shouted; a header is not the place for that. */
+function roleLabel(role: string) {
+  return role.charAt(0) + role.slice(1).toLowerCase().replaceAll("_", " ");
+}
 
 const NAV = [
   { to: "/", label: "Home", end: true },
@@ -29,7 +58,8 @@ const NAV = [
 
 export function TenantPublicLayout() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user, currentMembership, logout } = useAuthStore();
+  const membership = currentMembership();
 
   // Read from the cache first so the mark and the name are on the first frame.
   // A header that appears a beat after the page is a header that flickers.
@@ -103,9 +133,57 @@ export function TenantPublicLayout() {
 
           <div className="ml-auto flex shrink-0 items-center gap-2">
             {isAuthenticated ? (
-              <Button size="sm" onClick={() => navigate("/dashboard")}>
-                Dashboard
-              </Button>
+              /* Who you are signed in as, not just a way out of the page.
+                 A gym's own site is where somebody checks which account
+                 they are on before they buy anything. */
+              <Menu>
+                <MenuTrigger className="flex items-center gap-2 rounded-lg px-1.5 py-1 text-left transition-colors hover:bg-muted">
+                  <span className="grid h-8 w-8 shrink-0 overflow-hidden rounded-full bg-muted text-[11px] font-semibold text-muted-foreground ring-1 ring-border">
+                    {user?.avatarUrl ? (
+                      <img
+                        src={user.avatarUrl}
+                        alt=""
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      <span className="grid place-items-center">{initials(user?.name)}</span>
+                    )}
+                  </span>
+                  <span className="hidden min-w-0 flex-col sm:flex">
+                    <span className="truncate text-sm leading-tight font-medium">
+                      {user?.name ?? "Account"}
+                    </span>
+                    {membership?.role && (
+                      <span className="truncate text-[11px] leading-tight text-muted-foreground">
+                        {roleLabel(membership.role)}
+                      </span>
+                    )}
+                  </span>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </MenuTrigger>
+
+                <MenuContent align="end" side="bottom">
+                  <MenuItem onClick={() => navigate("/dashboard")}>
+                    <LayoutDashboard />
+                    Dashboard
+                  </MenuItem>
+                  <MenuItem onClick={() => navigate("/dashboard/profile")}>
+                    <User />
+                    Profile
+                  </MenuItem>
+                  <MenuSeparator />
+                  <MenuItem
+                    className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                    onClick={() => {
+                      logout();
+                      navigate("/");
+                    }}
+                  >
+                    <LogOut />
+                    Sign out
+                  </MenuItem>
+                </MenuContent>
+              </Menu>
             ) : (
               <>
                 <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>

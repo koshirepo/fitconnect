@@ -46,6 +46,20 @@ couponRoutes.get(
   couponController.coins,
 );
 
+/**
+ * Granting or clawing back coins by hand.
+ *
+ * `COUPONS_CREATE`, the grant that already decides who may invent a
+ * discount: writing coins into somebody's balance is the same act by
+ * another route, and it should not be a lesser permission.
+ */
+couponRoutes.post(
+  "/:tenantId/coupons/coins/:membershipId/adjust",
+  authenticate,
+  requireTenantPermissions(Permission.COUPONS_CREATE),
+  couponController.adjustCoins,
+);
+
 couponRoutes.get(
   "/:tenantId/coupons/:couponId",
   authenticate,

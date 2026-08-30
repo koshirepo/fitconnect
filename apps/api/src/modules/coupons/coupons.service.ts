@@ -489,3 +489,142 @@ export const couponService = {
     }
   },
 };
+
+/**
+ * Coins a gym gives or takes back by hand, and coins that time out.
+ *
+ * The ledger already recorded earning, spending, and reversal; these are the
+ * two movements it documented but nothing ever wrote. Without the first, a
+ * negative balance left by a reversal could never be forgiven and a goodwill
+ * gesture was impossible. Without the second, `coinsOutstanding` on the finance
+ * page was a promise that could only ever grow.
+ */
+export const coinAdminService = {
+  /**
+   * Move a member's balance by hand.
+   *
+   * Written as an ordinary ledger row, so an adjustment is as explainable and
+   * as reversible as anything else. A note is required: a balance that changed
+   * for no recorded reason is the thing this ledger exists to prevent.
+   */
+  async adjust(input: {
+    tenantId: string;
+    membershipId: string;
+    amount: number;
+    note: string;
+    actorUserId?: string;
+  }) {
+    if (input.amount === 0) {
+      return { error: "An adjustment of zero changes nothing.", status: 400 as const };
+    }
+
+    const membership = await prisma.tenantMembership.findFirst({
+      where: { id: input.membershipId, tenantId: input.tenantId },
+      select: { id: true },
+    });
+    if (!membership) {
+      return { error: "Member not found in this gym.", status: 404 as const };
+    }
+
+    // Taking away more than somebody has would leave them owing coins they
+    // never spent, which is a debt the gym invented.
+    if (input.amount < 0) {
+      const balance = await couponService.getCoinBalance(
+        input.tenantId,
+        input.membershipId,
+      );
+      if (balance + input.amount < 0) {
+        return {
+          error: `That would take them below zero. They have ${balance}.`,
+          status: 400 as const,
+        };
+      }
+    }
+
+    await prisma.coinLedgerEntry.create({
+      data: {
+        tenantId: input.tenantId,
+        membershipId: input.membershipId,
+        amount: input.amount,
+        reason: "ADJUSTMENT",
+        note: input.note,
+        ...(input.actorUserId ? { createdById: input.actorUserId } : {}),
+      },
+    });
+
+    const balance = await couponService.getCoinBalance(
+      input.tenantId,
+      input.membershipId,
+    );
+
+    return { data: { balance } };
+  },
+
+  /**
+   * Expire coins older than a gym's window.
+   *
+   * Works on the balance rather than on individual earns: a member who earned
+   * 100 coins a year ago and spent 80 of them has 20 left to lose, not 100. The
+   * sum of everything older than the window, less everything already spent or
+   * taken, is what can still expire.
+   *
+   * A gym with `coinExpiryDays` of 0 — every gym, until somebody sets one — is
+   * skipped entirely, so this does nothing at all unless it has been asked for.
+   */
+  async expireStale(now = new Date()) {
+    const gyms = await prisma.tenantSettings.findMany({
+      where: { coinExpiryDays: { gt: 0 } },
+      select: { tenantId: true, coinExpiryDays: true },
+    });
+
+    let expiredMembers = 0;
+    let expiredCoins = 0;
+
+    for (const gym of gyms) {
+      const cutoff = new Date(now);
+      cutoff.setDate(cutoff.getDate() - gym.coinExpiryDays);
+
+      // Everything earned before the cutoff, per member.
+      const aged = await prisma.coinLedgerEntry.groupBy({
+        by: ["membershipId"],
+        where: {
+          tenantId: gym.tenantId,
+          createdAt: { lt: cutoff },
+          amount: { gt: 0 },
+        },
+        _sum: { amount: true },
+      });
+
+      for (const row of aged) {
+        const earnedLongAgo = row._sum.amount ?? 0;
+        if (earnedLongAgo <= 0) continue;
+
+        const balance = await couponService.getCoinBalance(
+          gym.tenantId,
+          row.membershipId,
+        );
+
+        // Only what is both old and still held. Spending comes off the oldest
+        // coins first as far as this is concerned, which is the reading that
+        // favours the member.
+        const toExpire = Math.min(earnedLongAgo, balance);
+        if (toExpire <= 0) continue;
+
+        await prisma.coinLedgerEntry.create({
+          data: {
+            tenantId: gym.tenantId,
+            membershipId: row.membershipId,
+            amount: -toExpire,
+            reason: "EXPIRED",
+            note: `Unused for over ${gym.coinExpiryDays} days.`,
+          },
+        });
+
+        expiredMembers += 1;
+        expiredCoins += toExpire;
+      }
+    }
+
+    return { data: { gyms: gyms.length, expiredMembers, expiredCoins } };
+  },
+};

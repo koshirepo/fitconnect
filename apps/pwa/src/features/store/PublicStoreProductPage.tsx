@@ -158,25 +158,24 @@ export default function PublicStoreProductPage() {
             </span>
           )
         }
-        renderVariantAction={
-          asMember
-            ? (variant) => (
-                <Button
-                  size="icon"
-                  variant="outline"
-                  disabled={variant.stock <= 0}
-                  // The storefront owns the basket; this hands it the variant,
-                  // exactly as the dashboard product page does.
-                  onClick={() =>
-                    navigate(`/store?add=${encodeURIComponent(variant.id)}`)
-                  }
-                  aria-label={`Add ${variant.name} to basket`}
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                </Button>
-              )
-            : undefined
-        }
+        // Everyone gets this, not only members. A visitor sent here to
+        // choose between three flavours had no way to choose one: the grid
+        // said "Options", the product page listed them, and nothing on it
+        // added anything. Guests can buy now, so the button that starts
+        // that has to be here too.
+        renderVariantAction={(variant) => (
+          <Button
+            size="icon"
+            variant="outline"
+            disabled={variant.stock <= 0}
+            // The storefront owns the basket; this hands it the variant,
+            // exactly as the dashboard product page does.
+            onClick={() => navigate(`/store?add=${encodeURIComponent(variant.id)}`)}
+            aria-label={`Add ${variant.name} to basket`}
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </Button>
+        )}
       />
 
       {!asMember && (

@@ -11,6 +11,7 @@ import { credentialsKeyConfigured, open, seal } from "../../lib/secret-box";
 import {
   createOrder,
   fetchPayment,
+  upsertWebhook,
   verifyCheckoutSignature,
   verifyWebhookSignature,
   RazorpayError,
@@ -67,6 +68,49 @@ async function tenantCredentials(tenantId: string) {
     keySecret,
     webhookSecret: await open(settings.razorpayWebhookSecret),
   };
+}
+
+
+/**
+ * Write down what a delivery was and what became of it.
+ *
+ * Every exit from `handleWebhook` goes through here, including the refusals.
+ * Without it a rejected or ignored delivery left no trace at all, so "why is
+ * this payment still pending" could only be answered from Razorpay's own
+ * dashboard — and a retry loop was invisible until somebody noticed the
+ * duplicate charges that never came.
+ *
+ * Never throws: a log that can break the thing it is logging is worse than no
+ * log. A failed write is dropped and the delivery is answered as normal.
+ */
+async function recordDelivery(input: {
+  tenantId: string;
+  event?: string | null;
+  gatewayOrderId?: string | null;
+  gatewayPaymentId?: string | null;
+  outcome: string;
+  detail?: string;
+  status?: number;
+}) {
+  try {
+    await prisma.webhookDelivery.create({
+      data: {
+        tenantId: input.tenantId,
+        event: input.event ?? null,
+        gatewayOrderId: input.gatewayOrderId ?? null,
+        gatewayPaymentId: input.gatewayPaymentId ?? null,
+        outcome: input.outcome,
+        detail: input.detail ?? null,
+        status: input.status ?? 200,
+      },
+    });
+  } catch (error) {
+    console.warn("Could not record a webhook delivery.", {
+      tenantId: input.tenantId,
+      outcome: input.outcome,
+      reason: (error as Error)?.message,
+    });
+  }
 }
 
 export const gatewayService = {
@@ -204,7 +248,98 @@ export const gatewayService = {
       create: { tenantId, ...data },
     });
 
-    return gatewayService.getConfig(tenantId);
+    // Saving credentials is the moment to register the webhook, because it
+    // is the only moment anybody is thinking about this gym's gateway. Left
+    // to be done by hand it does not get done, and a gym without one loses
+    // every payment whose browser closed mid-checkout.
+    const registration = await gatewayService.registerWebhook(tenantId);
+
+    const config = await gatewayService.getConfig(tenantId);
+    if ("error" in config) return config;
+
+    return { data: { ...config.data, webhook: registration } };
+  },
+
+  /**
+   * Point this gym's Razorpay account at this app.
+   *
+   * Idempotent through the saved `razorpayWebhookId`: with one the existing
+   * webhook is updated, without one a new webhook is created and its id
+   * kept. Registering twice without that memory would leave two webhooks
+   * delivering every event.
+   *
+   * A signing secret is generated here when the gym has not supplied one —
+   * it is a shared secret between two machines, and asking a person to
+   * invent one only adds a step they can get wrong.
+   *
+   * Never throws. A gateway that refuses to register a webhook must not
+   * stop the credentials being saved; the gym can still take payments, and
+   * the settings screen says what happened.
+   */
+  async registerWebhook(tenantId: string) {
+    const appUrl = process.env.API_PUBLIC_URL ?? process.env.APP_URL ?? "";
+    if (!appUrl) {
+      return {
+        ok: false,
+        detail: "This deployment does not know its own public address.",
+      };
+    }
+
+    const credentials = await gatewayService.resolveCredentials(tenantId);
+    if (!credentials) {
+      return { ok: false, detail: "This gym has no gateway credentials yet." };
+    }
+
+    // Only a gym collecting into its own account gets its own webhook. One
+    // on the platform account already covers every gym that falls back to
+    // it, and registering per gym there would duplicate every delivery.
+    if (credentials.source !== "TENANT") {
+      return {
+        ok: true,
+        detail: "Using the platform account, which already has a webhook.",
+      };
+    }
+
+    const settings = await prisma.tenantSettings.findUnique({
+      where: { tenantId },
+      select: { razorpayWebhookId: true, razorpayWebhookSecret: true },
+    });
+
+    // A secret already in use has to be reused: changing it would silently
+    // invalidate every delivery until the new one was saved everywhere.
+    const secret = credentials.webhookSecret ?? crypto.randomUUID().replaceAll("-", "");
+
+    try {
+      const webhook = await upsertWebhook(credentials, {
+        url: new URL(`/webhooks/razorpay/${tenantId}`, appUrl).toString(),
+        secret,
+        webhookId: settings?.razorpayWebhookId ?? null,
+      });
+
+      await prisma.tenantSettings.update({
+        where: { tenantId },
+        data: {
+          razorpayWebhookId: webhook.id,
+          // Stored only when this generated it; a gym-supplied secret is
+          // already on file and sealed.
+          ...(settings?.razorpayWebhookSecret
+            ? {}
+            : { razorpayWebhookSecret: await seal(secret) }),
+        },
+      });
+
+      return { ok: true, detail: "Razorpay will now tell us about payments." };
+    } catch (error) {
+      const message =
+        error instanceof RazorpayError
+          ? error.message
+          : "Razorpay could not be reached.";
+
+      return {
+        ok: false,
+        detail: `Payments will work, but confirmations may be delayed: ${message}`,
+      };
+    }
   },
 
   /**
@@ -627,11 +762,23 @@ export const gatewayService = {
     signature: string | null,
   ) {
     if (!signature) {
+      await recordDelivery({
+        tenantId,
+        outcome: "BAD_SIGNATURE",
+        detail: "The delivery carried no signature header.",
+        status: 400,
+      });
       return { error: "Missing webhook signature.", status: 400 as const };
     }
 
     const credentials = await gatewayService.resolveCredentials(tenantId);
     if (!credentials?.webhookSecret) {
+      await recordDelivery({
+        tenantId,
+        outcome: "NO_SECRET",
+        detail: "This gym has no webhook secret, so nothing can be verified.",
+        status: 409,
+      });
       return {
         error: "No webhook secret is configured for this gym.",
         status: 409 as const,
@@ -644,6 +791,12 @@ export const gatewayService = {
       signature,
     );
     if (!valid) {
+      await recordDelivery({
+        tenantId,
+        outcome: "BAD_SIGNATURE",
+        detail: "The signature did not match this gym's webhook secret.",
+        status: 400,
+      });
       return { error: "Invalid webhook signature.", status: 400 as const };
     }
 
@@ -660,6 +813,12 @@ export const gatewayService = {
     if (!entity?.order_id || !entity.id) {
       // Events we do not act on (refunds, settlements, subscription lifecycle)
       // are acknowledged so Razorpay stops retrying them.
+      await recordDelivery({
+        tenantId,
+        event: event.event,
+        outcome: "IGNORED",
+        detail: "Nothing in this event names a payment we track.",
+      });
       return { data: { handled: false, event: event.event ?? null } };
     }
 
@@ -668,6 +827,53 @@ export const gatewayService = {
       tenantId,
     );
     if (payments.length === 0) {
+      // A guest store order has no payment row — a guest has no membership
+      // for one to hang off — so its gateway trail lives on the order
+      // itself. This is the branch that stops a paid guest basket sitting
+      // pending forever when the browser dies before returning.
+      const guestOrder = await prisma.storeOrder.findFirst({
+        where: { tenantId, gatewayOrderId: entity.order_id, membershipId: null },
+        select: { id: true, status: true },
+      });
+
+      if (guestOrder) {
+        const settling =
+          event.event === "payment.captured" || event.event === "order.paid";
+
+        if (settling) {
+          const { storeGuestService } = await import("../store/store-sale.service");
+          await storeGuestService.settleByGatewayOrder(
+            tenantId,
+            entity.order_id,
+            entity.id,
+          );
+        } else if (event.event === "payment.failed") {
+          // Cancelled rather than left pending, and the held stock goes
+          // back: nobody paid, so nobody is waiting to collect it.
+          const { storeGuestService } = await import("../store/store-sale.service");
+          await storeGuestService.cancelOnlineGuestOrder(tenantId, guestOrder.id);
+        }
+
+        await recordDelivery({
+          tenantId,
+          event: event.event,
+          gatewayOrderId: entity.order_id,
+          gatewayPaymentId: entity.id,
+          outcome: settling ? "SETTLED" : "FAILED_ORDER",
+          detail: `Guest store order ${guestOrder.id.slice(-6).toUpperCase()}.`,
+        });
+
+        return { data: { handled: true, event: event.event ?? null } };
+      }
+
+      await recordDelivery({
+        tenantId,
+        event: event.event,
+        gatewayOrderId: entity.order_id,
+        gatewayPaymentId: entity.id,
+        outcome: "UNKNOWN_ORDER",
+        detail: "Nothing of this gym is attached to that Razorpay order.",
+      });
       return { data: { handled: false, event: event.event ?? null } };
     }
 
@@ -675,6 +881,14 @@ export const gatewayService = {
 
     if (event.event === "payment.failed") {
       await gatewayService.failOrder(payments, entity.id);
+      await recordDelivery({
+        tenantId,
+        event: event.event,
+        gatewayOrderId: entity.order_id,
+        gatewayPaymentId: entity.id,
+        outcome: "FAILED_ORDER",
+        detail: "Marked the order's rows failed.",
+      });
       return { data: { handled: true, event: event.event } };
     }
 
@@ -691,6 +905,14 @@ export const gatewayService = {
           // Anything else (5xx, network) is transient, so let the delivery fail
           // and be retried.
           if (error instanceof RazorpayError && error.status < 500) {
+            await recordDelivery({
+              tenantId,
+              event: event.event,
+              gatewayOrderId: entity.order_id,
+              gatewayPaymentId: entity.id,
+              outcome: "ERROR",
+              detail: `Razorpay does not recognise that payment: ${error.message}`,
+            });
             return { data: { handled: false, event: event.event } };
           }
           throw error;
@@ -699,10 +921,38 @@ export const gatewayService = {
         if (remote.status === "captured" || remote.status === "authorized") {
           await gatewayService.settleOrder(payments, entity.id);
         }
+
+        await recordDelivery({
+          tenantId,
+          event: event.event,
+          gatewayOrderId: entity.order_id,
+          gatewayPaymentId: entity.id,
+          outcome: remote.status === "captured" || remote.status === "authorized"
+            ? "SETTLED"
+            : "IGNORED",
+          detail: `Razorpay reports this payment as ${remote.status}.`,
+        });
+      } else {
+        await recordDelivery({
+          tenantId,
+          event: event.event,
+          gatewayOrderId: entity.order_id,
+          gatewayPaymentId: entity.id,
+          outcome: "IGNORED",
+          detail: "Already settled before this delivery arrived.",
+        });
       }
       return { data: { handled: true, event: event.event } };
     }
 
+    await recordDelivery({
+      tenantId,
+      event: event.event,
+      gatewayOrderId: entity.order_id,
+      gatewayPaymentId: entity.id,
+      outcome: "IGNORED",
+      detail: "This app does not act on that event.",
+    });
     return { data: { handled: false, event: event.event ?? null } };
   },
 };

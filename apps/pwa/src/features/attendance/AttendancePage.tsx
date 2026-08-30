@@ -1,5 +1,6 @@
 import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
+import { ScanCheckIn } from "./ScanCheckIn";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
@@ -71,6 +72,7 @@ export default function AttendancePage() {
   const membershipId = membership?.id;
   // "Staff" here means whoever may see the whole gym's attendance, not a role name.
   const isStaff = can(Permission.ATTENDANCE_READ);
+  const canMarkAttendance = can(Permission.ATTENDANCE_MARK);
   const canDeleteAttendance = can(Permission.ATTENDANCE_DELETE);
 
   const [date, setDate] = React.useState(() => {
@@ -333,6 +335,11 @@ export default function AttendancePage() {
       {error && (
         <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">{error}</div>
       )}
+
+      {/* The desk's own camera, above the poster members scan: at a queue this
+          is the faster of the two, and the one that works for members who never
+          installed anything. */}
+      {canMarkAttendance && <ScanCheckIn />}
 
       {isStaff && qrUrl && (
         <Card>

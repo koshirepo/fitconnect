@@ -143,8 +143,8 @@ export const badgeService = {
    * Execute the `list member badges` workflow for the badges module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
-  async listMemberBadges(membershipId: string) {
-    const badges = await badgeRepository.listMemberBadges(membershipId);
+  async listMemberBadges(tenantId: string, membershipId: string) {
+    const badges = await badgeRepository.listMemberBadges(tenantId, membershipId);
     return { data: { badges } };
   },
 };

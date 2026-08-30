@@ -9,7 +9,11 @@ import type { Context } from "hono";
 import { publicService } from "./public.service";
 import { parsePagination } from "../../lib/pagination";
 import { ok, okPaginated, notFound, badRequest, conflict } from "../../lib/response";
-import { guestOrderSchema, guestOrderLookupSchema } from "../store/store.schema";
+import {
+  guestOrderSchema,
+  guestOrderLookupSchema,
+  guestCheckoutVerifySchema,
+} from "../store/store.schema";
 
 export const publicController = {
   /**
@@ -76,6 +80,48 @@ export const publicController = {
           : badRequest(c, result.error);
     }
     return ok(c, result.data, 201);
+  },
+
+  /** Open a card payment for a basket, without an account. */
+  async startGuestCheckout(c: Context) {
+    const host = c.req.query("host") ?? c.req.header("host") ?? "";
+    if (!host) return notFound(c, "Tenant host is required.");
+
+    const parsed = guestOrderSchema.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) {
+      return badRequest(c, "Check the details and try again.", parsed.error.issues);
+    }
+
+    const result = await publicService.startGuestCheckoutByHost(host, parsed.data);
+    if ("error" in result) {
+      return result.status === 409
+        ? conflict(c, result.error!)
+        : result.status === 404
+          ? notFound(c, result.error!)
+          : badRequest(c, result.error!);
+    }
+    return ok(c, result.data, 201);
+  },
+
+  /** Settle it against the signature the checkout widget returned. */
+  async verifyGuestCheckout(c: Context) {
+    const host = c.req.query("host") ?? c.req.header("host") ?? "";
+    if (!host) return notFound(c, "Tenant host is required.");
+
+    const parsed = guestCheckoutVerifySchema.safeParse(
+      await c.req.json().catch(() => null),
+    );
+    if (!parsed.success) {
+      return badRequest(c, "That payment could not be read.", parsed.error.issues);
+    }
+
+    const result = await publicService.verifyGuestCheckoutByHost(host, parsed.data);
+    if ("error" in result) {
+      return result.status === 404
+        ? notFound(c, result.error!)
+        : badRequest(c, result.error!);
+    }
+    return ok(c, result.data);
   },
 
   /** Checking on a reservation with the reference and the phone number. */

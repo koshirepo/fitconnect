@@ -54,6 +54,7 @@ export const ModelName = {
   User: 'User',
   WebAuthnCredential: 'WebAuthnCredential',
   WebAuthnChallenge: 'WebAuthnChallenge',
+  WebhookDelivery: 'WebhookDelivery',
   IdempotencyKey: 'IdempotencyKey',
   PasswordResetToken: 'PasswordResetToken',
   RefreshToken: 'RefreshToken',
@@ -154,6 +155,21 @@ export const WebAuthnChallengeScalarFieldEnum = {
 export type WebAuthnChallengeScalarFieldEnum = (typeof WebAuthnChallengeScalarFieldEnum)[keyof typeof WebAuthnChallengeScalarFieldEnum]
 
 
+export const WebhookDeliveryScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  event: 'event',
+  gatewayOrderId: 'gatewayOrderId',
+  gatewayPaymentId: 'gatewayPaymentId',
+  outcome: 'outcome',
+  detail: 'detail',
+  status: 'status',
+  createdAt: 'createdAt'
+} as const
+
+export type WebhookDeliveryScalarFieldEnum = (typeof WebhookDeliveryScalarFieldEnum)[keyof typeof WebhookDeliveryScalarFieldEnum]
+
+
 export const IdempotencyKeyScalarFieldEnum = {
   key: 'key',
   userId: 'userId',
@@ -251,9 +267,11 @@ export const TenantSettingsScalarFieldEnum = {
   whatsappTemplates: 'whatsappTemplates',
   referralRewardCoins: 'referralRewardCoins',
   referralRefereeCoins: 'referralRefereeCoins',
+  coinExpiryDays: 'coinExpiryDays',
   razorpayKeyId: 'razorpayKeyId',
   razorpayKeySecret: 'razorpayKeySecret',
   razorpayWebhookSecret: 'razorpayWebhookSecret',
+  razorpayWebhookId: 'razorpayWebhookId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
