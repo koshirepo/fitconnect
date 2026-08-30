@@ -14,8 +14,7 @@ import { PaymentStatusChip } from "@/components/ui/payment-status-chip";
 import { SkeletonRow } from "@/components/ui/skeleton";
 import { SwipePane } from "@/components/ui/swipe-pane";
 import { Spinner } from "@/components/ui/spinner";
-import { ListPagination } from "@/components/ui/list-pagination";
-import { usePaginatedList } from "@/lib/use-paginated-list";
+import { useWindowedList } from "@/lib/use-windowed-list";
 import { EmptyState } from "@/components/ui/empty-state";
 import { downloadCsv } from "@/lib/csv";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
@@ -230,14 +229,13 @@ export default function PaymentsPage() {
   // stay instant; only a page of it reaches the DOM. Payments are the list that
   // grows without bound, so this is the one that needed it most.
   const {
-    page,
-    setPage,
-    pageItems: visiblePayments,
-    totalPages,
-    total: totalPayments,
-    rangeStart,
-    rangeEnd,
-  } = usePaginatedList(allPayments, {
+    visibleItems: visiblePayments,
+    sentinelRef,
+    hasMore,
+    loadMore,
+    shown,
+    total,
+  } = useWindowedList(allPayments, {
     pageSize: 25,
     resetKey: `${statusFilter}|${searchTerm}`,
   });
@@ -537,15 +535,24 @@ export default function PaymentsPage() {
             ))}
           </div>
 
-          <ListPagination
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-            rangeStart={rangeStart}
-            rangeEnd={rangeEnd}
-            total={totalPayments}
-            label="payments"
-          />
+
+          {hasMore ? (
+            <div ref={sentinelRef} className="flex justify-center pt-2">
+              {/* The observer normally reveals the next screenful before this is
+                  reached. The button is what saves a reader whose browser has no
+                  IntersectionObserver, or whose list sits in a container that
+                  never triggers one. */}
+              <Button variant="ghost" size="sm" onClick={loadMore}>
+                Load more
+              </Button>
+            </div>
+          ) : (
+            shown > 0 && (
+              <p className="pt-2 text-center text-xs text-muted-foreground">
+                Showing all {total} payments
+              </p>
+            )
+          )}
         </div>
       )}
       </SwipePane>

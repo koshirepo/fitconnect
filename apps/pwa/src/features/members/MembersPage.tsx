@@ -22,8 +22,7 @@ import {
 import { SkeletonRow } from "@/components/ui/skeleton";
 import { SwipePane } from "@/components/ui/swipe-pane";
 import { Spinner } from "@/components/ui/spinner";
-import { ListPagination } from "@/components/ui/list-pagination";
-import { usePaginatedList } from "@/lib/use-paginated-list";
+import { useWindowedList } from "@/lib/use-windowed-list";
 import { downloadCsv } from "@/lib/csv";
 import { formatDate, formatCurrency, cn } from "@/lib/utils";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
@@ -333,14 +332,13 @@ export default function MembersPage() {
   // Rendering a few thousand cards is tens of thousands of DOM nodes and a full
   // reconcile on every keystroke.
   const {
-    page,
-    setPage,
-    pageItems: visibleMembers,
-    totalPages,
-    total: totalMembers,
-    rangeStart,
-    rangeEnd,
-  } = usePaginatedList(filteredAllMembers, {
+    visibleItems: visibleMembers,
+    sentinelRef,
+    hasMore,
+    loadMore,
+    shown,
+    total,
+  } = useWindowedList(filteredAllMembers, {
     pageSize: 25,
     resetKey: `${statusFilter}|${roleFilter}|${badgeFilter}|${genderFilter}|${search}`,
   });
@@ -738,15 +736,24 @@ export default function MembersPage() {
             ))}
           </div>
 
-          <ListPagination
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-            rangeStart={rangeStart}
-            rangeEnd={rangeEnd}
-            total={totalMembers}
-            label="members"
-          />
+
+          {hasMore ? (
+            <div ref={sentinelRef} className="flex justify-center pt-2">
+              {/* The observer normally reveals the next screenful before this is
+                  reached. The button is what saves a reader whose browser has no
+                  IntersectionObserver, or whose list sits in a container that
+                  never triggers one. */}
+              <Button variant="ghost" size="sm" onClick={loadMore}>
+                Load more
+              </Button>
+            </div>
+          ) : (
+            shown > 0 && (
+              <p className="pt-2 text-center text-xs text-muted-foreground">
+                Showing all {total} members
+              </p>
+            )
+          )}
         </div>
       )}
       </SwipePane>

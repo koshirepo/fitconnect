@@ -124,6 +124,7 @@ function buildPendingReminder(
   amount: number,
   description: string | null,
   totalPending = 0,
+  paymentId?: string,
 ) {
   const outstanding = Math.max(totalPending, amount);
   const others = outstanding - amount;
@@ -136,7 +137,9 @@ function buildPendingReminder(
         : `${formatInr(amount)} on your account is still unpaid.`) +
       (others > 0 ? ` ${formatInr(others)} more is outstanding.` : "") +
       " Tap to settle it.",
-    url: "/dashboard/payments",
+    // The row being chased, so "tap to settle it" lands on the thing to settle
+    // rather than on a ledger the member then has to search.
+    url: paymentId ? `/dashboard/payments/${paymentId}` : "/dashboard/payments",
   };
 }
 
@@ -324,6 +327,7 @@ export const renewalReminderService = {
               payment.amount,
               payment.description,
               pendingTotals.get(payment.membershipId) ?? 0,
+              payment.id,
             ),
           ),
         );

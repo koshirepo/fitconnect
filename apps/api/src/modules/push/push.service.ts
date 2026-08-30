@@ -175,6 +175,8 @@ export const pushService = {
       memberId?: number;
       memberName?: string;
       description?: string | null;
+      /** The row this notification is about, so a tap opens the receipt. */
+      paymentId?: string;
       /** How it was taken, for the one-line summary. */
       source: "DESK" | "ONLINE";
       /** The staff member who recorded it, when a person did. */
@@ -195,7 +197,11 @@ export const pushService = {
           payment.source === "ONLINE"
             ? `${who} paid ${formatInr(payment.amount)} online${what}.`
             : `${formatInr(payment.amount)} collected from ${who}${what}.`,
-        url: "/dashboard/payments",
+        // The receipt itself when the row is known; the ledger otherwise, which
+        // is a settlement covering several rows at once.
+        url: payment.paymentId
+          ? `/dashboard/payments/${payment.paymentId}`
+          : "/dashboard/payments",
       },
       { excludeUserId: payment.actorUserId },
     );

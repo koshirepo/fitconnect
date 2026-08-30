@@ -494,6 +494,9 @@ export const gatewayService = {
         memberId: first?.member?.memberId,
         memberName: first?.member?.user.name,
         description: settled.length === 1 ? settled[0].description : null,
+        // Only when the order settled one row: a tap on a multi-row order has
+        // no single receipt to open, and the ledger is the honest destination.
+        paymentId: settled.length === 1 ? settled[0].id : undefined,
         source: "ONLINE",
       });
     }

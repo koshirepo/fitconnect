@@ -519,6 +519,9 @@ Your membership card: ${idCardUrl}`
           memberId: membership.memberId,
           memberName: input.name,
           description: subscription?.title ?? null,
+          // An admission can write several rows; the first is the plan, which
+          // is the one an admin opening the notification wants to see.
+          paymentId: payments[0]?.id,
           source: "DESK",
           actorUserId,
         });
