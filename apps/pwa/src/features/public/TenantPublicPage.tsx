@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
@@ -489,15 +489,9 @@ export default function TenantPublicPage() {
         </div>
       </div>
 
-      <footer className="border-t bg-background/80">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 text-sm text-muted-foreground sm:flex-row sm:px-6 lg:px-8">
-          <Link to="/" className="flex items-center gap-2 hover:text-foreground transition-colors">
-            <Dumbbell className="h-4 w-4" />
-            <span>FitConnect - Gym Management System</span>
-          </Link>
-          <p>&copy; {new Date().getFullYear()} FitConnect</p>
-        </div>
-      </footer>
+      {/* No footer of its own. The shared frame draws one that speaks as this
+          gym; the one that used to live here signed the gym's own page with the
+          platform's name. */}
     </div>
   );
 }
