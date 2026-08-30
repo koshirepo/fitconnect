@@ -13,9 +13,6 @@ import {
   LayoutDashboard,
   LogIn,
   LogOut,
-  MapPin,
-  MessageCircle,
-  Phone,
   ShoppingBag,
   User,
 } from "lucide-react";
@@ -30,6 +27,8 @@ import {
 import { resolveAssetUrl } from "@/lib/assets";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { Button } from "@/components/ui/button";
+import { WhatsAppFab } from "@/components/ui/whatsapp-fab";
+import { SiteFooter } from "./site-footer";
 import {
   Menu,
   MenuContent,
@@ -203,53 +202,12 @@ export function TenantPublicLayout() {
         <Outlet />
       </main>
 
-      <footer className="border-t border-border bg-background">
-        <div className="mx-auto max-w-6xl px-4 py-8 md:px-6">
-          <div className="flex flex-wrap items-start justify-between gap-6">
-            <div className="min-w-0">
-              <p className="font-semibold">{name || "FitConnect"}</p>
-              {brand?.description && (
-                <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                  {brand.description}
-                </p>
-              )}
-            </div>
+      {/* Follows the page rather than sitting in the footer: asking a
+          question is the thing a visitor most often wants, and it should
+          not require scrolling to the bottom of a product page to find. */}
+      <WhatsAppFab url={whatsappUrl} />
 
-            <div className="space-y-1.5 text-sm text-muted-foreground">
-              {brand?.phone && (
-                <a
-                  href={`tel:${brand.phone}`}
-                  className="flex items-center gap-2 hover:text-foreground"
-                >
-                  <Phone className="h-4 w-4" />
-                  {brand.phone}
-                </a>
-              )}
-              {whatsappUrl && (
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 hover:text-foreground"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  Chat on WhatsApp
-                </a>
-              )}
-              {brand?.address && (
-                <p className="flex items-start gap-2">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
-                  <span className="max-w-xs">{brand.address}</span>
-                </p>
-              )}
-            </div>
-          </div>
-
-          <p className="mt-6 border-t border-border pt-4 text-xs text-muted-foreground">
-            Powered by FitConnect
-          </p>
-        </div>
-      </footer>
+      <SiteFooter variant="tenant" gym={brand} signedIn={isAuthenticated} />
     </div>
   );
 }
