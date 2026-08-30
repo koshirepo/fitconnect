@@ -69,7 +69,7 @@ export function usePayments(filters: PaymentListFilters = {}, options: { enabled
  * a status change refreshes all of them at once.
  */
 export function useAllPayments(options: { enabled?: boolean; pageSize?: number } = {}) {
-  const { pageSize = 200 } = options;
+  const { pageSize = 500 } = options;
 
   return useTenantQuery(
     (tenantId) => [...queryKeys.payments.list(tenantId), "all", pageSize],

@@ -13,6 +13,9 @@ import { MemberCard, PersonChip } from "@/components/ui/member-card";
 import { PaymentStatusChip } from "@/components/ui/payment-status-chip";
 import { SkeletonRow } from "@/components/ui/skeleton";
 import { SwipePane } from "@/components/ui/swipe-pane";
+import { Spinner } from "@/components/ui/spinner";
+import { ListPagination } from "@/components/ui/list-pagination";
+import { usePaginatedList } from "@/lib/use-paginated-list";
 import { EmptyState } from "@/components/ui/empty-state";
 import { downloadCsv } from "@/lib/csv";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
@@ -78,6 +81,14 @@ export default function PaymentsPage() {
   const statusFilter = searchParams.get("status") ?? "";
   const searchTerm = searchParams.get("search") ?? "";
 
+  // Local box, URL 300ms behind it. Every keystroke used to re-filter the whole
+  // ledger and push a history entry, so backspacing walked back through the
+  // typing rather than clearing the field.
+  const [searchInput, setSearchInput] = React.useState(searchTerm);
+  const searchTimer = React.useRef<number | undefined>(undefined);
+
+  React.useEffect(() => () => window.clearTimeout(searchTimer.current), []);
+
   // Swiping walks the same tab strip the taps use.
   const statusTabIndex = Math.max(
     STATUS_TABS.findIndex((tab) => tab.value === statusFilter),
@@ -109,6 +120,19 @@ export default function PaymentsPage() {
     });
   };
 
+  /** Type into the box now, filter 300ms after the typing stops. */
+  const onSearchChange = (value: string) => {
+    setSearchInput(value);
+    window.clearTimeout(searchTimer.current);
+    searchTimer.current = window.setTimeout(() => setSearchTerm(value), 300);
+  };
+
+  const clearSearch = () => {
+    window.clearTimeout(searchTimer.current);
+    setSearchInput("");
+    setSearchTerm("");
+  };
+
   // The whole ledger is fetched once and filtered in the browser, the way the
   // member list works: one cached result serves every tab, so switching tabs
   // and typing in the search box cost nothing.
@@ -120,7 +144,19 @@ export default function PaymentsPage() {
     [canViewAllPayments, allPaymentsQuery.data, myPaymentsQuery.data],
   );
 
-  const loading = (canViewAllPayments ? allPaymentsQuery : myPaymentsQuery).isLoading;
+  // `isPending`, not `isLoading`: both queries are gated on the tenant id, and a
+  // disabled query reports `isLoading: false` with no data — so this screen
+  // painted "No payments found" before the first fetch had even started, which
+  // is what a phone resolving its subdomain slowly showed every time. Guarded
+  // by the tenant id, because a query that never runs stays pending forever.
+  const activeQuery = canViewAllPayments ? allPaymentsQuery : myPaymentsQuery;
+  const loading =
+    Boolean(currentTenantId) &&
+    (activeQuery.isPending || (activeQuery.isFetching && payments.length === 0));
+
+  // A warm cache paints instantly and then refetches in the background. Without
+  // this the screen looks idle while it is anything but.
+  const refreshing = !loading && activeQuery.isFetching;
 
   const updatePaymentStatus = useUpdatePaymentStatus();
 
@@ -189,6 +225,22 @@ export default function PaymentsPage() {
       statusFilter ? searchedPayments.filter((p) => p.status === statusFilter) : searchedPayments,
     [searchedPayments, statusFilter],
   );
+
+  // The ledger stays whole in memory so the tabs, the search, and offline reads
+  // stay instant; only a page of it reaches the DOM. Payments are the list that
+  // grows without bound, so this is the one that needed it most.
+  const {
+    page,
+    setPage,
+    pageItems: visiblePayments,
+    totalPages,
+    total: totalPayments,
+    rangeStart,
+    rangeEnd,
+  } = usePaginatedList(allPayments, {
+    pageSize: 25,
+    resetKey: `${statusFilter}|${searchTerm}`,
+  });
 
   /** Row count behind each tab, so a tab shows what clicking it will reveal. */
   const statusCounts = React.useMemo(() => {
@@ -301,17 +353,13 @@ export default function PaymentsPage() {
             <input
               type="text"
               placeholder="Search by name, email, admission no, plan, or amount..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-              }}
+              value={searchInput}
+              onChange={(e) => onSearchChange(e.target.value)}
               className="w-full pl-10 pr-10 py-2 border border-input rounded-md bg-background text-sm"
             />
-            {searchTerm && (
+            {searchInput && (
               <button
-                onClick={() => {
-                  setSearchTerm("");
-                }}
+                onClick={clearSearch}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 <X className="h-4 w-4" />
@@ -355,6 +403,18 @@ export default function PaymentsPage() {
         </div>
       )}
 
+      {refreshing && (
+        <p
+          role="status"
+          className="flex items-center gap-2 text-xs text-muted-foreground"
+        >
+          {/* The live region is this line, not the icon: the spinner carries a
+              "Loading" label of its own that would be announced twice. */}
+          <Spinner aria-hidden className="size-3" />
+          Refreshing payments…
+        </p>
+      )}
+
       <SwipePane
         paneKey={statusFilter}
         paneIndex={statusTabIndex}
@@ -383,7 +443,7 @@ export default function PaymentsPage() {
       ) : (
         <div className="space-y-4">
           <div className="space-y-3">
-            {allPayments.map((p) => (
+            {visiblePayments.map((p) => (
               <MemberCard
                 key={p.id}
                 size="md"
@@ -476,6 +536,16 @@ export default function PaymentsPage() {
               />
             ))}
           </div>
+
+          <ListPagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            rangeStart={rangeStart}
+            rangeEnd={rangeEnd}
+            total={totalPayments}
+            label="payments"
+          />
         </div>
       )}
       </SwipePane>

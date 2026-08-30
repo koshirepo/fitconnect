@@ -21,6 +21,9 @@ import {
 } from "@/components/ui/select";
 import { SkeletonRow } from "@/components/ui/skeleton";
 import { SwipePane } from "@/components/ui/swipe-pane";
+import { Spinner } from "@/components/ui/spinner";
+import { ListPagination } from "@/components/ui/list-pagination";
+import { usePaginatedList } from "@/lib/use-paginated-list";
 import { downloadCsv } from "@/lib/csv";
 import { formatDate, formatCurrency, cn } from "@/lib/utils";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
@@ -130,6 +133,15 @@ export default function MembersPage() {
   const genderFilter = searchParams.get("gender") ?? "";
   const search = searchParams.get("search") ?? "";
 
+  // The box is driven locally and the URL catches up 300ms after typing stops.
+  // Writing every keystroke straight to the URL re-filtered the whole roster per
+  // character and left a history entry per character behind it, so backspacing
+  // walked back through the typing instead of clearing the field.
+  const [searchInput, setSearchInput] = React.useState(search);
+  const searchTimer = React.useRef<number | undefined>(undefined);
+
+  React.useEffect(() => () => window.clearTimeout(searchTimer.current), []);
+
   const updateParams = React.useCallback(
     (updates: Record<string, string>) => {
       setSearchParams(
@@ -150,6 +162,23 @@ export default function MembersPage() {
     },
     [setSearchParams],
   );
+
+  /** Type into the box now, filter 300ms after the typing stops. */
+  const onSearchChange = React.useCallback(
+    (value: string) => {
+      setSearchInput(value);
+      window.clearTimeout(searchTimer.current);
+      searchTimer.current = window.setTimeout(() => updateParams({ search: value }), 300);
+    },
+    [updateParams],
+  );
+
+  /** Clearing is immediate — nobody waits to see an emptied box take effect. */
+  const clearSearch = React.useCallback(() => {
+    window.clearTimeout(searchTimer.current);
+    setSearchInput("");
+    updateParams({ search: "" });
+  }, [updateParams]);
 
   // Three independent reads; react-query runs them in parallel and dedupes them
   // against whatever other screens have already requested.
@@ -174,6 +203,11 @@ export default function MembersPage() {
   const loading =
     Boolean(currentTenantId) &&
     (membersQuery.isPending || (membersQuery.isFetching && members.length === 0));
+
+  // A warm cache paints instantly and refetches behind it. Without this the
+  // screen looks idle while it is anything but — which on a phone, where the
+  // cache is usually warm and the network usually slow, is most of the time.
+  const refreshing = !loading && membersQuery.isFetching;
 
   const removeMember = useRemoveMember();
   // A WhatsApp reminder is the one chase the server cannot see, so the app
@@ -294,6 +328,23 @@ export default function MembersPage() {
     return scopedMembers.filter((member) => matchesStatusTab(member, statusFilter, now));
   }, [scopedMembers, statusFilter]);
 
+  // The whole roster stays in memory — that is what keeps search, the tab
+  // counts, and offline reads instant — but only one page of it is drawn.
+  // Rendering a few thousand cards is tens of thousands of DOM nodes and a full
+  // reconcile on every keystroke.
+  const {
+    page,
+    setPage,
+    pageItems: visibleMembers,
+    totalPages,
+    total: totalMembers,
+    rangeStart,
+    rangeEnd,
+  } = usePaginatedList(filteredAllMembers, {
+    pageSize: 25,
+    resetKey: `${statusFilter}|${roleFilter}|${badgeFilter}|${genderFilter}|${search}`,
+  });
+
   // Swiping moves along the same tab strip the taps use, so the two can never
   // disagree about what comes next.
   const statusTabIndex = Math.max(
@@ -313,8 +364,11 @@ export default function MembersPage() {
     statusFilter || badgeFilter || genderFilter || search.trim() || roleFilter !== "MEMBER",
   );
 
-  const clearFilters = () =>
+  const clearFilters = () => {
+    window.clearTimeout(searchTimer.current);
+    setSearchInput("");
     updateParams({ status: "", badge: "", gender: "", search: "", role: "MEMBER" });
+  };
 
   const recordWhatsApp = (
     member: DisplayMember,
@@ -532,13 +586,13 @@ export default function MembersPage() {
           <input
             type="text"
             placeholder="Search by name, phone, email, or admission no..."
-            value={search}
-            onChange={(e) => updateParams({ search: e.target.value })}
+            value={searchInput}
+            onChange={(e) => onSearchChange(e.target.value)}
             className="h-12 w-full rounded-lg border border-input bg-background pr-10 pl-12 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50"
           />
-          {search && (
+          {searchInput && (
             <button
-              onClick={() => updateParams({ search: "" })}
+              onClick={clearSearch}
               className="absolute top-1/2 right-4 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               <X className="h-4 w-4" />
@@ -599,6 +653,18 @@ export default function MembersPage() {
         </div>
       </div>
 
+      {refreshing && (
+        <p
+          role="status"
+          className="flex items-center gap-2 text-xs text-muted-foreground"
+        >
+          {/* The live region is this line, not the icon: the spinner carries a
+              "Loading" label of its own that would be announced twice. */}
+          <Spinner aria-hidden className="size-3" />
+          Refreshing members…
+        </p>
+      )}
+
       <SwipePane
         paneKey={statusFilter}
         paneIndex={statusTabIndex}
@@ -637,7 +703,7 @@ export default function MembersPage() {
       ) : (
         <div className="space-y-4">
           <div className="space-y-4">
-            {filteredAllMembers.map((m) => (
+            {visibleMembers.map((m) => (
               <MemberCard
                 key={m.id}
                 person={m}
@@ -672,6 +738,15 @@ export default function MembersPage() {
             ))}
           </div>
 
+          <ListPagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            rangeStart={rangeStart}
+            rangeEnd={rangeEnd}
+            total={totalMembers}
+            label="members"
+          />
         </div>
       )}
       </SwipePane>

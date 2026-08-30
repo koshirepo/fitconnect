@@ -286,6 +286,12 @@ model TenantMembership {
   @@index([userId])
   @@index([shiftId])
   @@index([referredByMembershipId])
+  /// The shapes the roster reads actually use, the way Payment already covers
+  /// its own. Without these, a status tab scans every membership in the gym and
+  /// sorts the survivors in memory; @@unique([tenantId, memberId]) only rescues
+  /// the unfiltered list.
+  @@index([tenantId, status, memberId])
+  @@index([tenantId, status, dueDate])
 }
 
 // Subscription and payment

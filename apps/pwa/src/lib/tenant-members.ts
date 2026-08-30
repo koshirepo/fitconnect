@@ -59,7 +59,7 @@ export async function loadAllTenantMembers(
     search,
     status,
     badge,
-    pageSize = 200,
+    pageSize = 500,
     forceRefresh = false,
   }: LoadAllTenantMembersOptions = {},
 ): Promise<TenantMember[]> {

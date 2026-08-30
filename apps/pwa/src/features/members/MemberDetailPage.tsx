@@ -1110,9 +1110,15 @@ export default function MemberDetailPage() {
       {isMemberProfile && canSeeMoney && reminders.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <MessageCircle className="h-5 w-5" />
-              Reminders sent
+            <CardTitle className="text-lg">
+              <Link
+                to={getTenantDashboardPath("/reminders")}
+                className="flex items-center gap-2 hover:underline"
+              >
+                <MessageCircle className="h-5 w-5" />
+                Reminders sent
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </Link>
             </CardTitle>
             <CardDescription>
               {outstandingReminders > 0
@@ -1122,9 +1128,10 @@ export default function MemberDetailPage() {
           </CardHeader>
           <CardContent className="space-y-2">
             {reminders.slice(0, 10).map((reminder) => (
-              <div
+              <Link
                 key={reminder.id}
-                className="flex items-start justify-between gap-3 border-b pb-2 last:border-0 last:pb-0"
+                to={getTenantDashboardPath(`/reminders/${reminder.id}`)}
+                className="-mx-2 flex items-start justify-between gap-3 rounded-md border-b px-2 py-2 last:border-0 hover:bg-muted/50"
               >
                 <div className="min-w-0">
                   <p className="text-sm font-medium">
@@ -1143,7 +1150,7 @@ export default function MemberDetailPage() {
                     <p className="text-[10px] text-emerald-600">settled</p>
                   )}
                 </div>
-              </div>
+              </Link>
             ))}
           </CardContent>
         </Card>
