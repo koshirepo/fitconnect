@@ -41,6 +41,7 @@ import { Label } from "@/components/ui/label";
 import { StoreVariantPicker } from "./StoreVariantPicker";
 import type { TenantMember, StoreProduct, StoreVariant } from "@fitconnect/shared/types/models";
 import { getApiError } from "@/api/client";
+import { haptics } from "@/lib/haptics";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -219,9 +220,11 @@ export default function StorePage() {
         );
       }
 
+      haptics.payment();
       resetSale();
       setSellOpen(false);
     } catch (caught) {
+      haptics.failure();
       toast.error(getApiError(caught));
     } finally {
       setSelling(false);
@@ -256,6 +259,8 @@ export default function StorePage() {
     try {
       if (action === "complete") {
         const result = await completeOrder.mutateAsync(order.id);
+        // Handing an order over is a payment taken, same as any other.
+        haptics.payment();
         toast.success(
           result.completed
             ? "Handed over. Stock updated."

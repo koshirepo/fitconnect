@@ -11,6 +11,7 @@ import { usePayments, useSubscriptions } from "@/api/queries/payments";
 import { useTenantSettings } from "@/api/queries/catalog";
 import { useCoinBalance, useCouponQuote } from "@/api/queries/coupons";
 import { getApiError } from "@/api/client";
+import { haptics } from "@/lib/haptics";
 import { formatCurrency } from "@/lib/utils";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import {
@@ -389,12 +390,22 @@ export default function RecordPaymentPage() {
         });
         const whatsappUrl = buildWhatsAppUrl(selectedMember.phone, msg);
         if (whatsappUrl) {
-          window.location.assign(whatsappUrl);
+          // A new tab, unlike everything else in this app. WhatsApp is a
+          // different application rather than another page of this one, and
+          // following it in place threw whoever was at the desk out of the
+          // payment they had just taken.
+          window.open(whatsappUrl, "_blank", "noopener,noreferrer");
         }
       }
 
+      // Money in. The phone is usually in a hand with eyes on the member or the
+      // card machine, so the confirmation has to reach somewhere other than the
+      // screen.
+      haptics.payment();
+
       navigate("/payments");
     } catch (err) {
+      haptics.failure();
       setError(getApiError(err));
     } finally {
       setSubmitting(false);

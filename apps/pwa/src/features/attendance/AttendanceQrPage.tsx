@@ -4,6 +4,7 @@ import { attendanceApi } from "@/api/attendance";
 import { getApiError } from "@/api/client";
 import { useAuthStore } from "@/stores/auth";
 import { resolveAssetUrl } from "@/lib/assets";
+import { useWakeLock } from "@/lib/use-wake-lock";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CardSkeleton } from "@/components/ui/skeleton";
@@ -14,6 +15,10 @@ export default function AttendanceQrPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
+  // This page is propped up and read, not held and tapped. A screen that locks
+  // itself between the first member of the morning and the second is a screen
+  // somebody has to walk over and wake.
+  useWakeLock();
   const [tenant, setTenant] = React.useState<{
     id: string;
     name: string;

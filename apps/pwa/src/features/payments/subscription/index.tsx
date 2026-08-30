@@ -12,6 +12,7 @@ import {
   useVerifyCheckout,
 } from "@/api/queries/payments";
 import { getApiError } from "@/api/client";
+import { haptics } from "@/lib/haptics";
 import { openRazorpayCheckout } from "@/lib/razorpay-checkout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -102,6 +103,7 @@ export default function SubscriptionsPage() {
         return;
       }
 
+      haptics.payment();
       await verifyCheckout.mutateAsync({
         orderId: result.orderId,
         paymentId: result.paymentId,

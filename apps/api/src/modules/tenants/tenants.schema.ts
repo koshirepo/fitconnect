@@ -62,6 +62,10 @@ export const createTenantSchema = z.object({
     .optional()
     .or(z.literal("")),
   logoUrl: z.string().url("Logo URL must be a valid URL").optional().or(z.literal("")),
+  /** The gym's accent colour. Six-digit hex so the browser can derive the
+      rest — the gradient stop and the readable text on top of it — without
+      three columns that can disagree with each other. */
+  brandColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Use a six-digit hex colour, e.g. #E2571E").optional().or(z.literal("")),
   markdown: z
     .string()
     .max(20000, "Markdown description must be at most 20000 characters")
@@ -91,6 +95,9 @@ export const updateTenantSchema = z
     ),
     logoUrl: optionalNullableString(
       z.string().url("Logo URL must be a valid URL"),
+    ),
+    brandColor: optionalNullableString(
+      z.string().regex(/^#[0-9a-fA-F]{6}$/, "Use a six-digit hex colour, e.g. #E2571E"),
     ),
     markdown: optionalNullableString(
       z.string().max(20000, "Markdown description must be at most 20000 characters"),

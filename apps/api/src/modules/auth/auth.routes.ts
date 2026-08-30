@@ -13,6 +13,7 @@ import { optionalAuthenticate } from "../../middleware/optional-authenticate";
 import { requirePermissions } from "../../middleware/authorize";
 import { rateLimitSignup } from "../../middleware/abuse-guard";
 import { authController } from "./auth.controller";
+import { passkeyController } from "./passkeys.controller";
 import type { AppBindings } from "../../types/app-context";
 
 export const authRoutes = new Hono<AppBindings>();
@@ -27,5 +28,21 @@ authRoutes.post(
   requirePermissions(Permission.PLATFORM_USERS_CREATE),
   authController.createPlatformUser,
 );
+/**
+ * Passkeys.
+ *
+ * Registration needs a session — a key is being added to an account somebody is
+ * already in. Sign-in cannot have one, which is the entire point, so those two
+ * carry the same per-IP limit every other anonymous write here does. What makes
+ * them safe is not the limit: it is that a signature can only be produced by a
+ * private key this server has never seen and cannot leak.
+ */
+authRoutes.get("/passkeys", authenticate, passkeyController.list);
+authRoutes.delete("/passkeys/:passkeyId", authenticate, passkeyController.remove);
+authRoutes.post("/passkeys/register/options", authenticate, passkeyController.registerOptions);
+authRoutes.post("/passkeys/register/verify", authenticate, passkeyController.registerVerify);
+authRoutes.post("/passkeys/login/options", rateLimitSignup, passkeyController.loginOptions);
+authRoutes.post("/passkeys/login/verify", rateLimitSignup, passkeyController.loginVerify);
+
 authRoutes.post("/forgot-password", rateLimitSignup, authController.forgotPassword);
 authRoutes.post("/reset-password", authController.resetPassword);

@@ -229,3 +229,60 @@
     background-color: var(--muted);
   }
 }
+
+/* ── Page transitions ─────────────────────────────────────────────────────────
+ *
+ * Driven by `useViewTransitionLocation`, which defers the router's location
+ * until the browser has snapshotted the outgoing page. Only a change of path
+ * gets here: tab strips navigate by search param and are animated by
+ * `SwipePane` instead.
+ *
+ * The movement is deliberately small — a fade with a few pixels of lift. A
+ * dashboard is navigated dozens of times an hour, and an animation that reads
+ * as elegant on the first visit reads as a delay on the fortieth.
+ *
+ * Nothing here is a fallback: browsers without the API simply swap the page,
+ * which is what they did before. `prefers-reduced-motion` is honoured in the
+ * hook, which skips the transition entirely rather than shortening it.
+ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  /* The default cross-fade animates both at once and double-paints the
+     background; these replace it with an explicit pair. */
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  animation: page-leave 90ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+::view-transition-new(root) {
+  animation: page-enter 180ms cubic-bezier(0, 0, 0.2, 1) both;
+}
+
+@keyframes page-leave {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* A belt-and-braces guard: the hook already skips the transition, but a
+   transition started before the preference changed should still stop moving. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}

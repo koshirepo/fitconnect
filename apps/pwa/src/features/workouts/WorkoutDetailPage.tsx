@@ -1,5 +1,6 @@
 import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
+import { useWakeLock } from "@/lib/use-wake-lock";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useParams } from "react-router-dom";
 import { useAppNavigate } from "@/lib/use-app-navigate";
@@ -28,6 +29,10 @@ import AvatarCard from "@/components/ui/avatarCard";
 import MemberSelector from "@/components/ui/memberSelector";
 
 export default function WorkoutDetailPage() {
+  // Read between sets with the phone on a bench, so the gap between glances is
+  // longer than any sensible screen timeout.
+  useWakeLock();
+
   const { planId } = useParams<{ planId: string }>();
   const navigate = useAppNavigate();
   const { currentTenantId } = useAuthStore();

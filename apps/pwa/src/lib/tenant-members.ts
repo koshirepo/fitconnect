@@ -1,4 +1,5 @@
 import { tenantsApi } from "@/api/tenants";
+import { getNetworkQuality } from "@/lib/network-status";
 import type { TenantMember } from "@/types/api";
 
 type LoadAllTenantMembersOptions = {
@@ -81,6 +82,16 @@ export async function loadAllTenantMembers(
   );
   const firstBatch = firstPage.data.data.members;
   const totalPages = firstPage.data.meta.totalPages;
+
+  // Downloading the whole roster is what keeps search and the tab counts
+  // instant, and it is a fair trade on a usable connection. On 2G, or with Data
+  // Saver on, it is a fair trade no longer: the reader waits on twenty parallel
+  // requests to see the first row. They get the first page and the list works,
+  // narrower, straight away.
+  const { isSlow } = getNetworkQuality();
+  if (isSlow && totalPages > 1) {
+    return firstBatch;
+  }
 
   const allMembers =
     totalPages <= 1

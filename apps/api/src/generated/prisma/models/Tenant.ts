@@ -37,6 +37,7 @@ export type TenantMinAggregateOutputType = {
   createdAt: Date | null
   updatedAt: Date | null
   markdown: string | null
+  brandColor: string | null
   description: string | null
   platformExpiresAt: Date | null
 }
@@ -54,6 +55,7 @@ export type TenantMaxAggregateOutputType = {
   createdAt: Date | null
   updatedAt: Date | null
   markdown: string | null
+  brandColor: string | null
   description: string | null
   platformExpiresAt: Date | null
 }
@@ -71,6 +73,7 @@ export type TenantCountAggregateOutputType = {
   createdAt: number
   updatedAt: number
   markdown: number
+  brandColor: number
   description: number
   platformExpiresAt: number
   _all: number
@@ -90,6 +93,7 @@ export type TenantMinAggregateInputType = {
   createdAt?: true
   updatedAt?: true
   markdown?: true
+  brandColor?: true
   description?: true
   platformExpiresAt?: true
 }
@@ -107,6 +111,7 @@ export type TenantMaxAggregateInputType = {
   createdAt?: true
   updatedAt?: true
   markdown?: true
+  brandColor?: true
   description?: true
   platformExpiresAt?: true
 }
@@ -124,6 +129,7 @@ export type TenantCountAggregateInputType = {
   createdAt?: true
   updatedAt?: true
   markdown?: true
+  brandColor?: true
   description?: true
   platformExpiresAt?: true
   _all?: true
@@ -214,6 +220,7 @@ export type TenantGroupByOutputType = {
   createdAt: Date
   updatedAt: Date
   markdown: string | null
+  brandColor: string | null
   description: string | null
   platformExpiresAt: Date | null
   _count: TenantCountAggregateOutputType | null
@@ -252,6 +259,7 @@ export type TenantWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Tenant"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Tenant"> | Date | string
   markdown?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  brandColor?: Prisma.StringNullableFilter<"Tenant"> | string | null
   description?: Prisma.StringNullableFilter<"Tenant"> | string | null
   platformExpiresAt?: Prisma.DateTimeNullableFilter<"Tenant"> | Date | string | null
   memberships?: Prisma.TenantMembershipListRelationFilter
@@ -292,6 +300,7 @@ export type TenantOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   markdown?: Prisma.SortOrderInput | Prisma.SortOrder
+  brandColor?: Prisma.SortOrderInput | Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   platformExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   memberships?: Prisma.TenantMembershipOrderByRelationAggregateInput
@@ -335,6 +344,7 @@ export type TenantWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Tenant"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Tenant"> | Date | string
   markdown?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  brandColor?: Prisma.StringNullableFilter<"Tenant"> | string | null
   description?: Prisma.StringNullableFilter<"Tenant"> | string | null
   platformExpiresAt?: Prisma.DateTimeNullableFilter<"Tenant"> | Date | string | null
   memberships?: Prisma.TenantMembershipListRelationFilter
@@ -375,6 +385,7 @@ export type TenantOrderByWithAggregationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   markdown?: Prisma.SortOrderInput | Prisma.SortOrder
+  brandColor?: Prisma.SortOrderInput | Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   platformExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.TenantCountOrderByAggregateInput
@@ -398,6 +409,7 @@ export type TenantScalarWhereWithAggregatesInput = {
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Tenant"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Tenant"> | Date | string
   markdown?: Prisma.StringNullableWithAggregatesFilter<"Tenant"> | string | null
+  brandColor?: Prisma.StringNullableWithAggregatesFilter<"Tenant"> | string | null
   description?: Prisma.StringNullableWithAggregatesFilter<"Tenant"> | string | null
   platformExpiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Tenant"> | Date | string | null
 }
@@ -415,6 +427,7 @@ export type TenantCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -455,6 +468,7 @@ export type TenantUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -495,6 +509,7 @@ export type TenantUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -535,6 +550,7 @@ export type TenantUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -575,6 +591,7 @@ export type TenantCreateManyInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
 }
@@ -592,6 +609,7 @@ export type TenantUpdateManyMutationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -609,6 +627,7 @@ export type TenantUncheckedUpdateManyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -626,6 +645,7 @@ export type TenantCountOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   markdown?: Prisma.SortOrder
+  brandColor?: Prisma.SortOrder
   description?: Prisma.SortOrder
   platformExpiresAt?: Prisma.SortOrder
 }
@@ -643,6 +663,7 @@ export type TenantMaxOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   markdown?: Prisma.SortOrder
+  brandColor?: Prisma.SortOrder
   description?: Prisma.SortOrder
   platformExpiresAt?: Prisma.SortOrder
 }
@@ -660,6 +681,7 @@ export type TenantMinOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   markdown?: Prisma.SortOrder
+  brandColor?: Prisma.SortOrder
   description?: Prisma.SortOrder
   platformExpiresAt?: Prisma.SortOrder
 }
@@ -1015,6 +1037,7 @@ export type TenantCreateWithoutRolesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -1054,6 +1077,7 @@ export type TenantUncheckedCreateWithoutRolesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -1109,6 +1133,7 @@ export type TenantUpdateWithoutRolesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -1148,6 +1173,7 @@ export type TenantUncheckedUpdateWithoutRolesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -1187,6 +1213,7 @@ export type TenantCreateWithoutRolePermissionsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -1226,6 +1253,7 @@ export type TenantUncheckedCreateWithoutRolePermissionsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -1281,6 +1309,7 @@ export type TenantUpdateWithoutRolePermissionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -1320,6 +1349,7 @@ export type TenantUncheckedUpdateWithoutRolePermissionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -1359,6 +1389,7 @@ export type TenantCreateWithoutSettingsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -1398,6 +1429,7 @@ export type TenantUncheckedCreateWithoutSettingsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -1453,6 +1485,7 @@ export type TenantUpdateWithoutSettingsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -1492,6 +1525,7 @@ export type TenantUncheckedUpdateWithoutSettingsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -1531,6 +1565,7 @@ export type TenantCreateWithoutChargesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -1570,6 +1605,7 @@ export type TenantUncheckedCreateWithoutChargesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -1625,6 +1661,7 @@ export type TenantUpdateWithoutChargesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -1664,6 +1701,7 @@ export type TenantUncheckedUpdateWithoutChargesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -1703,6 +1741,7 @@ export type TenantCreateWithoutMembershipsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutTenantInput
@@ -1742,6 +1781,7 @@ export type TenantUncheckedCreateWithoutMembershipsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutTenantInput
@@ -1797,6 +1837,7 @@ export type TenantUpdateWithoutMembershipsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutTenantNestedInput
@@ -1836,6 +1877,7 @@ export type TenantUncheckedUpdateWithoutMembershipsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutTenantNestedInput
@@ -1875,6 +1917,7 @@ export type TenantCreateWithoutSubscriptionsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -1914,6 +1957,7 @@ export type TenantUncheckedCreateWithoutSubscriptionsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -1969,6 +2013,7 @@ export type TenantUpdateWithoutSubscriptionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -2008,6 +2053,7 @@ export type TenantUncheckedUpdateWithoutSubscriptionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -2047,6 +2093,7 @@ export type TenantCreateWithoutShiftsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -2086,6 +2133,7 @@ export type TenantUncheckedCreateWithoutShiftsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -2141,6 +2189,7 @@ export type TenantUpdateWithoutShiftsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -2180,6 +2229,7 @@ export type TenantUncheckedUpdateWithoutShiftsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -2219,6 +2269,7 @@ export type TenantCreateWithoutTodosInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -2258,6 +2309,7 @@ export type TenantUncheckedCreateWithoutTodosInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -2313,6 +2365,7 @@ export type TenantUpdateWithoutTodosInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -2352,6 +2405,7 @@ export type TenantUncheckedUpdateWithoutTodosInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -2391,6 +2445,7 @@ export type TenantCreateWithoutPaymentsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -2430,6 +2485,7 @@ export type TenantUncheckedCreateWithoutPaymentsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -2485,6 +2541,7 @@ export type TenantUpdateWithoutPaymentsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -2524,6 +2581,7 @@ export type TenantUncheckedUpdateWithoutPaymentsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -2563,6 +2621,7 @@ export type TenantCreateWithoutPaymentRemindersInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -2602,6 +2661,7 @@ export type TenantUncheckedCreateWithoutPaymentRemindersInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -2657,6 +2717,7 @@ export type TenantUpdateWithoutPaymentRemindersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -2696,6 +2757,7 @@ export type TenantUncheckedUpdateWithoutPaymentRemindersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -2735,6 +2797,7 @@ export type TenantCreateWithoutCouponsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -2774,6 +2837,7 @@ export type TenantUncheckedCreateWithoutCouponsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -2829,6 +2893,7 @@ export type TenantUpdateWithoutCouponsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -2868,6 +2933,7 @@ export type TenantUncheckedUpdateWithoutCouponsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -2907,6 +2973,7 @@ export type TenantCreateWithoutCouponRedemptionsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -2946,6 +3013,7 @@ export type TenantUncheckedCreateWithoutCouponRedemptionsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -3001,6 +3069,7 @@ export type TenantUpdateWithoutCouponRedemptionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -3040,6 +3109,7 @@ export type TenantUncheckedUpdateWithoutCouponRedemptionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -3079,6 +3149,7 @@ export type TenantCreateWithoutCoinLedgerInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -3118,6 +3189,7 @@ export type TenantUncheckedCreateWithoutCoinLedgerInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -3173,6 +3245,7 @@ export type TenantUpdateWithoutCoinLedgerInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -3212,6 +3285,7 @@ export type TenantUncheckedUpdateWithoutCoinLedgerInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -3251,6 +3325,7 @@ export type TenantCreateWithoutMembershipFreezesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -3290,6 +3365,7 @@ export type TenantUncheckedCreateWithoutMembershipFreezesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -3345,6 +3421,7 @@ export type TenantUpdateWithoutMembershipFreezesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -3384,6 +3461,7 @@ export type TenantUncheckedUpdateWithoutMembershipFreezesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -3423,6 +3501,7 @@ export type TenantCreateWithoutWorkoutPlansInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -3462,6 +3541,7 @@ export type TenantUncheckedCreateWithoutWorkoutPlansInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -3517,6 +3597,7 @@ export type TenantUpdateWithoutWorkoutPlansInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -3556,6 +3637,7 @@ export type TenantUncheckedUpdateWithoutWorkoutPlansInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -3595,6 +3677,7 @@ export type TenantCreateWithoutBadgesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -3634,6 +3717,7 @@ export type TenantUncheckedCreateWithoutBadgesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -3689,6 +3773,7 @@ export type TenantUpdateWithoutBadgesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -3728,6 +3813,7 @@ export type TenantUncheckedUpdateWithoutBadgesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -3767,6 +3853,7 @@ export type TenantCreateWithoutPlatformPaymentsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -3806,6 +3893,7 @@ export type TenantUncheckedCreateWithoutPlatformPaymentsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -3861,6 +3949,7 @@ export type TenantUpdateWithoutPlatformPaymentsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -3900,6 +3989,7 @@ export type TenantUncheckedUpdateWithoutPlatformPaymentsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -3939,6 +4029,7 @@ export type TenantCreateWithoutAttendancesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -3978,6 +4069,7 @@ export type TenantUncheckedCreateWithoutAttendancesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -4033,6 +4125,7 @@ export type TenantUpdateWithoutAttendancesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -4072,6 +4165,7 @@ export type TenantUncheckedUpdateWithoutAttendancesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -4111,6 +4205,7 @@ export type TenantCreateWithoutAuditLogsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -4150,6 +4245,7 @@ export type TenantUncheckedCreateWithoutAuditLogsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -4205,6 +4301,7 @@ export type TenantUpdateWithoutAuditLogsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -4244,6 +4341,7 @@ export type TenantUncheckedUpdateWithoutAuditLogsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -4283,6 +4381,7 @@ export type TenantCreateWithoutStoreProductsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -4322,6 +4421,7 @@ export type TenantUncheckedCreateWithoutStoreProductsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -4377,6 +4477,7 @@ export type TenantUpdateWithoutStoreProductsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -4416,6 +4517,7 @@ export type TenantUncheckedUpdateWithoutStoreProductsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -4455,6 +4557,7 @@ export type TenantCreateWithoutLikesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -4494,6 +4597,7 @@ export type TenantUncheckedCreateWithoutLikesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -4549,6 +4653,7 @@ export type TenantUpdateWithoutLikesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -4588,6 +4693,7 @@ export type TenantUncheckedUpdateWithoutLikesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -4627,6 +4733,7 @@ export type TenantCreateWithoutCommentsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -4666,6 +4773,7 @@ export type TenantUncheckedCreateWithoutCommentsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -4721,6 +4829,7 @@ export type TenantUpdateWithoutCommentsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -4760,6 +4869,7 @@ export type TenantUncheckedUpdateWithoutCommentsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -4799,6 +4909,7 @@ export type TenantCreateWithoutStoreOrdersInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipCreateNestedManyWithoutTenantInput
@@ -4838,6 +4949,7 @@ export type TenantUncheckedCreateWithoutStoreOrdersInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   markdown?: string | null
+  brandColor?: string | null
   description?: string | null
   platformExpiresAt?: Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
@@ -4893,6 +5005,7 @@ export type TenantUpdateWithoutStoreOrdersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUpdateManyWithoutTenantNestedInput
@@ -4932,6 +5045,7 @@ export type TenantUncheckedUpdateWithoutStoreOrdersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   markdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  brandColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   platformExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   memberships?: Prisma.TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
@@ -5191,6 +5305,7 @@ export type TenantSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   createdAt?: boolean
   updatedAt?: boolean
   markdown?: boolean
+  brandColor?: boolean
   description?: boolean
   platformExpiresAt?: boolean
   memberships?: boolean | Prisma.Tenant$membershipsArgs<ExtArgs>
@@ -5232,6 +5347,7 @@ export type TenantSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   createdAt?: boolean
   updatedAt?: boolean
   markdown?: boolean
+  brandColor?: boolean
   description?: boolean
   platformExpiresAt?: boolean
 }, ExtArgs["result"]["tenant"]>
@@ -5249,6 +5365,7 @@ export type TenantSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   createdAt?: boolean
   updatedAt?: boolean
   markdown?: boolean
+  brandColor?: boolean
   description?: boolean
   platformExpiresAt?: boolean
 }, ExtArgs["result"]["tenant"]>
@@ -5266,11 +5383,12 @@ export type TenantSelectScalar = {
   createdAt?: boolean
   updatedAt?: boolean
   markdown?: boolean
+  brandColor?: boolean
   description?: boolean
   platformExpiresAt?: boolean
 }
 
-export type TenantOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "slug" | "email" | "phone" | "logoUrl" | "address" | "estd" | "status" | "createdAt" | "updatedAt" | "markdown" | "description" | "platformExpiresAt", ExtArgs["result"]["tenant"]>
+export type TenantOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "slug" | "email" | "phone" | "logoUrl" | "address" | "estd" | "status" | "createdAt" | "updatedAt" | "markdown" | "brandColor" | "description" | "platformExpiresAt", ExtArgs["result"]["tenant"]>
 export type TenantInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   memberships?: boolean | Prisma.Tenant$membershipsArgs<ExtArgs>
   subscriptions?: boolean | Prisma.Tenant$subscriptionsArgs<ExtArgs>
@@ -5346,6 +5464,12 @@ export type $TenantPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
      * Optional markdown description for the tenant (e.g. about page)
      */
     markdown: string | null
+    /**
+     * The gym's own colour, as a hex string, used for the app's primary accent
+     * on that gym's pages. Null means the platform's default, which is what
+     * every gym looked like before this existed.
+     */
+    brandColor: string | null
     /**
      * Short plain-text tagline shown below the gym name on the public profile
      */
@@ -5809,6 +5933,7 @@ export interface TenantFieldRefs {
   readonly createdAt: Prisma.FieldRef<"Tenant", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Tenant", 'DateTime'>
   readonly markdown: Prisma.FieldRef<"Tenant", 'String'>
+  readonly brandColor: Prisma.FieldRef<"Tenant", 'String'>
   readonly description: Prisma.FieldRef<"Tenant", 'String'>
   readonly platformExpiresAt: Prisma.FieldRef<"Tenant", 'DateTime'>
 }

@@ -10,7 +10,6 @@
 import * as React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  ArrowLeft,
   Coins,
   Minus,
   Plus,
@@ -22,7 +21,14 @@ import {
 } from "lucide-react";
 
 import { publicApi } from "@/api/public";
+import {
+  readCachedTenantBranding,
+  writeCachedTenantBranding,
+  type TenantBranding,
+} from "@/lib/tenant-branding";
+import { resolveAssetUrl } from "@/lib/assets";
 import { getApiError } from "@/api/client";
+import { haptics } from "@/lib/haptics";
 import { useAuthStore } from "@/stores/auth";
 import { useCurrentTenantId } from "@/api/queries/shared";
 import {
@@ -32,10 +38,10 @@ import {
   useVerifyStoreCheckout,
 } from "@/api/queries/store";
 import { openRazorpayCheckout } from "@/lib/razorpay-checkout";
+import { useVirtualKeyboard } from "@/lib/use-virtual-keyboard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { CardsGridSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -92,6 +98,13 @@ export default function PublicStorePage() {
 
   const [products, setProducts] = React.useState<StoreProduct[]>([]);
   const [gymName, setGymName] = React.useState("");
+  // The shop wears the gym's name and mark, not the platform's. Read from the
+  // same cache the login screen and the install prompt use, so a member who has
+  // been here before sees the branding on the first frame rather than after a
+  // round trip.
+  const [brand, setBrand] = React.useState<TenantBranding | null>(() =>
+    readCachedTenantBranding(),
+  );
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
 
@@ -102,6 +115,11 @@ export default function PublicStorePage() {
 
   const [basket, setBasket] = React.useState<BasketEntry[]>([]);
   const [basketOpen, setBasketOpen] = React.useState(false);
+  // The basket is where somebody types their name and phone on a phone held in
+  // one hand. The viewport meta shrinks the layout so the pay button stays
+  // above the keyboard; this drops the prose that would otherwise push it back
+  // down into what little room is left.
+  const keyboard = useVirtualKeyboard();
 
   const startCheckout = useStartStoreCheckout();
   const verifyCheckout = useVerifyStoreCheckout();
@@ -136,6 +154,34 @@ export default function PublicStorePage() {
       active = false;
     };
   }, []);
+
+  React.useEffect(() => {
+    if (brand) return;
+
+    const host = typeof window === "undefined" ? "" : window.location.host;
+    let active = true;
+
+    publicApi
+      .getTenantBranding(host)
+      .then((res) => {
+        const next = res.data.data.tenant as TenantBranding | undefined;
+        if (!next || !active) return;
+        setBrand(next);
+        writeCachedTenantBranding(next, host);
+      })
+      .catch(() => {
+        // The shop works unbranded; a missing logo is not worth an error state.
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [brand]);
+
+  const brandLogo = brand?.logoUrl
+    ? (resolveAssetUrl(brand.logoUrl) ?? brand.logoUrl)
+    : null;
+  const storeTitle = brand?.name ?? gymName;
 
   const addToBasket = React.useCallback(
     (product: StoreProduct, variant: StoreVariant) => {
@@ -292,6 +338,7 @@ export default function PublicStorePage() {
         paymentId: result.paymentId,
         signature: result.signature,
       });
+      haptics.payment();
       clearBasket();
       setBasketOpen(false);
       toast.success("Paid. Collect it from the counter.");
@@ -353,22 +400,80 @@ export default function PublicStorePage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
-        <CardsGridSkeleton count={8} className="gap-3 sm:grid-cols-2 lg:grid-cols-4" />
+      <div className="min-h-screen bg-muted/40">
+        <header className="gradient-brand px-4 py-6 md:px-6 md:py-8">
+          <div className="mx-auto flex max-w-6xl items-center gap-4">
+            <div className="h-16 w-16 shrink-0 animate-pulse rounded-2xl bg-white/20 md:h-20 md:w-20" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="h-7 w-48 animate-pulse rounded bg-white/20" />
+              <div className="h-4 w-64 animate-pulse rounded bg-white/15" />
+            </div>
+          </div>
+        </header>
+        <div className="mx-auto max-w-6xl p-4 md:p-6">
+          <CardsGridSkeleton count={8} className="gap-3 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4" />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-muted/40">
-      {/* The shop's own bar: search and categories stay put while the grid
-          scrolls, which is the whole ergonomics of browsing a catalogue. */}
+      {/* The gym's own shopfront sign. A storefront that opens on a bare grid
+          could belong to anybody; the mark and the name are what say whose shop
+          this is, and they are the first thing above the fold. */}
+      <header className="gradient-brand relative overflow-hidden text-primary-foreground">
+        {/* A soft wash so the text keeps its contrast over either brand colour. */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
+
+        <div className="relative mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate("/")}
+              aria-label={storeTitle ? `Back to ${storeTitle}` : "Back to the gym"}
+              className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white/15 ring-1 ring-white/25 backdrop-blur transition-transform hover:scale-105 md:h-20 md:w-20"
+            >
+              {brandLogo ? (
+                <img
+                  src={brandLogo}
+                  alt={storeTitle ? `${storeTitle} logo` : "Gym logo"}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <ShoppingBag className="h-8 w-8" />
+              )}
+            </button>
+
+            <div className="min-w-0">
+              {/* The name is the way back. A shopfront sign is what you press
+                  to leave the shop, so it does the job the back button was
+                  doing without spending a row on saying so. */}
+              <h1 className="truncate text-2xl font-bold tracking-tight md:text-3xl">
+                <button
+                  onClick={() => navigate("/")}
+                  className="rounded text-left hover:underline focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none"
+                >
+                  {storeTitle ? `${storeTitle} Store` : "Store"}
+                </button>
+              </h1>
+              <p className="mt-0.5 line-clamp-2 text-sm text-primary-foreground/80">
+                {brand?.description || "Supplements and kit, sold at the gym"}
+              </p>
+              {products.length > 0 && (
+                <p className="mt-1 text-xs text-primary-foreground/70">
+                  {products.length} product{products.length === 1 ? "" : "s"} · collect at
+                  the counter
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Search and categories stay put while the grid scrolls, which is the
+          whole ergonomics of browsing a catalogue. */}
       <div className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3 md:px-6">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
-            <ArrowLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">Back</span>
-          </Button>
 
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -388,7 +493,12 @@ export default function PublicStorePage() {
             aria-label={`Basket, ${itemCount} item${itemCount === 1 ? "" : "s"}`}
           >
             <ShoppingCart className="h-4 w-4" />
-            <span className="hidden sm:inline">Cart</span>
+            {/* The running total, not just a count. What somebody wants to know
+                before opening a basket is what it will cost, and on a phone the
+                word "Cart" is the least useful thing in the button. */}
+            <span className="hidden sm:inline">
+              {itemCount > 0 ? formatCurrency(subtotal) : "Cart"}
+            </span>
             {itemCount > 0 && (
               <span className="ml-1 rounded-full bg-background/25 px-1.5 text-xs font-semibold">
                 {itemCount}
@@ -398,20 +508,38 @@ export default function PublicStorePage() {
         </div>
 
         <div className="mx-auto flex max-w-6xl items-center gap-2 overflow-x-auto px-4 pb-3 md:px-6">
-          {CATEGORIES.map((entry) => (
-            <button
-              key={entry.value}
-              onClick={() => setCategory(entry.value)}
-              className={cn(
-                "shrink-0 rounded-full border px-3 py-1.5 text-sm transition-colors",
-                category === entry.value
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-background hover:bg-muted",
-              )}
-            >
-              {entry.label}
-            </button>
-          ))}
+          {CATEGORIES.map((entry) => {
+            const count = entry.value
+              ? products.filter((product) => product.category === entry.value).length
+              : products.length;
+
+            return (
+              <button
+                key={entry.value}
+                onClick={() => setCategory(entry.value)}
+                className={cn(
+                  "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors",
+                  category === entry.value
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-background hover:bg-muted",
+                )}
+              >
+                {entry.label}
+                {/* The count is what turns a filter into a decision: nobody
+                    wants to tap a category to discover it is empty. */}
+                <span
+                  className={cn(
+                    "rounded-full px-1.5 text-[11px]",
+                    category === entry.value
+                      ? "bg-primary-foreground/20"
+                      : "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
 
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <span className="hidden text-xs text-muted-foreground sm:inline">Sort by</span>
@@ -434,7 +562,7 @@ export default function PublicStorePage() {
         {reference && (
           <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4">
             <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-              Reserved — quote {reference} at the counter
+              Reserved — quote {reference} at {storeTitle || "the counter"}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
               Nothing has been charged yet. Pay when you collect it, and bring the phone
@@ -472,11 +600,15 @@ export default function PublicStorePage() {
               return (
                 <div
                   key={product.id}
-                  className="group flex flex-col overflow-hidden rounded-lg border border-border bg-background transition-shadow hover:shadow-md"
+                  className={cn(
+                    "group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-all",
+                    "hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg",
+                    stock === 0 && "opacity-70",
+                  )}
                 >
                   <button
                     onClick={() => navigate(`/store/products/${product.id}`)}
-                    className="block aspect-square overflow-hidden bg-muted/50"
+                    className="relative block aspect-square overflow-hidden bg-muted/40"
                     aria-label={`Open ${product.name}`}
                   >
                     {photo ? (
@@ -490,50 +622,65 @@ export default function PublicStorePage() {
                         <ShoppingBag className="h-8 w-8 text-muted-foreground" />
                       </div>
                     )}
+
+                    {/* Scarcity where it is true and useful, and nowhere else.
+                        A badge on every card is decoration; on the last two
+                        tubs it is information. */}
+                    {stock === 0 ? (
+                      <span className="absolute inset-x-0 bottom-0 bg-destructive/90 py-1 text-center text-[11px] font-semibold text-destructive-foreground">
+                        Out of stock
+                      </span>
+                    ) : stock <= 3 ? (
+                      <span className="absolute top-2 left-2 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-semibold text-amber-950">
+                        Only {stock} left
+                      </span>
+                    ) : null}
+
+                    {product.coinsGranted > 0 && (
+                      <span className="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-background/90 px-2 py-0.5 text-[10px] font-semibold shadow-sm backdrop-blur">
+                        <Coins className="h-3 w-3" />+{product.coinsGranted}
+                      </span>
+                    )}
                   </button>
 
-                  <div className="flex min-w-0 flex-1 flex-col gap-1.5 p-3">
+                  <div className="flex min-w-0 flex-1 flex-col gap-2 p-3">
                     <button
                       onClick={() => navigate(`/store/products/${product.id}`)}
-                      className="line-clamp-2 text-left text-sm font-medium hover:text-primary"
+                      className="line-clamp-2 text-left text-sm leading-snug font-medium hover:text-primary"
                     >
                       {product.name}
                     </button>
 
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-base font-bold">{formatCurrency(price)}</span>
-                      {product.variants.length > 1 && (
-                        <span className="text-xs text-muted-foreground">onwards</span>
+                    <div className="mt-auto space-y-2">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-lg font-bold">{formatCurrency(price)}</span>
+                        {product.variants.length > 1 && (
+                          <span className="text-xs text-muted-foreground">onwards</span>
+                        )}
+                      </div>
+
+                      {stock === 0 ? (
+                        <Button size="sm" variant="outline" className="w-full" disabled>
+                          Sold out
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          className="w-full"
+                          onClick={() => {
+                            // One live variant is unambiguous, so it goes
+                            // straight in. More than one is a choice, and the
+                            // choice is made on the product page rather than
+                            // guessed here.
+                            if (buyable.length === 1) addToBasket(product, buyable[0]!);
+                            else navigate(`/store/products/${product.id}`);
+                          }}
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          {buyable.length === 1 ? "Add" : "Options"}
+                        </Button>
                       )}
                     </div>
-
-                    {product.coinsGranted > 0 && (
-                      <Badge variant="accent" className="w-fit text-[10px]">
-                        <Coins className="mr-1 h-3 w-3" />+{product.coinsGranted} coins
-                      </Badge>
-                    )}
-
-                    {stock === 0 ? (
-                      <p className="mt-auto pt-1 text-xs font-medium text-destructive">
-                        Out of stock
-                      </p>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="mt-auto"
-                        onClick={() => {
-                          // One live variant is unambiguous, so it goes straight
-                          // in. More than one is a choice, and the choice is
-                          // made on the product page rather than guessed here.
-                          if (buyable.length === 1) addToBasket(product, buyable[0]!);
-                          else navigate(`/store/products/${product.id}`);
-                        }}
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                        {buyable.length === 1 ? "Add to cart" : "Choose option"}
-                      </Button>
-                    )}
                   </div>
                 </div>
               );
@@ -541,6 +688,27 @@ export default function PublicStorePage() {
           </div>
         )}
       </div>
+
+      {/* A shop that ends in nothing looks broken. This is also the only
+          place a visitor is told where to collect from and who to call. */}
+      {(brand?.phone || brand?.address) && (
+        <footer className="mt-8 border-t border-border bg-background">
+          <div className="mx-auto max-w-6xl px-4 py-6 text-sm text-muted-foreground md:px-6">
+            <p className="font-medium text-foreground">
+              Collect from {storeTitle || "the gym"}
+            </p>
+            {brand.address && <p className="mt-1">{brand.address}</p>}
+            {brand.phone && (
+              <a
+                href={"tel:" + brand.phone}
+                className="mt-1 inline-block hover:text-foreground"
+              >
+                {brand.phone}
+              </a>
+            )}
+          </div>
+        </footer>
+      )}
 
       {/* ── Basket ─────────────────────────────────────────────────────────── */}
       {basketOpen && (
@@ -646,10 +814,12 @@ export default function PublicStorePage() {
 
               {basket.length > 0 && !asMember && (
                 <div className="space-y-3 rounded-lg border border-dashed border-border p-3">
-                  <p className="text-xs text-muted-foreground">
-                    Collection only — the gym holds it at the counter and you pay when
-                    you pick it up.
-                  </p>
+                  {!keyboard.open && (
+                    <p className="text-xs text-muted-foreground">
+                      Collection only — the gym holds it at the counter and you pay when
+                      you pick it up.
+                    </p>
+                  )}
                   <div className="space-y-1.5">
                     <Label htmlFor="buyer-name">Your name</Label>
                     <Input
@@ -706,10 +876,12 @@ export default function PublicStorePage() {
                       <Store className="h-4 w-4" />
                       Pay at the store
                     </Button>
-                    <p className="text-center text-xs text-muted-foreground">
-                      Paying at the store holds nothing back for you until a coach
-                      hands it over, so anything low on stock is safer bought now.
-                    </p>
+                    {!keyboard.open && (
+                      <p className="text-center text-xs text-muted-foreground">
+                        Paying at the store holds nothing back for you until a coach
+                        hands it over, so anything low on stock is safer bought now.
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <Button className="w-full" disabled={placing} onClick={reserveAsGuest}>

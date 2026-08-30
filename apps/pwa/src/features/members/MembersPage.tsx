@@ -380,6 +380,8 @@ export default function MembersPage() {
       {!m._pending && m.hasPendingPayment && m.phone && (
         <a
           href={getPendingPaymentReminderUrl(m) ?? undefined}
+          target="_blank"
+          rel="noopener noreferrer"
           title="Remind about the pending payment via WhatsApp"
           onClick={() => recordWhatsApp(m, "PENDING_PAYMENT", getPendingPaymentReminderText(m))}
         >
@@ -395,6 +397,8 @@ export default function MembersPage() {
       {!m._pending && m.isDue && m.phone && (
         <a
           href={getPaymentReminderUrl(m) ?? undefined}
+          target="_blank"
+          rel="noopener noreferrer"
           title="Send payment reminder via WhatsApp"
           onClick={() => recordWhatsApp(m, "RENEWAL_DUE", getPaymentReminderText(m))}
         >
@@ -421,6 +425,8 @@ export default function MembersPage() {
       {!m._pending && m.phone && (
         <a
           href={buildWhatsAppUrl(m.phone, `Hi ${m.name}`) ?? undefined}
+          target="_blank"
+          rel="noopener noreferrer"
           title="Chat on WhatsApp"
         >
           <Button

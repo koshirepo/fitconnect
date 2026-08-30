@@ -19,6 +19,7 @@ import {
 import { PhotoCapture } from "@/components/ui/photo-capture";
 import { DetailPageSkeleton } from "@/components/ui/skeleton";
 import { PushToggle } from "@/components/ui/push-toggle";
+import { PasskeysCard } from "./PasskeysCard";
 import { FreezeCard } from "@/components/ui/freeze-card";
 import { useCoinBalance } from "@/api/queries/coupons";
 import { useToast } from "@/components/ui/toast";
@@ -233,6 +234,12 @@ export default function ProfilePage() {
             <PushToggle description="Admins are notified when a member joins and when a payment comes in." />
           </CardContent>
         </Card>
+
+        {/* Renders nothing where the browser cannot do it, so it sits in the
+            flow rather than behind a condition here. */}
+        <div className="lg:col-span-2">
+          <PasskeysCard />
+        </div>
 
         {/* Photo Upload Dialog */}
         <Dialog open={photoDialogOpen} onOpenChange={setPhotoDialogOpen}>

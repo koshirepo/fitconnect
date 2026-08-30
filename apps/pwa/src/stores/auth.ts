@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { isAxiosError } from "axios";
+import { signInWithPasskey } from "@/api/passkeys";
 import type { User, TenantMembershipSummary } from "@/types/api";
 import { authApi } from "@/api/auth";
 import { resolveClientPermissions, type Permission } from "@/lib/permissions";
@@ -30,6 +31,14 @@ interface AuthState {
   canAll: (...permissions: Permission[]) => boolean;
       // Actions
   login: (email: string, password: string) => Promise<void>;
+  /**
+   * Sign in with a passkey.
+   *
+   * Takes the session the API already issued rather than credentials, because
+   * the credential half happened inside a native dialog this store never sees.
+   * Everything after that point is identical to a password sign-in.
+   */
+  loginWithPasskey: () => Promise<void>;
   logout: () => void;
   setTokens: (accessToken: string, refreshToken: string) => void;
   fetchMe: () => Promise<void>;
@@ -84,6 +93,25 @@ export const useAuthStore = create<AuthState>()(
         try {
           const { data: resp } = await authApi.login(email, password);
           const { accessToken, refreshToken, user } = resp.data;
+
+          set({
+            user,
+            accessToken,
+            refreshToken,
+            currentTenantId: user.membership?.tenantId ?? null,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+        } catch (err) {
+          set({ isLoading: false });
+          throw err;
+        }
+      },
+
+      loginWithPasskey: async () => {
+        set({ isLoading: true });
+        try {
+          const { accessToken, refreshToken, user } = await signInWithPasskey();
 
           set({
             user,

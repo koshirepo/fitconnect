@@ -19,7 +19,9 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
 import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { isTenantSubdomain } from "@/lib/subdomain";
+import { useViewTransitionLocation } from "@/lib/use-view-transition-location";
 import { useTenantInstallBranding } from "@/lib/install-branding";
+import { useBrandTheme } from "@/lib/brand-theme";
 import { ApexPathNormalizer, TenantPathNormalizer } from "@/features/auth/tenant-path-normalizer";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useAuthStore } from "@/stores/auth";
@@ -141,12 +143,22 @@ export default function App() {
   const { isAuthenticated, accessToken, fetchMe } = useAuthStore();
   const [authSyncing, setAuthSyncing] = React.useState(Boolean(isAuthenticated && accessToken));
   const isTenantHostView = isTenantSubdomain();
+  // One beat behind the browser's location while a page cross-fade runs, and
+  // exactly it otherwise. Both route trees render from this rather than from
+  // the router's own location, so a transition covers whichever host is in use.
+  const viewLocation = useViewTransitionLocation();
 
   // iOS reads the home-screen name and icon from meta tags rather than the
   // manifest, and a member can install from any screen — so this sits at the
   // root instead of on one page. `AppNudges`, mounted below, owns the same
   // lookup for its own wording; one call covers both.
-  useTenantInstallBranding();
+  const tenantBranding = useTenantInstallBranding();
+
+  // The gym's colour, painted over the platform's for as long as one of its
+  // pages is open. Mounted here rather than per screen because the accent
+  // belongs to the gym, not to a page: the storefront, the signup form, the ID
+  // card, and the dashboard all inherit it without knowing it exists.
+  useBrandTheme(tenantBranding?.brandColor);
 
   React.useEffect(() => {
     if (!isAuthenticated || !accessToken) {
@@ -167,7 +179,7 @@ export default function App() {
   }, [isAuthenticated, accessToken, fetchMe]);
 
   const tenantRoutes = (
-    <Routes>
+    <Routes location={viewLocation}>
       <Route path="/" element={<TenantPublicPage />} />
       {/* QR check-in links are generated from window.location.origin, so they
           land on the gym subdomain and need the route here too. */}
@@ -363,7 +375,7 @@ export default function App() {
         ) : (
         <PageSuspense>
           {isTenantHostView ? tenantRoutes : (
-            <Routes>
+            <Routes location={viewLocation}>
               <Route path="/attendance/qr/:tenantId" element={<AttendanceQrPage />} />
 
               {/* Public routes (no auth required) */}

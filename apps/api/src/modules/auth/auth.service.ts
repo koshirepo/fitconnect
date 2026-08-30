@@ -179,6 +179,60 @@ export const authService = {
    * Execute the `login` workflow for the auth module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
+  /**
+   * Everything a sign-in does once the credential has been accepted.
+   *
+   * Split out so a passkey login and a password login cannot drift apart: the
+   * account-status check, the gym-subdomain check, the tokens, and the shape of
+   * the payload are all decided here, once.
+   */
+  async issueSession(userId: string, requestTenant?: RequestTenantHost | null) {
+    const user = await authRepository.findUserWithMembershipsById(userId);
+    if (!user) return { error: "Account not found.", status: 401 as const };
+
+    if (user.status !== "ACTIVE") {
+      return { error: "Account is suspended or deleted.", status: 403 as const };
+    }
+
+    const tenantMismatch = checkTenantHostAccess(user, requestTenant);
+    if (tenantMismatch) return tenantMismatch;
+
+    const accessToken = await signAccessToken({
+      userId: user.id,
+      platformRole: user.platformRole as PlatformRole,
+      tenants: buildTenantsMap(user.memberships),
+    });
+
+    const refreshToken = generateRefreshToken();
+    await authRepository.createRefreshToken(
+      user.id,
+      refreshToken,
+      refreshTokenExpiresAt(),
+    );
+
+    const membership = mapMembership(user.memberships[0]);
+
+    return {
+      data: {
+        accessToken,
+        refreshToken,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone ?? null,
+          platformRole: user.platformRole as PlatformRole,
+          membership,
+          permissions: await resolveUserPermissions({
+            platformRole: user.platformRole as PlatformRole,
+            tenantRole: membership?.role,
+            tenantId: membership?.tenantId,
+          }),
+        },
+      },
+    };
+  },
+
   async login(input: LoginInput, requestTenant?: RequestTenantHost | null) {
     const user = await authRepository.findUserByEmail(input.email);
     if (!user) {

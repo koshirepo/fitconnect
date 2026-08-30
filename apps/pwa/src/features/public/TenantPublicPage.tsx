@@ -442,6 +442,8 @@ export default function TenantPublicPage() {
               {whatsappUrl && (
                 <a
                   href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
                 >
                   <MessageCircle className="h-4 w-4 text-muted-foreground" />

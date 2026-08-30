@@ -503,10 +503,6 @@ export type RoleUncheckedUpdateManyWithoutTenantNestedInput = {
   deleteMany?: Prisma.RoleScalarWhereInput | Prisma.RoleScalarWhereInput[]
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
-}
-
 export type RoleCreateWithoutTenantInput = {
   id?: string
   scope: string

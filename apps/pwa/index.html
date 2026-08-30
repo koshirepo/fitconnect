@@ -2,7 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!--
+      interactive-widget=resizes-content makes the on-screen keyboard shrink the
+      layout viewport rather than slide over it. The default overlays the page,
+      which on a phone hides exactly the thing a form was opened to reach: the
+      submit button pinned to the bottom. With this, a sticky footer sits above
+      the keyboard instead of behind it, and 100dvh stops meaning "under the
+      keyboard".
+
+      viewport-fit=cover is what lets the app paint into the notch and the home
+      indicator, and is why the layout uses env(safe-area-inset-*).
+    -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content"
+    />
     <meta name="theme-color" content="#0d1b2a" />
 
     <!-- Primary SEO Meta Tags -->

@@ -1,13 +1,14 @@
 import * as React from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
+import { isPasskeySupported, PasskeyCancelled } from "@/api/passkeys";
 import { getApiError } from "@/api/client";
 import { publicApi } from "@/api/public";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dumbbell } from "lucide-react";
+import { Dumbbell, Fingerprint } from "lucide-react";
 import { isTenantSubdomain } from "@/lib/subdomain";
 import { readCachedTenantBranding, writeCachedTenantBranding, type TenantBranding } from "@/lib/tenant-branding";
 import { resolveAssetUrl } from "@/lib/assets";
@@ -15,7 +16,10 @@ import { resolveAssetUrl } from "@/lib/assets";
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isAuthenticated } = useAuthStore();
+  const { login, loginWithPasskey, isAuthenticated } = useAuthStore();
+  // Offered only where it can work. A button that exists solely to fail is
+  // worse than no button, and this one has to survive Firefox and old Safari.
+  const [passkeysAvailable] = React.useState(isPasskeySupported);
   const from = (location.state as { from?: { pathname?: string; search?: string } } | null)?.from;
   const tenantContext = isTenantSubdomain();
   const defaultRedirect = tenantContext ? "/" : "/dashboard";
@@ -67,6 +71,30 @@ export default function LoginPage() {
       navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(getApiError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Sign in with whatever the device holds.
+   *
+   * No email first: with a resident key the authenticator already knows which
+   * account it is, which is the entire reason this beats the password it
+   * replaces — particularly for a member whose password is their phone number
+   * and whose email was invented for them at the desk.
+   */
+  const handlePasskey = async () => {
+    setError("");
+    setLoading(true);
+
+    try {
+      await loginWithPasskey();
+      navigate(redirectTo, { replace: true });
+    } catch (err) {
+      // Closing the prompt is a decision, not a failure. Saying nothing is the
+      // right response to somebody who changed their mind.
+      if (!(err instanceof PasskeyCancelled)) setError(getApiError(err));
     } finally {
       setLoading(false);
     }
@@ -147,6 +175,27 @@ export default function LoginPage() {
               </Link>
             </div>
           </form>
+
+          {passkeysAvailable && (
+            <>
+              <div className="my-4 flex items-center gap-3">
+                <span className="h-px flex-1 bg-border" />
+                <span className="text-xs text-muted-foreground">or</span>
+                <span className="h-px flex-1 bg-border" />
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled={loading}
+                onClick={handlePasskey}
+              >
+                <Fingerprint className="h-4 w-4" />
+                Sign in with a passkey
+              </Button>
+            </>
+          )}
 
           {/* Joining is gym-specific, so this only makes sense on a gym's own site. */}
           {tenantContext && (

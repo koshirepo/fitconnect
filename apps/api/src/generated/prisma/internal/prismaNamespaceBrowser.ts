@@ -52,6 +52,8 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
+  WebAuthnCredential: 'WebAuthnCredential',
+  WebAuthnChallenge: 'WebAuthnChallenge',
   IdempotencyKey: 'IdempotencyKey',
   PasswordResetToken: 'PasswordResetToken',
   RefreshToken: 'RefreshToken',
@@ -123,6 +125,35 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
+export const WebAuthnCredentialScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  credentialId: 'credentialId',
+  publicKey: 'publicKey',
+  counter: 'counter',
+  transports: 'transports',
+  discoverable: 'discoverable',
+  label: 'label',
+  createdAt: 'createdAt',
+  lastUsedAt: 'lastUsedAt'
+} as const
+
+export type WebAuthnCredentialScalarFieldEnum = (typeof WebAuthnCredentialScalarFieldEnum)[keyof typeof WebAuthnCredentialScalarFieldEnum]
+
+
+export const WebAuthnChallengeScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  handle: 'handle',
+  challenge: 'challenge',
+  purpose: 'purpose',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt'
+} as const
+
+export type WebAuthnChallengeScalarFieldEnum = (typeof WebAuthnChallengeScalarFieldEnum)[keyof typeof WebAuthnChallengeScalarFieldEnum]
+
+
 export const IdempotencyKeyScalarFieldEnum = {
   key: 'key',
   userId: 'userId',
@@ -173,6 +204,7 @@ export const TenantScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   markdown: 'markdown',
+  brandColor: 'brandColor',
   description: 'description',
   platformExpiresAt: 'platformExpiresAt'
 } as const

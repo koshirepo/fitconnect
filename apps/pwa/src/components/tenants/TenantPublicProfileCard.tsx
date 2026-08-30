@@ -71,6 +71,11 @@ export function TenantPublicProfileCard({
   const [address, setAddress] = React.useState(tenant.address ?? "");
   const [shortDescription, setShortDescription] = React.useState(tenant.description ?? "");
   const [markdown, setMarkdown] = React.useState(tenant.markdown ?? "");
+  const [brandColor, setBrandColor] = React.useState(
+    tenant.brandColor ?? "#E2571E",
+  );
+  /** Off means the platform default, which is what a null column means. */
+  const [brandColorOn, setBrandColorOn] = React.useState(Boolean(tenant.brandColor));
   const [logoFile, setLogoFile] = React.useState<File | null>(null);
   const [logoPreview, setLogoPreview] = React.useState<string | null>(tenant.logoUrl ?? null);
   const [saving, setSaving] = React.useState(false);
@@ -153,6 +158,7 @@ export function TenantPublicProfileCard({
         address: address.trim() ? address.trim() : null,
         logoUrl: nextLogoUrl ?? null,
         description: shortDescription.trim() ? shortDescription.trim() : null,
+        brandColor: brandColorOn ? brandColor : null,
         markdown: markdown.trim() ? markdown.trim() : null,
       };
 
@@ -319,6 +325,46 @@ export function TenantPublicProfileCard({
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground">{shortDescription.length}/300</p>
+              </div>
+
+              {/* One colour, everything else derived from it. The gradient
+                  stop and the readable text on top are computed in the
+                  browser, so there is nothing here that can disagree with
+                  itself. */}
+              <div className="space-y-2">
+                <Label htmlFor="tenant-brand-color">Brand Colour</Label>
+                <div className="flex flex-wrap items-center gap-3">
+                  <input
+                    id="tenant-brand-color"
+                    type="color"
+                    value={brandColor}
+                    disabled={saving || !brandColorOn}
+                    onChange={(e) => setBrandColor(e.target.value)}
+                    className="h-10 w-14 cursor-pointer rounded-md border border-input bg-background p-1 disabled:opacity-50"
+                  />
+                  <Input
+                    value={brandColor}
+                    disabled={saving || !brandColorOn}
+                    onChange={(e) => setBrandColor(e.target.value)}
+                    placeholder="#E2571E"
+                    className="w-32 font-mono"
+                  />
+                  <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <input
+                      type="checkbox"
+                      checked={brandColorOn}
+                      disabled={saving}
+                      onChange={(e) => setBrandColorOn(e.target.checked)}
+                      className="h-4 w-4 accent-primary"
+                    />
+                    Use our own colour
+                  </label>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Applied across every page on your gym&apos;s address — the
+                  storefront, the signup form, and the dashboard. Unticked, your
+                  pages use the FitConnect colour.
+                </p>
               </div>
             </div>
 

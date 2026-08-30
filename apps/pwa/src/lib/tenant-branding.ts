@@ -1,4 +1,7 @@
-const BRAND_CACHE_PREFIX = "fitconnect.tenant-branding";
+// Versioned: an entry written before a field existed would keep a returning
+// visitor on the old branding until the six hours ran out. Bumping the suffix
+// is how a new field reaches everybody on their next visit instead.
+const BRAND_CACHE_PREFIX = "fitconnect.tenant-branding.v2";
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
 export type TenantBranding = {
@@ -6,6 +9,8 @@ export type TenantBranding = {
   name: string;
   slug: string;
   logoUrl?: string | null;
+  /** The gym's accent colour, as hex. Null uses the platform's own. */
+  brandColor?: string | null;
   description?: string | null;
   markdown?: string | null;
   email?: string | null;

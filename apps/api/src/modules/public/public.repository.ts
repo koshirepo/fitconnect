@@ -16,6 +16,7 @@ const publicTenantSelect = {
   phone: true,
   address: true,
   logoUrl: true,
+  brandColor: true,
   markdown: true,
   description: true,
   estd: true,

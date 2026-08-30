@@ -8,6 +8,7 @@ import { useCharges, useShifts } from "@/api/queries/catalog";
 import { useAllMembers } from "@/api/queries/members";
 import { useQueryClient } from "@tanstack/react-query";
 import { getApiError } from "@/api/client";
+import { haptics } from "@/lib/haptics";
 import { storeFileOffline } from "@/lib/offline-files";
 import { queueMutation } from "@/lib/api-cache";
 import { getTenantDashboardPath } from "@/lib/subdomain";
@@ -169,6 +170,7 @@ export default function AddMemberPage() {
         }
 
         const res = await tenantsApi.addMember(currentTenantId, memberPayload);
+        haptics.member();
 
         // If the interceptor queued this offline, skip online-only side effects
         if (!res.data._offlineQueued) {
@@ -178,7 +180,13 @@ export default function AddMemberPage() {
           if (waText && memberData.phone) {
             const digits = memberData.phone.replace(/\D/g, "");
             const phone = digits.startsWith("91") ? digits : `91${digits}`;
-            window.location.assign(`https://wa.me/${phone}?text=${encodeURIComponent(waText)}`);
+            // A new tab: WhatsApp is a different application, and leaving in
+            // place would abandon the admission that was just completed.
+            window.open(
+              `https://wa.me/${phone}?text=${encodeURIComponent(waText)}`,
+              "_blank",
+              "noopener,noreferrer",
+            );
           }
         }
 

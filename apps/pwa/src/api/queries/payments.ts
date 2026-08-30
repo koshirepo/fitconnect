@@ -8,6 +8,7 @@
 import { keepPreviousData } from "@tanstack/react-query";
 import { paymentsApi } from "@/api/payments";
 import { queryKeys } from "@/lib/query-keys";
+import { getNetworkQuality } from "@/lib/network-status";
 import type {
   CreatePaymentPayload,
   CreateSubscriptionPayload,
@@ -77,6 +78,10 @@ export function useAllPayments(options: { enabled?: boolean; pageSize?: number }
       const first = unwrapPaginated(await paymentsApi.list(tenantId, 1, pageSize));
       const totalPages = first.meta.totalPages;
       if (totalPages <= 1) return first.data.payments;
+
+      // The ledger only grows, so it is the reading that hurts most on a bad
+      // link. One page beats a spinner that lasts half a minute.
+      if (getNetworkQuality().isSlow) return first.data.payments;
 
       const rest = await Promise.all(
         Array.from({ length: totalPages - 1 }, (_, index) =>

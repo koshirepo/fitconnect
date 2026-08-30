@@ -31,6 +31,31 @@ export const authRepository = {
   },
 
   /**
+   * The same shape as `findUserByEmail`, addressed by id.
+   *
+   * A passkey identifies the account by its credential rather than its address,
+   * and the session it issues needs the memberships the email lookup loads —
+   * so the two reads have to agree, and this is the one that keeps them
+   * agreeing rather than a second, thinner projection.
+   */
+  findUserWithMembershipsById(id: string) {
+    return prisma.user.findUnique({
+      where: { id },
+      include: {
+        memberships: {
+          where: { status: "ACTIVE" },
+          select: {
+            id: true,
+            tenantId: true,
+            role: true,
+            tenant: { select: { name: true, slug: true, platformExpiresAt: true } },
+          },
+        },
+      },
+    });
+  },
+
+  /**
    * Run the `find user by id` persistence operation for the auth module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */

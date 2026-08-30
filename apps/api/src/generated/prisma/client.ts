@@ -44,6 +44,31 @@ export { Prisma }
  */
 export type User = Prisma.UserModel
 /**
+ * Model WebAuthnCredential
+ * One passkey, registered on one device.
+ * 
+ * A member signs in with a fingerprint or a face instead of a password. That
+ * matters more here than in most apps: a member added at the desk gets their
+ * phone number as a password and, when they gave no email, a synthetic address
+ * they will never remember. A passkey replaces both with something the phone
+ * already holds.
+ * 
+ * The private key never leaves the authenticator. What is stored here is the
+ * public half, the id the browser hands back, and the signature counter that
+ * makes a cloned authenticator detectable.
+ */
+export type WebAuthnCredential = Prisma.WebAuthnCredentialModel
+/**
+ * Model WebAuthnChallenge
+ * A challenge issued for one WebAuthn ceremony, waiting to be answered.
+ * 
+ * The whole point of a challenge is that it is used once, so it is stored
+ * server-side and deleted on use rather than handed to the browser to give
+ * back. Rows are short-lived by nature and swept on the next issue for the
+ * same subject.
+ */
+export type WebAuthnChallenge = Prisma.WebAuthnChallengeModel
+/**
  * Model IdempotencyKey
  * A write the API has already applied, remembered so a replay of the same
  * queued mutation returns the original outcome instead of doing it twice.

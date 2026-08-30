@@ -116,6 +116,7 @@ export const publicService = {
          name: tenant.name,
          slug: tenant.slug,
          logoUrl: tenant.logoUrl,
+         brandColor: tenant.brandColor,
          description: tenant.description,
          markdown: tenant.markdown,
          email: tenant.email,

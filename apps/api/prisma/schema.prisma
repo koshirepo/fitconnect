@@ -38,6 +38,7 @@ model User {
 
   memberships              TenantMembership[]
   refreshTokens            RefreshToken[]
+  passkeys                 WebAuthnCredential[]
   passwordResetTokens      PasswordResetToken[]
   auditLogs                AuditLog[]             @relation("AuditActor")
   orders                   Order[]
@@ -50,6 +51,63 @@ model User {
   tenantComments           TenantComment[]
 
   @@index([email])
+}
+
+/// One passkey, registered on one device.
+///
+/// A member signs in with a fingerprint or a face instead of a password. That
+/// matters more here than in most apps: a member added at the desk gets their
+/// phone number as a password and, when they gave no email, a synthetic address
+/// they will never remember. A passkey replaces both with something the phone
+/// already holds.
+///
+/// The private key never leaves the authenticator. What is stored here is the
+/// public half, the id the browser hands back, and the signature counter that
+/// makes a cloned authenticator detectable.
+model WebAuthnCredential {
+  id           String @id @default(cuid())
+  userId       String
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Base64url, as the browser reports it. Unique across every account.
+  credentialId String @unique
+  /// The COSE public key, base64url.
+  publicKey    String
+  /// Signature counter. A value that does not advance is the documented signal
+  /// of a cloned authenticator, so it is stored rather than ignored.
+  counter      Int    @default(0)
+  /// "usb,nfc,ble,internal" — how the browser said it can be reached.
+  transports   String?
+  /// Whether the key lives on the device itself and can be used without the
+  /// account being named first. What makes a one-tap sign-in possible.
+  discoverable Boolean @default(false)
+  /// Whatever the owner calls it: "Pixel 8", "MacBook". Theirs to recognise.
+  label        String?
+  createdAt    DateTime @default(now())
+  lastUsedAt   DateTime?
+
+  @@index([userId])
+}
+
+/// A challenge issued for one WebAuthn ceremony, waiting to be answered.
+///
+/// The whole point of a challenge is that it is used once, so it is stored
+/// server-side and deleted on use rather than handed to the browser to give
+/// back. Rows are short-lived by nature and swept on the next issue for the
+/// same subject.
+model WebAuthnChallenge {
+  id        String   @id @default(cuid())
+  /// The user, when the ceremony has one. Null for a sign-in that has not named
+  /// an account yet — a discoverable-credential login.
+  userId    String?
+  /// Ties the challenge to one browser across the two calls of a ceremony.
+  handle    String   @unique
+  challenge String
+  /// "REGISTER" | "LOGIN"
+  purpose   String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
 }
 
 /// A write the API has already applied, remembered so a replay of the same
@@ -109,6 +167,10 @@ model Tenant {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   markdown    String? /// Optional markdown description for the tenant (e.g. about page)
+  /// The gym's own colour, as a hex string, used for the app's primary accent
+  /// on that gym's pages. Null means the platform's default, which is what
+  /// every gym looked like before this existed.
+  brandColor  String?
   description String? /// Short plain-text tagline shown below the gym name on the public profile
 
   platformExpiresAt DateTime?

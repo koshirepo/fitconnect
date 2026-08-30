@@ -38,6 +38,11 @@ self.addEventListener("push", (event) => {
       // repeat about the same one.
       tag: payload.tag || url,
       renotify: true,
+      // The same two-pulse pattern the app uses in the hand when a payment is
+      // taken, so an admin whose phone buzzes in a pocket knows what happened
+      // before reading anything. Android only; iOS ignores it, and a browser
+      // that does not support it drops the key.
+      vibrate: [35, 60, 35],
       data: { url },
     }),
   );

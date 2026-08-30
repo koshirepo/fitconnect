@@ -11,6 +11,7 @@ import * as React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { publicApi } from "@/api/public";
 import { getApiError } from "@/api/client";
+import { haptics } from "@/lib/haptics";
 import { openRazorpayCheckout } from "@/lib/razorpay-checkout";
 import { resolveAssetUrl } from "@/lib/assets";
 import MemberForm, { type MemberFormData } from "@/components/forms/MemberForm";
@@ -230,6 +231,9 @@ export default function SignupPage() {
         paymentId: result.paymentId,
         signature: result.signature,
       });
+
+      // Joined, and paid to do it: both of the things this app buzzes for.
+      haptics.payment();
 
       const active = verified.data.data.membership?.status === "ACTIVE";
 

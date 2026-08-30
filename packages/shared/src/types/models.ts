@@ -64,6 +64,8 @@ export interface Tenant {
   phone?: string | null;
   address?: string | null;
   logoUrl?: string | null;
+  /** Hex accent colour for this gym's pages. Null uses the platform default. */
+  brandColor?: string | null;
   markdown?: string | null;
   description?: string | null;
   estd?: string | null;
@@ -95,6 +97,8 @@ export interface UpdateTenantPayload {
   phone?: string | null;
   address?: string | null;
   logoUrl?: string | null;
+  /** Hex accent colour. Null puts this gym back on the platform's own. */
+  brandColor?: string | null;
   markdown?: string | null;
   description?: string | null;
 }

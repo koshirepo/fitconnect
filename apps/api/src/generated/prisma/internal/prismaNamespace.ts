@@ -398,6 +398,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   User: 'User',
+  WebAuthnCredential: 'WebAuthnCredential',
+  WebAuthnChallenge: 'WebAuthnChallenge',
   IdempotencyKey: 'IdempotencyKey',
   PasswordResetToken: 'PasswordResetToken',
   RefreshToken: 'RefreshToken',
@@ -452,7 +454,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "idempotencyKey" | "passwordResetToken" | "refreshToken" | "tenant" | "role" | "rolePermissionOverride" | "tenantSettings" | "tenantCharge" | "tenantMembership" | "subscription" | "shift" | "todo" | "payment" | "paymentReminder" | "coupon" | "couponRedemption" | "coinLedgerEntry" | "membershipFreeze" | "product" | "productReview" | "productReviewComment" | "productReviewHelpful" | "order" | "orderItem" | "workoutPlan" | "workoutPlanAssignment" | "badge" | "platformPayment" | "attendance" | "auditLog" | "pushSubscription" | "storeProduct" | "tenantLike" | "tenantComment" | "storeProductLike" | "storeProductComment" | "storeVariant" | "storeOrder" | "storeOrderItem"
+    modelProps: "user" | "webAuthnCredential" | "webAuthnChallenge" | "idempotencyKey" | "passwordResetToken" | "refreshToken" | "tenant" | "role" | "rolePermissionOverride" | "tenantSettings" | "tenantCharge" | "tenantMembership" | "subscription" | "shift" | "todo" | "payment" | "paymentReminder" | "coupon" | "couponRedemption" | "coinLedgerEntry" | "membershipFreeze" | "product" | "productReview" | "productReviewComment" | "productReviewHelpful" | "order" | "orderItem" | "workoutPlan" | "workoutPlanAssignment" | "badge" | "platformPayment" | "attendance" | "auditLog" | "pushSubscription" | "storeProduct" | "tenantLike" | "tenantComment" | "storeProductLike" | "storeProductComment" | "storeVariant" | "storeOrder" | "storeOrderItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -527,6 +529,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.UserCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.UserCountAggregateOutputType> | number
+        }
+      }
+    }
+    WebAuthnCredential: {
+      payload: Prisma.$WebAuthnCredentialPayload<ExtArgs>
+      fields: Prisma.WebAuthnCredentialFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WebAuthnCredentialFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAuthnCredentialPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WebAuthnCredentialFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAuthnCredentialPayload>
+        }
+        findFirst: {
+          args: Prisma.WebAuthnCredentialFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAuthnCredentialPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WebAuthnCredentialFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAuthnCredentialPayload>
+        }
+        findMany: {
+          args: Prisma.WebAuthnCredentialFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAuthnCredentialPayload>[]
+        }
+        create: {
+          args: Prisma.WebAuthnCredentialCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAuthnCredentialPayload>
+        }
+        createMany: {
+          args: Prisma.WebAuthnCredentialCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WebAuthnCredentialCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAuthnCredentialPayload>[]
+        }
+        delete: {
+          args: Prisma.WebAuthnCredentialDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAuthnCredentialPayload>
+        }
+        update: {
+          args: Prisma.WebAuthnCredentialUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAuthnCredentialPayload>
+        }
+        deleteMany: {
+          args: Prisma.WebAuthnCredentialDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WebAuthnCredentialUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WebAuthnCredentialUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAuthnCredentialPayload>[]
+        }
+        upsert: {
+          args: Prisma.WebAuthnCredentialUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAuthnCredentialPayload>
+        }
+        aggregate: {
+          args: Prisma.WebAuthnCredentialAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWebAuthnCredential>
+        }
+        groupBy: {
+          args: Prisma.WebAuthnCredentialGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WebAuthnCredentialGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WebAuthnCredentialCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WebAuthnCredentialCountAggregateOutputType> | number
+        }
+      }
+    }
+    WebAuthnChallenge: {
+      payload: Prisma.$WebAuthnChallengePayload<ExtArgs>
+      fields: Prisma.WebAuthnChallengeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WebAuthnChallengeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAuthnChallengePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WebAuthnChallengeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAuthnChallengePayload>
+        }
+        findFirst: {
+          args: Prisma.WebAuthnChallengeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAuthnChallengePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WebAuthnChallengeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAuthnChallengePayload>
+        }
+        findMany: {
+          args: Prisma.WebAuthnChallengeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAuthnChallengePayload>[]
+        }
+        create: {
+          args: Prisma.WebAuthnChallengeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAuthnChallengePayload>
+        }
+        createMany: {
+          args: Prisma.WebAuthnChallengeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WebAuthnChallengeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAuthnChallengePayload>[]
+        }
+        delete: {
+          args: Prisma.WebAuthnChallengeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAuthnChallengePayload>
+        }
+        update: {
+          args: Prisma.WebAuthnChallengeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAuthnChallengePayload>
+        }
+        deleteMany: {
+          args: Prisma.WebAuthnChallengeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WebAuthnChallengeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WebAuthnChallengeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAuthnChallengePayload>[]
+        }
+        upsert: {
+          args: Prisma.WebAuthnChallengeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebAuthnChallengePayload>
+        }
+        aggregate: {
+          args: Prisma.WebAuthnChallengeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWebAuthnChallenge>
+        }
+        groupBy: {
+          args: Prisma.WebAuthnChallengeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WebAuthnChallengeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WebAuthnChallengeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WebAuthnChallengeCountAggregateOutputType> | number
         }
       }
     }
@@ -3469,6 +3619,35 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
+export const WebAuthnCredentialScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  credentialId: 'credentialId',
+  publicKey: 'publicKey',
+  counter: 'counter',
+  transports: 'transports',
+  discoverable: 'discoverable',
+  label: 'label',
+  createdAt: 'createdAt',
+  lastUsedAt: 'lastUsedAt'
+} as const
+
+export type WebAuthnCredentialScalarFieldEnum = (typeof WebAuthnCredentialScalarFieldEnum)[keyof typeof WebAuthnCredentialScalarFieldEnum]
+
+
+export const WebAuthnChallengeScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  handle: 'handle',
+  challenge: 'challenge',
+  purpose: 'purpose',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt'
+} as const
+
+export type WebAuthnChallengeScalarFieldEnum = (typeof WebAuthnChallengeScalarFieldEnum)[keyof typeof WebAuthnChallengeScalarFieldEnum]
+
+
 export const IdempotencyKeyScalarFieldEnum = {
   key: 'key',
   userId: 'userId',
@@ -3519,6 +3698,7 @@ export const TenantScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   markdown: 'markdown',
+  brandColor: 'brandColor',
   description: 'description',
   platformExpiresAt: 'platformExpiresAt'
 } as const
@@ -4342,6 +4522,8 @@ export interface PrismaClientOptionsWithAdapter extends PrismaClientBaseOptions 
 export type PrismaClientOptions = PrismaClientOptionsWithAccelerateUrl | PrismaClientOptionsWithAdapter
 export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
+  webAuthnCredential?: Prisma.WebAuthnCredentialOmit
+  webAuthnChallenge?: Prisma.WebAuthnChallengeOmit
   idempotencyKey?: Prisma.IdempotencyKeyOmit
   passwordResetToken?: Prisma.PasswordResetTokenOmit
   refreshToken?: Prisma.RefreshTokenOmit
