@@ -131,11 +131,16 @@ Single app:
 npm run deploy:test --workspace @fitconnect/api
 ```
 
-Migrations are not run by a deploy. Apply them first:
+A push to `main` applies migrations before deploying the Worker, so new code
+never meets an old schema. A manual deploy skips that, and so does any deploy
+run from a machine rather than CI — apply them first:
 
 ```bash
 npm run db:migrate:production --workspace @fitconnect/api
 ```
+
+Applying is idempotent: wrangler records which files a database has already
+seen and applies only the rest.
 
 ## Payment gateway (Razorpay)
 
