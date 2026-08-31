@@ -87,6 +87,7 @@ export const idCardService = {
             logoUrl: true,
             address: true,
             phone: true,
+            brandColor: true,
             status: true,
           },
         },
@@ -120,6 +121,7 @@ export const idCardService = {
             logoUrl: membership.tenant.logoUrl,
             address: membership.tenant.address,
             phone: membership.tenant.phone,
+            brandColor: membership.tenant.brandColor,
           },
           /** When this render was produced, so a printed card shows its age. */
           issuedAt: new Date(),

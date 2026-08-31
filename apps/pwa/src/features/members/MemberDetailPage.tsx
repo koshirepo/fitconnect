@@ -550,22 +550,27 @@ export default function MemberDetailPage() {
         )}
       </div>
 
-      {coinBalance > 0 && (
-        <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
-          <Coins className="h-3.5 w-3.5" />
-          {coinBalance} coins to spend
-        </div>
-      )}
+      {/* Coins and the card link share a row: they are both things this member
+          holds rather than facts about them, and stacked one per line they
+          pushed the badges — which staff actually edit — below the fold. */}
+      {(coinBalance > 0 || member.idCardUrl) && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {coinBalance > 0 && (
+            <span className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+              <Coins className="h-3.5 w-3.5" />
+              {coinBalance} coins to spend
+            </span>
+          )}
 
-      {member.idCardUrl && (
-        <div className="mt-3">
-          <a
-            href={member.idCardUrl}
-            className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent"
-          >
-            <CreditCard className="h-3.5 w-3.5" />
-            Membership card
-          </a>
+          {member.idCardUrl && (
+            <a
+              href={member.idCardUrl}
+              className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent"
+            >
+              <CreditCard className="h-3.5 w-3.5" />
+              Membership card
+            </a>
+          )}
         </div>
       )}
 

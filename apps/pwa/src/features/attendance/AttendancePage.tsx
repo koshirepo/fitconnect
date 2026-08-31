@@ -16,6 +16,7 @@ import { useAllMembers } from "@/api/queries/members";
 import { flattenPages } from "@/api/queries/shared";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
+import { QrCode } from "@/components/ui/qr-code";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Spinner } from "@/components/ui/spinner";
@@ -37,7 +38,7 @@ import {
   CalendarDays,
   Copy,
   ExternalLink,
-  QrCode,
+  QrCode as QrCodeIcon,
   Clock3,
 } from "lucide-react";
 import type { AttendanceRecord } from "@/types/api";
@@ -256,10 +257,6 @@ export default function AttendancePage() {
     return `${window.location.origin}/attendance/qr/${currentTenantId}`;
   }, [currentTenantId]);
 
-  const qrImageUrl = qrUrl
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=12&data=${encodeURIComponent(qrUrl)}`
-    : "";
-
   const handleCopyQrLink = async () => {
     if (!qrUrl) return;
     await navigator.clipboard.writeText(qrUrl);
@@ -345,7 +342,7 @@ export default function AttendancePage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <QrCode className="h-5 w-5" />
+              <QrCodeIcon className="h-5 w-5" />
               Attendance QR
             </CardTitle>
             <CardDescription>
@@ -353,11 +350,7 @@ export default function AttendancePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <img
-              src={qrImageUrl}
-              alt="Attendance QR"
-              className="h-40 w-40 rounded-lg border bg-white p-2"
-            />
+            <QrCode value={qrUrl} size={160} label="Attendance QR" className="border" />
             <div className="min-w-0 flex-1 space-y-3">
               <p className="break-all rounded-md bg-muted p-3 text-xs text-muted-foreground">
                 {qrUrl}

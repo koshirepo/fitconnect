@@ -312,6 +312,8 @@ export interface MemberIdCard {
     logoUrl?: string | null;
     address?: string | null;
     phone?: string | null;
+    /** The gym's own colour, so a printed card matches its walls and its website. */
+    brandColor?: string | null;
   };
   issuedAt: string;
 }
