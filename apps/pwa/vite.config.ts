@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig, loadEnv, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
@@ -6,6 +6,51 @@ import path from "path";
 
 /** Repo root, so Vite may read files outside this app (the shared workspace package). */
 const workspaceRoot = path.resolve(__dirname, "../..");
+
+/**
+ * Serve the per-gym manifest in development.
+ *
+ * In production a Cloudflare Pages Function answers `/manifest.webmanifest`
+ * with the gym's own name and logo. Pages Functions do not run under Vite, so
+ * on localhost the static build manifest was served instead — every install
+ * from a gym subdomain came out called "FitConnect", which is not what ships.
+ *
+ * This runs the same handler the Pages Function exports, so what is tested on
+ * `<slug>.localhost` matches what a member installs from
+ * `<slug>.fitconnect.co.in`.
+ */
+function devTenantManifest(apiBaseUrl: string): PluginOption {
+  return {
+    name: "dev-tenant-manifest",
+    apply: "serve",
+    configureServer(server) {
+      server.middlewares.use("/manifest.webmanifest", (req, res, next) => {
+        void (async () => {
+          try {
+            const { onRequestGet } = await import("./functions/manifest.webmanifest");
+            const host = String(req.headers.host ?? "");
+
+            const response = await onRequestGet({
+              request: new Request(`http://${host}/manifest.webmanifest`),
+              env: {
+                API_BASE_URL: apiBaseUrl,
+                // Bare "localhost", so `<slug>.localhost` resolves to a gym the
+                // same way `<slug>.fitconnect.co.in` does in production.
+                APP_ROOT_DOMAINS: "localhost",
+              },
+            });
+
+            res.setHeader("Content-Type", "application/manifest+json");
+            res.end(await response.text());
+          } catch {
+            // Fall through to the static manifest rather than break the page.
+            next();
+          }
+        })();
+      });
+    },
+  };
+}
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -18,6 +63,7 @@ export default defineConfig(({ mode }) => {
 
   return {
   plugins: [
+    devTenantManifest(apiTarget),
     react({
       babel: {
         plugins: [["babel-plugin-react-compiler"]],
@@ -49,7 +95,18 @@ export default defineConfig(({ mode }) => {
         // Face detection and the charting library are ~1.1 MB between them and
         // each serves a single screen. Precaching them made every first visit
         // pay for both in the background; they are cached on first use instead.
-        globIgnores: ["**/assets/vendor-tf-*.js", "**/assets/FinanceReportsPage-*.js"],
+        globIgnores: [
+          "**/assets/vendor-tf-*.js",
+          "**/assets/FinanceReportsPage-*.js",
+          // Never precache the manifest. In production a Pages Function answers
+          // this url with the gym's own name and logo, and a precached copy of
+          // the build's platform manifest would be served from cache instead —
+          // which is why every install from a gym subdomain was still called
+          // "FitConnect" even though the endpoint itself was correct. A
+          // manifest is only read when installing, which needs the network
+          // anyway, so there is nothing to lose offline.
+          "**/manifest.webmanifest",
+        ],
         runtimeCaching: [
           {
             // Covers the chunks left out of the precache above, so a screen that

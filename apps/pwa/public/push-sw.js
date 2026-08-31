@@ -94,3 +94,27 @@ self.addEventListener("notificationclick", (event) => {
     })(),
   );
 });
+
+/**
+ * Keep the web app manifest off the service worker.
+ *
+ * In production a Cloudflare Pages Function answers "/manifest.webmanifest"
+ * with the gym's own name and logo. The build also emits a static manifest
+ * carrying the platform's name, and vite-plugin-pwa precaches that one — so
+ * once this worker was installed, every install prompt from a gym subdomain
+ * read "FitConnect" even though the endpoint itself returned the right thing.
+ *
+ * This listener is registered before Workbox's routes, because the generated
+ * worker calls importScripts on this file above its own routing, and the first
+ * listener to call respondWith wins — so the request reaches the network, and
+ * therefore the Function.
+ *
+ * Nothing is lost offline: a manifest is only read while installing, which
+ * needs the network regardless.
+ */
+self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
+  if (url.origin === self.location.origin && url.pathname === "/manifest.webmanifest") {
+    event.respondWith(fetch(event.request));
+  }
+});

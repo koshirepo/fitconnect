@@ -104,12 +104,20 @@ function iconsForTenant(logoUrl: string | null | undefined) {
   if (!logoUrl) return DEFAULT_ICONS;
 
   return [
-    { src: logoUrl, sizes: "192x192", type: "image/jpeg" },
-    { src: logoUrl, sizes: "512x512", type: "image/jpeg" },
-    // Maskable is deliberately left to the platform icon: a logo cropped to a
-    // circle by the launcher would lose its edges, and there is no safe-zone
-    // padding baked into an uploaded file.
-    { src: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+    // The gym's own mark, offered first so a browser picking by order or by
+    // best fit lands on it. No `type`: the upload may be a JPEG, a PNG or a
+    // WebP, and naming the wrong one invites a browser to skip the very icon
+    // it was told it could not render.
+    { src: logoUrl, sizes: "192x192" },
+    { src: logoUrl, sizes: "512x512" },
+
+    // Those sizes are a claim about a file nobody measured — Rudra Gym's logo
+    // is 400x400, declared above as both 192 and 512 — which is why the
+    // platform set follows it. These are same-origin PNGs at exactly the sizes
+    // they say, so whether a gym can be installed at all never rests on the
+    // dimensions of an upload. A mismatch on its own costs the install prompt
+    // outright; a mismatch with these behind it costs nothing.
+    ...DEFAULT_ICONS,
   ];
 }
 
@@ -125,7 +133,18 @@ function manifestResponse(body: unknown, cacheSeconds: number) {
 }
 
 export const onRequestGet = async (context: RequestContext): Promise<Response> => {
-  const host = context.request.headers.get("host") ?? "";
+  // Pages always sends a Host header; a Request built from a url in a test or
+  // a dev middleware does not carry one, and the url is then the only place the
+  // hostname exists. Reading both makes this work in either.
+  const host =
+    context.request.headers.get("host") ||
+    (() => {
+      try {
+        return new URL(context.request.url).host;
+      } catch {
+        return "";
+      }
+    })();
   const rootDomains = (context.env.APP_ROOT_DOMAINS ?? DEFAULT_ROOT_DOMAINS)
     .split(",")
     .map((value) => value.trim().toLowerCase())
