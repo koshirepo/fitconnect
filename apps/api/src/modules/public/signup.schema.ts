@@ -6,14 +6,7 @@
  * - Primary exports: selfSignupSchema, verifySignupSchema, SelfSignupInput, VerifySignupInput.
  */
 import { z } from "zod";
-
-/** Base64 image payload, e.g. `data:image/jpeg;base64,/9j/4AAQ...`. */
-const DATA_URL_PATTERN = /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+/=\s]+$/;
-
-/** 5 MB of image, matching the authenticated upload endpoints. */
-const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
-/** Base64 costs about a third more than the bytes it encodes. */
-const MAX_AVATAR_CHARS = Math.ceil((MAX_AVATAR_BYTES * 4) / 3) + 128;
+import { dataUrlField } from "../../lib/data-url-image";
 
 export const selfSignupSchema = z.object({
   name: z.string().min(2).max(120),
@@ -26,11 +19,11 @@ export const selfSignupSchema = z.object({
    * here means an image only ever lands in the bucket alongside a real
    * membership, instead of behind an open upload door.
    */
-  avatarDataUrl: z
-    .string()
-    .min(1, "A photo is required.")
-    .max(MAX_AVATAR_CHARS, "That photo is too large. Maximum size is 5 MB.")
-    .regex(DATA_URL_PATTERN, "That photo format is not supported."),
+  avatarDataUrl: dataUrlField({
+    required: "A photo is required.",
+    tooLarge: "That photo is too large. Maximum size is 5 MB.",
+    unsupported: "That photo format is not supported.",
+  }),
   /** Optional, mirroring the admin form — a phone-only member is normal here. */
   email: z.string().email().optional().or(z.literal("")),
   phone: z.string().min(10).max(15),

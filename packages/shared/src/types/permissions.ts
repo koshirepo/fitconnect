@@ -107,6 +107,8 @@ export const Permission = {
   BADGES_UPDATE: "badges:update",
   BADGES_DELETE: "badges:delete",
   BADGES_ASSIGN: "badges:assign",
+  /** Assigning a badge its gym marked restricted — see `Badge.restricted`. */
+  BADGES_ASSIGN_RESTRICTED: "badges:assign:restricted",
   BADGES_ASSIGNMENTS_READ: "badges:assignments:read",
 
   // Todos
@@ -248,6 +250,7 @@ const ADMIN_PERMISSIONS: Permission[] = [
   Permission.BADGES_CREATE,
   Permission.BADGES_UPDATE,
   Permission.BADGES_DELETE,
+  Permission.BADGES_ASSIGN_RESTRICTED,
   Permission.SETTINGS_UPDATE,
   Permission.CHARGES_CREATE,
   Permission.CHARGES_UPDATE,
@@ -539,6 +542,7 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [Permission.BADGES_UPDATE]: "Edit badges",
   [Permission.BADGES_DELETE]: "Delete badges",
   [Permission.BADGES_ASSIGN]: "Assign badges",
+  [Permission.BADGES_ASSIGN_RESTRICTED]: "Assign restricted badges",
   [Permission.BADGES_ASSIGNMENTS_READ]: "View badge assignments",
   [Permission.TODOS_READ]: "View todos",
   [Permission.TODOS_CREATE]: "Create todos",

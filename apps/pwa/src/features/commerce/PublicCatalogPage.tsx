@@ -2,15 +2,14 @@ import * as React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { commerceApi } from "@/api/commerce";
 import { getApiError } from "@/api/client";
-import { useAuthStore } from "@/stores/auth";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { CardsGridSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import { ArrowLeft, PackageOpen, ShoppingCart, Search, Plus, Minus, Trash2 } from "lucide-react";
+import { PackageOpen, ShoppingCart, Plus, Minus, Trash2 } from "lucide-react";
 import type { Product } from "@/types/api";
 import { formatCurrency } from "./pricing";
 import { PRODUCT_IMAGE_ASPECT_CLASS } from "./product-image";
+import { ShopHeader } from "./ShopHeader";
 import {
   getCartItems,
   getCartTotalQuantity,
@@ -21,7 +20,6 @@ import {
 
 export default function PublicCatalogPage() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
 
   const [products, setProducts] = React.useState<Product[]>([]);
   const [cart, setCart] = React.useState<CartItem[]>(() => getCartItems());
@@ -87,53 +85,14 @@ export default function PublicCatalogPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* ── Topbar ──────────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-20 border-b bg-background/80 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div>
-              <h1 className="text-lg font-bold tracking-tight leading-none">Gym Store</h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">
-                Browse &amp; add to cart, then checkout
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/shop/orders/lookup")}>
-              <Search className="h-4 w-4" />
-              <span className="hidden sm:inline ml-1.5">Order Status</span>
-            </Button>
-            {isAuthenticated ? (
-              <Button variant="ghost" size="sm" onClick={() => navigate("/orders/history")}>
-                My Orders
-              </Button>
-            ) : (
-              <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>
-                Sign In
-              </Button>
-            )}
-            <Button
-              onClick={() => navigate("/shop/cart")}
-              disabled={cartCount === 0}
-              className="relative"
-            >
-              <ShoppingCart className="h-4 w-4" />
-              <span className="ml-1.5">Cart</span>
-              {cartCount > 0 && (
-                <Badge
-                  variant="secondary"
-                  className="absolute bg-accent-foreground -top-2 -right-2 h-5 min-w-5 px-1 text-xs flex items-center justify-center"
-                >
-                  {cartCount}
-                </Badge>
-              )}
-            </Button>
-          </div>
+      <ShopHeader backTo="/" cartCount={cartCount}>
+        <div>
+          <h1 className="text-lg font-bold tracking-tight leading-none">Gym Store</h1>
+          <p className="text-xs text-muted-foreground hidden sm:block">
+            Browse &amp; add to cart, then checkout
+          </p>
         </div>
-      </div>
+      </ShopHeader>
 
       {/* ── Content ─────────────────────────────────────────────────────── */}
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

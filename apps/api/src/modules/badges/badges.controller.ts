@@ -18,9 +18,10 @@ import {
   notFound,
   badRequest,
   forbidden,
+  failWith,
 } from "../../lib/response";
 import { prisma } from "../../lib/prisma";
-import { can } from "../../lib/permissions";
+import { can, grantedPermissions } from "../../lib/permissions";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { createBadgeSchema, updateBadgeSchema, assignBadgeSchema } from "./badges.schema";
 import type { AppBindings } from "../../types/app-context";
@@ -143,13 +144,16 @@ export const badgeController = {
     const parsed = await parseBody(c, assignBadgeSchema);
     if (!parsed.ok) return parsed.response;
 
-    const result = await badgeService.assign(tenantId, badgeId, parsed.data);
+    const result = await badgeService.assign(
+      tenantId,
+      badgeId,
+      parsed.data,
+      grantedPermissions(c),
+    );
 
-    if ("error" in result) {
-      if (result.status === 409) return conflict(c, result.error!);
-      if (result.status === 400) return badRequest(c, result.error!);
-      return notFound(c, result.error!);
-    }
+    // `failWith` rather than the hand-rolled ladder this had, so a restricted
+    // badge's 403 arrives as a 403 instead of being flattened into "not found".
+    if ("error" in result) return failWith(c, { ...result, status: result.status ?? 404 });
 
     await auditLog({
       action: "CREATE",
@@ -173,8 +177,13 @@ export const badgeController = {
     const badgeId = c.req.param("badgeId")!;
     const membershipId = c.req.param("membershipId")!;
 
-    const result = await badgeService.unassign(tenantId, badgeId, membershipId);
-    if ("error" in result) return notFound(c, result.error!);
+    const result = await badgeService.unassign(
+      tenantId,
+      badgeId,
+      membershipId,
+      grantedPermissions(c),
+    );
+    if ("error" in result) return failWith(c, { ...result, status: result.status ?? 404 });
 
     await auditLog({
       action: "DELETE",

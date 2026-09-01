@@ -1,3 +1,4 @@
+import { getMonthStr, parseMonth, formatMonthLabel } from "@/lib/month";
 import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { ScanCheckIn } from "./ScanCheckIn";
@@ -16,6 +17,7 @@ import { useAllMembers } from "@/api/queries/members";
 import { flattenPages } from "@/api/queries/shared";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
+import { ShareButton } from "@/components/ui/share-button";
 import { QrCode } from "@/components/ui/qr-code";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -36,7 +38,6 @@ import {
   Search,
   X,
   CalendarDays,
-  Copy,
   ExternalLink,
   QrCode as QrCodeIcon,
   Clock3,
@@ -44,20 +45,6 @@ import {
 import type { AttendanceRecord } from "@/types/api";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-function getMonthStr(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function parseMonth(s: string): Date {
-  const [y, m] = s.split("-").map(Number);
-  return new Date(y, m - 1, 1);
-}
-
-function formatMonthLabel(s: string) {
-  const d = parseMonth(s);
-  return d.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
-}
 
 /**
  * The member-facing self check-in card, parked while check-in happens at the
@@ -84,7 +71,6 @@ export default function AttendancePage() {
   // Set optimistically after a successful check-in, before the list refetches.
   const [justCheckedIn, setJustCheckedIn] = React.useState(false);
   const [actionError, setActionError] = React.useState("");
-  const [copiedQrLink, setCopiedQrLink] = React.useState(false);
 
   // Bulk marking state
   const [showBulk, setShowBulk] = React.useState(false);
@@ -257,13 +243,6 @@ export default function AttendancePage() {
     return `${window.location.origin}/attendance/qr/${currentTenantId}`;
   }, [currentTenantId]);
 
-  const handleCopyQrLink = async () => {
-    if (!qrUrl) return;
-    await navigator.clipboard.writeText(qrUrl);
-    setCopiedQrLink(true);
-    window.setTimeout(() => setCopiedQrLink(false), 2000);
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -356,10 +335,7 @@ export default function AttendancePage() {
                 {qrUrl}
               </p>
               <div className="flex flex-wrap gap-2">
-                <Button type="button" variant="outline" onClick={handleCopyQrLink}>
-                  <Copy className="h-4 w-4" />
-                  {copiedQrLink ? "Copied" : "Copy Link"}
-                </Button>
+                <ShareButton url={qrUrl} title="Attendance QR" label="Share Link" size="default" />
                 <Button
                   type="button"
                   variant="outline"

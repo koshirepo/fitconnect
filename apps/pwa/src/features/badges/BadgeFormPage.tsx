@@ -53,6 +53,7 @@ export default function BadgeFormPage() {
   const [customColor, setCustomColor] = React.useState(false);
   const [icon, setIcon] = React.useState("");
   const [isActive, setIsActive] = React.useState(true);
+  const [restricted, setRestricted] = React.useState(false);
 
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState("");
@@ -74,6 +75,7 @@ export default function BadgeFormPage() {
     setCustomColor(!COLOR_PRESETS.some((preset) => preset.value === badge.color));
     setIcon(badge.icon ?? "");
     setIsActive(badge.isActive);
+    setRestricted(badge.restricted);
     setSeeded(true);
   }, [isEdit, seeded, badge]);
 
@@ -137,6 +139,7 @@ export default function BadgeFormPage() {
             description: description.trim() || undefined,
             color,
             icon: icon.trim() || undefined,
+            restricted,
             isActive,
           },
         });
@@ -149,6 +152,7 @@ export default function BadgeFormPage() {
         description: description.trim() || undefined,
         color,
         icon: icon.trim() || undefined,
+        restricted,
       });
       setSuccess(true);
     } catch (err) {
@@ -264,6 +268,24 @@ export default function BadgeFormPage() {
               </p>
             </div>
 
+            {/* Offered on create as well as edit: whether a badge carries
+                weight is decided when it is invented, not discovered later
+                after a coach has already handed it out. */}
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg border p-3">
+              <Checkbox
+                checked={restricted}
+                onCheckedChange={(checked) => setRestricted(checked === true)}
+              />
+              <div className="space-y-1">
+                <span className="text-sm font-medium">Admins only</span>
+                <p className="text-xs text-muted-foreground">
+                  Only admins can give or take this badge. Use it for badges that confer
+                  standing — staff credentials, lifetime membership — rather than ones that
+                  mark progress. Coaches keep assigning every other badge.
+                </p>
+              </div>
+            </label>
+
             {isEdit && (
               <label className="flex cursor-pointer items-start gap-3 rounded-lg border p-3">
                 <Checkbox
@@ -305,7 +327,12 @@ export default function BadgeFormPage() {
             </div>
 
             {/* Preset colors */}
-            <div className="grid grid-cols-4 sm:grid-cols-4 gap-2">
+            {/* Two across on a phone, four from `sm`. At four the cells were
+                about seventy pixels wide, which is not enough for a swatch and
+                a word like "Emerald" — so the label clipped and, worse, the
+                swatch itself was squeezed into a sliver, leaving the one thing
+                this control exists to show unjudgeable. */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {COLOR_PRESETS.map((preset) => (
                 <button
                   key={preset.value}
@@ -321,16 +348,17 @@ export default function BadgeFormPage() {
                   }`}
                 >
                   <div
-                    className="h-5 w-5 rounded-full border"
+                    className="h-5 w-5 shrink-0 rounded-full border"
                     style={{ backgroundColor: preset.value }}
                   />
-                  {preset.label}
+                  <span className="truncate">{preset.label}</span>
                 </button>
               ))}
             </div>
 
-            {/* Custom color */}
-            <div className="flex items-center gap-3">
+            {/* Custom color — wraps rather than overflowing once the picker
+                and the hex field appear beside the button on a narrow screen. */}
+            <div className="flex flex-wrap items-center gap-3">
               <button
                 type="button"
                 onClick={() => setCustomColor(true)}

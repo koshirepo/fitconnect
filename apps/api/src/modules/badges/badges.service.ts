@@ -5,9 +5,31 @@
  * - Prefer placing workflow logic, derived calculations, and domain invariants here instead of inside controllers or repositories.
  * - Primary exports: badgeService.
  */
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { badgeRepository } from "./badges.repository";
 import { flattenNestedMember } from "../../lib/flatten";
 import type { CreateBadgeInput, UpdateBadgeInput, AssignBadgeInput } from "./badges.schema";
+
+/**
+ * Refuse a restricted badge to a caller who only holds the ordinary assign right.
+ *
+ * `badges:assign` gets somebody through the route; this is the second gate,
+ * and it has to live here rather than in middleware because whether it applies
+ * depends on the badge being acted on, which the route does not know yet.
+ *
+ * Returns null when the badge is ordinary or the caller is entitled.
+ */
+function restrictionError(
+  badge: { restricted: boolean },
+  granted: ReadonlySet<Permission>,
+) {
+  if (!badge.restricted) return null;
+  if (granted.has(Permission.BADGES_ASSIGN_RESTRICTED)) return null;
+  return {
+    error: "This badge is restricted. Only an admin can assign or remove it.",
+    status: 403 as const,
+  };
+}
 
 type ServiceError = { error: string; status?: number };
 type ServiceResult<T> = { data: T } | ServiceError;
@@ -85,10 +107,18 @@ export const badgeService = {
    * Execute the `assign` workflow for the badges module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
-  async assign(tenantId: string, badgeId: string, input: AssignBadgeInput) {
+  async assign(
+    tenantId: string,
+    badgeId: string,
+    input: AssignBadgeInput,
+    granted: ReadonlySet<Permission>,
+  ) {
     const badge = await badgeRepository.findById(badgeId, tenantId);
     if (!badge) return { error: "Badge not found.", status: 404 as const };
     if (!badge.isActive) return { error: "Cannot assign an inactive badge.", status: 400 as const };
+
+    const gate = restrictionError(badge, granted);
+    if (gate) return gate;
 
     const membership = await badgeRepository.findMembership(tenantId, input.membershipId);
     if (!membership) return { error: "Member not found in this gym.", status: 404 as const };
@@ -113,9 +143,19 @@ export const badgeService = {
    * Execute the `unassign` workflow for the badges module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
-  async unassign(tenantId: string, badgeId: string, membershipId: string) {
+  async unassign(
+    tenantId: string,
+    badgeId: string,
+    membershipId: string,
+    granted: ReadonlySet<Permission>,
+  ) {
     const badge = await badgeRepository.findById(badgeId, tenantId);
     if (!badge) return { error: "Badge not found.", status: 404 as const };
+
+    // Taking a restricted badge away is as consequential as granting it — a
+    // coach who could strip a staff credential has the same power in reverse.
+    const gate = restrictionError(badge, granted);
+    if (gate) return gate;
 
     const alreadyAssigned = await badgeRepository.isAssigned(badgeId, membershipId);
     if (!alreadyAssigned) return { error: "Assignment not found.", status: 404 as const };

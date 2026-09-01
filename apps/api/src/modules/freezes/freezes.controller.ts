@@ -10,27 +10,13 @@ import { freezeService } from "./freezes.service";
 import { createFreezeSchema, endFreezeSchema } from "./freezes.schema";
 import { auditLog } from "../../lib/audit";
 import { parseBody } from "../../lib/http";
-import { badRequest, conflict, forbidden, notFound, ok } from "../../lib/response";
+import { badRequest, failWith, forbidden, notFound, ok } from "../../lib/response";
 import { can } from "../../lib/permissions";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { prisma } from "../../lib/prisma";
 import type { AppBindings } from "../../types/app-context";
 
 type AppContext = Context<AppBindings>;
-
-function fail(c: AppContext, result: { error?: string; status?: number }) {
-  const message = result.error ?? "Request failed.";
-  switch (result.status) {
-    case 403:
-      return forbidden(c, message);
-    case 404:
-      return notFound(c, message);
-    case 409:
-      return conflict(c, message);
-    default:
-      return badRequest(c, message);
-  }
-}
 
 /**
  * Whether this caller may act on this membership's freezes.
@@ -97,7 +83,7 @@ export const freezeController = {
       parsed.data,
       actorId,
     );
-    if ("error" in result) return fail(c, result);
+    if ("error" in result) return failWith(c, result);
 
     await auditLog({
       action: "CREATE",
@@ -144,7 +130,7 @@ export const freezeController = {
       parsed.data.endedOn ?? new Date(),
       "ENDED_EARLY",
     );
-    if ("error" in result) return fail(c, result);
+    if ("error" in result) return failWith(c, result);
 
     await auditLog({
       action: "UPDATE",

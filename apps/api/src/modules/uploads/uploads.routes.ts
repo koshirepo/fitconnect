@@ -9,7 +9,7 @@
 import { Hono, type Context } from "hono";
 import { authenticate } from "../../middleware/authenticate";
 import { badRequest, ok } from "../../lib/response";
-import { uploadFile } from "../../lib/storage";
+import { publicAssetUrl, uploadFile } from "../../lib/storage";
 import { requirePermissions } from "../../middleware/authorize";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import type { AppBindings } from "../../types/app-context";
@@ -28,13 +28,8 @@ const EXT_MAP: Record<string, string> = {
 
 type AppContext = Context<AppBindings>;
 
-function encodeObjectKeyForPath(key: string) {
-  return key.split("/").map((segment) => encodeURIComponent(segment)).join("/");
-}
-
 function getAssetUrl(c: AppContext, key: string) {
-  const requestUrl = new URL(c.req.url);
-  return new URL(`/uploads/file/${encodeObjectKeyForPath(key)}`, requestUrl.origin).toString();
+  return publicAssetUrl(c.req.url, key);
 }
 
 async function handleUpload(c: AppContext, folder: string) {
@@ -73,6 +68,35 @@ uploadRoutes.get("/file/:folder/:filename", async (c) => {
   const key = `${folder}/${filename}`;
   const object = await bucket.get(key);
   if (!object) {
+    /**
+     * Fetch it from the bucket's public address before giving up.
+     *
+     * A developer runs against a copy of the real database — real members,
+     * real gyms, real photo URLs — with an empty local bucket, so every avatar
+     * and logo resolves to a 404 here and the product renders with initials
+     * where the pictures should be.
+     *
+     * The bytes are streamed rather than redirected to on purpose. The public
+     * bucket sends no CORS headers, so a redirect would still fail for the one
+     * caller that matters most: the ID card, which fetches its images to inline
+     * them into a single SVG. Passing them through this origin sidesteps that
+     * entirely. In production the bucket holds the object and none of this runs.
+     */
+    const publicBase = c.env?.R2_PUBLIC_URL;
+    if (publicBase) {
+      const upstream = await fetch(`${publicBase.replace(/\/+$/, "")}/${key}`);
+      if (upstream.ok) {
+        const headers = new Headers();
+        const type = upstream.headers.get("content-type");
+        if (type) headers.set("content-type", type);
+        // Short, unlike the immutable cache below: this is a stand-in for an
+        // object the bucket does not have, and it should stop being served the
+        // moment the bucket does.
+        headers.set("cache-control", "public, max-age=300");
+        return new Response(upstream.body, { headers });
+      }
+    }
+
     return c.text("File not found.", 404);
   }
 

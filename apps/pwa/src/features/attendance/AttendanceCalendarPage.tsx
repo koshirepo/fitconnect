@@ -1,3 +1,4 @@
+import { getMonthStr, parseMonth, formatMonthLabel } from "@/lib/month";
 import * as React from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAppNavigate } from "@/lib/use-app-navigate";
@@ -17,20 +18,6 @@ type DayData = {
 };
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-function getMonthStr(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function parseMonth(s: string): Date {
-  const [y, m] = s.split("-").map(Number);
-  return new Date(y, m - 1, 1);
-}
-
-function formatMonthLabel(s: string) {
-  const d = parseMonth(s);
-  return d.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
-}
 
 export default function AttendanceCalendarPage() {
   const navigate = useAppNavigate();

@@ -16,21 +16,30 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.basename(scriptDir).toLowerCase() === "scripts" ? path.resolve(scriptDir, "..") : scriptDir;
 const schemaPath = path.join(rootDir, "prisma", "schema.prisma");
 const clientPath = path.join(rootDir, "src", "generated", "prisma", "client.ts");
-const prismaBin = path.join(
-  rootDir,
-  "node_modules",
-  ".bin",
-  process.platform === "win32" ? "prisma.cmd" : "prisma"
-);
-const prismaCliPath = path.join(rootDir, "node_modules", "prisma", "build", "index.js");
+/**
+ * Where a workspace dependency actually landed.
+ *
+ * npm hoists shared dependencies to the repo root, so `apps/api/node_modules`
+ * holds only what could not be hoisted. Looking in one place finds the CLIs on
+ * a fresh clone and reports them missing on an ordinary hoisted install, which
+ * is the more common of the two. Each candidate is walked from the app upwards,
+ * so a locally installed copy still wins over the hoisted one.
+ */
+function resolveFromWorkspace(...segments) {
+  const candidates = [
+    path.join(rootDir, "node_modules", ...segments),
+    path.resolve(rootDir, "..", "..", "node_modules", ...segments),
+  ];
+  return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0];
+}
+
+const binName = (name) => (process.platform === "win32" ? `${name}.cmd` : name);
+
+const prismaBin = resolveFromWorkspace(".bin", binName("prisma"));
+const prismaCliPath = resolveFromWorkspace("prisma", "build", "index.js");
 const wranglerConfigPath = path.join(rootDir, "wrangler.toml");
-const wranglerBin = path.join(
-  rootDir,
-  "node_modules",
-  ".bin",
-  process.platform === "win32" ? "wrangler.cmd" : "wrangler"
-);
-const wranglerCliPath = path.join(rootDir, "node_modules", "wrangler", "bin", "wrangler.js");
+const wranglerBin = resolveFromWorkspace(".bin", binName("wrangler"));
+const wranglerCliPath = resolveFromWorkspace("wrangler", "bin", "wrangler.js");
 const localD1Path = path.join(
   rootDir,
   ".wrangler",

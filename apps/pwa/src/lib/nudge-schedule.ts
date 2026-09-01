@@ -43,6 +43,43 @@ export function shouldNudgeToday(key: NudgeKey, now = new Date()) {
   return stored !== today(now);
 }
 
+/**
+ * True when this prompt has not yet been dismissed in this run of the app.
+ *
+ * The cadence for something the app genuinely needs rather than merely
+ * prefers: notifications are how a member hears that their membership is
+ * expiring, so the offer comes back on the next open rather than waiting a
+ * day. "Don't ask again" is still honoured — a member who has decided is not
+ * asked again, on any cadence.
+ */
+export function shouldNudgeThisSession(key: NudgeKey) {
+  if (read(key) === "never") return false;
+  return readSession(key) !== "dismissed";
+}
+
+/** Take this prompt out of rotation until the app is opened again. */
+export function snoozeNudgeForSession(key: NudgeKey) {
+  writeSession(key, "dismissed");
+}
+
+function readSession(key: NudgeKey) {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.sessionStorage.getItem(`${STORAGE_PREFIX}.${key}`);
+  } catch {
+    return null;
+  }
+}
+
+function writeSession(key: NudgeKey, value: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(`${STORAGE_PREFIX}.${key}`, value);
+  } catch {
+    // Same as above: no storage means asked again, which is the safe failure.
+  }
+}
+
 /** Take this prompt out of rotation until tomorrow. */
 export function snoozeNudgeForToday(key: NudgeKey, now = new Date()) {
   write(key, today(now));

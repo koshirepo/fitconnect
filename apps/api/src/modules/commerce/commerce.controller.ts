@@ -14,6 +14,7 @@ import { commerceService } from "./commerce.service";
 import {
   createProductSchema,
   placeOrderSchema,
+  verifyOrderPaymentSchema,
   updateOrderStatusSchema,
   updateProductSchema,
 } from "./commerce.schema";
@@ -57,6 +58,33 @@ export const commerceController = {
     const result = await commerceService.placeOrder(parsed.data, userId);
     if ("error" in result) return failWith(c, result);
     return ok(c, result.data, 201);
+  },
+
+  /**
+   * Handle the `start checkout` HTTP action for the commerce module.
+   * Places the order and opens the Razorpay payment for it.
+   */
+  async startCheckout(c: AppContext) {
+    const parsed = await parseBody(c, placeOrderSchema);
+    if (!parsed.ok) return parsed.response;
+
+    const userId = c.get("optionalAuthUser")?.id;
+    const result = await commerceService.startCheckout(parsed.data, userId);
+    if ("error" in result) return failWith(c, result);
+    return ok(c, result.data, 201);
+  },
+
+  /**
+   * Handle the `verify order payment` HTTP action for the commerce module.
+   * Settles the order against the signature the checkout widget returned.
+   */
+  async verifyOrderPayment(c: AppContext) {
+    const parsed = await parseBody(c, verifyOrderPaymentSchema);
+    if (!parsed.ok) return parsed.response;
+
+    const result = await commerceService.verifyPayment(parsed.data);
+    if ("error" in result) return failWith(c, result);
+    return ok(c, result.data);
   },
 
   /**

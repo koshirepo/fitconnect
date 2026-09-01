@@ -17,10 +17,6 @@ import { unwrap, useCurrentTenantId, useTenantMutation, useTenantQuery } from ".
  * product detail in one call. Stock is why that matters: a sale that did not
  * refresh the list would offer a tub the gym no longer has.
  */
-function storeRoot(tenantId: string | null | undefined) {
-  return ["store", tenantId ?? "none"];
-}
-
 /**
  * The gym's catalogue.
  *
@@ -55,7 +51,7 @@ export function useCreateStoreProduct() {
   return useTenantMutation(
     async (id, payload: StoreProductPayload) =>
       unwrap(await storeApi.createProduct(id, payload)).product,
-    { invalidates: [storeRoot(tenantId)] },
+    { invalidates: [queryKeys.store.root(tenantId)] },
   );
 }
 
@@ -66,7 +62,7 @@ export function useUpdateStoreProduct() {
       id,
       input: { productId: string; payload: Partial<Omit<StoreProductPayload, "variants">> },
     ) => unwrap(await storeApi.updateProduct(id, input.productId, input.payload)).product,
-    { invalidates: [storeRoot(tenantId)] },
+    { invalidates: [queryKeys.store.root(tenantId)] },
   );
 }
 
@@ -74,7 +70,7 @@ export function useDeleteStoreProduct() {
   const tenantId = useCurrentTenantId();
   return useTenantMutation(
     async (id, productId: string) => unwrap(await storeApi.deleteProduct(id, productId)),
-    { invalidates: [storeRoot(tenantId)] },
+    { invalidates: [queryKeys.store.root(tenantId)] },
   );
 }
 
@@ -83,7 +79,7 @@ export function useAddStoreVariant() {
   return useTenantMutation(
     async (id, input: { productId: string; payload: StoreVariantPayload }) =>
       unwrap(await storeApi.addVariant(id, input.productId, input.payload)).variant,
-    { invalidates: [storeRoot(tenantId)] },
+    { invalidates: [queryKeys.store.root(tenantId)] },
   );
 }
 
@@ -92,7 +88,7 @@ export function useUpdateStoreVariant() {
   return useTenantMutation(
     async (id, input: { variantId: string; payload: Partial<StoreVariantPayload> }) =>
       unwrap(await storeApi.updateVariant(id, input.variantId, input.payload)).variant,
-    { invalidates: [storeRoot(tenantId)] },
+    { invalidates: [queryKeys.store.root(tenantId)] },
   );
 }
 
@@ -100,7 +96,7 @@ export function useDeleteStoreVariant() {
   const tenantId = useCurrentTenantId();
   return useTenantMutation(
     async (id, variantId: string) => unwrap(await storeApi.deleteVariant(id, variantId)),
-    { invalidates: [storeRoot(tenantId)] },
+    { invalidates: [queryKeys.store.root(tenantId)] },
   );
 }
 
@@ -109,7 +105,7 @@ export function useAdjustStoreStock() {
   return useTenantMutation(
     async (id, input: { variantId: string; delta: number; note?: string }) =>
       unwrap(await storeApi.adjustStock(id, input.variantId, input.delta, input.note)),
-    { invalidates: [storeRoot(tenantId)] },
+    { invalidates: [queryKeys.store.root(tenantId)] },
   );
 }
 
@@ -130,7 +126,7 @@ export function useSellAtCounter() {
       },
     ) => unwrap(await storeApi.sellAtCounter(id, input)),
     // Stock moved and coins changed hands.
-    { invalidates: [storeRoot(tenantId)] },
+    { invalidates: [queryKeys.store.root(tenantId)] },
   );
 }
 
@@ -142,7 +138,7 @@ export function useStartStoreCheckout() {
       id,
       input: { items: StoreBasketLine[]; couponCode?: string; coinsToSpend?: number },
     ) => unwrap(await storeApi.startCheckout(id, input)),
-    { invalidates: [storeRoot(tenantId)] },
+    { invalidates: [queryKeys.store.root(tenantId)] },
   );
 }
 
@@ -161,14 +157,14 @@ export function useSellToGuest() {
       },
     ) => unwrap(await storeApi.sellToGuest(id, input)),
     // Stock moved.
-    { invalidates: [storeRoot(tenantId)] },
+    { invalidates: [queryKeys.store.root(tenantId)] },
   );
 }
 
 /** The desk's order queue. */
 export function useStoreOrders(filters: { status?: string; channel?: string } = {}) {
   return useTenantQuery(
-    (tenantId) => [...storeRoot(tenantId), "orders", filters],
+    (tenantId) => [...queryKeys.store.root(tenantId), "orders", filters],
     async (tenantId) => unwrap(await storeApi.listOrders(tenantId, filters)).orders,
   );
 }
@@ -178,7 +174,7 @@ export function useCompleteStoreOrder() {
   const tenantId = useCurrentTenantId();
   return useTenantMutation(
     async (id, orderId: string) => unwrap(await storeApi.completeOrder(id, orderId)),
-    { invalidates: [storeRoot(tenantId)] },
+    { invalidates: [queryKeys.store.root(tenantId)] },
   );
 }
 
@@ -186,7 +182,7 @@ export function useRejectStoreOrder() {
   const tenantId = useCurrentTenantId();
   return useTenantMutation(
     async (id, orderId: string) => unwrap(await storeApi.rejectOrder(id, orderId)),
-    { invalidates: [storeRoot(tenantId)] },
+    { invalidates: [queryKeys.store.root(tenantId)] },
   );
 }
 
@@ -196,7 +192,7 @@ export function useReserveStoreOrder() {
   return useTenantMutation(
     async (id, input: { items: StoreBasketLine[]; note?: string }) =>
       unwrap(await storeApi.reserve(id, input)),
-    { invalidates: [storeRoot(tenantId)] },
+    { invalidates: [queryKeys.store.root(tenantId)] },
   );
 }
 
@@ -205,7 +201,7 @@ export function useVerifyStoreCheckout() {
   return useTenantMutation(
     async (id, input: { orderId: string; paymentId: string; signature: string }) =>
       unwrap(await storeApi.verifyCheckout(id, input)),
-    { invalidates: [storeRoot(tenantId)] },
+    { invalidates: [queryKeys.store.root(tenantId)] },
   );
 }
 
@@ -214,6 +210,6 @@ export function useCancelStoreOrder() {
   const tenantId = useCurrentTenantId();
   return useTenantMutation(
     async (id, orderId: string) => unwrap(await storeApi.cancelOrder(id, orderId)),
-    { invalidates: [storeRoot(tenantId)] },
+    { invalidates: [queryKeys.store.root(tenantId)] },
   );
 }

@@ -49,7 +49,11 @@ APP_URL = "http://localhost:5173"
 APP_ROOT_DOMAINS = "localhost"
 CLOUDFLARE_ACCOUNT_ID = "610fe4c99988bf13d33f49fbfe446fee"
 CLOUDFLARE_PAGES_PROJECT = "fitconnect-pwa"
-R2_PUBLIC_URL = "https://pub-2da141b1571a44ebb3e8f7633b6e5b61.r2.dev"
+# The bucket that actually serves the stored files. The previous value
+# (pub-2da141...) returns 404 for objects that exist under this one, which
+# broke local development: the API proxy falls back to this address when its
+# own bucket lacks the object, and every avatar and logo rendered as initials.
+R2_PUBLIC_URL = "https://pub-f9794d5233bf467ca886bdf6c65a7cbe.r2.dev"
 CORS_ORIGIN = "http://localhost:5173"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = "587"

@@ -13,6 +13,9 @@ import type {
   SelfSignupPayload,
   SelfSignupResult,
   SignupVerifyResult,
+  TenantSignupPayload,
+  TenantSignupResult,
+  TenantSlugCheck,
   MemberIdCard,
   VerifyCheckoutPayload,
 } from "@/types/api";
@@ -217,4 +220,17 @@ export const publicApi = {
     api.post<ApiResponse<SignupVerifyResult>>("/public/signup/verify", payload, {
       params: { host },
     }),
+
+  // ─── Gym self-registration ────────────────────────────────────────────────
+  // Unlike everything above, these carry no host: the gym does not exist yet,
+  // and this flow runs on the platform's own domain.
+
+  /** Whether a gym address is free, for the form's inline check. */
+  checkTenantSlug: (slug: string) =>
+    api.get<ApiResponse<TenantSlugCheck>>("/public/tenant-signup/slug", {
+      params: { slug, _: Date.now() },
+    }),
+
+  registerTenant: (payload: TenantSignupPayload) =>
+    api.post<ApiResponse<TenantSignupResult>>("/public/tenant-signup", payload),
 };

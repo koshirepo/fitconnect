@@ -11,6 +11,8 @@ import type { AccountStatus } from "@fitconnect/shared/types/enums";
 type CreateTenantData = {
   name: string;
   slug: string;
+  /** Defaults to ACTIVE in the schema; self-registered gyms start SUSPENDED. */
+  status?: string;
   email?: string;
   phone?: string;
   address?: string;
@@ -36,6 +38,15 @@ const tenantSelect = {
   phone: true,
   address: true,
   logoUrl: true,
+  /**
+   * The gym's accent.
+   *
+   * Absent here, every read of a tenant came back without it: the settings
+   * form could never show a saved colour, so its "use our own colour" box was
+   * unticked on every visit, and saving from that state wrote null back. The
+   * column was doing nothing for anybody.
+   */
+  brandColor: true,
   markdown: true,
   description: true,
   estd: true,
@@ -188,7 +199,10 @@ export const tenantRepository = {
       },
     });
 
-    return tenant;
+    // The admin's id comes back alongside the tenant so a caller that needs to
+    // issue this person a session does not have to look up by email the account
+    // it created a line ago.
+    return { tenant, userId };
   },
 
   /**

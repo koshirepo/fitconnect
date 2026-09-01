@@ -44,6 +44,16 @@ export default function BadgesPage() {
   // separate grant that coaches hold by default.
   const isAdmin = can(Permission.BADGES_CREATE);
   const canAssignBadges = can(Permission.BADGES_ASSIGN);
+  const canAssignRestricted = can(Permission.BADGES_ASSIGN_RESTRICTED);
+
+  /**
+   * Whether this caller may hand out this particular badge.
+   *
+   * The API enforces the same rule and is what actually protects it; hiding
+   * the button here just avoids offering an action that would be refused.
+   */
+  const canAssignBadge = (badge: { restricted: boolean }) =>
+    canAssignBadges && (!badge.restricted || canAssignRestricted);
 
   // ─── Badge list ─────────────────────────────────────────────────────────────
   // Authors see inactive badges too, so the flag is part of the cache key.
@@ -183,7 +193,7 @@ export default function BadgesPage() {
         {isAdmin && (
           <Button onClick={() => navigate("/badges/create")}>
             <Plus className="h-4 w-4" />
-            New Badge
+            <span className="hidden sm:inline">New Badge</span>
           </Button>
         )}
       </div>
@@ -204,7 +214,7 @@ export default function BadgesPage() {
             isAdmin ? (
               <Button onClick={() => navigate("/badges/create")}>
                 <Plus className="h-4 w-4" />
-                Create Badge
+                <span className="hidden sm:inline">Create Badge</span>
               </Button>
             ) : undefined
           }
@@ -230,6 +240,14 @@ export default function BadgesPage() {
                         {!badge.isActive && (
                           <BadgeUI variant="warning" className="mt-0.5">
                             Inactive
+                          </BadgeUI>
+                        )}
+                        {/* Shown to staff only. A member has no assign button
+                            to be puzzled by, so the label would just be noise
+                            on their own achievements. */}
+                        {badge.restricted && canAssignBadges && (
+                          <BadgeUI variant="secondary" className="mt-0.5">
+                            Admins only
                           </BadgeUI>
                         )}
                       </div>
@@ -277,7 +295,7 @@ export default function BadgesPage() {
                           Edit
                         </Button>
                       )}
-                      {canAssignBadges && (
+                      {canAssignBadge(badge) && (
                         <Button
                           variant="outline"
                           size="sm"

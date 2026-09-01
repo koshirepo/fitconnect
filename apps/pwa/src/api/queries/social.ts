@@ -11,11 +11,7 @@ import { socialApi, type CommentFeed } from "@/api/social";
 import { queryKeys } from "@/lib/query-keys";
 import { unwrap, useCurrentTenantId, useTenantMutation, useTenantQuery } from "./shared";
 
-/** Every store query for one gym — the catalogue and its comment threads alike. */
-function storeRoot(tenantId: string | null | undefined) {
-  return ["store", tenantId ?? "none"];
-}
-
+/** Every reaction to the gym itself, as the prefix invalidation uses. */
 function socialRoot(tenantId: string | null | undefined) {
   return ["social", tenantId ?? "none"];
 }
@@ -50,7 +46,7 @@ export function useToggleProductLike(productId: string | undefined) {
           : await socialApi.unlikeProduct(id, productId!),
       ),
     {
-      invalidates: [storeRoot(tenantId)],
+      invalidates: [queryKeys.store.root(tenantId)],
       onMutate: async (liked: boolean) => {
         await queryClient.cancelQueries({ queryKey: key });
         const previous = queryClient.getQueryData<CommentFeed>(key);
@@ -79,7 +75,7 @@ export function useAddProductComment(productId: string | undefined) {
   const tenantId = useCurrentTenantId();
   return useTenantMutation(
     async (id, body: string) => unwrap(await socialApi.addProductComment(id, productId!, body)),
-    { invalidates: [storeRoot(tenantId)] },
+    { invalidates: [queryKeys.store.root(tenantId)] },
   );
 }
 
@@ -87,7 +83,7 @@ export function useDeleteProductComment() {
   const tenantId = useCurrentTenantId();
   return useTenantMutation(
     async (id, commentId: string) => unwrap(await socialApi.deleteProductComment(id, commentId)),
-    { invalidates: [storeRoot(tenantId)] },
+    { invalidates: [queryKeys.store.root(tenantId)] },
   );
 }
 

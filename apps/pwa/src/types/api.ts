@@ -93,7 +93,11 @@ export type {
   SignupOptions,
   SelfSignupPayload,
   SelfSignupResult,
+  TenantSignupPayload,
+  TenantSignupResult,
+  TenantSlugCheck,
   SignupVerifyResult,
+  OrderCheckoutSession,
   // Platform Billing
   PlatformPayment,
   RecordPlatformPaymentPayload,

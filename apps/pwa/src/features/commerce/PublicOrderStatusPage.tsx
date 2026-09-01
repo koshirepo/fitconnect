@@ -86,6 +86,21 @@ export default function PublicOrderStatusPage() {
               <span className="text-muted-foreground">Current Status</span>
               <Badge variant={STATUS_STYLE[order.status] ?? "secondary"}>{order.status}</Badge>
             </div>
+            {/* Payment is separate from fulfilment: an order can be paid and
+                not yet shipped, and a buyer who just paid needs to see that
+                the money landed rather than a "PENDING" that means shipping. */}
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Payment</span>
+              <Badge variant={order.paymentStatus === "COMPLETED" ? "default" : "secondary"}>
+                {order.paymentStatus === "COMPLETED" ? "PAID" : "UNPAID"}
+              </Badge>
+            </div>
+            {order.paidAt && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Paid At</span>
+                <span>{formatDateTime(order.paidAt)}</span>
+              </div>
+            )}
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Created At</span>
               <span>{formatDateTime(order.createdAt)}</span>

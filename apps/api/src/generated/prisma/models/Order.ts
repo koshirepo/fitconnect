@@ -52,6 +52,10 @@ export type OrderMinAggregateOutputType = {
   gstRatePct: number | null
   gstAmount: number | null
   totalAmount: number | null
+  paymentStatus: string | null
+  gatewayOrderId: string | null
+  gatewayPaymentId: string | null
+  paidAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -68,6 +72,10 @@ export type OrderMaxAggregateOutputType = {
   gstRatePct: number | null
   gstAmount: number | null
   totalAmount: number | null
+  paymentStatus: string | null
+  gatewayOrderId: string | null
+  gatewayPaymentId: string | null
+  paidAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -84,6 +92,10 @@ export type OrderCountAggregateOutputType = {
   gstRatePct: number
   gstAmount: number
   totalAmount: number
+  paymentStatus: number
+  gatewayOrderId: number
+  gatewayPaymentId: number
+  paidAt: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -116,6 +128,10 @@ export type OrderMinAggregateInputType = {
   gstRatePct?: true
   gstAmount?: true
   totalAmount?: true
+  paymentStatus?: true
+  gatewayOrderId?: true
+  gatewayPaymentId?: true
+  paidAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -132,6 +148,10 @@ export type OrderMaxAggregateInputType = {
   gstRatePct?: true
   gstAmount?: true
   totalAmount?: true
+  paymentStatus?: true
+  gatewayOrderId?: true
+  gatewayPaymentId?: true
+  paidAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -148,6 +168,10 @@ export type OrderCountAggregateInputType = {
   gstRatePct?: true
   gstAmount?: true
   totalAmount?: true
+  paymentStatus?: true
+  gatewayOrderId?: true
+  gatewayPaymentId?: true
+  paidAt?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -251,6 +275,10 @@ export type OrderGroupByOutputType = {
   gstRatePct: number
   gstAmount: number
   totalAmount: number
+  paymentStatus: string
+  gatewayOrderId: string | null
+  gatewayPaymentId: string | null
+  paidAt: Date | null
   createdAt: Date
   updatedAt: Date
   _count: OrderCountAggregateOutputType | null
@@ -290,6 +318,10 @@ export type OrderWhereInput = {
   gstRatePct?: Prisma.IntFilter<"Order"> | number
   gstAmount?: Prisma.IntFilter<"Order"> | number
   totalAmount?: Prisma.IntFilter<"Order"> | number
+  paymentStatus?: Prisma.StringFilter<"Order"> | string
+  gatewayOrderId?: Prisma.StringNullableFilter<"Order"> | string | null
+  gatewayPaymentId?: Prisma.StringNullableFilter<"Order"> | string | null
+  paidAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
@@ -308,6 +340,10 @@ export type OrderOrderByWithRelationInput = {
   gstRatePct?: Prisma.SortOrder
   gstAmount?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
+  paymentStatus?: Prisma.SortOrder
+  gatewayOrderId?: Prisma.SortOrderInput | Prisma.SortOrder
+  gatewayPaymentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  paidAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -329,6 +365,10 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   gstRatePct?: Prisma.IntFilter<"Order"> | number
   gstAmount?: Prisma.IntFilter<"Order"> | number
   totalAmount?: Prisma.IntFilter<"Order"> | number
+  paymentStatus?: Prisma.StringFilter<"Order"> | string
+  gatewayOrderId?: Prisma.StringNullableFilter<"Order"> | string | null
+  gatewayPaymentId?: Prisma.StringNullableFilter<"Order"> | string | null
+  paidAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
@@ -347,6 +387,10 @@ export type OrderOrderByWithAggregationInput = {
   gstRatePct?: Prisma.SortOrder
   gstAmount?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
+  paymentStatus?: Prisma.SortOrder
+  gatewayOrderId?: Prisma.SortOrderInput | Prisma.SortOrder
+  gatewayPaymentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  paidAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.OrderCountOrderByAggregateInput
@@ -371,6 +415,10 @@ export type OrderScalarWhereWithAggregatesInput = {
   gstRatePct?: Prisma.IntWithAggregatesFilter<"Order"> | number
   gstAmount?: Prisma.IntWithAggregatesFilter<"Order"> | number
   totalAmount?: Prisma.IntWithAggregatesFilter<"Order"> | number
+  paymentStatus?: Prisma.StringWithAggregatesFilter<"Order"> | string
+  gatewayOrderId?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
+  gatewayPaymentId?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
+  paidAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Order"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Order"> | Date | string
 }
@@ -386,6 +434,10 @@ export type OrderCreateInput = {
   gstRatePct?: number
   gstAmount?: number
   totalAmount: number
+  paymentStatus?: string
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  paidAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user?: Prisma.UserCreateNestedOneWithoutOrdersInput
@@ -404,6 +456,10 @@ export type OrderUncheckedCreateInput = {
   gstRatePct?: number
   gstAmount?: number
   totalAmount: number
+  paymentStatus?: string
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  paidAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   items?: Prisma.OrderItemUncheckedCreateNestedManyWithoutOrderInput
@@ -420,6 +476,10 @@ export type OrderUpdateInput = {
   gstRatePct?: Prisma.IntFieldUpdateOperationsInput | number
   gstAmount?: Prisma.IntFieldUpdateOperationsInput | number
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  paymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneWithoutOrdersNestedInput
@@ -438,6 +498,10 @@ export type OrderUncheckedUpdateInput = {
   gstRatePct?: Prisma.IntFieldUpdateOperationsInput | number
   gstAmount?: Prisma.IntFieldUpdateOperationsInput | number
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  paymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   items?: Prisma.OrderItemUncheckedUpdateManyWithoutOrderNestedInput
@@ -455,6 +519,10 @@ export type OrderCreateManyInput = {
   gstRatePct?: number
   gstAmount?: number
   totalAmount: number
+  paymentStatus?: string
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  paidAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -470,6 +538,10 @@ export type OrderUpdateManyMutationInput = {
   gstRatePct?: Prisma.IntFieldUpdateOperationsInput | number
   gstAmount?: Prisma.IntFieldUpdateOperationsInput | number
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  paymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -486,6 +558,10 @@ export type OrderUncheckedUpdateManyInput = {
   gstRatePct?: Prisma.IntFieldUpdateOperationsInput | number
   gstAmount?: Prisma.IntFieldUpdateOperationsInput | number
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  paymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -512,6 +588,10 @@ export type OrderCountOrderByAggregateInput = {
   gstRatePct?: Prisma.SortOrder
   gstAmount?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
+  paymentStatus?: Prisma.SortOrder
+  gatewayOrderId?: Prisma.SortOrder
+  gatewayPaymentId?: Prisma.SortOrder
+  paidAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -535,6 +615,10 @@ export type OrderMaxOrderByAggregateInput = {
   gstRatePct?: Prisma.SortOrder
   gstAmount?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
+  paymentStatus?: Prisma.SortOrder
+  gatewayOrderId?: Prisma.SortOrder
+  gatewayPaymentId?: Prisma.SortOrder
+  paidAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -551,6 +635,10 @@ export type OrderMinOrderByAggregateInput = {
   gstRatePct?: Prisma.SortOrder
   gstAmount?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
+  paymentStatus?: Prisma.SortOrder
+  gatewayOrderId?: Prisma.SortOrder
+  gatewayPaymentId?: Prisma.SortOrder
+  paidAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -634,6 +722,10 @@ export type OrderCreateWithoutUserInput = {
   gstRatePct?: number
   gstAmount?: number
   totalAmount: number
+  paymentStatus?: string
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  paidAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   items?: Prisma.OrderItemCreateNestedManyWithoutOrderInput
@@ -650,6 +742,10 @@ export type OrderUncheckedCreateWithoutUserInput = {
   gstRatePct?: number
   gstAmount?: number
   totalAmount: number
+  paymentStatus?: string
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  paidAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   items?: Prisma.OrderItemUncheckedCreateNestedManyWithoutOrderInput
@@ -695,6 +791,10 @@ export type OrderScalarWhereInput = {
   gstRatePct?: Prisma.IntFilter<"Order"> | number
   gstAmount?: Prisma.IntFilter<"Order"> | number
   totalAmount?: Prisma.IntFilter<"Order"> | number
+  paymentStatus?: Prisma.StringFilter<"Order"> | string
+  gatewayOrderId?: Prisma.StringNullableFilter<"Order"> | string | null
+  gatewayPaymentId?: Prisma.StringNullableFilter<"Order"> | string | null
+  paidAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Order"> | Date | string
 }
@@ -710,6 +810,10 @@ export type OrderCreateWithoutItemsInput = {
   gstRatePct?: number
   gstAmount?: number
   totalAmount: number
+  paymentStatus?: string
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  paidAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user?: Prisma.UserCreateNestedOneWithoutOrdersInput
@@ -727,6 +831,10 @@ export type OrderUncheckedCreateWithoutItemsInput = {
   gstRatePct?: number
   gstAmount?: number
   totalAmount: number
+  paymentStatus?: string
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  paidAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -758,6 +866,10 @@ export type OrderUpdateWithoutItemsInput = {
   gstRatePct?: Prisma.IntFieldUpdateOperationsInput | number
   gstAmount?: Prisma.IntFieldUpdateOperationsInput | number
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  paymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneWithoutOrdersNestedInput
@@ -775,6 +887,10 @@ export type OrderUncheckedUpdateWithoutItemsInput = {
   gstRatePct?: Prisma.IntFieldUpdateOperationsInput | number
   gstAmount?: Prisma.IntFieldUpdateOperationsInput | number
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  paymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -790,6 +906,10 @@ export type OrderCreateManyUserInput = {
   gstRatePct?: number
   gstAmount?: number
   totalAmount: number
+  paymentStatus?: string
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  paidAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -805,6 +925,10 @@ export type OrderUpdateWithoutUserInput = {
   gstRatePct?: Prisma.IntFieldUpdateOperationsInput | number
   gstAmount?: Prisma.IntFieldUpdateOperationsInput | number
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  paymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   items?: Prisma.OrderItemUpdateManyWithoutOrderNestedInput
@@ -821,6 +945,10 @@ export type OrderUncheckedUpdateWithoutUserInput = {
   gstRatePct?: Prisma.IntFieldUpdateOperationsInput | number
   gstAmount?: Prisma.IntFieldUpdateOperationsInput | number
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  paymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   items?: Prisma.OrderItemUncheckedUpdateManyWithoutOrderNestedInput
@@ -837,6 +965,10 @@ export type OrderUncheckedUpdateManyWithoutUserInput = {
   gstRatePct?: Prisma.IntFieldUpdateOperationsInput | number
   gstAmount?: Prisma.IntFieldUpdateOperationsInput | number
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  paymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -884,6 +1016,10 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   gstRatePct?: boolean
   gstAmount?: boolean
   totalAmount?: boolean
+  paymentStatus?: boolean
+  gatewayOrderId?: boolean
+  gatewayPaymentId?: boolean
+  paidAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.Order$userArgs<ExtArgs>
@@ -903,6 +1039,10 @@ export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   gstRatePct?: boolean
   gstAmount?: boolean
   totalAmount?: boolean
+  paymentStatus?: boolean
+  gatewayOrderId?: boolean
+  gatewayPaymentId?: boolean
+  paidAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.Order$userArgs<ExtArgs>
@@ -920,6 +1060,10 @@ export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   gstRatePct?: boolean
   gstAmount?: boolean
   totalAmount?: boolean
+  paymentStatus?: boolean
+  gatewayOrderId?: boolean
+  gatewayPaymentId?: boolean
+  paidAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.Order$userArgs<ExtArgs>
@@ -937,11 +1081,15 @@ export type OrderSelectScalar = {
   gstRatePct?: boolean
   gstAmount?: boolean
   totalAmount?: boolean
+  paymentStatus?: boolean
+  gatewayOrderId?: boolean
+  gatewayPaymentId?: boolean
+  paidAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "buyerName" | "buyerEmail" | "buyerPhone" | "buyerAddress" | "status" | "subtotalAmount" | "gstRatePct" | "gstAmount" | "totalAmount" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
+export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "buyerName" | "buyerEmail" | "buyerPhone" | "buyerAddress" | "status" | "subtotalAmount" | "gstRatePct" | "gstAmount" | "totalAmount" | "paymentStatus" | "gatewayOrderId" | "gatewayPaymentId" | "paidAt" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
 export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.Order$userArgs<ExtArgs>
   items?: boolean | Prisma.Order$itemsArgs<ExtArgs>
@@ -967,11 +1115,26 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     buyerEmail: string
     buyerPhone: string
     buyerAddress: string
+    /**
+     * Fulfilment: PENDING, SHIPPED, DELIVERED. Not about money — see paymentStatus.
+     */
     status: string
     subtotalAmount: number
     gstRatePct: number
     gstAmount: number
     totalAmount: number
+    /**
+     * Money: PENDING, COMPLETED, FAILED. An order placed before the shop took
+     * cards stays PENDING here, which is what it always was.
+     */
+    paymentStatus: string
+    /**
+     * Razorpay's order id, which is what the browser and the webhook both
+     * return an order by. Indexed for exactly that lookup.
+     */
+    gatewayOrderId: string | null
+    gatewayPaymentId: string | null
+    paidAt: Date | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["order"]>
@@ -1410,6 +1573,10 @@ export interface OrderFieldRefs {
   readonly gstRatePct: Prisma.FieldRef<"Order", 'Int'>
   readonly gstAmount: Prisma.FieldRef<"Order", 'Int'>
   readonly totalAmount: Prisma.FieldRef<"Order", 'Int'>
+  readonly paymentStatus: Prisma.FieldRef<"Order", 'String'>
+  readonly gatewayOrderId: Prisma.FieldRef<"Order", 'String'>
+  readonly gatewayPaymentId: Prisma.FieldRef<"Order", 'String'>
+  readonly paidAt: Prisma.FieldRef<"Order", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Order", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Order", 'DateTime'>
 }

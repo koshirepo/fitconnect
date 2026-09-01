@@ -7,8 +7,15 @@
  */
 import type { OrderStatus } from "@fitconnect/shared/types/enums";
 import { COMMERCE_DEFAULT_GST_RATE_PCT } from "@fitconnect/shared/constants";
+import { createOrder, verifyCheckoutSignature, RazorpayError } from "../../lib/razorpay";
+import { gatewayService } from "../payments/gateway.service";
 import { commerceRepository } from "./commerce.repository";
-import type { CreateProductInput, PlaceOrderInput, UpdateProductInput } from "./commerce.schema";
+import type {
+  CreateProductInput,
+  PlaceOrderInput,
+  UpdateProductInput,
+  VerifyOrderPaymentInput,
+} from "./commerce.schema";
 
 /**
  * Execute the `to string list` workflow for the commerce module.
@@ -239,6 +246,107 @@ export const commerceService = {
       if (parsed) return parsed;
       throw err;
     }
+  },
+
+  /**
+   * Place an order and open a payment for it.
+   *
+   * The order is created first and exactly as `placeOrder` creates it — same
+   * stock claim, same server-side pricing — so the two paths can never disagree
+   * about what was bought or what it costs. The amount handed to Razorpay is
+   * the total the database computed, never a number from the request: a body
+   * that could name its own amount could buy a ₹5,000 order for a rupee.
+   *
+   * A deployment with no gateway configured still takes the order and returns
+   * `checkout: null`, which is exactly what this endpoint did before payment
+   * existed — an unpaid order for someone to settle by hand.
+   */
+  async startCheckout(input: PlaceOrderInput, userId?: string) {
+    const placed = await this.placeOrder(input, userId);
+    if ("error" in placed) return placed;
+
+    const order = placed.data.order;
+
+    const credentials = gatewayService.resolvePlatformCredentials();
+    if (!credentials) {
+      return { data: { order, checkout: null } };
+    }
+
+    try {
+      const gatewayOrder = await createOrder(credentials, {
+        amount: order.totalAmount,
+        receipt: order.id,
+        notes: { kind: "platform shop" },
+      });
+
+      await commerceRepository.attachGatewayOrder(order.id, gatewayOrder.id);
+
+      return {
+        data: {
+          order,
+          checkout: {
+            orderId: gatewayOrder.id,
+            // Public by design — the checkout widget needs it in the browser.
+            // The secret never leaves the API.
+            keyId: credentials.keyId,
+            amount: order.totalAmount,
+            currency: "INR",
+          },
+        },
+      };
+    } catch (err) {
+      /**
+       * The order stands, unpaid.
+       *
+       * Rolling it back would put the stock right but throw away a real
+       * purchase because Razorpay had a bad minute. Leaving it PENDING is the
+       * same state the shop produced for every order before it took cards, and
+       * the buyer is told to use the order id.
+       */
+      if (err instanceof RazorpayError) {
+        return {
+          error:
+            "Your order was placed, but the payment window could not be opened. Use your order id to pay later.",
+          status: 502 as const,
+        };
+      }
+      throw err;
+    }
+  },
+
+  /**
+   * Settle an order against what Razorpay signed.
+   *
+   * The signature is what proves the browser is not simply claiming success:
+   * only someone holding the key secret can produce it. Idempotent through a
+   * conditional update, so a second arrival finds nothing left to do rather
+   * than marking the same order paid twice.
+   */
+  async verifyPayment(input: VerifyOrderPaymentInput) {
+    const credentials = gatewayService.resolvePlatformCredentials();
+    if (!credentials) {
+      return { error: "This shop is not taking card payments.", status: 409 as const };
+    }
+
+    const valid = await verifyCheckoutSignature(credentials.keySecret, input);
+    if (!valid) {
+      return { error: "That payment could not be verified.", status: 400 as const };
+    }
+
+    const order = await commerceRepository.findOrderByGatewayOrderId(input.orderId);
+    if (!order) return { error: "Order not found.", status: 404 as const };
+
+    const settled = await commerceRepository.markOrderPaid(order.id, input.paymentId);
+
+    return {
+      data: {
+        order: mapOrder(order),
+        orderId: order.id,
+        // False when somebody else settled it first, which is a success for the
+        // caller — the money is in either way.
+        alreadySettled: !settled,
+      },
+    };
   },
 
   /**

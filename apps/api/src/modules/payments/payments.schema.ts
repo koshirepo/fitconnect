@@ -101,8 +101,18 @@ export const createPaymentSchema = z
     }
   });
 
+/**
+ * Every status a payment can be moved to, PENDING included.
+ *
+ * An admin correcting the record needs the whole set, not a one-way path: a
+ * payment marked failed against the wrong member, or completed by a
+ * mis-click, has to be able to go back to owing. Who may make which move is
+ * decided in the service against the caller's permissions — somebody holding
+ * only `payments:settle` still cannot touch a settled row — so widening the
+ * shape here grants nothing on its own.
+ */
 export const updatePaymentStatusSchema = z.object({
-  status: z.enum(["COMPLETED", "FAILED", "REFUNDED"]),
+  status: z.enum(["PENDING", "COMPLETED", "FAILED", "REFUNDED"]),
 });
 
 export const updatePaymentSchema = z

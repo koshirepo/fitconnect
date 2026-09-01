@@ -305,6 +305,8 @@ export type TenantMembershipWhereInput = {
   soldStoreOrders?: Prisma.StoreOrderListRelationFilter
   paymentReminders?: Prisma.PaymentReminderListRelationFilter
   sentReminders?: Prisma.PaymentReminderListRelationFilter
+  bodyMetrics?: Prisma.BodyMetricListRelationFilter
+  recordedMetrics?: Prisma.BodyMetricListRelationFilter
 }
 
 export type TenantMembershipOrderByWithRelationInput = {
@@ -345,6 +347,8 @@ export type TenantMembershipOrderByWithRelationInput = {
   soldStoreOrders?: Prisma.StoreOrderOrderByRelationAggregateInput
   paymentReminders?: Prisma.PaymentReminderOrderByRelationAggregateInput
   sentReminders?: Prisma.PaymentReminderOrderByRelationAggregateInput
+  bodyMetrics?: Prisma.BodyMetricOrderByRelationAggregateInput
+  recordedMetrics?: Prisma.BodyMetricOrderByRelationAggregateInput
 }
 
 export type TenantMembershipWhereUniqueInput = Prisma.AtLeast<{
@@ -390,6 +394,8 @@ export type TenantMembershipWhereUniqueInput = Prisma.AtLeast<{
   soldStoreOrders?: Prisma.StoreOrderListRelationFilter
   paymentReminders?: Prisma.PaymentReminderListRelationFilter
   sentReminders?: Prisma.PaymentReminderListRelationFilter
+  bodyMetrics?: Prisma.BodyMetricListRelationFilter
+  recordedMetrics?: Prisma.BodyMetricListRelationFilter
 }, "id" | "userId" | "idCardToken" | "tenantId_userId" | "tenantId_memberId">
 
 export type TenantMembershipOrderByWithAggregationInput = {
@@ -466,6 +472,8 @@ export type TenantMembershipCreateInput = {
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateInput = {
@@ -502,6 +510,8 @@ export type TenantMembershipUncheckedCreateInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUpdateInput = {
@@ -538,6 +548,8 @@ export type TenantMembershipUpdateInput = {
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateInput = {
@@ -574,6 +586,8 @@ export type TenantMembershipUncheckedUpdateInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipCreateManyInput = {
@@ -1040,6 +1054,36 @@ export type TenantMembershipUpdateOneRequiredWithoutFreezesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.TenantMembershipUpdateToOneWithWhereWithoutFreezesInput, Prisma.TenantMembershipUpdateWithoutFreezesInput>, Prisma.TenantMembershipUncheckedUpdateWithoutFreezesInput>
 }
 
+export type TenantMembershipCreateNestedOneWithoutBodyMetricsInput = {
+  create?: Prisma.XOR<Prisma.TenantMembershipCreateWithoutBodyMetricsInput, Prisma.TenantMembershipUncheckedCreateWithoutBodyMetricsInput>
+  connectOrCreate?: Prisma.TenantMembershipCreateOrConnectWithoutBodyMetricsInput
+  connect?: Prisma.TenantMembershipWhereUniqueInput
+}
+
+export type TenantMembershipCreateNestedOneWithoutRecordedMetricsInput = {
+  create?: Prisma.XOR<Prisma.TenantMembershipCreateWithoutRecordedMetricsInput, Prisma.TenantMembershipUncheckedCreateWithoutRecordedMetricsInput>
+  connectOrCreate?: Prisma.TenantMembershipCreateOrConnectWithoutRecordedMetricsInput
+  connect?: Prisma.TenantMembershipWhereUniqueInput
+}
+
+export type TenantMembershipUpdateOneRequiredWithoutBodyMetricsNestedInput = {
+  create?: Prisma.XOR<Prisma.TenantMembershipCreateWithoutBodyMetricsInput, Prisma.TenantMembershipUncheckedCreateWithoutBodyMetricsInput>
+  connectOrCreate?: Prisma.TenantMembershipCreateOrConnectWithoutBodyMetricsInput
+  upsert?: Prisma.TenantMembershipUpsertWithoutBodyMetricsInput
+  connect?: Prisma.TenantMembershipWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.TenantMembershipUpdateToOneWithWhereWithoutBodyMetricsInput, Prisma.TenantMembershipUpdateWithoutBodyMetricsInput>, Prisma.TenantMembershipUncheckedUpdateWithoutBodyMetricsInput>
+}
+
+export type TenantMembershipUpdateOneWithoutRecordedMetricsNestedInput = {
+  create?: Prisma.XOR<Prisma.TenantMembershipCreateWithoutRecordedMetricsInput, Prisma.TenantMembershipUncheckedCreateWithoutRecordedMetricsInput>
+  connectOrCreate?: Prisma.TenantMembershipCreateOrConnectWithoutRecordedMetricsInput
+  upsert?: Prisma.TenantMembershipUpsertWithoutRecordedMetricsInput
+  disconnect?: Prisma.TenantMembershipWhereInput | boolean
+  delete?: Prisma.TenantMembershipWhereInput | boolean
+  connect?: Prisma.TenantMembershipWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.TenantMembershipUpdateToOneWithWhereWithoutRecordedMetricsInput, Prisma.TenantMembershipUpdateWithoutRecordedMetricsInput>, Prisma.TenantMembershipUncheckedUpdateWithoutRecordedMetricsInput>
+}
+
 export type TenantMembershipCreateNestedOneWithoutCreatedPlansInput = {
   create?: Prisma.XOR<Prisma.TenantMembershipCreateWithoutCreatedPlansInput, Prisma.TenantMembershipUncheckedCreateWithoutCreatedPlansInput>
   connectOrCreate?: Prisma.TenantMembershipCreateOrConnectWithoutCreatedPlansInput
@@ -1229,6 +1273,8 @@ export type TenantMembershipCreateWithoutUserInput = {
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutUserInput = {
@@ -1264,6 +1310,8 @@ export type TenantMembershipUncheckedCreateWithoutUserInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutUserInput = {
@@ -1343,6 +1391,8 @@ export type TenantMembershipCreateWithoutTenantInput = {
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutTenantInput = {
@@ -1378,6 +1428,8 @@ export type TenantMembershipUncheckedCreateWithoutTenantInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutTenantInput = {
@@ -1438,6 +1490,8 @@ export type TenantMembershipCreateWithoutReferralsInput = {
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutReferralsInput = {
@@ -1473,6 +1527,8 @@ export type TenantMembershipUncheckedCreateWithoutReferralsInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutReferralsInput = {
@@ -1513,6 +1569,8 @@ export type TenantMembershipCreateWithoutReferredByInput = {
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutReferredByInput = {
@@ -1548,6 +1606,8 @@ export type TenantMembershipUncheckedCreateWithoutReferredByInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutReferredByInput = {
@@ -1603,6 +1663,8 @@ export type TenantMembershipUpdateWithoutReferralsInput = {
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutReferralsInput = {
@@ -1638,6 +1700,8 @@ export type TenantMembershipUncheckedUpdateWithoutReferralsInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUpsertWithWhereUniqueWithoutReferredByInput = {
@@ -1689,6 +1753,8 @@ export type TenantMembershipCreateWithoutShiftInput = {
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutShiftInput = {
@@ -1724,6 +1790,8 @@ export type TenantMembershipUncheckedCreateWithoutShiftInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutShiftInput = {
@@ -1784,6 +1852,8 @@ export type TenantMembershipCreateWithoutCreatedTodosInput = {
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutCreatedTodosInput = {
@@ -1819,6 +1889,8 @@ export type TenantMembershipUncheckedCreateWithoutCreatedTodosInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutCreatedTodosInput = {
@@ -1859,6 +1931,8 @@ export type TenantMembershipCreateWithoutUpdatedTodosInput = {
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutUpdatedTodosInput = {
@@ -1894,6 +1968,8 @@ export type TenantMembershipUncheckedCreateWithoutUpdatedTodosInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutUpdatedTodosInput = {
@@ -1934,6 +2010,8 @@ export type TenantMembershipCreateWithoutCompletedTodosInput = {
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutCompletedTodosInput = {
@@ -1969,6 +2047,8 @@ export type TenantMembershipUncheckedCreateWithoutCompletedTodosInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutCompletedTodosInput = {
@@ -2020,6 +2100,8 @@ export type TenantMembershipUpdateWithoutCreatedTodosInput = {
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutCreatedTodosInput = {
@@ -2055,6 +2137,8 @@ export type TenantMembershipUncheckedUpdateWithoutCreatedTodosInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUpsertWithoutUpdatedTodosInput = {
@@ -2101,6 +2185,8 @@ export type TenantMembershipUpdateWithoutUpdatedTodosInput = {
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutUpdatedTodosInput = {
@@ -2136,6 +2222,8 @@ export type TenantMembershipUncheckedUpdateWithoutUpdatedTodosInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUpsertWithoutCompletedTodosInput = {
@@ -2182,6 +2270,8 @@ export type TenantMembershipUpdateWithoutCompletedTodosInput = {
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutCompletedTodosInput = {
@@ -2217,6 +2307,8 @@ export type TenantMembershipUncheckedUpdateWithoutCompletedTodosInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipCreateWithoutPaymentsInput = {
@@ -2252,6 +2344,8 @@ export type TenantMembershipCreateWithoutPaymentsInput = {
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutPaymentsInput = {
@@ -2287,6 +2381,8 @@ export type TenantMembershipUncheckedCreateWithoutPaymentsInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutPaymentsInput = {
@@ -2327,6 +2423,8 @@ export type TenantMembershipCreateWithoutCollectedPaymentsInput = {
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutCollectedPaymentsInput = {
@@ -2362,6 +2460,8 @@ export type TenantMembershipUncheckedCreateWithoutCollectedPaymentsInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutCollectedPaymentsInput = {
@@ -2413,6 +2513,8 @@ export type TenantMembershipUpdateWithoutPaymentsInput = {
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutPaymentsInput = {
@@ -2448,6 +2550,8 @@ export type TenantMembershipUncheckedUpdateWithoutPaymentsInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUpsertWithoutCollectedPaymentsInput = {
@@ -2494,6 +2598,8 @@ export type TenantMembershipUpdateWithoutCollectedPaymentsInput = {
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutCollectedPaymentsInput = {
@@ -2529,6 +2635,8 @@ export type TenantMembershipUncheckedUpdateWithoutCollectedPaymentsInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipCreateWithoutPaymentRemindersInput = {
@@ -2564,6 +2672,8 @@ export type TenantMembershipCreateWithoutPaymentRemindersInput = {
   storeComments?: Prisma.StoreProductCommentCreateNestedManyWithoutMembershipInput
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutPaymentRemindersInput = {
@@ -2599,6 +2709,8 @@ export type TenantMembershipUncheckedCreateWithoutPaymentRemindersInput = {
   storeComments?: Prisma.StoreProductCommentUncheckedCreateNestedManyWithoutMembershipInput
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutPaymentRemindersInput = {
@@ -2639,6 +2751,8 @@ export type TenantMembershipCreateWithoutSentRemindersInput = {
   storeComments?: Prisma.StoreProductCommentCreateNestedManyWithoutMembershipInput
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutSentRemindersInput = {
@@ -2674,6 +2788,8 @@ export type TenantMembershipUncheckedCreateWithoutSentRemindersInput = {
   storeComments?: Prisma.StoreProductCommentUncheckedCreateNestedManyWithoutMembershipInput
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutSentRemindersInput = {
@@ -2725,6 +2841,8 @@ export type TenantMembershipUpdateWithoutPaymentRemindersInput = {
   storeComments?: Prisma.StoreProductCommentUpdateManyWithoutMembershipNestedInput
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutPaymentRemindersInput = {
@@ -2760,6 +2878,8 @@ export type TenantMembershipUncheckedUpdateWithoutPaymentRemindersInput = {
   storeComments?: Prisma.StoreProductCommentUncheckedUpdateManyWithoutMembershipNestedInput
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUpsertWithoutSentRemindersInput = {
@@ -2806,6 +2926,8 @@ export type TenantMembershipUpdateWithoutSentRemindersInput = {
   storeComments?: Prisma.StoreProductCommentUpdateManyWithoutMembershipNestedInput
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutSentRemindersInput = {
@@ -2841,6 +2963,8 @@ export type TenantMembershipUncheckedUpdateWithoutSentRemindersInput = {
   storeComments?: Prisma.StoreProductCommentUncheckedUpdateManyWithoutMembershipNestedInput
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipCreateWithoutCouponRedemptionsInput = {
@@ -2876,6 +3000,8 @@ export type TenantMembershipCreateWithoutCouponRedemptionsInput = {
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutCouponRedemptionsInput = {
@@ -2911,6 +3037,8 @@ export type TenantMembershipUncheckedCreateWithoutCouponRedemptionsInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutCouponRedemptionsInput = {
@@ -2962,6 +3090,8 @@ export type TenantMembershipUpdateWithoutCouponRedemptionsInput = {
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutCouponRedemptionsInput = {
@@ -2997,6 +3127,8 @@ export type TenantMembershipUncheckedUpdateWithoutCouponRedemptionsInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipCreateWithoutCoinLedgerInput = {
@@ -3032,6 +3164,8 @@ export type TenantMembershipCreateWithoutCoinLedgerInput = {
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutCoinLedgerInput = {
@@ -3067,6 +3201,8 @@ export type TenantMembershipUncheckedCreateWithoutCoinLedgerInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutCoinLedgerInput = {
@@ -3118,6 +3254,8 @@ export type TenantMembershipUpdateWithoutCoinLedgerInput = {
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutCoinLedgerInput = {
@@ -3153,6 +3291,8 @@ export type TenantMembershipUncheckedUpdateWithoutCoinLedgerInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipCreateWithoutFreezesInput = {
@@ -3188,6 +3328,8 @@ export type TenantMembershipCreateWithoutFreezesInput = {
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutFreezesInput = {
@@ -3223,6 +3365,8 @@ export type TenantMembershipUncheckedCreateWithoutFreezesInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutFreezesInput = {
@@ -3274,6 +3418,8 @@ export type TenantMembershipUpdateWithoutFreezesInput = {
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutFreezesInput = {
@@ -3309,6 +3455,336 @@ export type TenantMembershipUncheckedUpdateWithoutFreezesInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
+}
+
+export type TenantMembershipCreateWithoutBodyMetricsInput = {
+  id?: string
+  memberId: number
+  role?: string
+  status?: string
+  dueDate?: Date | string | null
+  idCardToken?: string | null
+  joinedAt?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tenant: Prisma.TenantCreateNestedOneWithoutMembershipsInput
+  user: Prisma.UserCreateNestedOneWithoutMembershipsInput
+  shift?: Prisma.ShiftCreateNestedOneWithoutMembersInput
+  referredBy?: Prisma.TenantMembershipCreateNestedOneWithoutReferralsInput
+  badges?: Prisma.BadgeCreateNestedManyWithoutUsersInput
+  referrals?: Prisma.TenantMembershipCreateNestedManyWithoutReferredByInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutMemberInput
+  collectedPayments?: Prisma.PaymentCreateNestedManyWithoutCollectedByInput
+  createdPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutCreatorInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentCreateNestedManyWithoutMembershipInput
+  attendances?: Prisma.AttendanceCreateNestedManyWithoutMemberInput
+  markedAttendances?: Prisma.AttendanceCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutMembershipInput
+  storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutMemberInput
+  storeLikes?: Prisma.StoreProductLikeCreateNestedManyWithoutMembershipInput
+  storeComments?: Prisma.StoreProductCommentCreateNestedManyWithoutMembershipInput
+  soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
+  paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
+  sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
+}
+
+export type TenantMembershipUncheckedCreateWithoutBodyMetricsInput = {
+  id?: string
+  tenantId: string
+  userId: string
+  memberId: number
+  role?: string
+  status?: string
+  dueDate?: Date | string | null
+  shiftId?: string | null
+  referredByMembershipId?: string | null
+  idCardToken?: string | null
+  joinedAt?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutUsersInput
+  referrals?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutReferredByInput
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutMemberInput
+  collectedPayments?: Prisma.PaymentUncheckedCreateNestedManyWithoutCollectedByInput
+  createdPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutCreatorInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedCreateNestedManyWithoutMembershipInput
+  attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMemberInput
+  markedAttendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutMembershipInput
+  storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutMemberInput
+  storeLikes?: Prisma.StoreProductLikeUncheckedCreateNestedManyWithoutMembershipInput
+  storeComments?: Prisma.StoreProductCommentUncheckedCreateNestedManyWithoutMembershipInput
+  soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
+  paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
+  sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
+}
+
+export type TenantMembershipCreateOrConnectWithoutBodyMetricsInput = {
+  where: Prisma.TenantMembershipWhereUniqueInput
+  create: Prisma.XOR<Prisma.TenantMembershipCreateWithoutBodyMetricsInput, Prisma.TenantMembershipUncheckedCreateWithoutBodyMetricsInput>
+}
+
+export type TenantMembershipCreateWithoutRecordedMetricsInput = {
+  id?: string
+  memberId: number
+  role?: string
+  status?: string
+  dueDate?: Date | string | null
+  idCardToken?: string | null
+  joinedAt?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tenant: Prisma.TenantCreateNestedOneWithoutMembershipsInput
+  user: Prisma.UserCreateNestedOneWithoutMembershipsInput
+  shift?: Prisma.ShiftCreateNestedOneWithoutMembersInput
+  referredBy?: Prisma.TenantMembershipCreateNestedOneWithoutReferralsInput
+  badges?: Prisma.BadgeCreateNestedManyWithoutUsersInput
+  referrals?: Prisma.TenantMembershipCreateNestedManyWithoutReferredByInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutMemberInput
+  collectedPayments?: Prisma.PaymentCreateNestedManyWithoutCollectedByInput
+  createdPlans?: Prisma.WorkoutPlanCreateNestedManyWithoutCreatorInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentCreateNestedManyWithoutMembershipInput
+  attendances?: Prisma.AttendanceCreateNestedManyWithoutMemberInput
+  markedAttendances?: Prisma.AttendanceCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeCreateNestedManyWithoutMembershipInput
+  storeOrders?: Prisma.StoreOrderCreateNestedManyWithoutMemberInput
+  storeLikes?: Prisma.StoreProductLikeCreateNestedManyWithoutMembershipInput
+  storeComments?: Prisma.StoreProductCommentCreateNestedManyWithoutMembershipInput
+  soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
+  paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
+  sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+}
+
+export type TenantMembershipUncheckedCreateWithoutRecordedMetricsInput = {
+  id?: string
+  tenantId: string
+  userId: string
+  memberId: number
+  role?: string
+  status?: string
+  dueDate?: Date | string | null
+  shiftId?: string | null
+  referredByMembershipId?: string | null
+  idCardToken?: string | null
+  joinedAt?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  badges?: Prisma.BadgeUncheckedCreateNestedManyWithoutUsersInput
+  referrals?: Prisma.TenantMembershipUncheckedCreateNestedManyWithoutReferredByInput
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutMemberInput
+  collectedPayments?: Prisma.PaymentUncheckedCreateNestedManyWithoutCollectedByInput
+  createdPlans?: Prisma.WorkoutPlanUncheckedCreateNestedManyWithoutCreatorInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedCreateNestedManyWithoutMembershipInput
+  attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMemberInput
+  markedAttendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutMarkedByInput
+  createdTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutUpdatedByInput
+  completedTodos?: Prisma.TodoUncheckedCreateNestedManyWithoutCompletedByInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedCreateNestedManyWithoutMembershipInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedCreateNestedManyWithoutMembershipInput
+  freezes?: Prisma.MembershipFreezeUncheckedCreateNestedManyWithoutMembershipInput
+  storeOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutMemberInput
+  storeLikes?: Prisma.StoreProductLikeUncheckedCreateNestedManyWithoutMembershipInput
+  storeComments?: Prisma.StoreProductCommentUncheckedCreateNestedManyWithoutMembershipInput
+  soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
+  paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
+  sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+}
+
+export type TenantMembershipCreateOrConnectWithoutRecordedMetricsInput = {
+  where: Prisma.TenantMembershipWhereUniqueInput
+  create: Prisma.XOR<Prisma.TenantMembershipCreateWithoutRecordedMetricsInput, Prisma.TenantMembershipUncheckedCreateWithoutRecordedMetricsInput>
+}
+
+export type TenantMembershipUpsertWithoutBodyMetricsInput = {
+  update: Prisma.XOR<Prisma.TenantMembershipUpdateWithoutBodyMetricsInput, Prisma.TenantMembershipUncheckedUpdateWithoutBodyMetricsInput>
+  create: Prisma.XOR<Prisma.TenantMembershipCreateWithoutBodyMetricsInput, Prisma.TenantMembershipUncheckedCreateWithoutBodyMetricsInput>
+  where?: Prisma.TenantMembershipWhereInput
+}
+
+export type TenantMembershipUpdateToOneWithWhereWithoutBodyMetricsInput = {
+  where?: Prisma.TenantMembershipWhereInput
+  data: Prisma.XOR<Prisma.TenantMembershipUpdateWithoutBodyMetricsInput, Prisma.TenantMembershipUncheckedUpdateWithoutBodyMetricsInput>
+}
+
+export type TenantMembershipUpdateWithoutBodyMetricsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  memberId?: Prisma.IntFieldUpdateOperationsInput | number
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tenant?: Prisma.TenantUpdateOneRequiredWithoutMembershipsNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutMembershipsNestedInput
+  shift?: Prisma.ShiftUpdateOneWithoutMembersNestedInput
+  referredBy?: Prisma.TenantMembershipUpdateOneWithoutReferralsNestedInput
+  badges?: Prisma.BadgeUpdateManyWithoutUsersNestedInput
+  referrals?: Prisma.TenantMembershipUpdateManyWithoutReferredByNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutMemberNestedInput
+  collectedPayments?: Prisma.PaymentUpdateManyWithoutCollectedByNestedInput
+  createdPlans?: Prisma.WorkoutPlanUpdateManyWithoutCreatorNestedInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUpdateManyWithoutMembershipNestedInput
+  attendances?: Prisma.AttendanceUpdateManyWithoutMemberNestedInput
+  markedAttendances?: Prisma.AttendanceUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUpdateManyWithoutMembershipNestedInput
+  storeOrders?: Prisma.StoreOrderUpdateManyWithoutMemberNestedInput
+  storeLikes?: Prisma.StoreProductLikeUpdateManyWithoutMembershipNestedInput
+  storeComments?: Prisma.StoreProductCommentUpdateManyWithoutMembershipNestedInput
+  soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
+  paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
+  sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
+}
+
+export type TenantMembershipUncheckedUpdateWithoutBodyMetricsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  memberId?: Prisma.IntFieldUpdateOperationsInput | number
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  badges?: Prisma.BadgeUncheckedUpdateManyWithoutUsersNestedInput
+  referrals?: Prisma.TenantMembershipUncheckedUpdateManyWithoutReferredByNestedInput
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutMemberNestedInput
+  collectedPayments?: Prisma.PaymentUncheckedUpdateManyWithoutCollectedByNestedInput
+  createdPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutCreatorNestedInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedUpdateManyWithoutMembershipNestedInput
+  attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMemberNestedInput
+  markedAttendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutMembershipNestedInput
+  storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutMemberNestedInput
+  storeLikes?: Prisma.StoreProductLikeUncheckedUpdateManyWithoutMembershipNestedInput
+  storeComments?: Prisma.StoreProductCommentUncheckedUpdateManyWithoutMembershipNestedInput
+  soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
+  paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
+  sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
+}
+
+export type TenantMembershipUpsertWithoutRecordedMetricsInput = {
+  update: Prisma.XOR<Prisma.TenantMembershipUpdateWithoutRecordedMetricsInput, Prisma.TenantMembershipUncheckedUpdateWithoutRecordedMetricsInput>
+  create: Prisma.XOR<Prisma.TenantMembershipCreateWithoutRecordedMetricsInput, Prisma.TenantMembershipUncheckedCreateWithoutRecordedMetricsInput>
+  where?: Prisma.TenantMembershipWhereInput
+}
+
+export type TenantMembershipUpdateToOneWithWhereWithoutRecordedMetricsInput = {
+  where?: Prisma.TenantMembershipWhereInput
+  data: Prisma.XOR<Prisma.TenantMembershipUpdateWithoutRecordedMetricsInput, Prisma.TenantMembershipUncheckedUpdateWithoutRecordedMetricsInput>
+}
+
+export type TenantMembershipUpdateWithoutRecordedMetricsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  memberId?: Prisma.IntFieldUpdateOperationsInput | number
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tenant?: Prisma.TenantUpdateOneRequiredWithoutMembershipsNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutMembershipsNestedInput
+  shift?: Prisma.ShiftUpdateOneWithoutMembersNestedInput
+  referredBy?: Prisma.TenantMembershipUpdateOneWithoutReferralsNestedInput
+  badges?: Prisma.BadgeUpdateManyWithoutUsersNestedInput
+  referrals?: Prisma.TenantMembershipUpdateManyWithoutReferredByNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutMemberNestedInput
+  collectedPayments?: Prisma.PaymentUpdateManyWithoutCollectedByNestedInput
+  createdPlans?: Prisma.WorkoutPlanUpdateManyWithoutCreatorNestedInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUpdateManyWithoutMembershipNestedInput
+  attendances?: Prisma.AttendanceUpdateManyWithoutMemberNestedInput
+  markedAttendances?: Prisma.AttendanceUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUpdateManyWithoutMembershipNestedInput
+  storeOrders?: Prisma.StoreOrderUpdateManyWithoutMemberNestedInput
+  storeLikes?: Prisma.StoreProductLikeUpdateManyWithoutMembershipNestedInput
+  storeComments?: Prisma.StoreProductCommentUpdateManyWithoutMembershipNestedInput
+  soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
+  paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
+  sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+}
+
+export type TenantMembershipUncheckedUpdateWithoutRecordedMetricsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  memberId?: Prisma.IntFieldUpdateOperationsInput | number
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  badges?: Prisma.BadgeUncheckedUpdateManyWithoutUsersNestedInput
+  referrals?: Prisma.TenantMembershipUncheckedUpdateManyWithoutReferredByNestedInput
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutMemberNestedInput
+  collectedPayments?: Prisma.PaymentUncheckedUpdateManyWithoutCollectedByNestedInput
+  createdPlans?: Prisma.WorkoutPlanUncheckedUpdateManyWithoutCreatorNestedInput
+  planAssignments?: Prisma.WorkoutPlanAssignmentUncheckedUpdateManyWithoutMembershipNestedInput
+  attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMemberNestedInput
+  markedAttendances?: Prisma.AttendanceUncheckedUpdateManyWithoutMarkedByNestedInput
+  createdTodos?: Prisma.TodoUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedTodos?: Prisma.TodoUncheckedUpdateManyWithoutUpdatedByNestedInput
+  completedTodos?: Prisma.TodoUncheckedUpdateManyWithoutCompletedByNestedInput
+  couponRedemptions?: Prisma.CouponRedemptionUncheckedUpdateManyWithoutMembershipNestedInput
+  coinLedger?: Prisma.CoinLedgerEntryUncheckedUpdateManyWithoutMembershipNestedInput
+  freezes?: Prisma.MembershipFreezeUncheckedUpdateManyWithoutMembershipNestedInput
+  storeOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutMemberNestedInput
+  storeLikes?: Prisma.StoreProductLikeUncheckedUpdateManyWithoutMembershipNestedInput
+  storeComments?: Prisma.StoreProductCommentUncheckedUpdateManyWithoutMembershipNestedInput
+  soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
+  paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
+  sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
 }
 
 export type TenantMembershipCreateWithoutCreatedPlansInput = {
@@ -3344,6 +3820,8 @@ export type TenantMembershipCreateWithoutCreatedPlansInput = {
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutCreatedPlansInput = {
@@ -3379,6 +3857,8 @@ export type TenantMembershipUncheckedCreateWithoutCreatedPlansInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutCreatedPlansInput = {
@@ -3430,6 +3910,8 @@ export type TenantMembershipUpdateWithoutCreatedPlansInput = {
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutCreatedPlansInput = {
@@ -3465,6 +3947,8 @@ export type TenantMembershipUncheckedUpdateWithoutCreatedPlansInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipCreateWithoutPlanAssignmentsInput = {
@@ -3500,6 +3984,8 @@ export type TenantMembershipCreateWithoutPlanAssignmentsInput = {
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutPlanAssignmentsInput = {
@@ -3535,6 +4021,8 @@ export type TenantMembershipUncheckedCreateWithoutPlanAssignmentsInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutPlanAssignmentsInput = {
@@ -3586,6 +4074,8 @@ export type TenantMembershipUpdateWithoutPlanAssignmentsInput = {
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutPlanAssignmentsInput = {
@@ -3621,6 +4111,8 @@ export type TenantMembershipUncheckedUpdateWithoutPlanAssignmentsInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipCreateWithoutBadgesInput = {
@@ -3656,6 +4148,8 @@ export type TenantMembershipCreateWithoutBadgesInput = {
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutBadgesInput = {
@@ -3691,6 +4185,8 @@ export type TenantMembershipUncheckedCreateWithoutBadgesInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutBadgesInput = {
@@ -3747,6 +4243,8 @@ export type TenantMembershipCreateWithoutAttendancesInput = {
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutAttendancesInput = {
@@ -3782,6 +4280,8 @@ export type TenantMembershipUncheckedCreateWithoutAttendancesInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutAttendancesInput = {
@@ -3822,6 +4322,8 @@ export type TenantMembershipCreateWithoutMarkedAttendancesInput = {
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutMarkedAttendancesInput = {
@@ -3857,6 +4359,8 @@ export type TenantMembershipUncheckedCreateWithoutMarkedAttendancesInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutMarkedAttendancesInput = {
@@ -3908,6 +4412,8 @@ export type TenantMembershipUpdateWithoutAttendancesInput = {
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutAttendancesInput = {
@@ -3943,6 +4449,8 @@ export type TenantMembershipUncheckedUpdateWithoutAttendancesInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUpsertWithoutMarkedAttendancesInput = {
@@ -3989,6 +4497,8 @@ export type TenantMembershipUpdateWithoutMarkedAttendancesInput = {
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutMarkedAttendancesInput = {
@@ -4024,6 +4534,8 @@ export type TenantMembershipUncheckedUpdateWithoutMarkedAttendancesInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipCreateWithoutStoreLikesInput = {
@@ -4059,6 +4571,8 @@ export type TenantMembershipCreateWithoutStoreLikesInput = {
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutStoreLikesInput = {
@@ -4094,6 +4608,8 @@ export type TenantMembershipUncheckedCreateWithoutStoreLikesInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutStoreLikesInput = {
@@ -4145,6 +4661,8 @@ export type TenantMembershipUpdateWithoutStoreLikesInput = {
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutStoreLikesInput = {
@@ -4180,6 +4698,8 @@ export type TenantMembershipUncheckedUpdateWithoutStoreLikesInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipCreateWithoutStoreCommentsInput = {
@@ -4215,6 +4735,8 @@ export type TenantMembershipCreateWithoutStoreCommentsInput = {
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutStoreCommentsInput = {
@@ -4250,6 +4772,8 @@ export type TenantMembershipUncheckedCreateWithoutStoreCommentsInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutStoreCommentsInput = {
@@ -4301,6 +4825,8 @@ export type TenantMembershipUpdateWithoutStoreCommentsInput = {
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutStoreCommentsInput = {
@@ -4336,6 +4862,8 @@ export type TenantMembershipUncheckedUpdateWithoutStoreCommentsInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipCreateWithoutStoreOrdersInput = {
@@ -4371,6 +4899,8 @@ export type TenantMembershipCreateWithoutStoreOrdersInput = {
   soldStoreOrders?: Prisma.StoreOrderCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutStoreOrdersInput = {
@@ -4406,6 +4936,8 @@ export type TenantMembershipUncheckedCreateWithoutStoreOrdersInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedCreateNestedManyWithoutSoldByInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutStoreOrdersInput = {
@@ -4446,6 +4978,8 @@ export type TenantMembershipCreateWithoutSoldStoreOrdersInput = {
   storeComments?: Prisma.StoreProductCommentCreateNestedManyWithoutMembershipInput
   paymentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipUncheckedCreateWithoutSoldStoreOrdersInput = {
@@ -4481,6 +5015,8 @@ export type TenantMembershipUncheckedCreateWithoutSoldStoreOrdersInput = {
   storeComments?: Prisma.StoreProductCommentUncheckedCreateNestedManyWithoutMembershipInput
   paymentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutMemberInput
   sentReminders?: Prisma.PaymentReminderUncheckedCreateNestedManyWithoutActorInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutMembershipInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedCreateNestedManyWithoutRecordedByInput
 }
 
 export type TenantMembershipCreateOrConnectWithoutSoldStoreOrdersInput = {
@@ -4532,6 +5068,8 @@ export type TenantMembershipUpdateWithoutStoreOrdersInput = {
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutStoreOrdersInput = {
@@ -4567,6 +5105,8 @@ export type TenantMembershipUncheckedUpdateWithoutStoreOrdersInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUpsertWithoutSoldStoreOrdersInput = {
@@ -4613,6 +5153,8 @@ export type TenantMembershipUpdateWithoutSoldStoreOrdersInput = {
   storeComments?: Prisma.StoreProductCommentUpdateManyWithoutMembershipNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutSoldStoreOrdersInput = {
@@ -4648,6 +5190,8 @@ export type TenantMembershipUncheckedUpdateWithoutSoldStoreOrdersInput = {
   storeComments?: Prisma.StoreProductCommentUncheckedUpdateManyWithoutMembershipNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipCreateManyUserInput = {
@@ -4698,6 +5242,8 @@ export type TenantMembershipUpdateWithoutUserInput = {
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutUserInput = {
@@ -4733,6 +5279,8 @@ export type TenantMembershipUncheckedUpdateWithoutUserInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateManyWithoutUserInput = {
@@ -4798,6 +5346,8 @@ export type TenantMembershipUpdateWithoutTenantInput = {
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutTenantInput = {
@@ -4833,6 +5383,8 @@ export type TenantMembershipUncheckedUpdateWithoutTenantInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateManyWithoutTenantInput = {
@@ -4898,6 +5450,8 @@ export type TenantMembershipUpdateWithoutReferredByInput = {
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutReferredByInput = {
@@ -4933,6 +5487,8 @@ export type TenantMembershipUncheckedUpdateWithoutReferredByInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateManyWithoutReferredByInput = {
@@ -4998,6 +5554,8 @@ export type TenantMembershipUpdateWithoutShiftInput = {
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutShiftInput = {
@@ -5033,6 +5591,8 @@ export type TenantMembershipUncheckedUpdateWithoutShiftInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateManyWithoutShiftInput = {
@@ -5083,6 +5643,8 @@ export type TenantMembershipUpdateWithoutBadgesInput = {
   soldStoreOrders?: Prisma.StoreOrderUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateWithoutBadgesInput = {
@@ -5118,6 +5680,8 @@ export type TenantMembershipUncheckedUpdateWithoutBadgesInput = {
   soldStoreOrders?: Prisma.StoreOrderUncheckedUpdateManyWithoutSoldByNestedInput
   paymentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutMemberNestedInput
   sentReminders?: Prisma.PaymentReminderUncheckedUpdateManyWithoutActorNestedInput
+  bodyMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutMembershipNestedInput
+  recordedMetrics?: Prisma.BodyMetricUncheckedUpdateManyWithoutRecordedByNestedInput
 }
 
 export type TenantMembershipUncheckedUpdateManyWithoutBadgesInput = {
@@ -5162,6 +5726,8 @@ export type TenantMembershipCountOutputType = {
   soldStoreOrders: number
   paymentReminders: number
   sentReminders: number
+  bodyMetrics: number
+  recordedMetrics: number
 }
 
 export type TenantMembershipCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -5185,6 +5751,8 @@ export type TenantMembershipCountOutputTypeSelect<ExtArgs extends runtime.Types.
   soldStoreOrders?: boolean | TenantMembershipCountOutputTypeCountSoldStoreOrdersArgs
   paymentReminders?: boolean | TenantMembershipCountOutputTypeCountPaymentRemindersArgs
   sentReminders?: boolean | TenantMembershipCountOutputTypeCountSentRemindersArgs
+  bodyMetrics?: boolean | TenantMembershipCountOutputTypeCountBodyMetricsArgs
+  recordedMetrics?: boolean | TenantMembershipCountOutputTypeCountRecordedMetricsArgs
 }
 
 /**
@@ -5337,6 +5905,20 @@ export type TenantMembershipCountOutputTypeCountSentRemindersArgs<ExtArgs extend
   where?: Prisma.PaymentReminderWhereInput
 }
 
+/**
+ * TenantMembershipCountOutputType without action
+ */
+export type TenantMembershipCountOutputTypeCountBodyMetricsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.BodyMetricWhereInput
+}
+
+/**
+ * TenantMembershipCountOutputType without action
+ */
+export type TenantMembershipCountOutputTypeCountRecordedMetricsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.BodyMetricWhereInput
+}
+
 
 export type TenantMembershipSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -5376,6 +5958,8 @@ export type TenantMembershipSelect<ExtArgs extends runtime.Types.Extensions.Inte
   soldStoreOrders?: boolean | Prisma.TenantMembership$soldStoreOrdersArgs<ExtArgs>
   paymentReminders?: boolean | Prisma.TenantMembership$paymentRemindersArgs<ExtArgs>
   sentReminders?: boolean | Prisma.TenantMembership$sentRemindersArgs<ExtArgs>
+  bodyMetrics?: boolean | Prisma.TenantMembership$bodyMetricsArgs<ExtArgs>
+  recordedMetrics?: boolean | Prisma.TenantMembership$recordedMetricsArgs<ExtArgs>
   _count?: boolean | Prisma.TenantMembershipCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["tenantMembership"]>
 
@@ -5461,6 +6045,8 @@ export type TenantMembershipInclude<ExtArgs extends runtime.Types.Extensions.Int
   soldStoreOrders?: boolean | Prisma.TenantMembership$soldStoreOrdersArgs<ExtArgs>
   paymentReminders?: boolean | Prisma.TenantMembership$paymentRemindersArgs<ExtArgs>
   sentReminders?: boolean | Prisma.TenantMembership$sentRemindersArgs<ExtArgs>
+  bodyMetrics?: boolean | Prisma.TenantMembership$bodyMetricsArgs<ExtArgs>
+  recordedMetrics?: boolean | Prisma.TenantMembership$recordedMetricsArgs<ExtArgs>
   _count?: boolean | Prisma.TenantMembershipCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type TenantMembershipIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -5503,6 +6089,8 @@ export type $TenantMembershipPayload<ExtArgs extends runtime.Types.Extensions.In
     soldStoreOrders: Prisma.$StoreOrderPayload<ExtArgs>[]
     paymentReminders: Prisma.$PaymentReminderPayload<ExtArgs>[]
     sentReminders: Prisma.$PaymentReminderPayload<ExtArgs>[]
+    bodyMetrics: Prisma.$BodyMetricPayload<ExtArgs>[]
+    recordedMetrics: Prisma.$BodyMetricPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -5946,6 +6534,8 @@ export interface Prisma__TenantMembershipClient<T, Null = never, ExtArgs extends
   soldStoreOrders<T extends Prisma.TenantMembership$soldStoreOrdersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantMembership$soldStoreOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StoreOrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   paymentReminders<T extends Prisma.TenantMembership$paymentRemindersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantMembership$paymentRemindersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PaymentReminderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   sentReminders<T extends Prisma.TenantMembership$sentRemindersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantMembership$sentRemindersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PaymentReminderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  bodyMetrics<T extends Prisma.TenantMembership$bodyMetricsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantMembership$bodyMetricsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BodyMetricPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  recordedMetrics<T extends Prisma.TenantMembership$recordedMetricsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantMembership$recordedMetricsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BodyMetricPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -6902,6 +7492,54 @@ export type TenantMembership$sentRemindersArgs<ExtArgs extends runtime.Types.Ext
   take?: number
   skip?: number
   distinct?: Prisma.PaymentReminderScalarFieldEnum | Prisma.PaymentReminderScalarFieldEnum[]
+}
+
+/**
+ * TenantMembership.bodyMetrics
+ */
+export type TenantMembership$bodyMetricsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the BodyMetric
+   */
+  select?: Prisma.BodyMetricSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the BodyMetric
+   */
+  omit?: Prisma.BodyMetricOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BodyMetricInclude<ExtArgs> | null
+  where?: Prisma.BodyMetricWhereInput
+  orderBy?: Prisma.BodyMetricOrderByWithRelationInput | Prisma.BodyMetricOrderByWithRelationInput[]
+  cursor?: Prisma.BodyMetricWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.BodyMetricScalarFieldEnum | Prisma.BodyMetricScalarFieldEnum[]
+}
+
+/**
+ * TenantMembership.recordedMetrics
+ */
+export type TenantMembership$recordedMetricsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the BodyMetric
+   */
+  select?: Prisma.BodyMetricSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the BodyMetric
+   */
+  omit?: Prisma.BodyMetricOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BodyMetricInclude<ExtArgs> | null
+  where?: Prisma.BodyMetricWhereInput
+  orderBy?: Prisma.BodyMetricOrderByWithRelationInput | Prisma.BodyMetricOrderByWithRelationInput[]
+  cursor?: Prisma.BodyMetricWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.BodyMetricScalarFieldEnum | Prisma.BodyMetricScalarFieldEnum[]
 }
 
 /**

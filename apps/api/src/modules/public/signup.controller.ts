@@ -13,75 +13,12 @@ import {
   error,
   forbidden,
   notFound,
+  failWith,
   ok,
 } from "../../lib/response";
-import { uploadFile } from "../../lib/storage";
+import { storeDataUrlImage } from "../../lib/data-url-image";
 import { signupService } from "./signup.service";
 import { signupQuoteSchema, selfSignupSchema, verifySignupSchema } from "./signup.schema";
-
-/** Extensions for the image types the signup schema admits. */
-const EXT_MAP: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-  "image/gif": "gif",
-};
-
-function encodeObjectKeyForPath(key: string) {
-  return key
-    .split("/")
-    .map((segment) => encodeURIComponent(segment))
-    .join("/");
-}
-
-/**
- * Store the signup photo and return the URL the rest of the app reads avatars
- * from — the same `/uploads/file/...` form the authenticated upload endpoint
- * hands back, so a self-signed-up member's photo behaves like any other.
- */
-async function storeAvatar(c: Context, dataUrl: string) {
-  const match = /^data:(image\/[a-z]+);base64,(.*)$/s.exec(dataUrl);
-  if (!match) return null;
-
-  const [, contentType, base64] = match;
-  const binary = atob(base64.replace(/\s/g, ""));
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-
-  const result = await uploadFile(
-    "avatars",
-    bytes.buffer,
-    contentType,
-    EXT_MAP[contentType] ?? "jpg",
-    {
-      bucket: c.env?.UPLOADS_BUCKET ?? c.env?.FILES,
-      publicUrl: c.env?.R2_PUBLIC_URL,
-    },
-  );
-
-  const requestUrl = new URL(c.req.url);
-  return new URL(
-    `/uploads/file/${encodeObjectKeyForPath(result.key)}`,
-    requestUrl.origin,
-  ).toString();
-}
-
-/** Map a service failure onto the matching response helper. */
-function fail(c: Context, result: { error?: string; status?: number }) {
-  const message = result.error ?? "Request failed.";
-  switch (result.status) {
-    case 400:
-      return badRequest(c, message);
-    case 403:
-      return forbidden(c, message);
-    case 404:
-      return notFound(c, message);
-    case 409:
-      return conflict(c, message);
-    default:
-      return error(c, (result.status ?? 502) as 502, "GATEWAY_ERROR", message);
-  }
-}
 
 /**
  * The gym subdomain this request arrived on.
@@ -99,7 +36,7 @@ export const signupController = {
    */
   async getOptions(c: Context) {
     const result = await signupService.getOptions(requestHost(c));
-    if ("error" in result) return fail(c, result);
+    if ("error" in result) return failWith(c, result);
     return ok(c, result.data);
   },
 
@@ -115,7 +52,7 @@ export const signupController = {
     if (!parsed.ok) return parsed.response;
 
     const result = await signupService.quoteByHost(requestHost(c), parsed.data);
-    if ("error" in result) return fail(c, result);
+    if ("error" in result) return failWith(c, result);
     return ok(c, result.data);
   },
 
@@ -133,7 +70,7 @@ export const signupController = {
     // fails the signup outright rather than leaving a member with no photo.
     let avatarUrl: string | null;
     try {
-      avatarUrl = await storeAvatar(c, avatarDataUrl);
+      avatarUrl = await storeDataUrlImage(c, "avatars", avatarDataUrl);
     } catch {
       return error(
         c,
@@ -149,7 +86,7 @@ export const signupController = {
       { ...input, avatarUrl },
       (promise) => c.executionCtx.waitUntil(promise),
     );
-    if ("error" in result) return fail(c, result);
+    if ("error" in result) return failWith(c, result);
 
     return ok(c, result.data, 201);
   },
@@ -163,7 +100,7 @@ export const signupController = {
     if (!parsed.ok) return parsed.response;
 
     const result = await signupService.verify(requestHost(c), parsed.data);
-    if ("error" in result) return fail(c, result);
+    if ("error" in result) return failWith(c, result);
 
     return ok(c, result.data);
   },

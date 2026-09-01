@@ -12,6 +12,7 @@ import { auditLog } from "../../lib/audit";
 import { parseBody } from "../../lib/http";
 import {
   badRequest,
+  failWith,
   conflict,
   error,
   forbidden,
@@ -26,25 +27,6 @@ import {
 import type { AppBindings } from "../../types/app-context";
 
 type AppContext = Context<AppBindings>;
-
-/** Map a service failure onto the matching response helper. */
-function fail(c: AppContext, result: { error?: string; status?: number }) {
-  const message = result.error ?? "Request failed.";
-  switch (result.status) {
-    case 400:
-      return badRequest(c, message);
-    case 403:
-      return forbidden(c, message);
-    case 404:
-      return notFound(c, message);
-    case 409:
-      return conflict(c, message);
-    default:
-      // 502/503 from here mean Razorpay refused or could not be reached — an
-      // upstream failure, not a bug in this request.
-      return error(c, (result.status ?? 502) as 502, "GATEWAY_ERROR", message);
-  }
-}
 
 export const gatewayController = {
   /**
@@ -67,7 +49,7 @@ export const gatewayController = {
     if (!parsed.ok) return parsed.response;
 
     const result = await gatewayService.updateConfig(tenantId, parsed.data);
-    if ("error" in result) return fail(c, result);
+    if ("error" in result) return failWith(c, result);
 
     await auditLog({
       action: "UPDATE",
@@ -97,7 +79,7 @@ export const gatewayController = {
   async testConnection(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const result = await gatewayService.testConnection(tenantId);
-    if ("error" in result) return fail(c, result);
+    if ("error" in result) return failWith(c, result);
     return ok(c, result.data);
   },
 
@@ -115,7 +97,7 @@ export const gatewayController = {
       c.get("authUser").id,
       parsed.data,
     );
-    if ("error" in result) return fail(c, result);
+    if ("error" in result) return failWith(c, result);
 
     return ok(c, result.data, 201);
   },
@@ -134,7 +116,7 @@ export const gatewayController = {
       c.get("authUser").id,
       parsed.data,
     );
-    if ("error" in result) return fail(c, result);
+    if ("error" in result) return failWith(c, result);
 
     if (!result.data.alreadySettled) {
       await auditLog({
@@ -173,7 +155,7 @@ export const gatewayController = {
       rawBody,
       signature,
     );
-    if ("error" in result) return fail(c, result);
+    if ("error" in result) return failWith(c, result);
 
     return ok(c, result.data);
   },

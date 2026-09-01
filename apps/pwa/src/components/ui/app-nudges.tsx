@@ -1,7 +1,7 @@
 /**
- * Documentation: The daily offers to install the app and turn notifications on.
+ * Documentation: The offers to install the app and turn notifications on.
  *
- * - Two prompts, one at a time, one appearance each per day. Installing comes first: a member who has the app on their home screen is the one most likely to accept notifications, and stacking both offers on one screen gets both ignored.
+ * - Two prompts, one at a time. Installing is offered once a day; notifications come back on every app open, because a member without them never hears that their membership is expiring. Installing comes first: a member who has the app on their home screen is the one most likely to accept notifications, and stacking both offers on one screen gets both ignored.
  * - On a gym subdomain both are that gym's, by name and by logo — the branding lookup is awaited rather than read from cache, because a first visit is exactly when the cache is cold and the offer matters most.
  * - Android and desktop Chrome hand over a real install prompt; iOS never does, so there it explains the Share → Add to Home Screen route instead. Without that half, every member on an iPhone would be offered nothing at all.
  * - Notifications are only offered to a signed-in member: the subscription is registered against their account, and `Notification.requestPermission` must be called from a tap, which is why the button asks rather than the effect.
@@ -20,8 +20,10 @@ import { useTenantInstallBranding } from "@/lib/install-branding";
 import { isPushSubscribed, subscribeToPush } from "@/lib/push-notifications";
 import {
   shouldNudgeToday,
+  shouldNudgeThisSession,
   silenceNudge,
   snoozeNudgeForToday,
+  snoozeNudgeForSession,
   type NudgeKey,
 } from "@/lib/nudge-schedule";
 import { useAuthStore } from "@/stores/auth";
@@ -96,8 +98,11 @@ export function AppNudges() {
 
       // Notifications are the member's own, so there has to be a member.
       if (!isAuthenticated || !pushSupported) return null;
-      if (!shouldNudgeToday("notifications")) return null;
-      // A browser-level block cannot be undone from here; asking daily would
+      // Every app open rather than once a day: notifications are how a member
+      // hears that their membership is expiring, and one who has not turned
+      // them on is missing that entirely. "Don't ask again" still stops it.
+      if (!shouldNudgeThisSession("notifications")) return null;
+      // A browser-level block cannot be undone from here; asking again would
       // only produce a button that does nothing.
       if (Notification.permission === "denied") return null;
       if (Notification.permission === "granted" && (await isPushSubscribed())) return null;
@@ -121,6 +126,8 @@ export function AppNudges() {
 
   const close = (key: NudgeKey, forGood = false) => {
     if (forGood) silenceNudge(key);
+    // Installing stays a once-a-day offer; notifications return next open.
+    else if (key === "notifications") snoozeNudgeForSession(key);
     else snoozeNudgeForToday(key);
     setNudge(null);
   };

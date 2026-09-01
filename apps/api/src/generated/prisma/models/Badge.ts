@@ -31,6 +31,7 @@ export type BadgeMinAggregateOutputType = {
   description: string | null
   color: string | null
   icon: string | null
+  restricted: boolean | null
   isActive: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -43,6 +44,7 @@ export type BadgeMaxAggregateOutputType = {
   description: string | null
   color: string | null
   icon: string | null
+  restricted: boolean | null
   isActive: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -55,6 +57,7 @@ export type BadgeCountAggregateOutputType = {
   description: number
   color: number
   icon: number
+  restricted: number
   isActive: number
   createdAt: number
   updatedAt: number
@@ -69,6 +72,7 @@ export type BadgeMinAggregateInputType = {
   description?: true
   color?: true
   icon?: true
+  restricted?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
@@ -81,6 +85,7 @@ export type BadgeMaxAggregateInputType = {
   description?: true
   color?: true
   icon?: true
+  restricted?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
@@ -93,6 +98,7 @@ export type BadgeCountAggregateInputType = {
   description?: true
   color?: true
   icon?: true
+  restricted?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
@@ -178,6 +184,7 @@ export type BadgeGroupByOutputType = {
   description: string | null
   color: string
   icon: string | null
+  restricted: boolean
   isActive: boolean
   createdAt: Date
   updatedAt: Date
@@ -211,6 +218,7 @@ export type BadgeWhereInput = {
   description?: Prisma.StringNullableFilter<"Badge"> | string | null
   color?: Prisma.StringFilter<"Badge"> | string
   icon?: Prisma.StringNullableFilter<"Badge"> | string | null
+  restricted?: Prisma.BoolFilter<"Badge"> | boolean
   isActive?: Prisma.BoolFilter<"Badge"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Badge"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Badge"> | Date | string
@@ -227,6 +235,7 @@ export type BadgeOrderByWithRelationInput = {
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   color?: Prisma.SortOrder
   icon?: Prisma.SortOrderInput | Prisma.SortOrder
+  restricted?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -247,6 +256,7 @@ export type BadgeWhereUniqueInput = Prisma.AtLeast<{
   description?: Prisma.StringNullableFilter<"Badge"> | string | null
   color?: Prisma.StringFilter<"Badge"> | string
   icon?: Prisma.StringNullableFilter<"Badge"> | string | null
+  restricted?: Prisma.BoolFilter<"Badge"> | boolean
   isActive?: Prisma.BoolFilter<"Badge"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Badge"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Badge"> | Date | string
@@ -263,6 +273,7 @@ export type BadgeOrderByWithAggregationInput = {
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   color?: Prisma.SortOrder
   icon?: Prisma.SortOrderInput | Prisma.SortOrder
+  restricted?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -281,6 +292,7 @@ export type BadgeScalarWhereWithAggregatesInput = {
   description?: Prisma.StringNullableWithAggregatesFilter<"Badge"> | string | null
   color?: Prisma.StringWithAggregatesFilter<"Badge"> | string
   icon?: Prisma.StringNullableWithAggregatesFilter<"Badge"> | string | null
+  restricted?: Prisma.BoolWithAggregatesFilter<"Badge"> | boolean
   isActive?: Prisma.BoolWithAggregatesFilter<"Badge"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Badge"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Badge"> | Date | string
@@ -292,6 +304,7 @@ export type BadgeCreateInput = {
   description?: string | null
   color?: string
   icon?: string | null
+  restricted?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -308,6 +321,7 @@ export type BadgeUncheckedCreateInput = {
   description?: string | null
   color?: string
   icon?: string | null
+  restricted?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -322,6 +336,7 @@ export type BadgeUpdateInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restricted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -338,6 +353,7 @@ export type BadgeUncheckedUpdateInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restricted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -353,6 +369,7 @@ export type BadgeCreateManyInput = {
   description?: string | null
   color?: string
   icon?: string | null
+  restricted?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -364,6 +381,7 @@ export type BadgeUpdateManyMutationInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restricted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -376,6 +394,7 @@ export type BadgeUncheckedUpdateManyInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restricted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -403,6 +422,7 @@ export type BadgeCountOrderByAggregateInput = {
   description?: Prisma.SortOrder
   color?: Prisma.SortOrder
   icon?: Prisma.SortOrder
+  restricted?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -415,6 +435,7 @@ export type BadgeMaxOrderByAggregateInput = {
   description?: Prisma.SortOrder
   color?: Prisma.SortOrder
   icon?: Prisma.SortOrder
+  restricted?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -427,6 +448,7 @@ export type BadgeMinOrderByAggregateInput = {
   description?: Prisma.SortOrder
   color?: Prisma.SortOrder
   icon?: Prisma.SortOrder
+  restricted?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -594,6 +616,7 @@ export type BadgeCreateWithoutTenantInput = {
   description?: string | null
   color?: string
   icon?: string | null
+  restricted?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -608,6 +631,7 @@ export type BadgeUncheckedCreateWithoutTenantInput = {
   description?: string | null
   color?: string
   icon?: string | null
+  restricted?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -651,6 +675,7 @@ export type BadgeScalarWhereInput = {
   description?: Prisma.StringNullableFilter<"Badge"> | string | null
   color?: Prisma.StringFilter<"Badge"> | string
   icon?: Prisma.StringNullableFilter<"Badge"> | string | null
+  restricted?: Prisma.BoolFilter<"Badge"> | boolean
   isActive?: Prisma.BoolFilter<"Badge"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Badge"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Badge"> | Date | string
@@ -662,6 +687,7 @@ export type BadgeCreateWithoutUsersInput = {
   description?: string | null
   color?: string
   icon?: string | null
+  restricted?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -677,6 +703,7 @@ export type BadgeUncheckedCreateWithoutUsersInput = {
   description?: string | null
   color?: string
   icon?: string | null
+  restricted?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -711,6 +738,7 @@ export type BadgeCreateWithoutSubscriptionsInput = {
   description?: string | null
   color?: string
   icon?: string | null
+  restricted?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -726,6 +754,7 @@ export type BadgeUncheckedCreateWithoutSubscriptionsInput = {
   description?: string | null
   color?: string
   icon?: string | null
+  restricted?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -760,6 +789,7 @@ export type BadgeCreateWithoutCouponsInput = {
   description?: string | null
   color?: string
   icon?: string | null
+  restricted?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -775,6 +805,7 @@ export type BadgeUncheckedCreateWithoutCouponsInput = {
   description?: string | null
   color?: string
   icon?: string | null
+  restricted?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -809,6 +840,7 @@ export type BadgeCreateManyTenantInput = {
   description?: string | null
   color?: string
   icon?: string | null
+  restricted?: boolean
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -820,6 +852,7 @@ export type BadgeUpdateWithoutTenantInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restricted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -834,6 +867,7 @@ export type BadgeUncheckedUpdateWithoutTenantInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restricted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -848,6 +882,7 @@ export type BadgeUncheckedUpdateManyWithoutTenantInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restricted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -859,6 +894,7 @@ export type BadgeUpdateWithoutUsersInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restricted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -874,6 +910,7 @@ export type BadgeUncheckedUpdateWithoutUsersInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restricted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -888,6 +925,7 @@ export type BadgeUncheckedUpdateManyWithoutUsersInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restricted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -899,6 +937,7 @@ export type BadgeUpdateWithoutSubscriptionsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restricted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -914,6 +953,7 @@ export type BadgeUncheckedUpdateWithoutSubscriptionsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restricted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -928,6 +968,7 @@ export type BadgeUncheckedUpdateManyWithoutSubscriptionsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restricted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -939,6 +980,7 @@ export type BadgeUpdateWithoutCouponsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restricted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -954,6 +996,7 @@ export type BadgeUncheckedUpdateWithoutCouponsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restricted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -968,6 +1011,7 @@ export type BadgeUncheckedUpdateManyWithoutCouponsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  restricted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1029,6 +1073,7 @@ export type BadgeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   description?: boolean
   color?: boolean
   icon?: boolean
+  restricted?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1046,6 +1091,7 @@ export type BadgeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   description?: boolean
   color?: boolean
   icon?: boolean
+  restricted?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1059,6 +1105,7 @@ export type BadgeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   description?: boolean
   color?: boolean
   icon?: boolean
+  restricted?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1072,12 +1119,13 @@ export type BadgeSelectScalar = {
   description?: boolean
   color?: boolean
   icon?: boolean
+  restricted?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type BadgeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "name" | "description" | "color" | "icon" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["badge"]>
+export type BadgeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "name" | "description" | "color" | "icon" | "restricted" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["badge"]>
 export type BadgeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
   users?: boolean | Prisma.Badge$usersArgs<ExtArgs>
@@ -1116,6 +1164,14 @@ export type $BadgePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
      * Optional icon identifier (e.g. "trophy", "star", "flame")
      */
     icon: string | null
+    /**
+     * Whether handing this badge out needs more than the ordinary assign right.
+     * For badges that carry weight — staff credentials, lifetime standing —
+     * anything a coach should not be able to grant on the floor.
+     * Enforced against `badges:assign:restricted`, which only ADMIN holds by
+     * default and which a gym can grant to a custom role through role overrides.
+     */
+    restricted: boolean
     isActive: boolean
     createdAt: Date
     updatedAt: Date
@@ -1552,6 +1608,7 @@ export interface BadgeFieldRefs {
   readonly description: Prisma.FieldRef<"Badge", 'String'>
   readonly color: Prisma.FieldRef<"Badge", 'String'>
   readonly icon: Prisma.FieldRef<"Badge", 'String'>
+  readonly restricted: Prisma.FieldRef<"Badge", 'Boolean'>
   readonly isActive: Prisma.FieldRef<"Badge", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Badge", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Badge", 'DateTime'>

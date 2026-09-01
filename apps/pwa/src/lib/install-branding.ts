@@ -13,6 +13,7 @@ import {
   getCurrentTenantBrandingHost,
   readCachedTenantBranding,
   writeCachedTenantBranding,
+  TENANT_BRANDING_EVENT,
   type TenantBranding,
 } from "@/lib/tenant-branding";
 import { isTenantSubdomain } from "@/lib/subdomain";
@@ -84,10 +85,27 @@ export function useTenantInstallBranding(): TenantBranding | null {
     if (!isTenantSubdomain()) return;
 
     const host = getCurrentTenantBrandingHost();
+
+    /**
+     * Adopt branding the moment it is rewritten.
+     *
+     * The gym's accent is painted from this value at the app root, so without
+     * this an admin who changes the colour in settings would go on seeing the
+     * old one everywhere until the cache expired hours later — including on
+     * the very page they just saved.
+     */
+    const onBrandingChanged = (event: Event) => {
+      const next = (event as CustomEvent<TenantBranding>).detail;
+      if (!next?.name) return;
+      applyAppleMeta(next);
+      setBranding(next);
+    };
+    window.addEventListener(TENANT_BRANDING_EVENT, onBrandingChanged);
+
     const cached = readCachedTenantBranding(host);
     if (cached) {
       applyAppleMeta(cached);
-      return;
+      return () => window.removeEventListener(TENANT_BRANDING_EVENT, onBrandingChanged);
     }
 
     let active = true;
@@ -99,6 +117,7 @@ export function useTenantInstallBranding(): TenantBranding | null {
 
     return () => {
       active = false;
+      window.removeEventListener(TENANT_BRANDING_EVENT, onBrandingChanged);
     };
   }, []);
 

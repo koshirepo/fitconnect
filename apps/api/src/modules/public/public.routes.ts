@@ -3,13 +3,14 @@
  *
  * - Declares the Hono routes and middleware chain for public gym discovery and tenant profile exposure. This route set is mounted from `/public` in the application entrypoint.
  * - Keep routing and authorization wiring here, and delegate request handling to the companion controller instead of placing business logic in route callbacks.
- * - Relative endpoints declared in this file: GET /branding, GET /store, GET /store/products/:productId, GET /social, GET /gyms, GET /gyms/:slug, GET /signup/options, POST /signup, POST /signup/verify, GET /id-card/:token.
+ * - Relative endpoints declared in this file: GET /branding, GET /store, GET /store/products/:productId, GET /social, GET /gyms, GET /gyms/:slug, GET /signup/options, POST /signup, POST /signup/verify, GET /tenant-signup/slug, POST /tenant-signup, GET /id-card/:token.
  * - Primary exports: publicRoutes.
  */
 import { Hono } from "hono";
 import type { AppBindings } from "../../types/app-context";
 import { publicController } from "./public.controller";
 import { signupController } from "./signup.controller";
+import { tenantSignupController } from "./tenant-signup.controller";
 import { idCardController } from "./id-card.controller";
 import { rateLimitSignup, verifyTurnstile } from "../../middleware/abuse-guard";
 
@@ -59,6 +60,33 @@ publicRoutes.get("/signup/options", signupController.getOptions);
 publicRoutes.post("/signup/quote", rateLimitSignup, signupController.quote);
 publicRoutes.post("/signup", rateLimitSignup, verifyTurnstile, signupController.register);
 publicRoutes.post("/signup/verify", rateLimitSignup, signupController.verify);
+
+/**
+ * A gym registering itself, rather than being created by a platform admin.
+ *
+ * The one public endpoint that writes a tenant, so it is the one worth being
+ * careful about. Three things hold it: the gym is created SUSPENDED and stays
+ * invisible to every public read until a platform admin approves it, the owner
+ * is a plain `USER` who is ADMIN of nothing but their own pending gym, and the
+ * same rate limit and Turnstile guard the member signup uses sit in front.
+ * Registering an address does not reserve anything that approval cannot undo.
+ */
+/**
+ * Unlimited, unlike the registration below it.
+ *
+ * The signup limiter allows five calls a minute, which a form checking an
+ * address as it is typed exhausts before the owner has finished the first
+ * step. What it costs is one indexed lookup, and what it reveals is whether a
+ * public slug is taken — the same thing `GET /gyms/:slug` already answers, and
+ * that endpoint is not limited either.
+ */
+publicRoutes.get("/tenant-signup/slug", tenantSignupController.checkSlug);
+publicRoutes.post(
+  "/tenant-signup",
+  rateLimitSignup,
+  verifyTurnstile,
+  tenantSignupController.register,
+);
 
 /**
  * A member's ID card. Unauthenticated because the point is that it opens

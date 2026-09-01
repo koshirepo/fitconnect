@@ -221,6 +221,7 @@ export const authService = {
           name: user.name,
           email: user.email,
           phone: user.phone ?? null,
+          avatarUrl: user.avatarUrl ?? null,
           platformRole: user.platformRole as PlatformRole,
           membership,
           permissions: await resolveUserPermissions({
@@ -290,6 +291,7 @@ export const authService = {
           name: user.name,
           email: user.email,
           phone: user.phone ?? null,
+          avatarUrl: user.avatarUrl ?? null,
           platformRole: user.platformRole as PlatformRole,
           membership,
           permissions: await resolveUserPermissions({

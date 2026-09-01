@@ -10,26 +10,13 @@ import { Input } from "@/components/ui/input";
 import { SkeletonRow } from "@/components/ui/skeleton";
 import { ShoppingCart, Trash2, ArrowLeft, AlertTriangle } from "lucide-react";
 import type { Product } from "@/types/api";
-import { calculateTotals, formatCurrency } from "./pricing";
+import { calculateTotals, formatCurrency, validateQuantity } from "./pricing";
 import { getCartItems, removeCartItem, saveCartItems, upsertCartItem, type CartItem } from "./cart";
 
 type CartLine = {
   product: Product;
   quantity: number;
 };
-
-function validateQuantity(product: Product, quantity: number) {
-  if (quantity < product.minOrderQty || quantity > product.maxOrderQty) {
-    return `Allowed quantity is ${product.minOrderQty} to ${product.maxOrderQty}.`;
-  }
-  if (quantity > product.stock) {
-    return `Only ${product.stock} units are available.`;
-  }
-  if (!product.isActive) {
-    return "Product is currently inactive.";
-  }
-  return "";
-}
 
 export default function PublicCartPage() {
   const navigate = useNavigate();

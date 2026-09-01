@@ -834,11 +834,20 @@ model Order {
   buyerEmail     String
   buyerPhone     String
   buyerAddress   String
+  /// Fulfilment: PENDING, SHIPPED, DELIVERED. Not about money — see paymentStatus.
   status         String   @default("PENDING")
   subtotalAmount Int      @default(0)
   gstRatePct     Int      @default(18)
   gstAmount      Int      @default(0)
   totalAmount    Int
+  /// Money: PENDING, COMPLETED, FAILED. An order placed before the shop took
+  /// cards stays PENDING here, which is what it always was.
+  paymentStatus    String    @default("PENDING")
+  /// Razorpay's order id, which is what the browser and the webhook both
+  /// return an order by. Indexed for exactly that lookup.
+  gatewayOrderId   String?
+  gatewayPaymentId String?
+  paidAt           DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -847,6 +856,7 @@ model Order {
   @@index([userId])
   @@index([status])
   @@index([createdAt])
+  @@index([gatewayOrderId])
 }
 
 model OrderItem {
@@ -908,6 +918,12 @@ model Badge {
   description String?
   color       String             @default("#6366f1") /// Hex color for badge display
   icon        String? /// Optional icon identifier (e.g. "trophy", "star", "flame")
+  /// Whether handing this badge out needs more than the ordinary assign right.
+  /// For badges that carry weight — staff credentials, lifetime standing —
+  /// anything a coach should not be able to grant on the floor.
+  /// Enforced against `badges:assign:restricted`, which only ADMIN holds by
+  /// default and which a gym can grant to a custom role through role overrides.
+  restricted  Boolean            @default(false)
   isActive    Boolean            @default(true)
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt

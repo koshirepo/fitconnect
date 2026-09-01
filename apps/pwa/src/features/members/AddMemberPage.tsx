@@ -1,3 +1,4 @@
+import { formatCurrency } from "@fitconnect/shared/utils";
 import * as React from "react";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
@@ -41,14 +42,6 @@ import {
 } from "lucide-react";
 import { CardSkeleton } from "@/components/ui/skeleton";
 import MemberForm, { type MemberFormData } from "@/components/forms/MemberForm";
-
-function formatAmount(amount: number) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 0,
-  }).format(amount);
-}
 
 export default function AddMemberPage() {
   const navigate = useAppNavigate();
@@ -454,7 +447,7 @@ export default function AddMemberPage() {
                             )}
                             <div className="mt-2 flex items-center gap-2">
                               <span className="text-lg font-bold">
-                                {formatAmount(sub.amount)}
+                                {formatCurrency(sub.amount)}
                               </span>
                               <span className="text-xs text-muted-foreground">
                                 / {sub.durationDays} days
@@ -522,7 +515,7 @@ export default function AddMemberPage() {
                               </div>
                             </div>
                             <span className="font-semibold text-sm">
-                              {formatAmount(charge.amount)}
+                              {formatCurrency(charge.amount)}
                             </span>
                           </label>
                         );
@@ -546,7 +539,7 @@ export default function AddMemberPage() {
                           <span className="text-muted-foreground">
                             {charge.name}
                           </span>
-                          <span>{formatAmount(charge.amount)}</span>
+                          <span>{formatCurrency(charge.amount)}</span>
                         </div>
                       ))}
                     {selectedSubscription && (
@@ -555,18 +548,18 @@ export default function AddMemberPage() {
                           {selectedSubscription.title} (
                           {selectedSubscription.durationDays} days)
                         </span>
-                        <span>{formatAmount(selectedSubscription.amount)}</span>
+                        <span>{formatCurrency(selectedSubscription.amount)}</span>
                       </div>
                     )}
                     {discount > 0 && (
                       <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
                         <span>Coupon {couponCode.trim().toUpperCase()}</span>
-                        <span>-{formatAmount(discount)}</span>
+                        <span>-{formatCurrency(discount)}</span>
                       </div>
                     )}
                     <div className="border-t pt-2 flex justify-between font-bold text-base">
                       <span>Total</span>
-                      <span>{formatAmount(payableTotal)}</span>
+                      <span>{formatCurrency(payableTotal)}</span>
                     </div>
                   </div>
 
@@ -597,7 +590,7 @@ export default function AddMemberPage() {
                     )}
                     {discount > 0 && !couponError && (
                       <p className="text-xs text-emerald-600 dark:text-emerald-400">
-                        {formatAmount(discount)} off applied.
+                        {formatCurrency(discount)} off applied.
                       </p>
                     )}
                   </div>

@@ -37,6 +37,8 @@ const orderSelect = {
   gstRatePct: true,
   gstAmount: true,
   totalAmount: true,
+  paymentStatus: true,
+  paidAt: true,
   createdAt: true,
   updatedAt: true,
   items: {
@@ -322,6 +324,46 @@ export const commerceRepository = {
       where: { id: orderId },
       select: orderSelect,
     });
+  },
+
+  /**
+   * Run the `attach gateway order` persistence operation for the commerce module.
+   * Records which Razorpay order is collecting for this one, so the browser's
+   * return and the webhook can both find their way back here.
+   */
+  attachGatewayOrder(orderId: string, gatewayOrderId: string) {
+    return prisma.order.update({
+      where: { id: orderId },
+      data: { gatewayOrderId },
+      select: { id: true },
+    });
+  },
+
+  /** Run the `find order by gateway order id` persistence operation. */
+  findOrderByGatewayOrderId(gatewayOrderId: string) {
+    return prisma.order.findFirst({
+      where: { gatewayOrderId },
+      select: orderSelect,
+    });
+  },
+
+  /**
+   * Run the `mark order paid` persistence operation for the commerce module.
+   *
+   * Conditional on the order still being unpaid, so a browser returning at the
+   * same moment as a webhook cannot settle one order twice. The count tells the
+   * caller which of the two got there first.
+   */
+  async markOrderPaid(orderId: string, gatewayPaymentId: string) {
+    const result = await prisma.order.updateMany({
+      where: { id: orderId, paymentStatus: "PENDING" },
+      data: {
+        paymentStatus: "COMPLETED",
+        gatewayPaymentId,
+        paidAt: new Date(),
+      },
+    });
+    return result.count > 0;
   },
 
   /**

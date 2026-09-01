@@ -549,6 +549,52 @@ export interface SelfSignupResult {
   } | null;
 }
 
+/**
+ * A gym registering itself, instead of a platform admin creating it.
+ *
+ * Carries no status and no role: the server decides both. What the owner is
+ * choosing here is the gym's identity, its public address, and their own login.
+ */
+export interface TenantSignupPayload {
+  name: string;
+  /** The gym's permanent public address, e.g. `rudra-gym` in `rudra-gym.fitconnect.co.in`. */
+  slug: string;
+  /** Required. Base64 data URL — there is no session to upload a file with. */
+  logoDataUrl: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  description?: string;
+  owner: {
+    name: string;
+    email: string;
+    phone?: string;
+    /** Required, for the same reason the gym's logo is. */
+    avatarDataUrl: string;
+    password: string;
+  };
+  /** Solved Turnstile token; absent when the deployment has none configured. */
+  "cf-turnstile-response"?: string;
+}
+
+/**
+ * The result of registering a gym: the gym itself, awaiting approval, and a
+ * session for the owner so they land in their dashboard rather than at a
+ * login form.
+ */
+export interface TenantSignupResult {
+  tenant: { id: string; name: string; slug: string; status: string };
+  auth: { accessToken: string; refreshToken: string };
+  loginEmail: string;
+}
+
+/** Whether a gym address is free, and why not when it isn't. */
+export interface TenantSlugCheck {
+  slug: string;
+  available: boolean;
+  reason?: string;
+}
+
 export interface SignupVerifyResult {
   membership: {
     id: string;
@@ -678,14 +724,32 @@ export interface Order {
   buyerEmail: string;
   buyerPhone: string;
   buyerAddress: string;
+  /** Fulfilment, not money. See `paymentStatus` for whether it was paid. */
   status: OrderStatus;
   subtotalAmount: number;
   gstRatePct: number;
   gstAmount: number;
   totalAmount: number;
+  /** PENDING until the gateway settles it; COMPLETED once it has. */
+  paymentStatus?: PaymentStatus;
+  paidAt?: string | null;
   createdAt: string;
   updatedAt?: string;
   items: OrderItem[];
+}
+
+/**
+ * What the browser needs to open the Razorpay widget for a shop order.
+ *
+ * The key id is public; the order was created server-side against the total the
+ * database computed, so nothing here lets a browser name its own price.
+ */
+export interface OrderCheckoutSession {
+  /** Razorpay's order id, not ours. */
+  orderId: string;
+  keyId: string;
+  amount: number;
+  currency: string;
 }
 
 export interface PlaceOrderPayload {
@@ -764,6 +828,14 @@ export interface Badge {
   description?: string | null;
   color: string;
   icon?: string | null;
+  /**
+   * Whether handing this badge out needs `badges:assign:restricted`.
+   *
+   * For badges that confer standing rather than mark progress — a staff
+   * credential, lifetime membership — which a coach should not be able to
+   * grant or take away on the floor.
+   */
+  restricted: boolean;
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;
@@ -775,6 +847,7 @@ export interface CreateBadgePayload {
   description?: string;
   color?: string;
   icon?: string;
+  restricted?: boolean;
 }
 
 export interface UpdateBadgePayload {
@@ -782,6 +855,7 @@ export interface UpdateBadgePayload {
   description?: string;
   color?: string;
   icon?: string;
+  restricted?: boolean;
   isActive?: boolean;
 }
 

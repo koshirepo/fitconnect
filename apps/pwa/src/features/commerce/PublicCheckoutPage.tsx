@@ -11,8 +11,9 @@ import { Label } from "@/components/ui/label";
 import { FormPageSkeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, ShoppingBag, AlertTriangle, Trash2 } from "lucide-react";
 import type { PlaceOrderPayload, Product } from "@/types/api";
-import { calculateTotals, formatCurrency } from "./pricing";
+import { calculateTotals, formatCurrency, validateQuantity } from "./pricing";
 import { clearCartItems, getCartItems, saveCartItems, type CartItem } from "./cart";
+import { openRazorpayCheckout } from "@/lib/razorpay-checkout";
 
 type BuyerForm = {
   buyerName: string;
@@ -25,19 +26,6 @@ type CheckoutLine = {
   product: Product;
   quantity: number;
 };
-
-function validateQuantity(product: Product, quantity: number) {
-  if (quantity < product.minOrderQty || quantity > product.maxOrderQty) {
-    return `Allowed quantity is ${product.minOrderQty} to ${product.maxOrderQty}.`;
-  }
-  if (quantity > product.stock) {
-    return `Only ${product.stock} units are available.`;
-  }
-  if (!product.isActive) {
-    return "Product is currently inactive.";
-  }
-  return "";
-}
 
 export default function PublicCheckoutPage() {
   const navigate = useNavigate();
@@ -168,9 +156,56 @@ export default function PublicCheckoutPage() {
 
     setSubmitting(true);
     try {
-      const res = await commerceApi.placeOrder(payload);
+      const res = await commerceApi.startCheckout(payload);
+      const { order, checkout } = res.data.data;
+
+      // The order exists from here on, whatever happens at the payment window,
+      // so the cart is spent: clearing it now means a dismissed payment cannot
+      // leave the buyer placing the same order twice. Only storage is cleared —
+      // the in-memory copy still renders the summary behind the payment window,
+      // which would otherwise flip to "no items to checkout" underneath it.
       clearCartItems();
-      navigate(`/shop/orders/${res.data.data.order.id}`);
+
+      // No gateway configured: the order stands, unpaid, and the confirmation
+      // page says so. This is what the shop did before it took cards.
+      if (!checkout) {
+        navigate(`/shop/orders/${order.id}`);
+        return;
+      }
+
+      const result = await openRazorpayCheckout({
+        keyId: checkout.keyId,
+        orderId: checkout.orderId,
+        amount: checkout.amount,
+        currency: checkout.currency,
+        name: "FitConnect",
+        description: `Order ${order.id.slice(-6).toUpperCase()}`,
+        prefill: {
+          name: payload.buyerName,
+          email: payload.buyerEmail,
+          contact: payload.buyerPhone,
+        },
+      });
+
+      /**
+       * Dismissing or failing is not an error worth shouting about: the order
+       * is real and unpaid, and the confirmation page is where they can see it
+       * and its id. Razorpay's own webhook settles it if the money did land.
+       */
+      if (result.status === "paid") {
+        try {
+          await commerceApi.verifyOrderPayment({
+            orderId: result.orderId,
+            paymentId: result.paymentId,
+            signature: result.signature,
+          });
+        } catch {
+          // The money is taken and the webhook will settle it; showing a
+          // failure here would be both alarming and wrong.
+        }
+      }
+
+      navigate(`/shop/orders/${order.id}`);
     } catch (err: unknown) {
       setError(getApiError(err));
     } finally {
@@ -278,7 +313,7 @@ export default function PublicCheckoutPage() {
                 {error && <p className="text-sm text-destructive">{error}</p>}
 
                 <Button type="submit" className="w-full" disabled={submitting}>
-                  {submitting ? "Placing Order..." : "Place Order"}
+                  {submitting ? "Processing..." : `Pay ${formatCurrency(totals.totalAmount)}`}
                 </Button>
               </form>
             </CardContent>

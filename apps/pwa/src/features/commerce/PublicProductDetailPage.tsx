@@ -5,16 +5,14 @@ import remarkGfm from "remark-gfm";
 import { commerceApi } from "@/api/commerce";
 import { reviewsApi } from "@/api/reviews";
 import { getApiError } from "@/api/client";
-import { useAuthStore } from "@/stores/auth";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DetailPageSkeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft,
   PackageSearch,
   ShoppingCart,
-  Search,
+
   Plus,
   Minus,
   Trash2,
@@ -25,6 +23,7 @@ import {
 import type { Product } from "@/types/api";
 import type { ProductReview, RatingStats } from "@/api/reviews";
 import { formatCurrency } from "./pricing";
+import { ShopHeader } from "./ShopHeader";
 import { getCartItems, getCartTotalQuantity, upsertCartItem, removeCartItem } from "./cart";
 import { ReviewForm } from "@/components/commerce/ReviewForm";
 import { ReviewList } from "@/components/commerce/ReviewList";
@@ -34,7 +33,6 @@ import { PRODUCT_IMAGE_ASPECT_CLASS } from "./product-image";
 export default function PublicProductDetailPage() {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
 
   const [product, setProduct] = React.useState<Product | null>(null);
   const [cart, setCart] = React.useState(() => getCartItems());
@@ -138,54 +136,14 @@ export default function PublicProductDetailPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* ── Topbar ──────────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-20 border-b bg-background/80 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/shop")}>
-              <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline ml-1">Shop</span>
-            </Button>
-            <p className="text-sm text-muted-foreground hidden md:block truncate max-w-xs">
-              {product.category && (
-                <span className="text-muted-foreground">{product.category} / </span>
-              )}
-              <span className="text-foreground font-medium">{product.name}</span>
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/shop/orders/lookup")}>
-              <Search className="h-4 w-4" />
-              <span className="hidden sm:inline ml-1.5">Order Status</span>
-            </Button>
-            {isAuthenticated ? (
-              <Button variant="ghost" size="sm" onClick={() => navigate("/orders/history")}>
-                My Orders
-              </Button>
-            ) : (
-              <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>
-                Sign In
-              </Button>
-            )}
-            <Button
-              onClick={() => navigate("/shop/cart")}
-              disabled={cartCount === 0}
-              className="relative"
-            >
-              <ShoppingCart className="h-4 w-4" />
-              <span className="ml-1.5">Cart</span>
-              {cartCount > 0 && (
-                <Badge
-                  variant="secondary"
-                  className="absolute bg-accent-foreground -top-2 -right-2 h-5 min-w-5 px-1 text-xs flex items-center justify-center"
-                >
-                  {cartCount}
-                </Badge>
-              )}
-            </Button>
-          </div>
-        </div>
-      </div>
+      <ShopHeader backTo="/shop" backLabel="Shop" cartCount={cartCount}>
+        <p className="text-sm text-muted-foreground hidden md:block truncate max-w-xs">
+          {product.category && (
+            <span className="text-muted-foreground">{product.category} / </span>
+          )}
+          <span className="text-foreground font-medium">{product.name}</span>
+        </p>
+      </ShopHeader>
 
       {/* ── Hero: image + info ───────────────────────────────────────────── */}
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

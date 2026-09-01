@@ -7,10 +7,12 @@
  * - The member exists as soon as the form is submitted, inactive with a pending bill. Paying is what activates them, and a closed payment window leaves exactly that: an inactive member the front desk can settle with later.
  * - Primary exports: SignupPage.
  */
+import { formatCurrency } from "@fitconnect/shared/utils";
 import * as React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { publicApi } from "@/api/public";
 import { getApiError } from "@/api/client";
+import { readFileAsDataUrl } from "@/lib/file";
 import { haptics } from "@/lib/haptics";
 import { openRazorpayCheckout } from "@/lib/razorpay-checkout";
 import { resolveAssetUrl } from "@/lib/assets";
@@ -40,24 +42,6 @@ import type { SelfSignupResult, SignupOptions } from "@/types/api";
 import { TURNSTILE_SITE_KEY, TurnstileWidget } from "@/components/ui/turnstile";
 import { useAuthStore } from "@/stores/auth";
 import { getTenantDashboardPath } from "@/lib/subdomain";
-
-/** Read a captured photo into the base64 payload the signup endpoint takes. */
-function toDataUrl(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error("That photo could not be read."));
-    reader.readAsDataURL(file);
-  });
-}
-
-function formatAmount(amount: number) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 0,
-  }).format(amount);
-}
 
 type Outcome = {
   signup: SelfSignupResult;
@@ -224,7 +208,7 @@ export default function SignupPage() {
         ...(memberData.email ? { email: memberData.email } : {}),
         phone: memberData.phone,
         gender: memberData.gender,
-        avatarDataUrl: await toDataUrl(memberData.photoFile),
+        avatarDataUrl: await readFileAsDataUrl(memberData.photoFile),
         subscriptionId: selectedPlan.id,
         ...(selectedChargeIds.length > 0 ? { chargeIds: selectedChargeIds } : {}),
         ...(couponCode.trim() && discount > 0
@@ -382,7 +366,7 @@ export default function SignupPage() {
                 <span className="text-muted-foreground">
                   {active ? "Paid" : "Amount due"}
                 </span>
-                <span className="font-semibold">{formatAmount(signup.total)}</span>
+                <span className="font-semibold">{formatCurrency(signup.total)}</span>
               </div>
             </div>
 
@@ -488,7 +472,7 @@ export default function SignupPage() {
                       )}
                       <div className="mt-2 flex items-center gap-2">
                         <span className="text-lg font-bold">
-                          {formatAmount(plan.amount)}
+                          {formatCurrency(plan.amount)}
                         </span>
                         <span className="text-xs text-muted-foreground">
                           / {plan.durationDays} days
@@ -545,7 +529,7 @@ export default function SignupPage() {
                           </div>
                         </div>
                         <span className="text-sm font-semibold">
-                          {formatAmount(charge.amount)}
+                          {formatCurrency(charge.amount)}
                         </span>
                       </label>
                     );
@@ -567,7 +551,7 @@ export default function SignupPage() {
                   .map((charge) => (
                     <div key={charge.id} className="flex justify-between">
                       <span className="text-muted-foreground">{charge.name}</span>
-                      <span>{formatAmount(charge.amount)}</span>
+                      <span>{formatCurrency(charge.amount)}</span>
                     </div>
                   ))}
                 {selectedPlan && (
@@ -575,18 +559,18 @@ export default function SignupPage() {
                     <span className="text-muted-foreground">
                       {selectedPlan.title} ({selectedPlan.durationDays} days)
                     </span>
-                    <span>{formatAmount(selectedPlan.amount)}</span>
+                    <span>{formatCurrency(selectedPlan.amount)}</span>
                   </div>
                 )}
                 {discount > 0 && (
                   <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
                     <span>Coupon {couponCode.trim().toUpperCase()}</span>
-                    <span>-{formatAmount(discount)}</span>
+                    <span>-{formatCurrency(discount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between border-t pt-2 text-base font-bold">
                   <span>Total</span>
-                  <span>{formatAmount(grandTotal)}</span>
+                  <span>{formatCurrency(grandTotal)}</span>
                 </div>
               </div>
 
@@ -617,7 +601,7 @@ export default function SignupPage() {
                   )}
                   {discount > 0 && !couponError && (
                     <p className="text-xs text-emerald-600 dark:text-emerald-400">
-                      {formatAmount(discount)} off applied.
+                      {formatCurrency(discount)} off applied.
                     </p>
                   )}
                 </div>
@@ -661,7 +645,7 @@ export default function SignupPage() {
                   ) : (
                     <>
                       {options.onlinePaymentsEnabled
-                        ? `Pay ${formatAmount(grandTotal)} & Join`
+                        ? `Pay ${formatCurrency(grandTotal)} & Join`
                         : "Join & Pay at the Gym"}
                       <ArrowRight className="ml-1 h-4 w-4" />
                     </>

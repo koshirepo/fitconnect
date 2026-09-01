@@ -28,6 +28,7 @@ import { DetailPageSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CommentThread } from "@/components/social/CommentThread";
 import type { SocialComment, StoreProduct } from "@fitconnect/shared/types/models";
+import { ShareButton } from "@/components/ui/share-button";
 import { ProductOverview } from "./ProductOverview";
 
 export default function PublicStoreProductPage() {
@@ -52,6 +53,9 @@ export default function PublicStoreProductPage() {
   const deleteComment = useDeleteProductComment();
 
   const [product, setProduct] = React.useState<StoreProduct | null>(null);
+  // Only for the share text — "Shaker Bottle at Rudra Gym" says more in a
+  // WhatsApp message than the product name alone.
+  const [tenantName, setTenantName] = React.useState("");
   const [comments, setComments] = React.useState<SocialComment[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
@@ -65,6 +69,7 @@ export default function PublicStoreProductPage() {
       .then((res) => {
         if (!active) return;
         setProduct(res.data.data.product);
+        setTenantName(res.data.data.tenant.name);
         setComments(res.data.data.comments);
       })
       .catch((caught) => {
@@ -109,6 +114,15 @@ export default function PublicStoreProductPage() {
   /** The member feed once it lands, the public snapshot until then. */
   const shownComments = asMember && feed ? feed.comments : comments;
 
+  /**
+   * The address of this page, as the reader is standing on it.
+   *
+   * Taken from `window.location` rather than rebuilt from the slug so a link
+   * shared from the gym's own subdomain stays on that subdomain — which is
+   * where the gym's branding, its store, and its signup all live.
+   */
+  const shareUrl = typeof window === "undefined" ? "" : window.location.href;
+
   const handleLike = async (liked: boolean) => {
     try {
       await toggleLike.mutateAsync(liked);
@@ -141,22 +155,32 @@ export default function PublicStoreProductPage() {
       <ProductOverview
         product={product}
         action={
-          asMember ? (
-            <LikeButton
-              liked={feed?.liked ?? false}
-              count={feed?.likeCount ?? product.likeCount}
-              onToggle={handleLike}
-              disabled={memberFeed.isPending}
-              label="product"
+          <div className="flex items-center gap-2">
+            {asMember ? (
+              <LikeButton
+                liked={feed?.liked ?? false}
+                count={feed?.likeCount ?? product.likeCount}
+                onToggle={handleLike}
+                disabled={memberFeed.isPending}
+                label="product"
+              />
+            ) : (
+              /* The count without the button: a visitor can see that forty people
+                 liked this, and what they are missing by not having an account. */
+              <span className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm text-muted-foreground">
+                <Heart className="h-4 w-4" />
+                {product.likeCount}
+              </span>
+            )}
+            {/* Shown to everyone, member or not. The page is public, so the
+                link works for whoever receives it — which is the whole point
+                of a member sending it to somebody who has no account yet. */}
+            <ShareButton
+              url={shareUrl}
+              title={product.name}
+              text={`${product.name} at ${tenantName}`}
             />
-          ) : (
-            /* The count without the button: a visitor can see that forty people
-               liked this, and what they are missing by not having an account. */
-            <span className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm text-muted-foreground">
-              <Heart className="h-4 w-4" />
-              {product.likeCount}
-            </span>
-          )
+          </div>
         }
         // Everyone gets this, not only members. A visitor sent here to
         // choose between three flavours had no way to choose one: the grid

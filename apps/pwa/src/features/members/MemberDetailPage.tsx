@@ -1,3 +1,4 @@
+import { getMonthStr, parseMonth, formatMonthLabel } from "@/lib/month";
 import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
@@ -42,6 +43,7 @@ import {
   renderWhatsAppTemplateBody,
 } from "@/lib/whatsapp-templates";
 import { cn } from "@/lib/utils";
+import { PaymentStatusChip } from "@/components/ui/payment-status-chip";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -118,20 +120,6 @@ function whatsappSender(reminder: { actor?: { user: { name: string } } | null })
 }
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-function getMonthStr(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function parseMonth(s: string): Date {
-  const [y, m] = s.split("-").map(Number);
-  return new Date(y, m - 1, 1);
-}
-
-function formatMonthLabel(s: string) {
-  const d = parseMonth(s);
-  return d.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
-}
 
 export default function MemberDetailPage() {
   const { membershipId } = useParams<{ membershipId: string }>();
@@ -1178,39 +1166,94 @@ export default function MemberDetailPage() {
             {member.payments.length === 0 ? (
               <p className="text-sm text-muted-foreground">No payments recorded.</p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Subscription</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Valid</TableHead>
-                    <TableHead>Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                {/*
+                  Two layouts for one list. A four-column table in a card on a
+                  phone put the validity range and the whole date column off
+                  the right edge — the dates were not merely cramped, they were
+                  unreachable. Below `sm` each payment becomes a stacked row
+                  instead; from `sm` up the table returns, because scanning
+                  twenty payments down aligned columns is what a table is for.
+
+                  Status is shown in both. The table carried it only as the
+                  amount's colour, which meant a failed payment and a settled
+                  one read the same to anyone not comparing shades.
+                */}
+                <ul className="divide-y sm:hidden">
                   {member.payments.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell className="font-medium">
-                        <Link to={`/payments/${p.id}`} className="hover:underline">
-                          {p.subscription?.title ?? p.description ?? "-"}
-                        </Link>
-                      </TableCell>
-                      <TableCell
-                        className={cn("font-semibold", PAYMENT_AMOUNT_COLOR[p.status] ?? "")}
+                    <li key={p.id}>
+                      <Link
+                        to={`/payments/${p.id}`}
+                        className="flex flex-col gap-1.5 py-3 hover:bg-muted/40"
                       >
-                        {fmt(p.amount)}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-xs">
-                        {p.validFrom ? formatDate(p.validFrom) : "-"}
-                        {p.validUntil ? ` -> ${formatDate(p.validUntil)}` : ""}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-xs">
-                        {formatDate(p.createdAt)}
-                      </TableCell>
-                    </TableRow>
+                        <div className="flex items-start justify-between gap-3">
+                          <span className="min-w-0 flex-1 font-medium">
+                            {p.subscription?.title ?? p.description ?? "-"}
+                          </span>
+                          <span
+                            className={cn(
+                              "shrink-0 font-semibold",
+                              PAYMENT_AMOUNT_COLOR[p.status] ?? "",
+                            )}
+                          >
+                            {fmt(p.amount)}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                          <PaymentStatusChip status={p.status} />
+                          <span>{formatDate(p.createdAt)}</span>
+                        </div>
+                        {p.validFrom && (
+                          <p className="text-xs text-muted-foreground">
+                            Valid {formatDate(p.validFrom)}
+                            {p.validUntil ? ` → ${formatDate(p.validUntil)}` : ""}
+                          </p>
+                        )}
+                      </Link>
+                    </li>
                   ))}
-                </TableBody>
-              </Table>
+                </ul>
+
+                <div className="hidden sm:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Subscription</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Valid</TableHead>
+                        <TableHead>Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {member.payments.map((p) => (
+                        <TableRow key={p.id}>
+                          <TableCell className="font-medium">
+                            <Link to={`/payments/${p.id}`} className="hover:underline">
+                              {p.subscription?.title ?? p.description ?? "-"}
+                            </Link>
+                          </TableCell>
+                          <TableCell
+                            className={cn("font-semibold", PAYMENT_AMOUNT_COLOR[p.status] ?? "")}
+                          >
+                            {fmt(p.amount)}
+                          </TableCell>
+                          <TableCell>
+                            <PaymentStatusChip status={p.status} />
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
+                            {p.validFrom ? formatDate(p.validFrom) : "-"}
+                            {p.validUntil ? ` → ${formatDate(p.validUntil)}` : ""}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
+                            {formatDate(p.createdAt)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

@@ -1,5 +1,8 @@
+import { formatCurrency } from "@fitconnect/shared/utils";
 import * as React from "react";
 import { useAppNavigate } from "@/lib/use-app-navigate";
+import { tenantsApi } from "@/api/tenants";
+import { BrandColorCard } from "@/components/tenants/BrandColorCard";
 import { useAuthStore } from "@/stores/auth";
 import {
   useCharges,
@@ -15,7 +18,7 @@ import {
 } from "@/api/queries/catalog";
 import { getApiError } from "@/api/client";
 import { formatShiftWindow } from "@/lib/shifts";
-import type { TenantCharge, Shift } from "@/types/api";
+import type { TenantCharge, Shift, Tenant } from "@/types/api";
 import {
   Card,
   CardContent,
@@ -42,14 +45,6 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FormPageSkeleton } from "@/components/ui/skeleton";
 import PaymentGatewayCard from "./PaymentGatewayCard";
 
-function formatAmount(amount: number) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 0,
-  }).format(amount);
-}
-
 export default function GymSettingsPage() {
   const { currentTenantId } = useAuthStore();
   const navigate = useAppNavigate();
@@ -57,6 +52,25 @@ export default function GymSettingsPage() {
   // Three parallel reads; each write below invalidates the settings or shifts
   // key, so the lists refresh themselves rather than being patched in place.
   const settingsQuery = useTenantSettings();
+  // The tenant record itself, for the brand colour below. Its own state rather
+  // than a shared query because this page is the only reader.
+  const [tenant, setTenant] = React.useState<Tenant | null>(null);
+
+  React.useEffect(() => {
+    if (!currentTenantId) return;
+    let active = true;
+    tenantsApi
+      .get(currentTenantId)
+      .then((res) => {
+        if (active) setTenant(res.data.data.tenant);
+      })
+      .catch(() => {
+        // The colour card simply does not render; the rest of settings works.
+      });
+    return () => {
+      active = false;
+    };
+  }, [currentTenantId]);
   const chargesQuery = useCharges();
   const shiftsQuery = useShifts(true);
 
@@ -325,6 +339,8 @@ export default function GymSettingsPage() {
         </div>
       )}
 
+      {tenant && <BrandColorCard tenant={tenant} onSaved={setTenant} />}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -539,7 +555,7 @@ export default function GymSettingsPage() {
                     <div>
                       <p className="font-medium text-sm">{charge.name}</p>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>{formatAmount(charge.amount)}</span>
+                        <span>{formatCurrency(charge.amount)}</span>
                         {charge.isMandatory && (
                           <span className="inline-flex items-center gap-1 rounded bg-blue-100 px-1.5 py-0.5 text-blue-700">
                             <Shield className="h-3 w-3" />

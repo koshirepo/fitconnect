@@ -365,12 +365,8 @@ export default function IdCardPage() {
       // Both assets are inlined before the SVG is built, so what is rendered is
       // exactly what gets exported.
       const [photo, logo] = await Promise.all([
-        data.member.avatarUrl
-          ? toDataUrl(resolveAssetUrl(data.member.avatarUrl) ?? data.member.avatarUrl)
-          : Promise.resolve(null),
-        data.gym.logoUrl
-          ? toDataUrl(resolveAssetUrl(data.gym.logoUrl) ?? data.gym.logoUrl)
-          : Promise.resolve(null),
+        inlineAsset(data.member.avatarUrl),
+        inlineAsset(data.gym.logoUrl),
       ]);
 
       setSvg(buildCardSvg(data, photo, logo, window.location.href));
@@ -480,6 +476,25 @@ export default function IdCardPage() {
  * Returns null rather than throwing: a missing photo should still produce a
  * card, just one with initials where the picture goes.
  */
+/**
+ * Inline a stored asset, trying the proxy first and the stored URL after.
+ *
+ * The card is built as one self-contained SVG, so a photo that fails to fetch
+ * is not a broken image on the page — it is a card printed with initials where
+ * the face should be. That makes the second attempt worth making: older
+ * records hold an absolute bucket address, `resolveAssetUrl` points those at
+ * the API's proxy, and the proxy only has the file where its bucket does.
+ */
+async function inlineAsset(url: string | null | undefined): Promise<string | null> {
+  if (!url) return null;
+
+  const proxied = resolveAssetUrl(url);
+  const viaProxy = proxied ? await toDataUrl(proxied) : null;
+  if (viaProxy) return viaProxy;
+
+  return proxied === url ? null : toDataUrl(url);
+}
+
 async function toDataUrl(url: string): Promise<string | null> {
   try {
     const response = await fetch(url, { mode: "cors", cache: "no-store" });

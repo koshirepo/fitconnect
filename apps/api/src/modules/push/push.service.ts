@@ -7,6 +7,7 @@
  * - Prefer placing workflow logic, derived calculations, and domain invariants here instead of inside controllers or repositories.
  * - Primary exports: pushService.
  */
+import { formatCurrency } from "@fitconnect/shared/utils";
 import webPush from "web-push";
 import { config } from "../../config";
 import { pushRepository } from "./push.repository";
@@ -36,15 +37,6 @@ function ensureVapid() {
 type PushPayload = { title: string; body: string; url?: string };
 
 type StoredSubscription = { endpoint: string; p256dh: string; auth: string };
-
-/** Rupees the way every other member-facing amount in the app is written. */
-function formatInr(amount: number) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 0,
-  }).format(amount);
-}
 
 /**
  * Push one payload to a set of endpoints.
@@ -192,11 +184,11 @@ export const pushService = {
     return pushService.sendToTenantAdmins(
       tenantId,
       {
-        title: `Payment received: ${formatInr(payment.amount)}`,
+        title: `Payment received: ${formatCurrency(payment.amount)}`,
         body:
           payment.source === "ONLINE"
-            ? `${who} paid ${formatInr(payment.amount)} online${what}.`
-            : `${formatInr(payment.amount)} collected from ${who}${what}.`,
+            ? `${who} paid ${formatCurrency(payment.amount)} online${what}.`
+            : `${formatCurrency(payment.amount)} collected from ${who}${what}.`,
         // The receipt itself when the row is known; the ledger otherwise, which
         // is a settlement covering several rows at once.
         url: payment.paymentId

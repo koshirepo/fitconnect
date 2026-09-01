@@ -1,3 +1,4 @@
+import type { PaymentStatus } from "@/types/api";
 import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
@@ -251,7 +252,7 @@ export default function PaymentsPage() {
 
   const handleStatusUpdate = async (
     paymentId: string,
-    status: "COMPLETED" | "FAILED" | "REFUNDED",
+    status: PaymentStatus,
   ) => {
     try {
       await updatePaymentStatus.mutateAsync({ paymentId, status });

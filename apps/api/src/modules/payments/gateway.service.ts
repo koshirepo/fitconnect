@@ -134,6 +134,25 @@ export const gatewayService = {
     };
   },
 
+  /**
+   * The platform's own credentials, with no gym involved.
+   *
+   * The platform storefront sells the platform's goods, so there is no tenant
+   * whose account the money could belong to. Null when the deployment has no
+   * gateway configured, which the callers treat as "take the order, collect
+   * later" rather than as a failure.
+   */
+  resolvePlatformCredentials(): ResolvedCredentials | null {
+    const platform = platformCredentials();
+    if (!platform) return null;
+
+    return {
+      ...platform,
+      source: "PLATFORM",
+      webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET ?? null,
+    };
+  },
+
   // ─── Configuration ──────────────────────────────────────────────────────────
 
   /**

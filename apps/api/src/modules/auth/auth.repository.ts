@@ -82,6 +82,10 @@ export const authRepository = {
         name: true,
         email: true,
         phone: true,
+        // The session's own photo. Without it every avatar the app renders
+        // from `user` — the sidebar, the account menu — falls back to initials
+        // no matter what the member actually uploaded.
+        avatarUrl: true,
         platformRole: true,
         status: true,
       },

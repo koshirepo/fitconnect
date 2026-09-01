@@ -41,6 +41,7 @@ export const badgeRepository = {
         description: data.description,
         color: data.color ?? "#6366f1",
         icon: data.icon,
+        restricted: data.restricted ?? false,
       },
     });
   },

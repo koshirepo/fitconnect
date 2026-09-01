@@ -41,6 +41,14 @@ export const queryKeys = {
       ["shifts", tenantId, includeInactive] as const,
   },
   store: {
+    /**
+     * Everything cached for one gym's store, as the prefix invalidation uses.
+     *
+     * Lives here rather than beside each hook because a cache-key root written
+     * out twice is a root that can drift, and a drifted root does not error —
+     * it quietly stops invalidating.
+     */
+    root: (tenantId: string | null | undefined) => ["store", tenantId ?? "none"] as const,
     products: (tenantId: string, params?: unknown) =>
       ["store", tenantId, "products", params ?? null] as const,
     product: (tenantId: string, productId: string) =>

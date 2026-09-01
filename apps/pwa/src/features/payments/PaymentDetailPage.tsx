@@ -28,6 +28,7 @@ import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import {
   Calendar,
   CheckCircle2,
+  Clock,
   CreditCard,
   Pencil,
   Plus,
@@ -54,6 +55,23 @@ const statusLabel: Record<PaymentStatus, string> = {
   FAILED: "Failed",
   REFUNDED: "Refunded",
 };
+
+/**
+ * The statuses an admin can move a payment to when correcting the record.
+ *
+ * REFUNDED is in the list because it is a real status, but the page offers it
+ * through its own confirmed button — moving money back deserves the extra
+ * step that the others do not.
+ */
+const CORRECTABLE_STATUSES = [
+  { value: "PENDING" as const, label: "Pending", icon: Clock },
+  { value: "COMPLETED" as const, label: "Completed", icon: CheckCircle2 },
+  { value: "FAILED" as const, label: "Failed", icon: XCircle },
+  { value: "REFUNDED" as const, label: "Refunded", icon: RefreshCw },
+];
+
+/** What the settle buttons on a pending payment already cover. */
+const quickActionStatuses = new Set<PaymentStatus>(["COMPLETED", "FAILED"]);
 
 function statusBadgeVariant(status: PaymentStatus) {
   switch (status) {
@@ -197,7 +215,7 @@ export default function PaymentDetailPage() {
   );
   const memberPaymentsLoading = memberPaymentsQuery.isLoading;
 
-  const handleStatusUpdate = async (status: "COMPLETED" | "FAILED" | "REFUNDED") => {
+  const handleStatusUpdate = async (status: PaymentStatus) => {
     if (!currentTenantId || !paymentId) return;
 
     setUpdatingStatus(true);
@@ -280,7 +298,7 @@ export default function PaymentDetailPage() {
             {isAdmin && !editing && (
               <Button variant="outline" size="sm" onClick={startEditing}>
                 <Pencil className="h-4 w-4" />
-                Edit
+                <span className="hidden sm:inline">Edit</span>
               </Button>
             )}
             {isAdmin && editing && (
@@ -301,7 +319,7 @@ export default function PaymentDetailPage() {
                   disabled={updatingStatus}
                 >
                   <CheckCircle2 className="h-4 w-4" />
-                  Completed
+                  <span className="hidden sm:inline">Completed</span>
                 </Button>
                 <Button
                   size="sm"
@@ -310,7 +328,7 @@ export default function PaymentDetailPage() {
                   disabled={updatingStatus}
                 >
                   <XCircle className="h-4 w-4" />
-                  Failed
+                  <span className="hidden sm:inline">Failed</span>
                 </Button>
               </>
             )}
@@ -322,9 +340,37 @@ export default function PaymentDetailPage() {
                 disabled={updatingStatus}
               >
                 <RefreshCw className="h-4 w-4" />
-                Refund
+                <span className="hidden sm:inline">Refund</span>
               </Button>
             )}
+            {/* An admin can move a payment to any status, not only forwards.
+                A row marked failed against the wrong member, or completed by
+                a mis-click, has to be correctable — and before this there was
+                no action at all on a failed payment.
+
+                Only the statuses nothing else on this row already offers:
+                the current one, refund (its own confirmed button above), and
+                on a pending payment the two quick actions beside this. */}
+            {isAdmin &&
+              !editing &&
+              CORRECTABLE_STATUSES.filter(
+                (option) =>
+                  option.value !== payment.status &&
+                  option.value !== "REFUNDED" &&
+                  !(payment.status === "PENDING" && quickActionStatuses.has(option.value)),
+              ).map((option) => (
+                <Button
+                  key={option.value}
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleStatusUpdate(option.value)}
+                  disabled={updatingStatus}
+                  title={`Mark ${option.label}`}
+                >
+                  <option.icon className="h-4 w-4" />
+                  <span className="hidden sm:inline">{option.label}</span>
+                </Button>
+              ))}
             {isAdmin && !editing && (
               <Button
                 size="sm"

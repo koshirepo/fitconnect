@@ -1,3 +1,4 @@
+import type { PaymentStatus } from "@/types/api";
 import { api } from "./client";
 import type {
   Payment,
@@ -47,7 +48,7 @@ export const paymentsApi = {
   updateStatus: (
     tenantId: string,
     paymentId: string,
-    status: "COMPLETED" | "FAILED" | "REFUNDED",
+    status: PaymentStatus,
   ) =>
     api.patch<ApiResponse<{ payment: Payment }>>(`/tenants/${tenantId}/payments/${paymentId}`, {
       status,

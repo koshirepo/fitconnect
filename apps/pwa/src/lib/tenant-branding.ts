@@ -46,6 +46,16 @@ export function readCachedTenantBranding(hostname = getCurrentTenantBrandingHost
   }
 }
 
+/**
+ * Fired whenever this gym's branding is written.
+ *
+ * The accent colour is painted once at the app root from whatever branding was
+ * known at mount. Without a signal, an admin who changes the colour in settings
+ * keeps seeing the old one on every page — for the six hours the cache lives —
+ * because nothing tells the root to look again.
+ */
+export const TENANT_BRANDING_EVENT = "fitconnect:tenant-branding";
+
 export function writeCachedTenantBranding(data: TenantBranding, hostname = getCurrentTenantBrandingHost()) {
   if (!hostname || typeof window === "undefined") return;
 
@@ -56,6 +66,13 @@ export function writeCachedTenantBranding(data: TenantBranding, hostname = getCu
     );
   } catch {
     // Ignore storage quota issues; the app should keep working without this cache.
+  }
+
+  // After the write, so a listener that re-reads the cache sees the new value.
+  // Only for the host being looked at: writing another gym's branding — which
+  // the platform tenant list can do — must not repaint this one.
+  if (hostname === getCurrentTenantBrandingHost()) {
+    window.dispatchEvent(new CustomEvent(TENANT_BRANDING_EVENT, { detail: data }));
   }
 }
 

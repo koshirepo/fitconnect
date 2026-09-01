@@ -172,6 +172,11 @@ export type CoinLedgerEntry = Prisma.CoinLedgerEntryModel
  */
 export type MembershipFreeze = Prisma.MembershipFreezeModel
 /**
+ * Model BodyMetric
+ * 
+ */
+export type BodyMetric = Prisma.BodyMetricModel
+/**
  * Model Product
  * 
  */

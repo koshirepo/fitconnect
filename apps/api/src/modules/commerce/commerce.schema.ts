@@ -3,7 +3,7 @@
  *
  * - Defines the Zod schemas and inferred TypeScript input types used to validate requests for product catalog management, ordering, and admin order operations.
  * - When a request payload or query contract changes, update this file first and then adjust the controller/service code that consumes the parsed input.
- * - Primary exports: createProductSchema, updateProductSchema, placeOrderSchema, updateOrderStatusSchema, CreateProductInput, UpdateProductInput, PlaceOrderInput, UpdateOrderStatusInput.
+ * - Primary exports: createProductSchema, updateProductSchema, placeOrderSchema, verifyOrderPaymentSchema, updateOrderStatusSchema, CreateProductInput, UpdateProductInput, PlaceOrderInput, VerifyOrderPaymentInput, UpdateOrderStatusInput.
  */
 import { z } from "zod";
 
@@ -69,6 +69,20 @@ export const placeOrderSchema = z.object({
   items: z.array(orderItemSchema).min(1).max(100),
 });
 
+/**
+ * What the checkout widget hands back when a payment succeeds.
+ *
+ * No amount and no order of ours: the Razorpay order id is looked up on our
+ * side, and the signature is checked against our key secret. Nothing a browser
+ * can say here decides whether an order is paid.
+ */
+export const verifyOrderPaymentSchema = z.object({
+  /** Razorpay's order id, not ours. */
+  orderId: z.string().min(1),
+  paymentId: z.string().min(1),
+  signature: z.string().min(1),
+});
+
 export const updateOrderStatusSchema = z.object({
   status: z.enum(["PENDING", "SHIPPED", "DELIVERED"]),
 });
@@ -77,3 +91,4 @@ export type CreateProductInput = z.infer<typeof createProductSchema>;
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;
 export type PlaceOrderInput = z.infer<typeof placeOrderSchema>;
 export type UpdateOrderStatusInput = z.infer<typeof updateOrderStatusSchema>;
+export type VerifyOrderPaymentInput = z.infer<typeof verifyOrderPaymentSchema>;

@@ -81,6 +81,9 @@ const ResetPasswordPage = React.lazy(
 );
 const LandingPage = React.lazy(() => import("@/features/public/LandingPage"));
 const SignupPage = React.lazy(() => import("@/features/public/SignupPage"));
+const RegisterGymPage = React.lazy(
+  () => import("@/features/public/RegisterGymPage"),
+);
 const CouponsPage = React.lazy(() => import("@/features/coupons/CouponsPage"));
 const StorePage = React.lazy(() => import("@/features/store/StorePage"));
 const PublicStorePage = React.lazy(() => import("@/features/store/PublicStorePage"));
@@ -406,6 +409,10 @@ export default function App() {
                   path="/shop/orders/:orderId"
                   element={<PublicOrderStatusPage />}
                 />
+                {/* Listing a gym is the platform's own front door, not a
+                    gym's — it lives on the root host beside the marketing
+                    pages, never on a tenant subdomain. */}
+                <Route path="/register-gym" element={<RegisterGymPage />} />
                 <Route path="/about" element={<AboutUsPage />} />
                 <Route path="/contact" element={<ContactUsPage />} />
               </Route>

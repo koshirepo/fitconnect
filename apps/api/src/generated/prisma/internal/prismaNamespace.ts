@@ -419,6 +419,7 @@ export const ModelName = {
   CouponRedemption: 'CouponRedemption',
   CoinLedgerEntry: 'CoinLedgerEntry',
   MembershipFreeze: 'MembershipFreeze',
+  BodyMetric: 'BodyMetric',
   Product: 'Product',
   ProductReview: 'ProductReview',
   ProductReviewComment: 'ProductReviewComment',
@@ -455,7 +456,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "webAuthnCredential" | "webAuthnChallenge" | "webhookDelivery" | "idempotencyKey" | "passwordResetToken" | "refreshToken" | "tenant" | "role" | "rolePermissionOverride" | "tenantSettings" | "tenantCharge" | "tenantMembership" | "subscription" | "shift" | "todo" | "payment" | "paymentReminder" | "coupon" | "couponRedemption" | "coinLedgerEntry" | "membershipFreeze" | "product" | "productReview" | "productReviewComment" | "productReviewHelpful" | "order" | "orderItem" | "workoutPlan" | "workoutPlanAssignment" | "badge" | "platformPayment" | "attendance" | "auditLog" | "pushSubscription" | "storeProduct" | "tenantLike" | "tenantComment" | "storeProductLike" | "storeProductComment" | "storeVariant" | "storeOrder" | "storeOrderItem"
+    modelProps: "user" | "webAuthnCredential" | "webAuthnChallenge" | "webhookDelivery" | "idempotencyKey" | "passwordResetToken" | "refreshToken" | "tenant" | "role" | "rolePermissionOverride" | "tenantSettings" | "tenantCharge" | "tenantMembership" | "subscription" | "shift" | "todo" | "payment" | "paymentReminder" | "coupon" | "couponRedemption" | "coinLedgerEntry" | "membershipFreeze" | "bodyMetric" | "product" | "productReview" | "productReviewComment" | "productReviewHelpful" | "order" | "orderItem" | "workoutPlan" | "workoutPlanAssignment" | "badge" | "platformPayment" | "attendance" | "auditLog" | "pushSubscription" | "storeProduct" | "tenantLike" | "tenantComment" | "storeProductLike" | "storeProductComment" | "storeVariant" | "storeOrder" | "storeOrderItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2084,6 +2085,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.MembershipFreezeCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.MembershipFreezeCountAggregateOutputType> | number
+        }
+      }
+    }
+    BodyMetric: {
+      payload: Prisma.$BodyMetricPayload<ExtArgs>
+      fields: Prisma.BodyMetricFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.BodyMetricFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BodyMetricPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.BodyMetricFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BodyMetricPayload>
+        }
+        findFirst: {
+          args: Prisma.BodyMetricFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BodyMetricPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.BodyMetricFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BodyMetricPayload>
+        }
+        findMany: {
+          args: Prisma.BodyMetricFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BodyMetricPayload>[]
+        }
+        create: {
+          args: Prisma.BodyMetricCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BodyMetricPayload>
+        }
+        createMany: {
+          args: Prisma.BodyMetricCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.BodyMetricCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BodyMetricPayload>[]
+        }
+        delete: {
+          args: Prisma.BodyMetricDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BodyMetricPayload>
+        }
+        update: {
+          args: Prisma.BodyMetricUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BodyMetricPayload>
+        }
+        deleteMany: {
+          args: Prisma.BodyMetricDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.BodyMetricUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.BodyMetricUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BodyMetricPayload>[]
+        }
+        upsert: {
+          args: Prisma.BodyMetricUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BodyMetricPayload>
+        }
+        aggregate: {
+          args: Prisma.BodyMetricAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBodyMetric>
+        }
+        groupBy: {
+          args: Prisma.BodyMetricGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BodyMetricGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.BodyMetricCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BodyMetricCountAggregateOutputType> | number
         }
       }
     }
@@ -4054,6 +4129,29 @@ export const MembershipFreezeScalarFieldEnum = {
 export type MembershipFreezeScalarFieldEnum = (typeof MembershipFreezeScalarFieldEnum)[keyof typeof MembershipFreezeScalarFieldEnum]
 
 
+export const BodyMetricScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  membershipId: 'membershipId',
+  measuredOn: 'measuredOn',
+  recordedById: 'recordedById',
+  weightKg: 'weightKg',
+  heightCm: 'heightCm',
+  bodyFatPct: 'bodyFatPct',
+  muscleMassKg: 'muscleMassKg',
+  chestCm: 'chestCm',
+  waistCm: 'waistCm',
+  hipsCm: 'hipsCm',
+  armCm: 'armCm',
+  thighCm: 'thighCm',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BodyMetricScalarFieldEnum = (typeof BodyMetricScalarFieldEnum)[keyof typeof BodyMetricScalarFieldEnum]
+
+
 export const ProductScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -4125,6 +4223,10 @@ export const OrderScalarFieldEnum = {
   gstRatePct: 'gstRatePct',
   gstAmount: 'gstAmount',
   totalAmount: 'totalAmount',
+  paymentStatus: 'paymentStatus',
+  gatewayOrderId: 'gatewayOrderId',
+  gatewayPaymentId: 'gatewayPaymentId',
+  paidAt: 'paidAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -4177,6 +4279,7 @@ export const BadgeScalarFieldEnum = {
   description: 'description',
   color: 'color',
   icon: 'icon',
+  restricted: 'restricted',
   isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -4635,6 +4738,7 @@ export type GlobalOmitConfig = {
   couponRedemption?: Prisma.CouponRedemptionOmit
   coinLedgerEntry?: Prisma.CoinLedgerEntryOmit
   membershipFreeze?: Prisma.MembershipFreezeOmit
+  bodyMetric?: Prisma.BodyMetricOmit
   product?: Prisma.ProductOmit
   productReview?: Prisma.ProductReviewOmit
   productReviewComment?: Prisma.ProductReviewCommentOmit

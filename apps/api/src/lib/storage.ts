@@ -3,7 +3,7 @@
  *
  * - Validates folder and extension segments before writing binary data into Cloudflare R2 and returns the final public URL.
  * - Upload routes use this helper so storage-path safety and URL construction stay consistent across asset types.
- * - Primary exports: uploadFile, UploadResult.
+ * - Primary exports: uploadFile, UploadResult, deleteFileByUrl, cleanupPreviousAsset, publicAssetUrl, BackgroundTaskScheduler.
  */
 import { randomUUID } from "node:crypto";
 
@@ -160,3 +160,59 @@ export async function deleteFileByUrl(
   return { deleted: true, key };
 }
 
+
+/** Somewhere to hand slow work so a request does not wait on it. */
+export type BackgroundTaskScheduler = (promise: Promise<unknown>) => void;
+
+/**
+ * Delete the file an entity used to point at, after it has been repointed.
+ *
+ * Best effort and deliberately quiet: an orphaned object in the bucket costs
+ * a fraction of a penny, while a failed delete that breaks the save costs the
+ * user their edit. Failures are logged, never thrown.
+ *
+ * Passing a scheduler moves the delete off the request, which is what every
+ * caller wants — the reply does not depend on the old file being gone.
+ */
+export async function cleanupPreviousAsset(
+  label: string,
+  previousUrl: string | null | undefined,
+  nextUrl: string | null | undefined,
+  storage: StorageOptions = {},
+  scheduleBackgroundTask?: BackgroundTaskScheduler,
+) {
+  if (!previousUrl || previousUrl === nextUrl) {
+    return;
+  }
+
+  const cleanup = deleteFileByUrl(previousUrl, storage).catch((error) => {
+    console.error(`Failed to delete previous ${label}.`, {
+      previousUrl,
+      nextUrl,
+      error,
+    });
+  });
+
+  if (scheduleBackgroundTask) {
+    scheduleBackgroundTask(cleanup);
+    return;
+  }
+
+  await cleanup;
+}
+
+/**
+ * The URL the app serves a stored object from.
+ *
+ * Every segment is encoded separately so a key keeps its `folder/file.ext`
+ * shape rather than collapsing into one escaped blob. Built against the
+ * request's own origin so the same object resolves under a gym's subdomain,
+ * the app host, or localhost without any of them being configured.
+ */
+export function publicAssetUrl(requestUrl: string, key: string) {
+  const encoded = key
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+  return new URL(`/uploads/file/${encoded}`, new URL(requestUrl).origin).toString();
+}

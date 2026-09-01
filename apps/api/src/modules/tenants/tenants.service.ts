@@ -8,7 +8,12 @@
 import type { AccountStatus } from "@fitconnect/shared/types/enums";
 import { toSlug } from "@fitconnect/shared/utils";
 import { hashPassword, generateRandomPassword } from "../../auth/password";
-import { deleteFileByUrl, type StorageOptions } from "../../lib/storage";
+import {
+  cleanupPreviousAsset,
+  type BackgroundTaskScheduler,
+  type StorageOptions,
+} from "../../lib/storage";
+import { normalizeOptionalText } from "../../lib/text";
 import { provisionTenantSubdomain } from "../../lib/tenant-subdomain";
 import { tenantRepository } from "./tenants.repository";
 import type {
@@ -17,7 +22,6 @@ import type {
   RecordPlatformPaymentInput,
 } from "./tenants.schema";
 
-type BackgroundTaskScheduler = (promise: Promise<unknown>) => void;
 
 /**
  * Execute the `normalize slug` workflow for the tenants module.
@@ -27,40 +31,6 @@ function normalizeSlug(name: string) {
   const fromName = toSlug(name);
   if (fromName.length >= 2) return fromName;
   return "gym";
-}
-
-function normalizeOptionalText(value: string | null | undefined) {
-  if (value === undefined) return undefined;
-  if (value === null) return null;
-  const trimmed = value.trim();
-  return trimmed ? trimmed : null;
-}
-
-async function cleanupPreviousAsset(
-  label: string,
-  previousUrl: string | null | undefined,
-  nextUrl: string | null | undefined,
-  storage: StorageOptions = {},
-  scheduleBackgroundTask?: BackgroundTaskScheduler,
-) {
-  if (!previousUrl || previousUrl === nextUrl) {
-    return;
-  }
-
-  const cleanup = deleteFileByUrl(previousUrl, storage).catch((error) => {
-    console.error(`Failed to delete previous ${label}.`, {
-      previousUrl,
-      nextUrl,
-      error,
-    });
-  });
-
-  if (scheduleBackgroundTask) {
-    scheduleBackgroundTask(cleanup);
-    return;
-  }
-
-  await cleanup;
 }
 
 /**
@@ -136,7 +106,7 @@ export const tenantService = {
 
     // The repository handles tenant creation, admin provisioning, and the
     // initial tenant-admin membership bootstrap in one write boundary.
-    const tenant = await tenantRepository.createWithAdmin({
+    const { tenant } = await tenantRepository.createWithAdmin({
       tenant: {
         name: input.name,
         slug,
@@ -233,6 +203,12 @@ export const tenantService = {
         : {}),
       ...(input.markdown !== undefined
         ? { markdown: normalizeOptionalText(input.markdown) }
+        : {}),
+      // The schema has accepted a brand colour all along and this mapping never
+      // carried it through, so every save quietly discarded it and the column
+      // stayed null no matter what the settings form sent.
+      ...(input.brandColor !== undefined
+        ? { brandColor: normalizeOptionalText(input.brandColor) }
         : {}),
     });
 

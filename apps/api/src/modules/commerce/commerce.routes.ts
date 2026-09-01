@@ -3,7 +3,7 @@
  *
  * - Declares the Hono routes and middleware chain for product catalog management, ordering, and admin order operations. This route set is mounted from `/` in the application entrypoint.
  * - Keep routing and authorization wiring here, and delegate request handling to the companion controller instead of placing business logic in route callbacks.
- * - Relative endpoints declared in this file: GET /products, GET /products/:id, POST /orders, GET /orders/me, GET /orders/:id, GET /admin/products, GET /admin/products/:productId, POST /admin/products, PATCH /admin/products/:productId, DELETE /admin/products/:productId, GET /admin/orders, GET /admin/orders/:orderId, PATCH /admin/orders/:orderId/status, DELETE /admin/orders/:orderId.
+ * - Relative endpoints declared in this file: GET /products, GET /products/:id, POST /orders, POST /orders/checkout, POST /orders/checkout/verify, GET /orders/me, GET /orders/:id, GET /admin/products, GET /admin/products/:productId, POST /admin/products, PATCH /admin/products/:productId, DELETE /admin/products/:productId, GET /admin/orders, GET /admin/orders/:orderId, PATCH /admin/orders/:orderId/status, DELETE /admin/orders/:orderId.
  * - Primary exports: commerceRoutes.
  */
 import { Hono } from "hono";
@@ -20,6 +20,17 @@ export const commerceRoutes = new Hono<AppBindings>();
 commerceRoutes.get("/products", commerceController.listPublicProducts);
 commerceRoutes.get("/products/:id", commerceController.getPublicProductById);
 commerceRoutes.post("/orders", optionalAuthenticate, commerceController.placeOrder);
+/**
+ * Paying for a shop order.
+ *
+ * Unauthenticated by design — the platform storefront sells to visitors, the
+ * same as the gym storefront beside it. What protects it is that the price is
+ * recomputed from the database rather than read from the request, and that an
+ * order only becomes paid against a signature produced with our key secret.
+ * A deployment with no gateway configured still takes the order, unpaid.
+ */
+commerceRoutes.post("/orders/checkout", optionalAuthenticate, commerceController.startCheckout);
+commerceRoutes.post("/orders/checkout/verify", commerceController.verifyOrderPayment);
 
 // Logged-in users
 commerceRoutes.get(

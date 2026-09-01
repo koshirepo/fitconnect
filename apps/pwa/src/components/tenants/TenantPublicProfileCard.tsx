@@ -11,7 +11,8 @@ import { PhotoCapture } from "@/components/ui/photo-capture";
 import { Textarea } from "@/components/ui/textarea";
 import type { Tenant, UpdateTenantPayload } from "@/types/api";
 import { AlertCircle, AlertTriangle, ExternalLink } from "lucide-react";
-import { buildTenantPublicUrl } from "@/lib/subdomain";
+import { buildTenantPublicUrl, isTenantSubdomain } from "@/lib/subdomain";
+import { readCachedTenantBranding, writeCachedTenantBranding } from "@/lib/tenant-branding";
 
 const validators = {
   name: (value: string): string | null => {
@@ -71,11 +72,6 @@ export function TenantPublicProfileCard({
   const [address, setAddress] = React.useState(tenant.address ?? "");
   const [shortDescription, setShortDescription] = React.useState(tenant.description ?? "");
   const [markdown, setMarkdown] = React.useState(tenant.markdown ?? "");
-  const [brandColor, setBrandColor] = React.useState(
-    tenant.brandColor ?? "#E2571E",
-  );
-  /** Off means the platform default, which is what a null column means. */
-  const [brandColorOn, setBrandColorOn] = React.useState(Boolean(tenant.brandColor));
   const [logoFile, setLogoFile] = React.useState<File | null>(null);
   const [logoPreview, setLogoPreview] = React.useState<string | null>(tenant.logoUrl ?? null);
   const [saving, setSaving] = React.useState(false);
@@ -158,7 +154,6 @@ export function TenantPublicProfileCard({
         address: address.trim() ? address.trim() : null,
         logoUrl: nextLogoUrl ?? null,
         description: shortDescription.trim() ? shortDescription.trim() : null,
-        brandColor: brandColorOn ? brandColor : null,
         markdown: markdown.trim() ? markdown.trim() : null,
       };
 
@@ -170,6 +165,38 @@ export function TenantPublicProfileCard({
       });
       setLogoFile(null);
       setSuccessMsg("Public page updated.");
+
+      /**
+       * Refresh the branding cache this gym's pages are painted from.
+       *
+       * The accent, the name, and the logo are read from that cache at the app
+       * root — and it lives six hours. Without this the admin who just picked a
+       * new colour would keep seeing the old one on every page of their gym,
+       * including the one they are standing on, and would reasonably conclude
+       * the setting does nothing. Writing it also fires the event the root
+       * listens on, so the repaint happens now rather than on the next reload.
+       *
+       * Guarded by host: the platform tenant list can edit a gym from the app's
+       * own domain, where this cache belongs to nobody.
+       */
+      if (isTenantSubdomain()) {
+        const cached = readCachedTenantBranding();
+        writeCachedTenantBranding({
+          ...(cached ?? {}),
+          id: updatedTenant.id,
+          name: updatedTenant.name,
+          slug: updatedTenant.slug,
+          logoUrl: updatedTenant.logoUrl ?? null,
+          // Carried through untouched: this form no longer edits the colour,
+          // and dropping it here would clear the cached accent on every save.
+          brandColor: updatedTenant.brandColor ?? cached?.brandColor ?? null,
+          description: updatedTenant.description ?? null,
+          markdown: updatedTenant.markdown ?? null,
+          phone: updatedTenant.phone ?? null,
+          address: updatedTenant.address ?? null,
+        });
+      }
+
       window.dispatchEvent(
         new CustomEvent("tenant-updated", {
           detail: { tenant: updatedTenant },
@@ -327,45 +354,6 @@ export function TenantPublicProfileCard({
                 <p className="text-xs text-muted-foreground">{shortDescription.length}/300</p>
               </div>
 
-              {/* One colour, everything else derived from it. The gradient
-                  stop and the readable text on top are computed in the
-                  browser, so there is nothing here that can disagree with
-                  itself. */}
-              <div className="space-y-2">
-                <Label htmlFor="tenant-brand-color">Brand Colour</Label>
-                <div className="flex flex-wrap items-center gap-3">
-                  <input
-                    id="tenant-brand-color"
-                    type="color"
-                    value={brandColor}
-                    disabled={saving || !brandColorOn}
-                    onChange={(e) => setBrandColor(e.target.value)}
-                    className="h-10 w-14 cursor-pointer rounded-md border border-input bg-background p-1 disabled:opacity-50"
-                  />
-                  <Input
-                    value={brandColor}
-                    disabled={saving || !brandColorOn}
-                    onChange={(e) => setBrandColor(e.target.value)}
-                    placeholder="#E2571E"
-                    className="w-32 font-mono"
-                  />
-                  <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <input
-                      type="checkbox"
-                      checked={brandColorOn}
-                      disabled={saving}
-                      onChange={(e) => setBrandColorOn(e.target.checked)}
-                      className="h-4 w-4 accent-primary"
-                    />
-                    Use our own colour
-                  </label>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Applied across every page on your gym&apos;s address — the
-                  storefront, the signup form, and the dashboard. Unticked, your
-                  pages use the FitConnect colour.
-                </p>
-              </div>
             </div>
 
             <div className="space-y-2">

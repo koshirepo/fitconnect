@@ -122,8 +122,14 @@ export default function LandingPage() {
               payments, workout plans, badges — all in one beautiful, mobile-first app.
             </p>
             <div className="mt-10 flex flex-wrap justify-center gap-4">
-              <Button size="lg" onClick={() => navigate(isAuthenticated ? "/dashboard" : "/login")}>
-                {isAuthenticated ? "Go to Dashboard" : "Start Free"}
+              {/* A gym owner arriving here can register their own gym; before
+                  self-registration existed this button could only send them to
+                  a login form they had no account for. */}
+              <Button
+                size="lg"
+                onClick={() => navigate(isAuthenticated ? "/dashboard" : "/register-gym")}
+              >
+                {isAuthenticated ? "Go to Dashboard" : "List Your Gym"}
                 <ArrowRight className="h-4 w-4" />
               </Button>
               <Button
@@ -280,7 +286,10 @@ export default function LandingPage() {
             minutes, not months.
           </p>
           <div className="mt-8">
-            <Button size="lg" onClick={() => navigate(isAuthenticated ? "/dashboard" : "/login")}>
+            <Button
+              size="lg"
+              onClick={() => navigate(isAuthenticated ? "/dashboard" : "/register-gym")}
+            >
               {isAuthenticated ? "Go to Dashboard" : "Get Started Now"}
               <ArrowRight className="h-4 w-4" />
             </Button>

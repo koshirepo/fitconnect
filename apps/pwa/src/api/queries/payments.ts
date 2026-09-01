@@ -5,6 +5,7 @@
  * - A payment write invalidates members too: recording a payment moves the member's due date and can reactivate them, so a stale member list would contradict the receipt that was just saved.
  * - Primary exports: usePayments, useMyPayments, usePayment, usePaymentAnalytics, useSubscriptions, and the payment/subscription mutations.
  */
+import type { PaymentStatus } from "@/types/api";
 import { keepPreviousData } from "@tanstack/react-query";
 import { paymentsApi } from "@/api/payments";
 import { queryKeys } from "@/lib/query-keys";
@@ -202,7 +203,7 @@ export function useUpdatePayment() {
 export function useUpdatePaymentStatus() {
   const tenantId = useCurrentTenantId();
   return useTenantMutation(
-    async (id, vars: { paymentId: string; status: "COMPLETED" | "FAILED" | "REFUNDED" }) =>
+    async (id, vars: { paymentId: string; status: PaymentStatus }) =>
       unwrap(await paymentsApi.updateStatus(id, vars.paymentId, vars.status)),
     { invalidates: paymentWriteScope(tenantId) },
   );

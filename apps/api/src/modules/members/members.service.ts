@@ -15,7 +15,12 @@ import {
 } from "../../auth/password";
 import { memberRepository } from "./members.repository";
 import { flattenMemberUser, flattenNestedMember } from "../../lib/flatten";
-import { deleteFileByUrl, type StorageOptions } from "../../lib/storage";
+import {
+  cleanupPreviousAsset,
+  type BackgroundTaskScheduler,
+  type StorageOptions,
+} from "../../lib/storage";
+import { normalizeOptionalText } from "../../lib/text";
 import type {
   AddMemberInput,
   UpdateMemberInput,
@@ -29,7 +34,6 @@ import { couponService } from "../coupons/coupons.service";
 import { buildIdCardUrl, idCardService } from "../public/id-card.service";
 import { renderWhatsAppTemplate } from "@fitconnect/shared/whatsapp-templates";
 
-type BackgroundTaskScheduler = (promise: Promise<unknown>) => void;
 type ServiceError = { error: string; status?: 400 | 403 | 404 | 409 };
 type AddMemberResult = {
   membership: { id: string; [key: string]: unknown };
@@ -46,13 +50,6 @@ async function isTenantRoleValid(tenantId: string, role: string) {
   return Boolean(
     await rolePermissionRepository.findCustomRole(tenantId, "TENANT", role),
   );
-}
-
-function normalizeOptionalText(value: string | null | undefined) {
-  if (value === undefined) return undefined;
-  if (value === null) return null;
-  const trimmed = value.trim();
-  return trimmed ? trimmed : null;
 }
 
 function flattenReferralMember<
@@ -112,33 +109,6 @@ function flattenReferralLeader<
     referrals: membership.referrals.map((referral) => flattenReferralMember(referral)),
     referralCount: membership._count.referrals,
   };
-}
-
-async function cleanupPreviousAsset(
-  label: string,
-  previousUrl: string | null | undefined,
-  nextUrl: string | null | undefined,
-  storage: StorageOptions = {},
-  scheduleBackgroundTask?: BackgroundTaskScheduler,
-) {
-  if (!previousUrl || previousUrl === nextUrl) {
-    return;
-  }
-
-  const cleanup = deleteFileByUrl(previousUrl, storage).catch((error) => {
-    console.error(`Failed to delete previous ${label}.`, {
-      previousUrl,
-      nextUrl,
-      error,
-    });
-  });
-
-  if (scheduleBackgroundTask) {
-    scheduleBackgroundTask(cleanup);
-    return;
-  }
-
-  await cleanup;
 }
 
 /**

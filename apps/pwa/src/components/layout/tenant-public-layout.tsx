@@ -96,11 +96,17 @@ export function TenantPublicLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-muted/30">
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 md:px-6">
+        {/* Four things compete for a phone's width here: the mark, the gym's
+            name, two nav links, and the account. At 375px the name was the one
+            that lost, truncating to "Seed G…" — the single most important word
+            on a gym's own site. So the mark shrinks, the gaps tighten, and the
+            name takes whatever is left rather than being squeezed by a fixed
+            row beside it. */}
+        <div className="mx-auto flex max-w-6xl items-center gap-2 px-3 py-3 sm:gap-3 sm:px-4 md:px-6">
           {/* The mark and the name, together, are the way home — the convention
               every site a visitor has ever used already taught them. */}
-          <Link to="/" className="flex min-w-0 items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted ring-1 ring-border">
+          <Link to="/" className="flex min-w-0 flex-1 items-center gap-2 sm:gap-2.5">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted ring-1 ring-border sm:h-9 sm:w-9">
               {logo ? (
                 <img src={logo} alt="" className="h-full w-full object-cover" />
               ) : (
@@ -110,7 +116,7 @@ export function TenantPublicLayout() {
             <span className="truncate font-semibold">{name || "FitConnect"}</span>
           </Link>
 
-          <nav className="ml-2 flex items-center gap-1">
+          <nav className="flex shrink-0 items-center gap-0.5 sm:ml-2 sm:gap-1">
             {NAV.map((item) => (
               <NavLink
                 key={item.to}
@@ -118,7 +124,7 @@ export function TenantPublicLayout() {
                 end={item.end}
                 className={({ isActive }) =>
                   cn(
-                    "rounded-md px-2.5 py-1.5 text-sm transition-colors",
+                    "rounded-md px-2 py-1.5 text-sm transition-colors sm:px-2.5",
                     isActive
                       ? "bg-primary/10 font-medium text-primary"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -130,7 +136,7 @@ export function TenantPublicLayout() {
             ))}
           </nav>
 
-          <div className="ml-auto flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             {isAuthenticated ? (
               /* Who you are signed in as, not just a way out of the page.
                  A gym's own site is where somebody checks which account

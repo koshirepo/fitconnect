@@ -8,6 +8,7 @@ import type {
   CreateProductPayload,
   UpdateProductPayload,
   OrderStatus,
+  OrderCheckoutSession,
 } from "@/types/api";
 
 export const commerceApi = {
@@ -26,6 +27,26 @@ export const commerceApi = {
     api.get<ApiResponse<{ product: Product }>>(`/products/${productId}`),
 
   placeOrder: (data: PlaceOrderPayload) => api.post<ApiResponse<{ order: Order }>>("/orders", data),
+
+  /**
+   * Place the order and open a payment for it.
+   *
+   * `checkout` comes back null when the shop has no gateway configured, which
+   * leaves the order placed and unpaid — the behaviour this endpoint had before
+   * it took cards.
+   */
+  startCheckout: (data: PlaceOrderPayload) =>
+    api.post<ApiResponse<{ order: Order; checkout: OrderCheckoutSession | null }>>(
+      "/orders/checkout",
+      data,
+    ),
+
+  /** Settle the order with what the checkout widget handed back. */
+  verifyOrderPayment: (data: { orderId: string; paymentId: string; signature: string }) =>
+    api.post<ApiResponse<{ orderId: string; alreadySettled: boolean }>>(
+      "/orders/checkout/verify",
+      data,
+    ),
 
   getOrderById: (orderId: string) => api.get<ApiResponse<{ order: Order }>>(`/orders/${orderId}`),
 

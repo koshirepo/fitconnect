@@ -15,6 +15,14 @@ export const createBadgeSchema = z.object({
     .regex(/^#[0-9a-fA-F]{6}$/, "Must be a valid hex color")
     .optional(),
   icon: z.string().max(50).optional(),
+  /**
+   * Whether handing this badge out needs `badges:assign:restricted`.
+   *
+   * Settable only by someone who can create or edit badges, which is an admin
+   * right already — so a coach can neither unrestrict a badge to grant it nor
+   * restrict one to keep it from a colleague.
+   */
+  restricted: z.boolean().optional(),
 });
 
 export const updateBadgeSchema = z.object({
@@ -25,6 +33,7 @@ export const updateBadgeSchema = z.object({
     .regex(/^#[0-9a-fA-F]{6}$/, "Must be a valid hex color")
     .optional(),
   icon: z.string().max(50).optional(),
+  restricted: z.boolean().optional(),
   isActive: z.boolean().optional(),
 });
 

@@ -7,6 +7,7 @@
  * - Offsets rather than a running counter: a nudge fires when the date is exactly N days out (or past), for each N. Running daily that fires each offset once per member, and a missed cron day costs one nudge rather than causing duplicates. The `alreadySent` guard covers the other case — a schedule that runs twice in one day.
  * - Primary exports: renewalReminderService.
  */
+import { formatCurrency } from "@fitconnect/shared/utils";
 import { prisma } from "../../lib/prisma";
 import { reminderService } from "../reminders/reminders.service";
 
@@ -57,15 +58,6 @@ function formatDueDate(date: Date) {
   });
 }
 
-/** Rupees, the way every other member-facing amount is written. */
-function formatInr(amount: number) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 0,
-  }).format(amount);
-}
-
 /**
  * What a member still owes, as a sentence to append to any reminder.
  *
@@ -74,7 +66,7 @@ function formatInr(amount: number) {
  * who has a balance sitting on their account.
  */
 function outstandingSuffix(pendingAmount: number) {
-  return pendingAmount > 0 ? ` ${formatInr(pendingAmount)} is also pending on your account.` : "";
+  return pendingAmount > 0 ? ` ${formatCurrency(pendingAmount)} is also pending on your account.` : "";
 }
 
 /** What a member is told before their membership ends, and where it takes them. */
@@ -130,12 +122,12 @@ function buildPendingReminder(
   const others = outstanding - amount;
 
   return {
-    title: `${formatInr(outstanding)} pending at ${gymName}`,
+    title: `${formatCurrency(outstanding)} pending at ${gymName}`,
     body:
       (description
-        ? `${description} (${formatInr(amount)}) is still unpaid.`
-        : `${formatInr(amount)} on your account is still unpaid.`) +
-      (others > 0 ? ` ${formatInr(others)} more is outstanding.` : "") +
+        ? `${description} (${formatCurrency(amount)}) is still unpaid.`
+        : `${formatCurrency(amount)} on your account is still unpaid.`) +
+      (others > 0 ? ` ${formatCurrency(others)} more is outstanding.` : "") +
       " Tap to settle it.",
     // The row being chased, so "tap to settle it" lands on the thing to settle
     // rather than on a ledger the member then has to search.

@@ -73,6 +73,7 @@ export const ModelName = {
   CouponRedemption: 'CouponRedemption',
   CoinLedgerEntry: 'CoinLedgerEntry',
   MembershipFreeze: 'MembershipFreeze',
+  BodyMetric: 'BodyMetric',
   Product: 'Product',
   ProductReview: 'ProductReview',
   ProductReviewComment: 'ProductReviewComment',
@@ -486,6 +487,29 @@ export const MembershipFreezeScalarFieldEnum = {
 export type MembershipFreezeScalarFieldEnum = (typeof MembershipFreezeScalarFieldEnum)[keyof typeof MembershipFreezeScalarFieldEnum]
 
 
+export const BodyMetricScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  membershipId: 'membershipId',
+  measuredOn: 'measuredOn',
+  recordedById: 'recordedById',
+  weightKg: 'weightKg',
+  heightCm: 'heightCm',
+  bodyFatPct: 'bodyFatPct',
+  muscleMassKg: 'muscleMassKg',
+  chestCm: 'chestCm',
+  waistCm: 'waistCm',
+  hipsCm: 'hipsCm',
+  armCm: 'armCm',
+  thighCm: 'thighCm',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BodyMetricScalarFieldEnum = (typeof BodyMetricScalarFieldEnum)[keyof typeof BodyMetricScalarFieldEnum]
+
+
 export const ProductScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -557,6 +581,10 @@ export const OrderScalarFieldEnum = {
   gstRatePct: 'gstRatePct',
   gstAmount: 'gstAmount',
   totalAmount: 'totalAmount',
+  paymentStatus: 'paymentStatus',
+  gatewayOrderId: 'gatewayOrderId',
+  gatewayPaymentId: 'gatewayPaymentId',
+  paidAt: 'paidAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -609,6 +637,7 @@ export const BadgeScalarFieldEnum = {
   description: 'description',
   color: 'color',
   icon: 'icon',
+  restricted: 'restricted',
   isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

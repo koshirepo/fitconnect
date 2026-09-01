@@ -7,6 +7,7 @@ import { publicApi } from "@/api/public";
 import { isTenantSubdomain } from "@/lib/subdomain";
 import { useAuthStore } from "@/stores/auth";
 import { Button } from "@/components/ui/button";
+import { ShareButton } from "@/components/ui/share-button";
 import { QrCode } from "@/components/ui/qr-code";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge as BadgeUI } from "@/components/ui/badge";
@@ -33,7 +34,6 @@ import {
   Clock3,
   CircleDollarSign,
   MessageCircle,
-  Copy,
   QrCode as QrCodeIcon,
 } from "lucide-react";
 import type { PublicTenantDetail } from "@/types/api";
@@ -52,7 +52,6 @@ export default function TenantPublicPage() {
   const [tenant, setTenant] = React.useState<PublicTenantDetail | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
-  const [copiedQrLink, setCopiedQrLink] = React.useState(false);
 
   React.useEffect(() => {
     if (!isTenantSubdomain()) {
@@ -110,12 +109,6 @@ export default function TenantPublicPage() {
     typeof window === "undefined"
       ? `/attendance/qr/${tenant.id}`
       : `${window.location.origin}/attendance/qr/${tenant.id}`;
-
-  const handleCopyAttendanceQr = async () => {
-    await navigator.clipboard.writeText(attendanceQrUrl);
-    setCopiedQrLink(true);
-    window.setTimeout(() => setCopiedQrLink(false), 2000);
-  };
 
   return (
     <div className="bg-[radial-gradient(1200px_500px_at_15%_-20%,rgba(59,130,246,0.12),transparent),radial-gradient(900px_500px_at_100%_0%,rgba(16,185,129,0.1),transparent)] text-foreground">
@@ -332,10 +325,15 @@ export default function TenantPublicPage() {
                 {attendanceQrUrl}
               </p>
               <div className="grid grid-cols-2 gap-2">
-                <Button type="button" variant="outline" onClick={handleCopyAttendanceQr}>
-                  <Copy className="h-4 w-4" />
-                  {copiedQrLink ? "Copied" : "Copy"}
-                </Button>
+                {/* Share rather than copy: on a phone this opens the share
+                    sheet, which is how a QR link actually reaches the person
+                    who needs it. Desktop still copies. */}
+                <ShareButton
+                  url={attendanceQrUrl}
+                  title={`${tenant.name} attendance`}
+                  label="Share"
+                  size="default"
+                />
                 <Button type="button" onClick={() => navigate(`/attendance/qr/${tenant.id}`)}>
                   Mark
                   <ArrowRight className="h-4 w-4" />

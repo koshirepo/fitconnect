@@ -6,6 +6,7 @@
  * - The channel filter is the question people actually arrive with — "did we message them, or did the app?" — so it sits above the grid and recolours the day cells rather than hiding them.
  * - Primary exports: ReminderCalendarPage.
  */
+import { getMonthStr, parseMonth, formatMonthLabel } from "@/lib/month";
 import * as React from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAppNavigate } from "@/lib/use-app-navigate";
@@ -45,19 +46,6 @@ const CHANNEL_TABS: { value: ChannelFilter; label: string }[] = [
   { value: "PUSH", label: "Push" },
   { value: "WHATSAPP", label: "WhatsApp" },
 ];
-
-function getMonthStr(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function parseMonth(s: string): Date {
-  const [y, m] = s.split("-").map(Number);
-  return new Date(y, m - 1, 1);
-}
-
-function formatMonthLabel(s: string) {
-  return parseMonth(s).toLocaleDateString("en-IN", { month: "long", year: "numeric" });
-}
 
 function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" });
