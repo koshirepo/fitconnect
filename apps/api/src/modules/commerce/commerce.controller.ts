@@ -12,8 +12,14 @@ import { auditLog } from "../../lib/audit";
 import { ok, okPaginated, badRequest, notFound, conflict, failWith } from "../../lib/response";
 import { commerceService } from "./commerce.service";
 import {
+  cancelOrderSchema,
   createProductSchema,
+  createReturnSchema,
+  decideReturnSchema,
   placeOrderSchema,
+  refundOrderSchema,
+  serviceabilityQuerySchema,
+  shippingQuoteSchema,
   verifyOrderPaymentSchema,
   updateOrderStatusSchema,
   updateProductSchema,
@@ -282,6 +288,190 @@ export const commerceController = {
         totalAmount: result.data.order.totalAmount,
         itemCount: result.data.order.items.length,
       },
+      ip: c.req.header("x-forwarded-for") ?? undefined,
+    });
+
+    return ok(c, result.data);
+  },
+
+  /**
+   * Handle the `check pincode serviceability` HTTP action.
+   * Public: the checkout asks this before the buyer has committed to anything.
+   */
+  async checkServiceability(c: AppContext) {
+    const parsed = serviceabilityQuerySchema.safeParse({ pincode: c.req.query("pincode") ?? "" });
+    if (!parsed.success) return badRequest(c, "Enter a valid 6-digit pincode.");
+
+    const result = await commerceService.checkServiceability(parsed.data.pincode);
+    if ("error" in result) return failWith(c, result);
+    return ok(c, result.data);
+  },
+
+  /**
+   * Handle the `quote shipping` HTTP action.
+   * The basket goes in the body because a cart can be longer than a URL.
+   */
+  async quoteShipping(c: AppContext) {
+    const parsed = await parseBody(c, shippingQuoteSchema);
+    if (!parsed.ok) return parsed.response;
+
+    const result = await commerceService.quoteShipping(parsed.data.items, parsed.data.pincode);
+    if ("error" in result) return failWith(c, result);
+    return ok(c, result.data);
+  },
+
+  /**
+   * Handle the `get order tracking` HTTP action.
+   * Unauthenticated like the order lookup beside it: the order id is the secret.
+   */
+  async getOrderTracking(c: AppContext) {
+    const orderId = c.req.param("id")!;
+    const result = await commerceService.getOrderTracking(orderId);
+    if ("error" in result) return failWith(c, result);
+    return ok(c, result.data);
+  },
+
+  /** Handle the `cancel order` HTTP action for a buyer holding the order id. */
+  async cancelOrder(c: AppContext) {
+    const orderId = c.req.param("id")!;
+    const parsed = await parseBody(c, cancelOrderSchema);
+    if (!parsed.ok) return parsed.response;
+
+    const result = await commerceService.cancelOrder(orderId, parsed.data, "BUYER");
+    if ("error" in result) return failWith(c, result);
+    return ok(c, result.data);
+  },
+
+  /** Handle the `request return` HTTP action for a buyer holding the order id. */
+  async requestReturn(c: AppContext) {
+    const orderId = c.req.param("id")!;
+    const parsed = await parseBody(c, createReturnSchema);
+    if (!parsed.ok) return parsed.response;
+
+    const result = await commerceService.requestReturn(orderId, parsed.data);
+    if ("error" in result) return failWith(c, result);
+    return ok(c, result.data, 201);
+  },
+
+  /** Handle the `ship order` HTTP action — book the courier by hand. */
+  async shipOrder(c: AppContext) {
+    const orderId = c.req.param("orderId")!;
+    const result = await commerceService.shipOrder(orderId);
+    if ("error" in result) return failWith(c, result);
+
+    await auditLog({
+      action: "UPDATE",
+      entity: "Order",
+      entityId: orderId,
+      actorId: c.get("authUser").id,
+      metadata: { shipped: true, waybill: result.data.shipment.waybill },
+      ip: c.req.header("x-forwarded-for") ?? undefined,
+    });
+
+    return ok(c, result.data);
+  },
+
+  /** Handle the `admin cancel order` HTTP action, which may cancel a shipped one. */
+  async adminCancelOrder(c: AppContext) {
+    const orderId = c.req.param("orderId")!;
+    const parsed = await parseBody(c, cancelOrderSchema);
+    if (!parsed.ok) return parsed.response;
+
+    const result = await commerceService.cancelOrder(orderId, parsed.data, "ADMIN");
+    if ("error" in result) return failWith(c, result);
+
+    await auditLog({
+      action: "UPDATE",
+      entity: "Order",
+      entityId: orderId,
+      actorId: c.get("authUser").id,
+      metadata: { cancelled: true, refunded: result.data.refunded, reason: parsed.data.reason },
+      ip: c.req.header("x-forwarded-for") ?? undefined,
+    });
+
+    return ok(c, result.data);
+  },
+
+  /** Handle the `refund order` HTTP action, in full or in part. */
+  async refundOrder(c: AppContext) {
+    const orderId = c.req.param("orderId")!;
+    const parsed = await parseBody(c, refundOrderSchema);
+    if (!parsed.ok) return parsed.response;
+
+    // The key names the order and the admin's intent, so a double-submitted
+    // form is one refund while a genuine second refund is still possible.
+    const result = await commerceService.refundOrder(
+      orderId,
+      parsed.data,
+      `manual-${orderId}-${parsed.data.amount ?? "full"}`,
+    );
+    if ("error" in result) return failWith(c, result);
+
+    await auditLog({
+      action: "UPDATE",
+      entity: "Order",
+      entityId: orderId,
+      actorId: c.get("authUser").id,
+      metadata: { refunded: result.data.refunded, amount: parsed.data.amount ?? "full" },
+      ip: c.req.header("x-forwarded-for") ?? undefined,
+    });
+
+    return ok(c, result.data);
+  },
+
+  /** Handle the `get shipment label` HTTP action — a link to the courier's PDF. */
+  async getShipmentLabel(c: AppContext) {
+    const shipmentId = c.req.param("shipmentId")!;
+    const result = await commerceService.getShipmentLabel(shipmentId);
+    if ("error" in result) return failWith(c, result);
+    return ok(c, result.data);
+  },
+
+  /** Handle the `list returns` HTTP action for the returns queue. */
+  async listReturns(c: AppContext) {
+    const { page, limit } = parsePagination(c);
+    const status = c.req.query("status");
+    const { data, total } = await commerceService.listReturns(page, limit, status);
+    return okPaginated(c, data, { page, limit, total });
+  },
+
+  /** Handle the `decide return` HTTP action — approve and book, or reject. */
+  async decideReturn(c: AppContext) {
+    const returnId = c.req.param("returnId")!;
+    const parsed = await parseBody(c, decideReturnSchema);
+    if (!parsed.ok) return parsed.response;
+
+    const result = await commerceService.decideReturn(
+      returnId,
+      parsed.data,
+      c.get("authUser").id,
+    );
+    if ("error" in result) return failWith(c, result);
+
+    await auditLog({
+      action: "UPDATE",
+      entity: "ReturnRequest",
+      entityId: returnId,
+      actorId: c.get("authUser").id,
+      metadata: { decision: parsed.data.decision },
+      ip: c.req.header("x-forwarded-for") ?? undefined,
+    });
+
+    return ok(c, result.data);
+  },
+
+  /** Handle the `receive return` HTTP action, which is also what pays the buyer back. */
+  async receiveReturn(c: AppContext) {
+    const returnId = c.req.param("returnId")!;
+    const result = await commerceService.markReturnReceived(returnId, c.get("authUser").id);
+    if ("error" in result) return failWith(c, result);
+
+    await auditLog({
+      action: "UPDATE",
+      entity: "ReturnRequest",
+      entityId: returnId,
+      actorId: c.get("authUser").id,
+      metadata: { received: true, refunded: result.data.refunded },
       ip: c.req.header("x-forwarded-for") ?? undefined,
     });
 

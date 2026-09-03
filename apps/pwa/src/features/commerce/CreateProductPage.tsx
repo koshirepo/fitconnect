@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   useAdminProduct,
   useCreateProduct,
+  useWarehouses,
   useUpdateProduct,
 } from "@/api/queries/platform";
 import { uploadsApi } from "@/api/uploads";
@@ -10,6 +11,7 @@ import { getApiError } from "@/api/client";
 import type { Product } from "@/types/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,6 +42,21 @@ type ProductForm = {
   stock: string;
   minOrderQty: string;
   maxOrderQty: string;
+  /** Grams per unit — what the courier prices carriage on. */
+  weightGrams: string;
+  /** Packed size, in centimetres. */
+  lengthCm: string;
+  widthCm: string;
+  heightCm: string;
+  /** Which warehouse ships it. Empty means the default warehouse. */
+  warehouseId: string;
+  /** Whether a buyer may send this back at all. */
+  isReturnable: boolean;
+  /** Whether a faulty one is swapped rather than refunded. */
+  isReplaceable: boolean;
+  /** Empty follows the shop-wide window. */
+  returnWindowDays: string;
+  returnPolicyNote: string;
   isActive: boolean;
 };
 
@@ -54,6 +71,15 @@ const emptyForm: ProductForm = {
   stock: "",
   minOrderQty: "1",
   maxOrderQty: "10",
+  weightGrams: "500",
+  lengthCm: "10",
+  widthCm: "10",
+  heightCm: "10",
+  warehouseId: "",
+  isReturnable: true,
+  isReplaceable: false,
+  returnWindowDays: "",
+  returnPolicyNote: "",
   isActive: true,
 };
 
@@ -80,6 +106,18 @@ function toForm(product: Product): ProductForm {
     stock: String(product.stock),
     minOrderQty: String(product.minOrderQty),
     maxOrderQty: String(product.maxOrderQty),
+    weightGrams: String(product.weightGrams ?? 500),
+    lengthCm: String(product.lengthCm ?? 10),
+    widthCm: String(product.widthCm ?? 10),
+    heightCm: String(product.heightCm ?? 10),
+    warehouseId: product.warehouseId ?? "",
+    isReturnable: product.isReturnable ?? true,
+    isReplaceable: product.isReplaceable ?? false,
+    // Blank rather than the shop default: an empty box means "follow the shop",
+    // and pre-filling the current default would silently freeze it here.
+    returnWindowDays:
+      product.returnWindowDays != null ? String(product.returnWindowDays) : "",
+    returnPolicyNote: product.returnPolicyNote ?? "",
     isActive: product.isActive,
   };
 }
@@ -100,6 +138,23 @@ export default function CreateProductPage() {
   // Only edit mode loads an existing product; create mode starts from the blank form.
   const productQuery = useAdminProduct(isEditMode ? productId : undefined);
   const loadingProduct = productQuery.isLoading;
+
+  // Options for the ships-from picker. An empty list is fine: everything then
+  // ships from the deployment's single configured pickup location.
+  const warehousesQuery = useWarehouses(false);
+  const warehouses = warehousesQuery.data ?? [];
+
+  /**
+   * What the box alone would weigh in the courier's eyes.
+   *
+   * Shown beside the fields because volumetric pricing surprises people: a 1.2kg
+   * mat billed as 2.7kg looks like an error until the arithmetic is on screen.
+   */
+  const volumetricGrams = React.useMemo(() => {
+    const cubic = Number(form.lengthCm) * Number(form.widthCm) * Number(form.heightCm);
+    if (!Number.isFinite(cubic) || cubic <= 0) return 0;
+    return Math.round((cubic / 5000) * 1000);
+  }, [form.lengthCm, form.widthCm, form.heightCm]);
 
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
@@ -161,6 +216,18 @@ export default function CreateProductPage() {
       stock: Number(form.stock),
       minOrderQty: Number(form.minOrderQty),
       maxOrderQty: Number(form.maxOrderQty),
+      weightGrams: Number(form.weightGrams),
+      lengthCm: Number(form.lengthCm),
+      widthCm: Number(form.widthCm),
+      heightCm: Number(form.heightCm),
+      // Empty means "the default warehouse", which the API stores as null.
+      warehouseId: form.warehouseId || null,
+      isReturnable: form.isReturnable,
+      isReplaceable: form.isReplaceable,
+      // Empty means "the shop's window", which the API stores as null so a
+      // later change to that setting still moves this product.
+      returnWindowDays: form.returnWindowDays ? Number(form.returnWindowDays) : null,
+      returnPolicyNote: form.returnPolicyNote.trim() || null,
       isActive: form.isActive,
     };
 
@@ -170,7 +237,7 @@ export default function CreateProductPage() {
     }
 
     if (
-      [payload.price, payload.stock, payload.minOrderQty, payload.maxOrderQty].some(
+      [payload.price, payload.stock, payload.minOrderQty, payload.maxOrderQty, payload.weightGrams].some(
         (value) => Number.isNaN(value) || !Number.isInteger(value),
       )
     ) {
@@ -435,6 +502,209 @@ export default function CreateProductPage() {
                   }
                 />
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ── Shipping ──────────────────────────────────────────────────── */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Shipping</CardTitle>
+            <CardDescription>
+              What the courier charges depends on both of these. A wrong weight is a wrong quote at
+              checkout, and the warehouse decides which parcel this item travels in.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="weightGrams">Weight per unit (grams) *</Label>
+                <Input
+                  id="weightGrams"
+                  type="number"
+                  min={1}
+                  placeholder="e.g., 500"
+                  value={form.weightGrams}
+                  onChange={(e) => setForm((prev) => ({ ...prev, weightGrams: e.target.value }))}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Billed weight is the greater of this and the box below.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="warehouseId">Ships from</Label>
+                <Select
+                  value={form.warehouseId || "DEFAULT"}
+                  onValueChange={(value) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      warehouseId: (value ?? "") === "DEFAULT" ? "" : (value ?? ""),
+                    }))
+                  }
+                >
+                  <SelectTrigger id="warehouseId" className="w-full">
+                    <SelectValue placeholder="Default warehouse" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DEFAULT">Default warehouse</SelectItem>
+                    {warehouses.map((warehouse) => (
+                      <SelectItem key={warehouse.id} value={warehouse.id}>
+                        {warehouse.name}
+                        {warehouse.registeredAt ? "" : " (not registered)"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {warehouses.length === 0
+                    ? "No warehouses yet — add one under Commerce → Warehouses."
+                    : "Items from different warehouses ship as separate parcels."}
+                </p>
+              </div>
+            </div>
+
+            {/* Packed size. A light bulky item — a mat, a foam roller — is
+                billed on the space it takes, not its mass. */}
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="lengthCm">Length (cm)</Label>
+                <Input
+                  id="lengthCm"
+                  type="number"
+                  min={1}
+                  value={form.lengthCm}
+                  onChange={(e) => setForm((prev) => ({ ...prev, lengthCm: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="widthCm">Width (cm)</Label>
+                <Input
+                  id="widthCm"
+                  type="number"
+                  min={1}
+                  value={form.widthCm}
+                  onChange={(e) => setForm((prev) => ({ ...prev, widthCm: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="heightCm">Height (cm)</Label>
+                <Input
+                  id="heightCm"
+                  type="number"
+                  min={1}
+                  value={form.heightCm}
+                  onChange={(e) => setForm((prev) => ({ ...prev, heightCm: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            {volumetricGrams > 0 && (
+              <p className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
+                Packed box is {volumetricGrams}g of volumetric weight
+                {Number(form.weightGrams) > 0 && (
+                  <>
+                    {" "}
+                    against {form.weightGrams}g actual — the courier bills{" "}
+                    <span className="font-medium text-foreground">
+                      {Math.max(volumetricGrams, Number(form.weightGrams) || 0)}g
+                    </span>
+                    .
+                  </>
+                )}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Returns policy.
+
+            Per product rather than shop-wide, because the answer genuinely
+            differs by what is being sold: an unopened resistance band can come
+            back, an opened tub of whey cannot, and that is hygiene rules rather
+            than shop preference. Returnable and replaceable are separate
+            promises — a sealed supplement can be swapped when it arrives
+            damaged while never being returnable for a change of mind. */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Returns policy</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <label
+              htmlFor="isReturnable"
+              className="flex cursor-pointer items-start gap-3 rounded-md border p-3"
+            >
+              <Checkbox
+                id="isReturnable"
+                checked={form.isReturnable}
+                onCheckedChange={(checked) =>
+                  setForm((prev) => ({ ...prev, isReturnable: checked === true }))
+                }
+                className="mt-0.5"
+              />
+              <span className="space-y-1">
+                <span className="block text-sm font-medium">Buyer can return this</span>
+                <span className="block text-xs text-muted-foreground">
+                  An order is only returnable when everything in it is, because one
+                  parcel goes back as a whole.
+                </span>
+              </span>
+            </label>
+
+            <label
+              htmlFor="isReplaceable"
+              className="flex cursor-pointer items-start gap-3 rounded-md border p-3"
+            >
+              <Checkbox
+                id="isReplaceable"
+                checked={form.isReplaceable}
+                onCheckedChange={(checked) =>
+                  setForm((prev) => ({ ...prev, isReplaceable: checked === true }))
+                }
+                className="mt-0.5"
+              />
+              <span className="space-y-1">
+                <span className="block text-sm font-medium">
+                  Faulty one is replaced, not refunded
+                </span>
+                <span className="block text-xs text-muted-foreground">
+                  For sealed goods that cannot come back for a change of mind but
+                  should still be made good when they arrive damaged.
+                </span>
+              </span>
+            </label>
+
+            {form.isReturnable && (
+              <div className="space-y-2">
+                <Label htmlFor="returnWindowDays">Return window (days)</Label>
+                <Input
+                  id="returnWindowDays"
+                  type="number"
+                  min={1}
+                  max={365}
+                  placeholder="Follows the shop setting"
+                  value={form.returnWindowDays}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, returnWindowDays: e.target.value }))
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Leave blank to follow the shop-wide window, so changing that still
+                  moves this product. A number here is a deliberate exception.
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="returnPolicyNote">Condition shown to the buyer</Label>
+              <Input
+                id="returnPolicyNote"
+                maxLength={300}
+                placeholder="Unopened, in original packaging"
+                value={form.returnPolicyNote}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, returnPolicyNote: e.target.value }))
+                }
+              />
             </div>
           </CardContent>
         </Card>

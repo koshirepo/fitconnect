@@ -5,6 +5,7 @@ import { uploadsApi } from "@/api/uploads";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { PhotoCapture } from "@/components/ui/photo-capture";
@@ -296,12 +297,12 @@ export function TenantPublicProfileCard({
 
                 <div className="space-y-2">
                   <Label htmlFor="tenant-public-phone">Phone</Label>
-                  <Input
+                  <PhoneInput
                     id="tenant-public-phone"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     disabled={saving}
-                    placeholder="+91 98765 43210"
+                    placeholder="+919876543210"
                     className={fieldErrors.phone ? "border-red-500 focus-visible:ring-red-500" : ""}
                   />
                   {fieldErrors.phone && (

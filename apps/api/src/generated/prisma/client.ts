@@ -223,6 +223,39 @@ export type ProductReviewHelpful = Prisma.ProductReviewHelpfulModel
  */
 export type Order = Prisma.OrderModel
 /**
+ * Model Warehouse
+ * A place parcels leave from, and the pickup location Delhivery has on file.
+ * 
+ * `name` is the join between the two systems: Delhivery matches a manifest to
+ * a warehouse by that string and refuses anything it does not recognise, which
+ * is why it is unique here and why the app registers it through the API rather
+ * than trusting somebody to retype it.
+ */
+export type Warehouse = Prisma.WarehouseModel
+/**
+ * Model PickupRequest
+ * A collection Delhivery has been asked to make from one warehouse.
+ * 
+ * Recorded rather than fired and forgotten: an operator asking twice for the
+ * same morning wants to see that the first request exists, and a courier that
+ * does not turn up is a conversation about a specific pickup id.
+ */
+export type PickupRequest = Prisma.PickupRequestModel
+/**
+ * Model Shipment
+ * One courier consignment for an order — the parcel going out, or a return
+ * coming back. Kept apart from Order because an order can produce several: a
+ * forward shipment per warehouse the order draws on, then a reverse one when
+ * the buyer sends something back.
+ */
+export type Shipment = Prisma.ShipmentModel
+/**
+ * Model ReturnRequest
+ * A buyer asking for an order back, and everything that follows from it.
+ * Approval is a human decision; the refund that follows is not.
+ */
+export type ReturnRequest = Prisma.ReturnRequestModel
+/**
  * Model OrderItem
  * 
  */

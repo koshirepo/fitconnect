@@ -35,7 +35,7 @@ Hand-maintained source, config, schema, migration, and REST client files include
 - `badges`: badge definitions and badge assignment
 - `attendance`: self check-in, staff marking, summaries, and calendar views
 - `public`: public gym listing and gym profile endpoints
-- `commerce`: product catalog, order placement, and admin product/order management
+- `commerce`: product catalog, order placement, courier shipping via Delhivery, order tracking, cancellations, returns, and refunds
 - `review`: product reviews, comments, and helpful-vote tracking
 - `push`: browser push subscription management
 - `uploads`: avatar and product image uploads to R2
@@ -150,6 +150,92 @@ npm run dev
 - `UPLOADS_BUCKET`: optional alias accepted by the runtime if you prefer a more explicit bucket name
 - `R2_PUBLIC_URL`: string binding consumed by upload routes to build final asset URLs
 
+## Shipping, Returns And Refunds
+
+The platform shop ships with Delhivery and refunds through Razorpay. Both are
+optional: with neither configured the shop still sells, quotes carriage as free,
+and leaves fulfilment to be done by hand.
+
+Configuration is deliberately granular, because each piece unlocks a different
+step:
+
+| Setting | Where | Unlocks |
+| --- | --- | --- |
+| `DELHIVERY_API_TOKEN` | secret (`.dev.vars`, `wrangler secret put`) | pincode serviceability checks |
+| `DELHIVERY_ORIGIN_PINCODE` | `wrangler.toml` vars | live shipping quotes at checkout |
+| `DELHIVERY_PICKUP_LOCATION` | `wrangler.toml` vars | booking parcels and reverse pickups |
+
+The two location settings are only a fallback for a deployment with no warehouse
+records. Once any warehouse exists under **Commerce → Warehouses**, it takes over
+entirely — whether a courier can be booked is decided from the warehouse rows,
+not from these settings. Warehouses are created through the API and registered
+with Delhivery in the same action, so their names match by construction rather
+than by retyping.
+
+A booking is refused with one of three messages, each naming a different fix: no
+token (a deployment setting), no warehouse (a record to create), or a warehouse
+Delhivery has not accepted (a registration to retry).
+
+### How carriage is priced
+
+Three inputs, and the shop supplies two of them:
+
+- **Weight** — the sum of each product's `weightGrams`, read from the database.
+- **Size** — `lengthCm × widthCm × heightCm ÷ VOLUMETRIC_DIVISOR` (5000 by
+  default, Delhivery surface freight) gives volumetric weight. The parcel is
+  billed on **the greater of actual and volumetric**, which is what every
+  courier in India does: a 1.2kg yoga mat in a 61×15×15 box bills as 2.7kg.
+- **Distance** — Delhivery's own zone pricing between the warehouse pincode and
+  the delivery pincode. Nothing to compute; it is why a quote is asked per
+  warehouse rather than once per order.
+
+The quote returns `volumetricUsed` when size, not mass, set the price, so a
+buyer looking at a large charge for a light parcel can be told why.
+
+### Warehouses and multi-parcel orders
+
+Delhivery manifests one consignment per pickup location, so an order drawing on
+two warehouses is genuinely two parcels — two waybills, two tracking timelines,
+two carriage charges. The shop models that directly:
+
+- Each product names the warehouse it ships from (`Product.warehouseId`), or
+  falls back to the one marked default.
+- Checkout groups the basket by warehouse, prices each group from that
+  warehouse's own pincode, and sums. `parcelCount` on the quote says how many
+  parcels the basket becomes.
+- Booking iterates the groups and manifests each separately. A courier refusing
+  the second parcel leaves the first genuinely booked, and the retry books only
+  what is missing.
+- Returns go back to the warehouse the goods left, read from the forward
+  shipment rather than from the default.
+- **Commerce → Warehouses** also schedules pickups: Delhivery is asked to collect
+  from one warehouse on a date, defaulting to however many parcels are manifested
+  there and still waiting.
+
+`DELHIVERY_PICKUP_LOCATION` — and any warehouse name — must match what Delhivery
+holds character for character, or manifestation is refused. Registering through
+the app is what keeps that true.
+
+The order lifecycle:
+
+1. Checkout asks `GET /shipping/serviceability` and `POST /shipping/quote`.
+   Carriage is priced from the products' own `weightGrams`, server-side — a
+   browser never names its own shipping cost.
+2. Payment settles the order (`CONFIRMED`) and books a parcel per warehouse the
+   order draws on, each yielding its own waybill, and moves it to `SHIPPED`. A courier refusal never fails the payment:
+   the order waits at `CONFIRMED` for `POST /admin/orders/:orderId/ship`.
+3. `GET /orders/:id/tracking` syncs the courier's scans — at most once every
+   five minutes per parcel — and walks the order through `IN_TRANSIT`,
+   `OUT_FOR_DELIVERY` and `DELIVERED`.
+4. Before dispatch the buyer may cancel: the consignment is called off, stock
+   goes back, and any payment is refunded.
+5. For `RETURN_WINDOW_DAYS` after delivery the buyer may raise a return. An
+   admin approves it, which books the reverse pickup; marking it received
+   restores stock and refunds the buyer.
+
+Refunds carry a Razorpay idempotency key naming their reason, so a
+double-clicked approval pays a buyer once.
+
 ## Database Workflow
 
 When [`prisma/schema.prisma`](/l:/api/prisma/schema.prisma) changes:
@@ -193,25 +279,38 @@ If you update bindings in [`wrangler.toml`](/l:/api/wrangler.toml), rerun `npm r
 
 ### Local test credentials
 
-Use these accounts to sign in during local development.
+Every seeded account shares one password: **`Test@1234`**. Emails are derived from
+the seed, so they are the same on every machine that runs `npm run seed:local`.
 
-- Platform super admin: `superadmin@seed.gym.test` / `Test@1234`
-- Support user: `support@seed.gym.test` / `Test@1234`
-- Tenant admin (replace `<tenant-slug>` with a seeded tenant slug): `admin.<tenant-slug>@seed.gym.test` / `Test@1234`
+**Platform (app-level) accounts** — sign in at `http://localhost:5173/login`:
 
-Examples:
+| Role | Email | What it can reach |
+| --- | --- | --- |
+| `SUPER_ADMIN` | `superadmin@seed.gym.test` | Everything: tenants, platform commerce, roles, audit, billing |
+| `SUPPORT` | `support@seed.gym.test` | Read-heavy platform support access; no destructive tenant actions |
 
-- App-level platform login: `http://localhost:5173/login`
-- Tenant login on a public subdomain: `http://seed-gym-5.localhost:5173/login`
+**Tenant accounts for one gym** — Seed Gym 5, slug `seed-gym-5`. Sign in at
+`http://seed-gym-5.localhost:5173/login`:
 
-When the host includes a tenant subdomain, the shared login page treats the user as a tenant-level user and defaults back to the tenant public page after sign-in. When there is no subdomain, it behaves as the platform/app login and redirects to the dashboard.
+| Tenant role | Email | Member no. |
+| --- | --- | --- |
+| `ADMIN` | `admin.seed-gym-5@seed.gym.test` | 1 |
+| `COACH` | `coach.1.seed-gym-5@seed.gym.test` | 2 |
+| `COACH` | `coach.2.seed-gym-5@seed.gym.test` | 3 |
+| `MEMBER` (active) | `member.6.seed-gym-5@seed.gym.test` | 9 |
 
-Default seeded identities:
+Every other gym follows the same pattern — substitute its slug (`seed-gym-1`
+through `seed-gym-6`): `admin.<slug>@seed.gym.test`,
+`coach.<1-2>.<slug>@seed.gym.test`, `member.<1-24>.<slug>@seed.gym.test`.
 
-- Super admin: `superadmin@seed.gym.test`
-- Support: `support@seed.gym.test`
-- Tenant admins: `admin.<tenant-slug>@seed.gym.test`
-- Shared password: `Test@1234`
+Members are seeded with a deliberate spread of subscription states, so most
+`member.<n>` accounts are `SUSPENDED` on an overdue subscription — that is the
+overdue-enforcement fixture, not a broken seed. `member.6.seed-gym-5` is listed
+above because it is one of the active ones; admins and coaches are always active.
+
+When the host includes a tenant subdomain, the shared login page treats the user
+as a tenant-level user and defaults back to the tenant public page after sign-in.
+With no subdomain it behaves as the platform login and redirects to the dashboard.
 
 Scale the generated data set with flags such as:
 

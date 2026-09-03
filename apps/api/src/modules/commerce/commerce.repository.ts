@@ -20,6 +20,15 @@ const productSelect = {
   stock: true,
   minOrderQty: true,
   maxOrderQty: true,
+  isReturnable: true,
+  isReplaceable: true,
+  returnWindowDays: true,
+  returnPolicyNote: true,
+  weightGrams: true,
+  lengthCm: true,
+  widthCm: true,
+  heightCm: true,
+  warehouseId: true,
   isActive: true,
   createdAt: true,
   updatedAt: true,
@@ -32,13 +41,27 @@ const orderSelect = {
   buyerEmail: true,
   buyerPhone: true,
   buyerAddress: true,
+  buyerCity: true,
+  buyerState: true,
+  buyerPincode: true,
   status: true,
   subtotalAmount: true,
   gstRatePct: true,
   gstAmount: true,
+  shippingAmount: true,
+  shippingQuoteIssue: true,
   totalAmount: true,
   paymentStatus: true,
   paidAt: true,
+  gatewayPaymentId: true,
+  gatewayRefundId: true,
+  refundAmount: true,
+  refundedAt: true,
+  confirmedAt: true,
+  shippedAt: true,
+  deliveredAt: true,
+  cancelledAt: true,
+  cancelReason: true,
   createdAt: true,
   updatedAt: true,
   items: {
@@ -217,13 +240,52 @@ export const commerceRepository = {
    * Run the `create order with items` persistence operation for the commerce module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
+  /**
+   * The return policy of everything in one order.
+   *
+   * Read through the order items rather than from the products directly,
+   * because a product deleted or edited since does not change what was bought:
+   * the policy that applies is the one on the row the buyer ordered from.
+   */
+  async findOrderReturnPolicy(orderId: string) {
+    const items = await prisma.orderItem.findMany({
+      where: { orderId },
+      select: {
+        productName: true,
+        product: {
+          select: {
+            isReturnable: true,
+            isReplaceable: true,
+            returnWindowDays: true,
+            returnPolicyNote: true,
+          },
+        },
+      },
+    });
+
+    return items.map((item) => ({
+      productName: item.productName,
+      isReturnable: item.product?.isReturnable ?? true,
+      isReplaceable: item.product?.isReplaceable ?? false,
+      returnWindowDays: item.product?.returnWindowDays ?? null,
+      returnPolicyNote: item.product?.returnPolicyNote ?? null,
+    }));
+  },
+
   async createOrderWithItems(data: {
     userId?: string;
     buyerName: string;
     buyerEmail: string;
     buyerPhone: string;
     buyerAddress: string;
+    buyerCity?: string;
+    buyerState?: string;
+    buyerPincode?: string;
     gstRatePct: number;
+    /** Carriage, in rupees, already quoted by the courier for this basket. */
+    shippingAmount?: number;
+    /** Why that quote came out short, when it did. Null is the ordinary case. */
+    shippingQuoteIssue?: string | null;
     items: Array<{ productId: string; quantity: number }>;
   }) {
     // D1 doesn't support interactive transactions.
@@ -282,7 +344,10 @@ export const commerceRepository = {
 
       const subtotalAmount = orderItems.reduce((sum, item) => sum + item.lineTotal, 0);
       const gstAmount = Math.round((subtotalAmount * data.gstRatePct) / 100);
-      const totalAmount = subtotalAmount + gstAmount;
+      // GST is charged on the goods, not on carriage, so shipping is added
+      // after the tax rather than folded into the base it is computed from.
+      const shippingAmount = data.shippingAmount ?? 0;
+      const totalAmount = subtotalAmount + gstAmount + shippingAmount;
 
       return await prisma.order.create({
         data: {
@@ -291,9 +356,14 @@ export const commerceRepository = {
           buyerEmail: data.buyerEmail,
           buyerPhone: data.buyerPhone,
           buyerAddress: data.buyerAddress,
+          buyerCity: data.buyerCity,
+          buyerState: data.buyerState,
+          buyerPincode: data.buyerPincode,
           subtotalAmount,
           gstRatePct: data.gstRatePct,
           gstAmount,
+          shippingAmount,
+          shippingQuoteIssue: data.shippingQuoteIssue ?? null,
           totalAmount,
           items: { create: orderItems },
         },
@@ -361,9 +431,70 @@ export const commerceRepository = {
         paymentStatus: "COMPLETED",
         gatewayPaymentId,
         paidAt: new Date(),
+        // A paid order is a confirmed one. Fulfilment starts here, and this is
+        // the state the warehouse picks from.
+        status: "CONFIRMED",
+        confirmedAt: new Date(),
       },
     });
     return result.count > 0;
+  },
+
+  /**
+   * Move an order along its fulfilment path and stamp the moment it happened.
+   *
+   * One method rather than four because the timestamps are the only difference
+   * between them, and four near-identical updates is how one of them ends up
+   * forgetting to set its own.
+   */
+  advanceOrderStatus(
+    orderId: string,
+    status: "PACKED" | "SHIPPED" | "IN_TRANSIT" | "OUT_FOR_DELIVERY" | "DELIVERED" | "RETURNED",
+  ) {
+    const now = new Date();
+    return prisma.order.update({
+      where: { id: orderId },
+      data: {
+        status,
+        ...(status === "SHIPPED" ? { shippedAt: now } : {}),
+        ...(status === "DELIVERED" ? { deliveredAt: now } : {}),
+      },
+      select: orderSelect,
+    });
+  },
+
+  /**
+   * Cancel an order, once.
+   *
+   * Conditional on it not already being cancelled so a buyer clicking twice —
+   * or a buyer and an admin at the same moment — cannot restore stock twice.
+   */
+  async cancelOrder(orderId: string, reason: string) {
+    const result = await prisma.order.updateMany({
+      where: { id: orderId, status: { notIn: ["CANCELLED", "DELIVERED", "RETURNED"] } },
+      data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: reason },
+    });
+    return result.count > 0;
+  },
+
+  /**
+   * Record money sent back.
+   *
+   * `paymentStatus` becomes REFUNDED whatever the amount: a partial refund is
+   * still an order whose money has been touched, and the amount is recorded
+   * beside it for anyone who needs the difference.
+   */
+  recordRefund(orderId: string, data: { refundId: string; amount: number }) {
+    return prisma.order.update({
+      where: { id: orderId },
+      data: {
+        paymentStatus: "REFUNDED",
+        gatewayRefundId: data.refundId,
+        refundAmount: data.amount,
+        refundedAt: new Date(),
+      },
+      select: orderSelect,
+    });
   },
 
   /**

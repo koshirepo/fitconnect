@@ -6,6 +6,7 @@ import { uploadsApi } from "@/api/uploads";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PhotoCapture } from "@/components/ui/photo-capture";
@@ -385,9 +386,9 @@ export default function NewTenant() {
 
               <div className="space-y-2">
                 <Label htmlFor="tenant-phone">Phone (optional)</Label>
-                <Input
+                <PhoneInput
                   id="tenant-phone"
-                  placeholder="+91 98765 43210"
+                  placeholder="+919876543210"
                   value={tenantPhone}
                   onChange={(e) => setTenantPhone(e.target.value)}
                   disabled={submitting}
@@ -504,9 +505,8 @@ export default function NewTenant() {
 
               <div className="space-y-2">
                 <Label htmlFor="admin-phone">Admin Phone (optional)</Label>
-                <Input
+                <PhoneInput
                   id="admin-phone"
-                  type="tel"
                   placeholder="9876543210"
                   minLength={10}
                   maxLength={15}

@@ -30,14 +30,18 @@ export type OrderAvgAggregateOutputType = {
   subtotalAmount: number | null
   gstRatePct: number | null
   gstAmount: number | null
+  shippingAmount: number | null
   totalAmount: number | null
+  refundAmount: number | null
 }
 
 export type OrderSumAggregateOutputType = {
   subtotalAmount: number | null
   gstRatePct: number | null
   gstAmount: number | null
+  shippingAmount: number | null
   totalAmount: number | null
+  refundAmount: number | null
 }
 
 export type OrderMinAggregateOutputType = {
@@ -47,15 +51,28 @@ export type OrderMinAggregateOutputType = {
   buyerEmail: string | null
   buyerPhone: string | null
   buyerAddress: string | null
+  buyerCity: string | null
+  buyerState: string | null
+  buyerPincode: string | null
   status: string | null
   subtotalAmount: number | null
   gstRatePct: number | null
   gstAmount: number | null
+  shippingAmount: number | null
+  shippingQuoteIssue: string | null
   totalAmount: number | null
   paymentStatus: string | null
   gatewayOrderId: string | null
   gatewayPaymentId: string | null
   paidAt: Date | null
+  gatewayRefundId: string | null
+  refundAmount: number | null
+  refundedAt: Date | null
+  confirmedAt: Date | null
+  shippedAt: Date | null
+  deliveredAt: Date | null
+  cancelledAt: Date | null
+  cancelReason: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -67,15 +84,28 @@ export type OrderMaxAggregateOutputType = {
   buyerEmail: string | null
   buyerPhone: string | null
   buyerAddress: string | null
+  buyerCity: string | null
+  buyerState: string | null
+  buyerPincode: string | null
   status: string | null
   subtotalAmount: number | null
   gstRatePct: number | null
   gstAmount: number | null
+  shippingAmount: number | null
+  shippingQuoteIssue: string | null
   totalAmount: number | null
   paymentStatus: string | null
   gatewayOrderId: string | null
   gatewayPaymentId: string | null
   paidAt: Date | null
+  gatewayRefundId: string | null
+  refundAmount: number | null
+  refundedAt: Date | null
+  confirmedAt: Date | null
+  shippedAt: Date | null
+  deliveredAt: Date | null
+  cancelledAt: Date | null
+  cancelReason: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -87,15 +117,28 @@ export type OrderCountAggregateOutputType = {
   buyerEmail: number
   buyerPhone: number
   buyerAddress: number
+  buyerCity: number
+  buyerState: number
+  buyerPincode: number
   status: number
   subtotalAmount: number
   gstRatePct: number
   gstAmount: number
+  shippingAmount: number
+  shippingQuoteIssue: number
   totalAmount: number
   paymentStatus: number
   gatewayOrderId: number
   gatewayPaymentId: number
   paidAt: number
+  gatewayRefundId: number
+  refundAmount: number
+  refundedAt: number
+  confirmedAt: number
+  shippedAt: number
+  deliveredAt: number
+  cancelledAt: number
+  cancelReason: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -106,14 +149,18 @@ export type OrderAvgAggregateInputType = {
   subtotalAmount?: true
   gstRatePct?: true
   gstAmount?: true
+  shippingAmount?: true
   totalAmount?: true
+  refundAmount?: true
 }
 
 export type OrderSumAggregateInputType = {
   subtotalAmount?: true
   gstRatePct?: true
   gstAmount?: true
+  shippingAmount?: true
   totalAmount?: true
+  refundAmount?: true
 }
 
 export type OrderMinAggregateInputType = {
@@ -123,15 +170,28 @@ export type OrderMinAggregateInputType = {
   buyerEmail?: true
   buyerPhone?: true
   buyerAddress?: true
+  buyerCity?: true
+  buyerState?: true
+  buyerPincode?: true
   status?: true
   subtotalAmount?: true
   gstRatePct?: true
   gstAmount?: true
+  shippingAmount?: true
+  shippingQuoteIssue?: true
   totalAmount?: true
   paymentStatus?: true
   gatewayOrderId?: true
   gatewayPaymentId?: true
   paidAt?: true
+  gatewayRefundId?: true
+  refundAmount?: true
+  refundedAt?: true
+  confirmedAt?: true
+  shippedAt?: true
+  deliveredAt?: true
+  cancelledAt?: true
+  cancelReason?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -143,15 +203,28 @@ export type OrderMaxAggregateInputType = {
   buyerEmail?: true
   buyerPhone?: true
   buyerAddress?: true
+  buyerCity?: true
+  buyerState?: true
+  buyerPincode?: true
   status?: true
   subtotalAmount?: true
   gstRatePct?: true
   gstAmount?: true
+  shippingAmount?: true
+  shippingQuoteIssue?: true
   totalAmount?: true
   paymentStatus?: true
   gatewayOrderId?: true
   gatewayPaymentId?: true
   paidAt?: true
+  gatewayRefundId?: true
+  refundAmount?: true
+  refundedAt?: true
+  confirmedAt?: true
+  shippedAt?: true
+  deliveredAt?: true
+  cancelledAt?: true
+  cancelReason?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -163,15 +236,28 @@ export type OrderCountAggregateInputType = {
   buyerEmail?: true
   buyerPhone?: true
   buyerAddress?: true
+  buyerCity?: true
+  buyerState?: true
+  buyerPincode?: true
   status?: true
   subtotalAmount?: true
   gstRatePct?: true
   gstAmount?: true
+  shippingAmount?: true
+  shippingQuoteIssue?: true
   totalAmount?: true
   paymentStatus?: true
   gatewayOrderId?: true
   gatewayPaymentId?: true
   paidAt?: true
+  gatewayRefundId?: true
+  refundAmount?: true
+  refundedAt?: true
+  confirmedAt?: true
+  shippedAt?: true
+  deliveredAt?: true
+  cancelledAt?: true
+  cancelReason?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -270,15 +356,28 @@ export type OrderGroupByOutputType = {
   buyerEmail: string
   buyerPhone: string
   buyerAddress: string
+  buyerCity: string | null
+  buyerState: string | null
+  buyerPincode: string | null
   status: string
   subtotalAmount: number
   gstRatePct: number
   gstAmount: number
+  shippingAmount: number
+  shippingQuoteIssue: string | null
   totalAmount: number
   paymentStatus: string
   gatewayOrderId: string | null
   gatewayPaymentId: string | null
   paidAt: Date | null
+  gatewayRefundId: string | null
+  refundAmount: number | null
+  refundedAt: Date | null
+  confirmedAt: Date | null
+  shippedAt: Date | null
+  deliveredAt: Date | null
+  cancelledAt: Date | null
+  cancelReason: string | null
   createdAt: Date
   updatedAt: Date
   _count: OrderCountAggregateOutputType | null
@@ -313,19 +412,34 @@ export type OrderWhereInput = {
   buyerEmail?: Prisma.StringFilter<"Order"> | string
   buyerPhone?: Prisma.StringFilter<"Order"> | string
   buyerAddress?: Prisma.StringFilter<"Order"> | string
+  buyerCity?: Prisma.StringNullableFilter<"Order"> | string | null
+  buyerState?: Prisma.StringNullableFilter<"Order"> | string | null
+  buyerPincode?: Prisma.StringNullableFilter<"Order"> | string | null
   status?: Prisma.StringFilter<"Order"> | string
   subtotalAmount?: Prisma.IntFilter<"Order"> | number
   gstRatePct?: Prisma.IntFilter<"Order"> | number
   gstAmount?: Prisma.IntFilter<"Order"> | number
+  shippingAmount?: Prisma.IntFilter<"Order"> | number
+  shippingQuoteIssue?: Prisma.StringNullableFilter<"Order"> | string | null
   totalAmount?: Prisma.IntFilter<"Order"> | number
   paymentStatus?: Prisma.StringFilter<"Order"> | string
   gatewayOrderId?: Prisma.StringNullableFilter<"Order"> | string | null
   gatewayPaymentId?: Prisma.StringNullableFilter<"Order"> | string | null
   paidAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  gatewayRefundId?: Prisma.StringNullableFilter<"Order"> | string | null
+  refundAmount?: Prisma.IntNullableFilter<"Order"> | number | null
+  refundedAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  confirmedAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  shippedAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  deliveredAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  cancelledAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  cancelReason?: Prisma.StringNullableFilter<"Order"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   items?: Prisma.OrderItemListRelationFilter
+  shipments?: Prisma.ShipmentListRelationFilter
+  returns?: Prisma.ReturnRequestListRelationFilter
 }
 
 export type OrderOrderByWithRelationInput = {
@@ -335,19 +449,34 @@ export type OrderOrderByWithRelationInput = {
   buyerEmail?: Prisma.SortOrder
   buyerPhone?: Prisma.SortOrder
   buyerAddress?: Prisma.SortOrder
+  buyerCity?: Prisma.SortOrderInput | Prisma.SortOrder
+  buyerState?: Prisma.SortOrderInput | Prisma.SortOrder
+  buyerPincode?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   subtotalAmount?: Prisma.SortOrder
   gstRatePct?: Prisma.SortOrder
   gstAmount?: Prisma.SortOrder
+  shippingAmount?: Prisma.SortOrder
+  shippingQuoteIssue?: Prisma.SortOrderInput | Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
   paymentStatus?: Prisma.SortOrder
   gatewayOrderId?: Prisma.SortOrderInput | Prisma.SortOrder
   gatewayPaymentId?: Prisma.SortOrderInput | Prisma.SortOrder
   paidAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  gatewayRefundId?: Prisma.SortOrderInput | Prisma.SortOrder
+  refundAmount?: Prisma.SortOrderInput | Prisma.SortOrder
+  refundedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  confirmedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  shippedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  deliveredAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancelledAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancelReason?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   items?: Prisma.OrderItemOrderByRelationAggregateInput
+  shipments?: Prisma.ShipmentOrderByRelationAggregateInput
+  returns?: Prisma.ReturnRequestOrderByRelationAggregateInput
 }
 
 export type OrderWhereUniqueInput = Prisma.AtLeast<{
@@ -360,19 +489,34 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   buyerEmail?: Prisma.StringFilter<"Order"> | string
   buyerPhone?: Prisma.StringFilter<"Order"> | string
   buyerAddress?: Prisma.StringFilter<"Order"> | string
+  buyerCity?: Prisma.StringNullableFilter<"Order"> | string | null
+  buyerState?: Prisma.StringNullableFilter<"Order"> | string | null
+  buyerPincode?: Prisma.StringNullableFilter<"Order"> | string | null
   status?: Prisma.StringFilter<"Order"> | string
   subtotalAmount?: Prisma.IntFilter<"Order"> | number
   gstRatePct?: Prisma.IntFilter<"Order"> | number
   gstAmount?: Prisma.IntFilter<"Order"> | number
+  shippingAmount?: Prisma.IntFilter<"Order"> | number
+  shippingQuoteIssue?: Prisma.StringNullableFilter<"Order"> | string | null
   totalAmount?: Prisma.IntFilter<"Order"> | number
   paymentStatus?: Prisma.StringFilter<"Order"> | string
   gatewayOrderId?: Prisma.StringNullableFilter<"Order"> | string | null
   gatewayPaymentId?: Prisma.StringNullableFilter<"Order"> | string | null
   paidAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  gatewayRefundId?: Prisma.StringNullableFilter<"Order"> | string | null
+  refundAmount?: Prisma.IntNullableFilter<"Order"> | number | null
+  refundedAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  confirmedAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  shippedAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  deliveredAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  cancelledAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  cancelReason?: Prisma.StringNullableFilter<"Order"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   items?: Prisma.OrderItemListRelationFilter
+  shipments?: Prisma.ShipmentListRelationFilter
+  returns?: Prisma.ReturnRequestListRelationFilter
 }, "id">
 
 export type OrderOrderByWithAggregationInput = {
@@ -382,15 +526,28 @@ export type OrderOrderByWithAggregationInput = {
   buyerEmail?: Prisma.SortOrder
   buyerPhone?: Prisma.SortOrder
   buyerAddress?: Prisma.SortOrder
+  buyerCity?: Prisma.SortOrderInput | Prisma.SortOrder
+  buyerState?: Prisma.SortOrderInput | Prisma.SortOrder
+  buyerPincode?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   subtotalAmount?: Prisma.SortOrder
   gstRatePct?: Prisma.SortOrder
   gstAmount?: Prisma.SortOrder
+  shippingAmount?: Prisma.SortOrder
+  shippingQuoteIssue?: Prisma.SortOrderInput | Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
   paymentStatus?: Prisma.SortOrder
   gatewayOrderId?: Prisma.SortOrderInput | Prisma.SortOrder
   gatewayPaymentId?: Prisma.SortOrderInput | Prisma.SortOrder
   paidAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  gatewayRefundId?: Prisma.SortOrderInput | Prisma.SortOrder
+  refundAmount?: Prisma.SortOrderInput | Prisma.SortOrder
+  refundedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  confirmedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  shippedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  deliveredAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancelledAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancelReason?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.OrderCountOrderByAggregateInput
@@ -410,15 +567,28 @@ export type OrderScalarWhereWithAggregatesInput = {
   buyerEmail?: Prisma.StringWithAggregatesFilter<"Order"> | string
   buyerPhone?: Prisma.StringWithAggregatesFilter<"Order"> | string
   buyerAddress?: Prisma.StringWithAggregatesFilter<"Order"> | string
+  buyerCity?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
+  buyerState?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
+  buyerPincode?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   status?: Prisma.StringWithAggregatesFilter<"Order"> | string
   subtotalAmount?: Prisma.IntWithAggregatesFilter<"Order"> | number
   gstRatePct?: Prisma.IntWithAggregatesFilter<"Order"> | number
   gstAmount?: Prisma.IntWithAggregatesFilter<"Order"> | number
+  shippingAmount?: Prisma.IntWithAggregatesFilter<"Order"> | number
+  shippingQuoteIssue?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   totalAmount?: Prisma.IntWithAggregatesFilter<"Order"> | number
   paymentStatus?: Prisma.StringWithAggregatesFilter<"Order"> | string
   gatewayOrderId?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   gatewayPaymentId?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   paidAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
+  gatewayRefundId?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
+  refundAmount?: Prisma.IntNullableWithAggregatesFilter<"Order"> | number | null
+  refundedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
+  confirmedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
+  shippedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
+  deliveredAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
+  cancelledAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
+  cancelReason?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Order"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Order"> | Date | string
 }
@@ -429,19 +599,34 @@ export type OrderCreateInput = {
   buyerEmail: string
   buyerPhone: string
   buyerAddress: string
+  buyerCity?: string | null
+  buyerState?: string | null
+  buyerPincode?: string | null
   status?: string
   subtotalAmount?: number
   gstRatePct?: number
   gstAmount?: number
+  shippingAmount?: number
+  shippingQuoteIssue?: string | null
   totalAmount: number
   paymentStatus?: string
   gatewayOrderId?: string | null
   gatewayPaymentId?: string | null
   paidAt?: Date | string | null
+  gatewayRefundId?: string | null
+  refundAmount?: number | null
+  refundedAt?: Date | string | null
+  confirmedAt?: Date | string | null
+  shippedAt?: Date | string | null
+  deliveredAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user?: Prisma.UserCreateNestedOneWithoutOrdersInput
   items?: Prisma.OrderItemCreateNestedManyWithoutOrderInput
+  shipments?: Prisma.ShipmentCreateNestedManyWithoutOrderInput
+  returns?: Prisma.ReturnRequestCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUncheckedCreateInput = {
@@ -451,18 +636,33 @@ export type OrderUncheckedCreateInput = {
   buyerEmail: string
   buyerPhone: string
   buyerAddress: string
+  buyerCity?: string | null
+  buyerState?: string | null
+  buyerPincode?: string | null
   status?: string
   subtotalAmount?: number
   gstRatePct?: number
   gstAmount?: number
+  shippingAmount?: number
+  shippingQuoteIssue?: string | null
   totalAmount: number
   paymentStatus?: string
   gatewayOrderId?: string | null
   gatewayPaymentId?: string | null
   paidAt?: Date | string | null
+  gatewayRefundId?: string | null
+  refundAmount?: number | null
+  refundedAt?: Date | string | null
+  confirmedAt?: Date | string | null
+  shippedAt?: Date | string | null
+  deliveredAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   items?: Prisma.OrderItemUncheckedCreateNestedManyWithoutOrderInput
+  shipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutOrderInput
+  returns?: Prisma.ReturnRequestUncheckedCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUpdateInput = {
@@ -471,19 +671,34 @@ export type OrderUpdateInput = {
   buyerEmail?: Prisma.StringFieldUpdateOperationsInput | string
   buyerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   buyerAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerCity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPincode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   subtotalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   gstRatePct?: Prisma.IntFieldUpdateOperationsInput | number
   gstAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingQuoteIssue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gatewayRefundId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refundAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  refundedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  shippedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneWithoutOrdersNestedInput
   items?: Prisma.OrderItemUpdateManyWithoutOrderNestedInput
+  shipments?: Prisma.ShipmentUpdateManyWithoutOrderNestedInput
+  returns?: Prisma.ReturnRequestUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateInput = {
@@ -493,18 +708,33 @@ export type OrderUncheckedUpdateInput = {
   buyerEmail?: Prisma.StringFieldUpdateOperationsInput | string
   buyerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   buyerAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerCity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPincode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   subtotalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   gstRatePct?: Prisma.IntFieldUpdateOperationsInput | number
   gstAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingQuoteIssue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gatewayRefundId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refundAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  refundedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  shippedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   items?: Prisma.OrderItemUncheckedUpdateManyWithoutOrderNestedInput
+  shipments?: Prisma.ShipmentUncheckedUpdateManyWithoutOrderNestedInput
+  returns?: Prisma.ReturnRequestUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderCreateManyInput = {
@@ -514,15 +744,28 @@ export type OrderCreateManyInput = {
   buyerEmail: string
   buyerPhone: string
   buyerAddress: string
+  buyerCity?: string | null
+  buyerState?: string | null
+  buyerPincode?: string | null
   status?: string
   subtotalAmount?: number
   gstRatePct?: number
   gstAmount?: number
+  shippingAmount?: number
+  shippingQuoteIssue?: string | null
   totalAmount: number
   paymentStatus?: string
   gatewayOrderId?: string | null
   gatewayPaymentId?: string | null
   paidAt?: Date | string | null
+  gatewayRefundId?: string | null
+  refundAmount?: number | null
+  refundedAt?: Date | string | null
+  confirmedAt?: Date | string | null
+  shippedAt?: Date | string | null
+  deliveredAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -533,15 +776,28 @@ export type OrderUpdateManyMutationInput = {
   buyerEmail?: Prisma.StringFieldUpdateOperationsInput | string
   buyerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   buyerAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerCity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPincode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   subtotalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   gstRatePct?: Prisma.IntFieldUpdateOperationsInput | number
   gstAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingQuoteIssue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gatewayRefundId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refundAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  refundedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  shippedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -553,15 +809,28 @@ export type OrderUncheckedUpdateManyInput = {
   buyerEmail?: Prisma.StringFieldUpdateOperationsInput | string
   buyerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   buyerAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerCity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPincode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   subtotalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   gstRatePct?: Prisma.IntFieldUpdateOperationsInput | number
   gstAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingQuoteIssue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gatewayRefundId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refundAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  refundedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  shippedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -583,15 +852,28 @@ export type OrderCountOrderByAggregateInput = {
   buyerEmail?: Prisma.SortOrder
   buyerPhone?: Prisma.SortOrder
   buyerAddress?: Prisma.SortOrder
+  buyerCity?: Prisma.SortOrder
+  buyerState?: Prisma.SortOrder
+  buyerPincode?: Prisma.SortOrder
   status?: Prisma.SortOrder
   subtotalAmount?: Prisma.SortOrder
   gstRatePct?: Prisma.SortOrder
   gstAmount?: Prisma.SortOrder
+  shippingAmount?: Prisma.SortOrder
+  shippingQuoteIssue?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
   paymentStatus?: Prisma.SortOrder
   gatewayOrderId?: Prisma.SortOrder
   gatewayPaymentId?: Prisma.SortOrder
   paidAt?: Prisma.SortOrder
+  gatewayRefundId?: Prisma.SortOrder
+  refundAmount?: Prisma.SortOrder
+  refundedAt?: Prisma.SortOrder
+  confirmedAt?: Prisma.SortOrder
+  shippedAt?: Prisma.SortOrder
+  deliveredAt?: Prisma.SortOrder
+  cancelledAt?: Prisma.SortOrder
+  cancelReason?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -600,7 +882,9 @@ export type OrderAvgOrderByAggregateInput = {
   subtotalAmount?: Prisma.SortOrder
   gstRatePct?: Prisma.SortOrder
   gstAmount?: Prisma.SortOrder
+  shippingAmount?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
+  refundAmount?: Prisma.SortOrder
 }
 
 export type OrderMaxOrderByAggregateInput = {
@@ -610,15 +894,28 @@ export type OrderMaxOrderByAggregateInput = {
   buyerEmail?: Prisma.SortOrder
   buyerPhone?: Prisma.SortOrder
   buyerAddress?: Prisma.SortOrder
+  buyerCity?: Prisma.SortOrder
+  buyerState?: Prisma.SortOrder
+  buyerPincode?: Prisma.SortOrder
   status?: Prisma.SortOrder
   subtotalAmount?: Prisma.SortOrder
   gstRatePct?: Prisma.SortOrder
   gstAmount?: Prisma.SortOrder
+  shippingAmount?: Prisma.SortOrder
+  shippingQuoteIssue?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
   paymentStatus?: Prisma.SortOrder
   gatewayOrderId?: Prisma.SortOrder
   gatewayPaymentId?: Prisma.SortOrder
   paidAt?: Prisma.SortOrder
+  gatewayRefundId?: Prisma.SortOrder
+  refundAmount?: Prisma.SortOrder
+  refundedAt?: Prisma.SortOrder
+  confirmedAt?: Prisma.SortOrder
+  shippedAt?: Prisma.SortOrder
+  deliveredAt?: Prisma.SortOrder
+  cancelledAt?: Prisma.SortOrder
+  cancelReason?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -630,15 +927,28 @@ export type OrderMinOrderByAggregateInput = {
   buyerEmail?: Prisma.SortOrder
   buyerPhone?: Prisma.SortOrder
   buyerAddress?: Prisma.SortOrder
+  buyerCity?: Prisma.SortOrder
+  buyerState?: Prisma.SortOrder
+  buyerPincode?: Prisma.SortOrder
   status?: Prisma.SortOrder
   subtotalAmount?: Prisma.SortOrder
   gstRatePct?: Prisma.SortOrder
   gstAmount?: Prisma.SortOrder
+  shippingAmount?: Prisma.SortOrder
+  shippingQuoteIssue?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
   paymentStatus?: Prisma.SortOrder
   gatewayOrderId?: Prisma.SortOrder
   gatewayPaymentId?: Prisma.SortOrder
   paidAt?: Prisma.SortOrder
+  gatewayRefundId?: Prisma.SortOrder
+  refundAmount?: Prisma.SortOrder
+  refundedAt?: Prisma.SortOrder
+  confirmedAt?: Prisma.SortOrder
+  shippedAt?: Prisma.SortOrder
+  deliveredAt?: Prisma.SortOrder
+  cancelledAt?: Prisma.SortOrder
+  cancelReason?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -647,7 +957,9 @@ export type OrderSumOrderByAggregateInput = {
   subtotalAmount?: Prisma.SortOrder
   gstRatePct?: Prisma.SortOrder
   gstAmount?: Prisma.SortOrder
+  shippingAmount?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
+  refundAmount?: Prisma.SortOrder
 }
 
 export type OrderScalarRelationFilter = {
@@ -697,6 +1009,34 @@ export type OrderUncheckedUpdateManyWithoutUserNestedInput = {
   deleteMany?: Prisma.OrderScalarWhereInput | Prisma.OrderScalarWhereInput[]
 }
 
+export type OrderCreateNestedOneWithoutShipmentsInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutShipmentsInput, Prisma.OrderUncheckedCreateWithoutShipmentsInput>
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutShipmentsInput
+  connect?: Prisma.OrderWhereUniqueInput
+}
+
+export type OrderUpdateOneRequiredWithoutShipmentsNestedInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutShipmentsInput, Prisma.OrderUncheckedCreateWithoutShipmentsInput>
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutShipmentsInput
+  upsert?: Prisma.OrderUpsertWithoutShipmentsInput
+  connect?: Prisma.OrderWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OrderUpdateToOneWithWhereWithoutShipmentsInput, Prisma.OrderUpdateWithoutShipmentsInput>, Prisma.OrderUncheckedUpdateWithoutShipmentsInput>
+}
+
+export type OrderCreateNestedOneWithoutReturnsInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutReturnsInput, Prisma.OrderUncheckedCreateWithoutReturnsInput>
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutReturnsInput
+  connect?: Prisma.OrderWhereUniqueInput
+}
+
+export type OrderUpdateOneRequiredWithoutReturnsNestedInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutReturnsInput, Prisma.OrderUncheckedCreateWithoutReturnsInput>
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutReturnsInput
+  upsert?: Prisma.OrderUpsertWithoutReturnsInput
+  connect?: Prisma.OrderWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OrderUpdateToOneWithWhereWithoutReturnsInput, Prisma.OrderUpdateWithoutReturnsInput>, Prisma.OrderUncheckedUpdateWithoutReturnsInput>
+}
+
 export type OrderCreateNestedOneWithoutItemsInput = {
   create?: Prisma.XOR<Prisma.OrderCreateWithoutItemsInput, Prisma.OrderUncheckedCreateWithoutItemsInput>
   connectOrCreate?: Prisma.OrderCreateOrConnectWithoutItemsInput
@@ -717,18 +1057,33 @@ export type OrderCreateWithoutUserInput = {
   buyerEmail: string
   buyerPhone: string
   buyerAddress: string
+  buyerCity?: string | null
+  buyerState?: string | null
+  buyerPincode?: string | null
   status?: string
   subtotalAmount?: number
   gstRatePct?: number
   gstAmount?: number
+  shippingAmount?: number
+  shippingQuoteIssue?: string | null
   totalAmount: number
   paymentStatus?: string
   gatewayOrderId?: string | null
   gatewayPaymentId?: string | null
   paidAt?: Date | string | null
+  gatewayRefundId?: string | null
+  refundAmount?: number | null
+  refundedAt?: Date | string | null
+  confirmedAt?: Date | string | null
+  shippedAt?: Date | string | null
+  deliveredAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   items?: Prisma.OrderItemCreateNestedManyWithoutOrderInput
+  shipments?: Prisma.ShipmentCreateNestedManyWithoutOrderInput
+  returns?: Prisma.ReturnRequestCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutUserInput = {
@@ -737,18 +1092,33 @@ export type OrderUncheckedCreateWithoutUserInput = {
   buyerEmail: string
   buyerPhone: string
   buyerAddress: string
+  buyerCity?: string | null
+  buyerState?: string | null
+  buyerPincode?: string | null
   status?: string
   subtotalAmount?: number
   gstRatePct?: number
   gstAmount?: number
+  shippingAmount?: number
+  shippingQuoteIssue?: string | null
   totalAmount: number
   paymentStatus?: string
   gatewayOrderId?: string | null
   gatewayPaymentId?: string | null
   paidAt?: Date | string | null
+  gatewayRefundId?: string | null
+  refundAmount?: number | null
+  refundedAt?: Date | string | null
+  confirmedAt?: Date | string | null
+  shippedAt?: Date | string | null
+  deliveredAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   items?: Prisma.OrderItemUncheckedCreateNestedManyWithoutOrderInput
+  shipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutOrderInput
+  returns?: Prisma.ReturnRequestUncheckedCreateNestedManyWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutUserInput = {
@@ -786,17 +1156,342 @@ export type OrderScalarWhereInput = {
   buyerEmail?: Prisma.StringFilter<"Order"> | string
   buyerPhone?: Prisma.StringFilter<"Order"> | string
   buyerAddress?: Prisma.StringFilter<"Order"> | string
+  buyerCity?: Prisma.StringNullableFilter<"Order"> | string | null
+  buyerState?: Prisma.StringNullableFilter<"Order"> | string | null
+  buyerPincode?: Prisma.StringNullableFilter<"Order"> | string | null
   status?: Prisma.StringFilter<"Order"> | string
   subtotalAmount?: Prisma.IntFilter<"Order"> | number
   gstRatePct?: Prisma.IntFilter<"Order"> | number
   gstAmount?: Prisma.IntFilter<"Order"> | number
+  shippingAmount?: Prisma.IntFilter<"Order"> | number
+  shippingQuoteIssue?: Prisma.StringNullableFilter<"Order"> | string | null
   totalAmount?: Prisma.IntFilter<"Order"> | number
   paymentStatus?: Prisma.StringFilter<"Order"> | string
   gatewayOrderId?: Prisma.StringNullableFilter<"Order"> | string | null
   gatewayPaymentId?: Prisma.StringNullableFilter<"Order"> | string | null
   paidAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  gatewayRefundId?: Prisma.StringNullableFilter<"Order"> | string | null
+  refundAmount?: Prisma.IntNullableFilter<"Order"> | number | null
+  refundedAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  confirmedAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  shippedAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  deliveredAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  cancelledAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  cancelReason?: Prisma.StringNullableFilter<"Order"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Order"> | Date | string
+}
+
+export type OrderCreateWithoutShipmentsInput = {
+  id?: string
+  buyerName: string
+  buyerEmail: string
+  buyerPhone: string
+  buyerAddress: string
+  buyerCity?: string | null
+  buyerState?: string | null
+  buyerPincode?: string | null
+  status?: string
+  subtotalAmount?: number
+  gstRatePct?: number
+  gstAmount?: number
+  shippingAmount?: number
+  shippingQuoteIssue?: string | null
+  totalAmount: number
+  paymentStatus?: string
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  paidAt?: Date | string | null
+  gatewayRefundId?: string | null
+  refundAmount?: number | null
+  refundedAt?: Date | string | null
+  confirmedAt?: Date | string | null
+  shippedAt?: Date | string | null
+  deliveredAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user?: Prisma.UserCreateNestedOneWithoutOrdersInput
+  items?: Prisma.OrderItemCreateNestedManyWithoutOrderInput
+  returns?: Prisma.ReturnRequestCreateNestedManyWithoutOrderInput
+}
+
+export type OrderUncheckedCreateWithoutShipmentsInput = {
+  id?: string
+  userId?: string | null
+  buyerName: string
+  buyerEmail: string
+  buyerPhone: string
+  buyerAddress: string
+  buyerCity?: string | null
+  buyerState?: string | null
+  buyerPincode?: string | null
+  status?: string
+  subtotalAmount?: number
+  gstRatePct?: number
+  gstAmount?: number
+  shippingAmount?: number
+  shippingQuoteIssue?: string | null
+  totalAmount: number
+  paymentStatus?: string
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  paidAt?: Date | string | null
+  gatewayRefundId?: string | null
+  refundAmount?: number | null
+  refundedAt?: Date | string | null
+  confirmedAt?: Date | string | null
+  shippedAt?: Date | string | null
+  deliveredAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  items?: Prisma.OrderItemUncheckedCreateNestedManyWithoutOrderInput
+  returns?: Prisma.ReturnRequestUncheckedCreateNestedManyWithoutOrderInput
+}
+
+export type OrderCreateOrConnectWithoutShipmentsInput = {
+  where: Prisma.OrderWhereUniqueInput
+  create: Prisma.XOR<Prisma.OrderCreateWithoutShipmentsInput, Prisma.OrderUncheckedCreateWithoutShipmentsInput>
+}
+
+export type OrderUpsertWithoutShipmentsInput = {
+  update: Prisma.XOR<Prisma.OrderUpdateWithoutShipmentsInput, Prisma.OrderUncheckedUpdateWithoutShipmentsInput>
+  create: Prisma.XOR<Prisma.OrderCreateWithoutShipmentsInput, Prisma.OrderUncheckedCreateWithoutShipmentsInput>
+  where?: Prisma.OrderWhereInput
+}
+
+export type OrderUpdateToOneWithWhereWithoutShipmentsInput = {
+  where?: Prisma.OrderWhereInput
+  data: Prisma.XOR<Prisma.OrderUpdateWithoutShipmentsInput, Prisma.OrderUncheckedUpdateWithoutShipmentsInput>
+}
+
+export type OrderUpdateWithoutShipmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerName?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerEmail?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerPhone?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerCity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPincode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  subtotalAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  gstRatePct?: Prisma.IntFieldUpdateOperationsInput | number
+  gstAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingQuoteIssue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  paymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gatewayRefundId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refundAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  refundedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  shippedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneWithoutOrdersNestedInput
+  items?: Prisma.OrderItemUpdateManyWithoutOrderNestedInput
+  returns?: Prisma.ReturnRequestUpdateManyWithoutOrderNestedInput
+}
+
+export type OrderUncheckedUpdateWithoutShipmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerName?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerEmail?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerPhone?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerCity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPincode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  subtotalAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  gstRatePct?: Prisma.IntFieldUpdateOperationsInput | number
+  gstAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingQuoteIssue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  paymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gatewayRefundId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refundAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  refundedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  shippedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  items?: Prisma.OrderItemUncheckedUpdateManyWithoutOrderNestedInput
+  returns?: Prisma.ReturnRequestUncheckedUpdateManyWithoutOrderNestedInput
+}
+
+export type OrderCreateWithoutReturnsInput = {
+  id?: string
+  buyerName: string
+  buyerEmail: string
+  buyerPhone: string
+  buyerAddress: string
+  buyerCity?: string | null
+  buyerState?: string | null
+  buyerPincode?: string | null
+  status?: string
+  subtotalAmount?: number
+  gstRatePct?: number
+  gstAmount?: number
+  shippingAmount?: number
+  shippingQuoteIssue?: string | null
+  totalAmount: number
+  paymentStatus?: string
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  paidAt?: Date | string | null
+  gatewayRefundId?: string | null
+  refundAmount?: number | null
+  refundedAt?: Date | string | null
+  confirmedAt?: Date | string | null
+  shippedAt?: Date | string | null
+  deliveredAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user?: Prisma.UserCreateNestedOneWithoutOrdersInput
+  items?: Prisma.OrderItemCreateNestedManyWithoutOrderInput
+  shipments?: Prisma.ShipmentCreateNestedManyWithoutOrderInput
+}
+
+export type OrderUncheckedCreateWithoutReturnsInput = {
+  id?: string
+  userId?: string | null
+  buyerName: string
+  buyerEmail: string
+  buyerPhone: string
+  buyerAddress: string
+  buyerCity?: string | null
+  buyerState?: string | null
+  buyerPincode?: string | null
+  status?: string
+  subtotalAmount?: number
+  gstRatePct?: number
+  gstAmount?: number
+  shippingAmount?: number
+  shippingQuoteIssue?: string | null
+  totalAmount: number
+  paymentStatus?: string
+  gatewayOrderId?: string | null
+  gatewayPaymentId?: string | null
+  paidAt?: Date | string | null
+  gatewayRefundId?: string | null
+  refundAmount?: number | null
+  refundedAt?: Date | string | null
+  confirmedAt?: Date | string | null
+  shippedAt?: Date | string | null
+  deliveredAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  items?: Prisma.OrderItemUncheckedCreateNestedManyWithoutOrderInput
+  shipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutOrderInput
+}
+
+export type OrderCreateOrConnectWithoutReturnsInput = {
+  where: Prisma.OrderWhereUniqueInput
+  create: Prisma.XOR<Prisma.OrderCreateWithoutReturnsInput, Prisma.OrderUncheckedCreateWithoutReturnsInput>
+}
+
+export type OrderUpsertWithoutReturnsInput = {
+  update: Prisma.XOR<Prisma.OrderUpdateWithoutReturnsInput, Prisma.OrderUncheckedUpdateWithoutReturnsInput>
+  create: Prisma.XOR<Prisma.OrderCreateWithoutReturnsInput, Prisma.OrderUncheckedCreateWithoutReturnsInput>
+  where?: Prisma.OrderWhereInput
+}
+
+export type OrderUpdateToOneWithWhereWithoutReturnsInput = {
+  where?: Prisma.OrderWhereInput
+  data: Prisma.XOR<Prisma.OrderUpdateWithoutReturnsInput, Prisma.OrderUncheckedUpdateWithoutReturnsInput>
+}
+
+export type OrderUpdateWithoutReturnsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerName?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerEmail?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerPhone?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerCity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPincode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  subtotalAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  gstRatePct?: Prisma.IntFieldUpdateOperationsInput | number
+  gstAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingQuoteIssue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  paymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gatewayRefundId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refundAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  refundedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  shippedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneWithoutOrdersNestedInput
+  items?: Prisma.OrderItemUpdateManyWithoutOrderNestedInput
+  shipments?: Prisma.ShipmentUpdateManyWithoutOrderNestedInput
+}
+
+export type OrderUncheckedUpdateWithoutReturnsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerName?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerEmail?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerPhone?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerCity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPincode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  subtotalAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  gstRatePct?: Prisma.IntFieldUpdateOperationsInput | number
+  gstAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingQuoteIssue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  paymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gatewayRefundId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refundAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  refundedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  shippedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  items?: Prisma.OrderItemUncheckedUpdateManyWithoutOrderNestedInput
+  shipments?: Prisma.ShipmentUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderCreateWithoutItemsInput = {
@@ -805,18 +1500,33 @@ export type OrderCreateWithoutItemsInput = {
   buyerEmail: string
   buyerPhone: string
   buyerAddress: string
+  buyerCity?: string | null
+  buyerState?: string | null
+  buyerPincode?: string | null
   status?: string
   subtotalAmount?: number
   gstRatePct?: number
   gstAmount?: number
+  shippingAmount?: number
+  shippingQuoteIssue?: string | null
   totalAmount: number
   paymentStatus?: string
   gatewayOrderId?: string | null
   gatewayPaymentId?: string | null
   paidAt?: Date | string | null
+  gatewayRefundId?: string | null
+  refundAmount?: number | null
+  refundedAt?: Date | string | null
+  confirmedAt?: Date | string | null
+  shippedAt?: Date | string | null
+  deliveredAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user?: Prisma.UserCreateNestedOneWithoutOrdersInput
+  shipments?: Prisma.ShipmentCreateNestedManyWithoutOrderInput
+  returns?: Prisma.ReturnRequestCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutItemsInput = {
@@ -826,17 +1536,32 @@ export type OrderUncheckedCreateWithoutItemsInput = {
   buyerEmail: string
   buyerPhone: string
   buyerAddress: string
+  buyerCity?: string | null
+  buyerState?: string | null
+  buyerPincode?: string | null
   status?: string
   subtotalAmount?: number
   gstRatePct?: number
   gstAmount?: number
+  shippingAmount?: number
+  shippingQuoteIssue?: string | null
   totalAmount: number
   paymentStatus?: string
   gatewayOrderId?: string | null
   gatewayPaymentId?: string | null
   paidAt?: Date | string | null
+  gatewayRefundId?: string | null
+  refundAmount?: number | null
+  refundedAt?: Date | string | null
+  confirmedAt?: Date | string | null
+  shippedAt?: Date | string | null
+  deliveredAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  shipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutOrderInput
+  returns?: Prisma.ReturnRequestUncheckedCreateNestedManyWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutItemsInput = {
@@ -861,18 +1586,33 @@ export type OrderUpdateWithoutItemsInput = {
   buyerEmail?: Prisma.StringFieldUpdateOperationsInput | string
   buyerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   buyerAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerCity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPincode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   subtotalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   gstRatePct?: Prisma.IntFieldUpdateOperationsInput | number
   gstAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingQuoteIssue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gatewayRefundId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refundAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  refundedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  shippedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneWithoutOrdersNestedInput
+  shipments?: Prisma.ShipmentUpdateManyWithoutOrderNestedInput
+  returns?: Prisma.ReturnRequestUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutItemsInput = {
@@ -882,17 +1622,32 @@ export type OrderUncheckedUpdateWithoutItemsInput = {
   buyerEmail?: Prisma.StringFieldUpdateOperationsInput | string
   buyerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   buyerAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerCity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPincode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   subtotalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   gstRatePct?: Prisma.IntFieldUpdateOperationsInput | number
   gstAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingQuoteIssue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gatewayRefundId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refundAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  refundedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  shippedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  shipments?: Prisma.ShipmentUncheckedUpdateManyWithoutOrderNestedInput
+  returns?: Prisma.ReturnRequestUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderCreateManyUserInput = {
@@ -901,15 +1656,28 @@ export type OrderCreateManyUserInput = {
   buyerEmail: string
   buyerPhone: string
   buyerAddress: string
+  buyerCity?: string | null
+  buyerState?: string | null
+  buyerPincode?: string | null
   status?: string
   subtotalAmount?: number
   gstRatePct?: number
   gstAmount?: number
+  shippingAmount?: number
+  shippingQuoteIssue?: string | null
   totalAmount: number
   paymentStatus?: string
   gatewayOrderId?: string | null
   gatewayPaymentId?: string | null
   paidAt?: Date | string | null
+  gatewayRefundId?: string | null
+  refundAmount?: number | null
+  refundedAt?: Date | string | null
+  confirmedAt?: Date | string | null
+  shippedAt?: Date | string | null
+  deliveredAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -920,18 +1688,33 @@ export type OrderUpdateWithoutUserInput = {
   buyerEmail?: Prisma.StringFieldUpdateOperationsInput | string
   buyerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   buyerAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerCity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPincode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   subtotalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   gstRatePct?: Prisma.IntFieldUpdateOperationsInput | number
   gstAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingQuoteIssue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gatewayRefundId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refundAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  refundedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  shippedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   items?: Prisma.OrderItemUpdateManyWithoutOrderNestedInput
+  shipments?: Prisma.ShipmentUpdateManyWithoutOrderNestedInput
+  returns?: Prisma.ReturnRequestUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutUserInput = {
@@ -940,18 +1723,33 @@ export type OrderUncheckedUpdateWithoutUserInput = {
   buyerEmail?: Prisma.StringFieldUpdateOperationsInput | string
   buyerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   buyerAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerCity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPincode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   subtotalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   gstRatePct?: Prisma.IntFieldUpdateOperationsInput | number
   gstAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingQuoteIssue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gatewayRefundId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refundAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  refundedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  shippedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   items?: Prisma.OrderItemUncheckedUpdateManyWithoutOrderNestedInput
+  shipments?: Prisma.ShipmentUncheckedUpdateManyWithoutOrderNestedInput
+  returns?: Prisma.ReturnRequestUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateManyWithoutUserInput = {
@@ -960,15 +1758,28 @@ export type OrderUncheckedUpdateManyWithoutUserInput = {
   buyerEmail?: Prisma.StringFieldUpdateOperationsInput | string
   buyerPhone?: Prisma.StringFieldUpdateOperationsInput | string
   buyerAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  buyerCity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  buyerPincode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   subtotalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   gstRatePct?: Prisma.IntFieldUpdateOperationsInput | number
   gstAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingAmount?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingQuoteIssue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   paymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gatewayRefundId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refundAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  refundedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  shippedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -980,10 +1791,14 @@ export type OrderUncheckedUpdateManyWithoutUserInput = {
 
 export type OrderCountOutputType = {
   items: number
+  shipments: number
+  returns: number
 }
 
 export type OrderCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   items?: boolean | OrderCountOutputTypeCountItemsArgs
+  shipments?: boolean | OrderCountOutputTypeCountShipmentsArgs
+  returns?: boolean | OrderCountOutputTypeCountReturnsArgs
 }
 
 /**
@@ -1003,6 +1818,20 @@ export type OrderCountOutputTypeCountItemsArgs<ExtArgs extends runtime.Types.Ext
   where?: Prisma.OrderItemWhereInput
 }
 
+/**
+ * OrderCountOutputType without action
+ */
+export type OrderCountOutputTypeCountShipmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ShipmentWhereInput
+}
+
+/**
+ * OrderCountOutputType without action
+ */
+export type OrderCountOutputTypeCountReturnsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ReturnRequestWhereInput
+}
+
 
 export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1011,19 +1840,34 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   buyerEmail?: boolean
   buyerPhone?: boolean
   buyerAddress?: boolean
+  buyerCity?: boolean
+  buyerState?: boolean
+  buyerPincode?: boolean
   status?: boolean
   subtotalAmount?: boolean
   gstRatePct?: boolean
   gstAmount?: boolean
+  shippingAmount?: boolean
+  shippingQuoteIssue?: boolean
   totalAmount?: boolean
   paymentStatus?: boolean
   gatewayOrderId?: boolean
   gatewayPaymentId?: boolean
   paidAt?: boolean
+  gatewayRefundId?: boolean
+  refundAmount?: boolean
+  refundedAt?: boolean
+  confirmedAt?: boolean
+  shippedAt?: boolean
+  deliveredAt?: boolean
+  cancelledAt?: boolean
+  cancelReason?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.Order$userArgs<ExtArgs>
   items?: boolean | Prisma.Order$itemsArgs<ExtArgs>
+  shipments?: boolean | Prisma.Order$shipmentsArgs<ExtArgs>
+  returns?: boolean | Prisma.Order$returnsArgs<ExtArgs>
   _count?: boolean | Prisma.OrderCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["order"]>
 
@@ -1034,15 +1878,28 @@ export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   buyerEmail?: boolean
   buyerPhone?: boolean
   buyerAddress?: boolean
+  buyerCity?: boolean
+  buyerState?: boolean
+  buyerPincode?: boolean
   status?: boolean
   subtotalAmount?: boolean
   gstRatePct?: boolean
   gstAmount?: boolean
+  shippingAmount?: boolean
+  shippingQuoteIssue?: boolean
   totalAmount?: boolean
   paymentStatus?: boolean
   gatewayOrderId?: boolean
   gatewayPaymentId?: boolean
   paidAt?: boolean
+  gatewayRefundId?: boolean
+  refundAmount?: boolean
+  refundedAt?: boolean
+  confirmedAt?: boolean
+  shippedAt?: boolean
+  deliveredAt?: boolean
+  cancelledAt?: boolean
+  cancelReason?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.Order$userArgs<ExtArgs>
@@ -1055,15 +1912,28 @@ export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   buyerEmail?: boolean
   buyerPhone?: boolean
   buyerAddress?: boolean
+  buyerCity?: boolean
+  buyerState?: boolean
+  buyerPincode?: boolean
   status?: boolean
   subtotalAmount?: boolean
   gstRatePct?: boolean
   gstAmount?: boolean
+  shippingAmount?: boolean
+  shippingQuoteIssue?: boolean
   totalAmount?: boolean
   paymentStatus?: boolean
   gatewayOrderId?: boolean
   gatewayPaymentId?: boolean
   paidAt?: boolean
+  gatewayRefundId?: boolean
+  refundAmount?: boolean
+  refundedAt?: boolean
+  confirmedAt?: boolean
+  shippedAt?: boolean
+  deliveredAt?: boolean
+  cancelledAt?: boolean
+  cancelReason?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.Order$userArgs<ExtArgs>
@@ -1076,23 +1946,38 @@ export type OrderSelectScalar = {
   buyerEmail?: boolean
   buyerPhone?: boolean
   buyerAddress?: boolean
+  buyerCity?: boolean
+  buyerState?: boolean
+  buyerPincode?: boolean
   status?: boolean
   subtotalAmount?: boolean
   gstRatePct?: boolean
   gstAmount?: boolean
+  shippingAmount?: boolean
+  shippingQuoteIssue?: boolean
   totalAmount?: boolean
   paymentStatus?: boolean
   gatewayOrderId?: boolean
   gatewayPaymentId?: boolean
   paidAt?: boolean
+  gatewayRefundId?: boolean
+  refundAmount?: boolean
+  refundedAt?: boolean
+  confirmedAt?: boolean
+  shippedAt?: boolean
+  deliveredAt?: boolean
+  cancelledAt?: boolean
+  cancelReason?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "buyerName" | "buyerEmail" | "buyerPhone" | "buyerAddress" | "status" | "subtotalAmount" | "gstRatePct" | "gstAmount" | "totalAmount" | "paymentStatus" | "gatewayOrderId" | "gatewayPaymentId" | "paidAt" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
+export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "buyerName" | "buyerEmail" | "buyerPhone" | "buyerAddress" | "buyerCity" | "buyerState" | "buyerPincode" | "status" | "subtotalAmount" | "gstRatePct" | "gstAmount" | "shippingAmount" | "shippingQuoteIssue" | "totalAmount" | "paymentStatus" | "gatewayOrderId" | "gatewayPaymentId" | "paidAt" | "gatewayRefundId" | "refundAmount" | "refundedAt" | "confirmedAt" | "shippedAt" | "deliveredAt" | "cancelledAt" | "cancelReason" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
 export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.Order$userArgs<ExtArgs>
   items?: boolean | Prisma.Order$itemsArgs<ExtArgs>
+  shipments?: boolean | Prisma.Order$shipmentsArgs<ExtArgs>
+  returns?: boolean | Prisma.Order$returnsArgs<ExtArgs>
   _count?: boolean | Prisma.OrderCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type OrderIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1107,6 +1992,8 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   objects: {
     user: Prisma.$UserPayload<ExtArgs> | null
     items: Prisma.$OrderItemPayload<ExtArgs>[]
+    shipments: Prisma.$ShipmentPayload<ExtArgs>[]
+    returns: Prisma.$ReturnRequestPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1114,18 +2001,43 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     buyerName: string
     buyerEmail: string
     buyerPhone: string
-    buyerAddress: string
     /**
-     * Fulfilment: PENDING, SHIPPED, DELIVERED. Not about money — see paymentStatus.
+     * The street line. Kept as the whole address for orders placed before the
+     * shop shipped anything, which is why the parts below are optional.
+     */
+    buyerAddress: string
+    buyerCity: string | null
+    buyerState: string | null
+    /**
+     * Six digits. A courier can do nothing without it, so every new order has one.
+     */
+    buyerPincode: string | null
+    /**
+     * Fulfilment: PENDING → CONFIRMED → PACKED → SHIPPED → IN_TRANSIT →
+     * OUT_FOR_DELIVERY → DELIVERED, or CANCELLED / RETURNED. Not about money —
+     * see paymentStatus.
      */
     status: string
     subtotalAmount: number
     gstRatePct: number
     gstAmount: number
+    /**
+     * What the courier costs the buyer. Quoted at checkout and frozen here, so a
+     * later change to Delhivery's rates cannot re-price an order already placed.
+     */
+    shippingAmount: number
+    /**
+     * Why carriage came out unpriced, when it did. NULL is the ordinary case.
+     * A quote can legitimately return zero — no courier token, nothing resolving
+     * to a warehouse, a warehouse with no pincode — and the sale still goes
+     * through, by design. This is how the shop finds out it happened instead of
+     * absorbing the freight silently.
+     */
+    shippingQuoteIssue: string | null
     totalAmount: number
     /**
-     * Money: PENDING, COMPLETED, FAILED. An order placed before the shop took
-     * cards stays PENDING here, which is what it always was.
+     * Money: PENDING, COMPLETED, FAILED, REFUNDED. An order placed before the
+     * shop took cards stays PENDING here, which is what it always was.
      */
     paymentStatus: string
     /**
@@ -1135,6 +2047,21 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     gatewayOrderId: string | null
     gatewayPaymentId: string | null
     paidAt: Date | null
+    /**
+     * Razorpay's refund id and what it sent back, in paise. Partial refunds are
+     * possible, so the amount is recorded rather than inferred from the total.
+     */
+    gatewayRefundId: string | null
+    refundAmount: number | null
+    refundedAt: Date | null
+    /**
+     * Fulfilment timestamps, each set once when the state is first reached.
+     */
+    confirmedAt: Date | null
+    shippedAt: Date | null
+    deliveredAt: Date | null
+    cancelledAt: Date | null
+    cancelReason: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["order"]>
@@ -1533,6 +2460,8 @@ export interface Prisma__OrderClient<T, Null = never, ExtArgs extends runtime.Ty
   readonly [Symbol.toStringTag]: "PrismaPromise"
   user<T extends Prisma.Order$userArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$userArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   items<T extends Prisma.Order$itemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  shipments<T extends Prisma.Order$shipmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$shipmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShipmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  returns<T extends Prisma.Order$returnsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$returnsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReturnRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1568,15 +2497,28 @@ export interface OrderFieldRefs {
   readonly buyerEmail: Prisma.FieldRef<"Order", 'String'>
   readonly buyerPhone: Prisma.FieldRef<"Order", 'String'>
   readonly buyerAddress: Prisma.FieldRef<"Order", 'String'>
+  readonly buyerCity: Prisma.FieldRef<"Order", 'String'>
+  readonly buyerState: Prisma.FieldRef<"Order", 'String'>
+  readonly buyerPincode: Prisma.FieldRef<"Order", 'String'>
   readonly status: Prisma.FieldRef<"Order", 'String'>
   readonly subtotalAmount: Prisma.FieldRef<"Order", 'Int'>
   readonly gstRatePct: Prisma.FieldRef<"Order", 'Int'>
   readonly gstAmount: Prisma.FieldRef<"Order", 'Int'>
+  readonly shippingAmount: Prisma.FieldRef<"Order", 'Int'>
+  readonly shippingQuoteIssue: Prisma.FieldRef<"Order", 'String'>
   readonly totalAmount: Prisma.FieldRef<"Order", 'Int'>
   readonly paymentStatus: Prisma.FieldRef<"Order", 'String'>
   readonly gatewayOrderId: Prisma.FieldRef<"Order", 'String'>
   readonly gatewayPaymentId: Prisma.FieldRef<"Order", 'String'>
   readonly paidAt: Prisma.FieldRef<"Order", 'DateTime'>
+  readonly gatewayRefundId: Prisma.FieldRef<"Order", 'String'>
+  readonly refundAmount: Prisma.FieldRef<"Order", 'Int'>
+  readonly refundedAt: Prisma.FieldRef<"Order", 'DateTime'>
+  readonly confirmedAt: Prisma.FieldRef<"Order", 'DateTime'>
+  readonly shippedAt: Prisma.FieldRef<"Order", 'DateTime'>
+  readonly deliveredAt: Prisma.FieldRef<"Order", 'DateTime'>
+  readonly cancelledAt: Prisma.FieldRef<"Order", 'DateTime'>
+  readonly cancelReason: Prisma.FieldRef<"Order", 'String'>
   readonly createdAt: Prisma.FieldRef<"Order", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Order", 'DateTime'>
 }
@@ -2018,6 +2960,54 @@ export type Order$itemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
   take?: number
   skip?: number
   distinct?: Prisma.OrderItemScalarFieldEnum | Prisma.OrderItemScalarFieldEnum[]
+}
+
+/**
+ * Order.shipments
+ */
+export type Order$shipmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Shipment
+   */
+  select?: Prisma.ShipmentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Shipment
+   */
+  omit?: Prisma.ShipmentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ShipmentInclude<ExtArgs> | null
+  where?: Prisma.ShipmentWhereInput
+  orderBy?: Prisma.ShipmentOrderByWithRelationInput | Prisma.ShipmentOrderByWithRelationInput[]
+  cursor?: Prisma.ShipmentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ShipmentScalarFieldEnum | Prisma.ShipmentScalarFieldEnum[]
+}
+
+/**
+ * Order.returns
+ */
+export type Order$returnsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ReturnRequest
+   */
+  select?: Prisma.ReturnRequestSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ReturnRequest
+   */
+  omit?: Prisma.ReturnRequestOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ReturnRequestInclude<ExtArgs> | null
+  where?: Prisma.ReturnRequestWhereInput
+  orderBy?: Prisma.ReturnRequestOrderByWithRelationInput | Prisma.ReturnRequestOrderByWithRelationInput[]
+  cursor?: Prisma.ReturnRequestWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ReturnRequestScalarFieldEnum | Prisma.ReturnRequestScalarFieldEnum[]
 }
 
 /**

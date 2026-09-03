@@ -27,6 +27,10 @@ const REQUIRED_SECRETS = [
     hint: "Registers each new gym's subdomain on the Pages project. Needs Account → Cloudflare Pages: Edit.",
   },
   {
+    key: "DELHIVERY_API_TOKEN",
+    hint: "Delhivery shipping token from one.delhivery.com → Settings → API Setup. Books and cancels real shipments.",
+  },
+  {
     key: "TURNSTILE_SECRET_KEY",
     hint: "Verifies the signup captcha. From the Turnstile widget you create; leave unset to disable the check.",
   },

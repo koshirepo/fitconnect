@@ -408,13 +408,7 @@ export const gatewayService = {
    * has something to find even if the browser is closed mid-payment.
    */
   async createCheckout(tenantId: string, userId: string, input: CheckoutInput) {
-    const credentials = await gatewayService.resolveCredentials(tenantId);
-    if (!credentials) {
-      return {
-        error: "This gym has not set up online payments yet.",
-        status: 409 as const,
-      };
-    }
+    const payAtCounter = input.mode === "COUNTER";
 
     const [membership, subscription] = await Promise.all([
       paymentRepository.findCheckoutMembership(tenantId, userId),
@@ -447,6 +441,58 @@ export const gatewayService = {
       return {
         error: "You are not eligible for this plan.",
         status: 400 as const,
+      };
+    }
+
+    /**
+     * Settling at the front desk.
+     *
+     * Nothing is charged and no gateway is involved, so this needs neither
+     * credentials nor an order — it writes the same PENDING row the online
+     * path writes, at the plan's own price, and staff settle it through the
+     * counter flow they already use. Arrears are deliberately left where they
+     * are: with no order to carry them, they stay their own pending rows.
+     */
+    if (payAtCounter) {
+      // Tapping twice must not leave the desk two bills for one renewal.
+      const open = await paymentRepository.findPendingCounterPayment(
+        tenantId,
+        membership.id,
+        subscription.id,
+      );
+
+      if (open) {
+        return {
+          data: { checkout: null, paymentId: open.id, settled: false, counter: true },
+        };
+      }
+
+      const pending = await paymentRepository.createPayment({
+        tenantId,
+        membershipId: membership.id,
+        subscriptionId: subscription.id,
+        description: subscription.title,
+        status: "PENDING",
+        amount: subscription.amount,
+      });
+
+      return {
+        data: {
+          checkout: null,
+          paymentId: pending.id,
+          settled: false,
+          /** Distinguishes this from a bill coins cleared outright. */
+          counter: true,
+        },
+      };
+    }
+
+    // Everything below opens a payment window, which the gym must be set up for.
+    const credentials = await gatewayService.resolveCredentials(tenantId);
+    if (!credentials) {
+      return {
+        error: "This gym has not set up online payments yet.",
+        status: 409 as const,
       };
     }
 
@@ -495,9 +541,14 @@ export const gatewayService = {
     // nothing left to charge, so the sale completes here rather than opening
     // a payment window for zero rupees, which Razorpay would refuse anyway.
     if (amount <= 0) {
-      const validFrom = new Date();
-      const validUntil = new Date(validFrom);
-      validUntil.setDate(validUntil.getDate() + subscription.durationDays);
+      // Stacked on any cover the member still holds, exactly as a paid
+      // renewal is: clearing the bill with coins is still paying for it.
+      const paidAt = new Date();
+      const { validFrom, validUntil } = await paymentRepository.nextValidityWindow(
+        membership.id,
+        subscription.durationDays,
+        paidAt,
+      );
 
       const settled = await paymentRepository.createPayment({
         tenantId,
@@ -513,7 +564,7 @@ export const gatewayService = {
               coinsRedeemed: quote.data.coinsRedeemed,
             }
           : {}),
-        paidAt: validFrom,
+        paidAt,
         validFrom,
         validUntil,
       });
@@ -722,16 +773,24 @@ export const gatewayService = {
       // A row the webhook already settled is left exactly as it was, so the
       // paid date does not move when the browser arrives second.
       if (row.status === "COMPLETED") continue;
-      settled.push(
-        await paymentRepository.settleGatewayPayment(row.id, gatewayPaymentId),
+      const paid = await paymentRepository.settleGatewayPayment(
+        row.id,
+        gatewayPaymentId,
       );
+      settled.push(paid);
+
+      // Carried to the membership as each plan settles, not once at the end:
+      // an order can hold more than one plan — a renewal booked for the desk
+      // and never paid, now being settled online with this one — and each
+      // stacks on the date the previous left behind. Reading a due date that
+      // had not caught up yet would land them on top of each other.
+      if (paid.validUntil) {
+        await paymentRepository.refreshDueDate(row.membershipId);
+      }
     }
 
     const membershipId = payments[0]?.membershipId;
     if (membershipId) {
-      if (settled.some((row) => row.validUntil)) {
-        await paymentRepository.refreshDueDate(membershipId);
-      }
       await paymentRepository.reactivateIfPaidUp(membershipId);
     }
 

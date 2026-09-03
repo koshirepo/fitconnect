@@ -37,6 +37,7 @@ import {
   Dumbbell,
   IndianRupee,
   Shield,
+  Store,
 } from "lucide-react";
 import type { SelfSignupResult, SignupOptions } from "@/types/api";
 import { TURNSTILE_SITE_KEY, TurnstileWidget } from "@/components/ui/turnstile";
@@ -124,6 +125,10 @@ export default function SignupPage() {
 
   const grandTotal = Math.max(0, listTotal - discount);
 
+  // Both join buttons close on the same conditions, so they share one answer.
+  const joinDisabled =
+    submitting || !selectedPlan || (Boolean(TURNSTILE_SITE_KEY) && !turnstileToken);
+
   const applyCoupon = async () => {
     const code = couponCode.trim();
     setCouponError("");
@@ -191,7 +196,7 @@ export default function SignupPage() {
     await store.fetchMe();
   };
 
-  const handleJoin = async () => {
+  const handleJoin = async (paymentMode: "ONLINE" | "COUNTER" = "ONLINE") => {
     if (!memberData || !selectedPlan) return;
     if (!memberData.photoFile) {
       // The form will not submit without one, so this is a guard rather than a
@@ -215,6 +220,7 @@ export default function SignupPage() {
           ? { couponCode: couponCode.trim() }
           : {}),
         ...(memberData.shiftId ? { shiftId: memberData.shiftId } : {}),
+        paymentMode,
         ...(turnstileToken ? { "cf-turnstile-response": turnstileToken } : {}),
       });
 
@@ -234,7 +240,9 @@ export default function SignupPage() {
           signup,
           active: false,
           pendingReason:
-            "This gym isn't taking online payments yet, so your membership is pending until the front desk records your payment.",
+            paymentMode === "COUNTER"
+              ? "Your membership is saved and stays pending until you pay at the gym. Bring the amount above to the front desk."
+              : "This gym isn't taking online payments yet, so your membership is pending until the front desk records your payment.",
         });
         return;
       }
@@ -626,30 +634,51 @@ export default function SignupPage() {
                 </div>
               )}
 
-              <div className="mt-4 flex gap-3">
-                <Button variant="outline" onClick={() => setStep(1)}>
+              {/* Two ways to settle the joining fee, the same pair the store
+                  offers. A gym with no gateway keeps only the second. */}
+              <div className="mt-4 space-y-2">
+                {options.onlinePaymentsEnabled && (
+                  <Button
+                    onClick={() => handleJoin("ONLINE")}
+                    disabled={joinDisabled}
+                    className="w-full"
+                  >
+                    {submitting ? (
+                      "Processing..."
+                    ) : (
+                      <>
+                        Pay {formatCurrency(grandTotal)} &amp; Join
+                        <ArrowRight className="ml-1 h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                )}
+
+                <Button
+                  variant={options.onlinePaymentsEnabled ? "outline" : "default"}
+                  onClick={() => handleJoin("COUNTER")}
+                  disabled={joinDisabled}
+                  className="w-full"
+                >
+                  <Store className="mr-1 h-4 w-4" />
+                  {submitting ? "Processing..." : "Join & Pay at the Gym"}
+                </Button>
+
+                {options.onlinePaymentsEnabled && (
+                  <p className="text-center text-xs text-muted-foreground">
+                    Paying at the gym leaves your membership pending until the
+                    front desk records it, so it does not start today.
+                  </p>
+                )}
+
+                <Button
+                  variant="ghost"
+                  onClick={() => setStep(1)}
+                  disabled={submitting}
+                  className="w-full"
+                >
                   <ArrowLeft className="mr-1 h-4 w-4" />
                   Back
-                </Button>
-                <Button
-                  onClick={handleJoin}
-                  disabled={
-                    submitting ||
-                    !selectedPlan ||
-                    (Boolean(TURNSTILE_SITE_KEY) && !turnstileToken)
-                  }
-                  className="flex-1"
-                >
-                  {submitting ? (
-                    "Processing..."
-                  ) : (
-                    <>
-                      {options.onlinePaymentsEnabled
-                        ? `Pay ${formatCurrency(grandTotal)} & Join`
-                        : "Join & Pay at the Gym"}
-                      <ArrowRight className="ml-1 h-4 w-4" />
-                    </>
-                  )}
                 </Button>
               </div>
             </CardContent>

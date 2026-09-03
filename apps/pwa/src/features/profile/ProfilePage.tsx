@@ -6,6 +6,7 @@ import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import AvatarCard from "@/components/ui/avatarCard";
 import { Badge } from "@/components/ui/badge";
@@ -321,8 +322,7 @@ export default function ProfilePage() {
                   <p className="text-sm font-medium">Change Password</p>
                   <div className="space-y-2">
                     <Label>Current Password</Label>
-                    <Input
-                      type="password"
+                    <PasswordInput
                       value={fCurrentPwd}
                       onChange={(e) => setFCurrentPwd(e.target.value)}
                       placeholder="Leave blank to keep current"
@@ -330,8 +330,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="space-y-2">
                     <Label>New Password</Label>
-                    <Input
-                      type="password"
+                    <PasswordInput
                       value={fNewPwd}
                       onChange={(e) => setFNewPwd(e.target.value)}
                       placeholder="Min 8 characters"

@@ -32,3 +32,19 @@ RAZORPAY_WEBHOOK_SECRET=""
 # before a gym can save its own keys. Any long random string:
 #   openssl rand -base64 32
 CREDENTIALS_KEY=""
+
+# Delhivery shipping token from one.delhivery.com → Settings → API Setup.
+# Server-side only: it can manifest and cancel real shipments. Leave blank to
+# run the shop without a courier — checkout then says shipping is unavailable.
+DELHIVERY_API_TOKEN=""
+
+# Shared secret for Delhivery's tracking push. Delhivery signs nothing, so this
+# is the whole of the authentication on /webhooks/delhivery/tracking — give the
+# same value to Delhivery as the Authorization header they should send. Unset,
+# the endpoint refuses every delivery rather than trusting an unsigned one.
+DELHIVERY_WEBHOOK_TOKEN=
+
+# Override the host from wrangler.toml. Development defaults to Delhivery
+# staging; set this to https://track.delhivery.com only if you must run local
+# against production, and remember that bookings then cost real money.
+DELHIVERY_BASE_URL=

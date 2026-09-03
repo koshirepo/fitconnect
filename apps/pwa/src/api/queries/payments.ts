@@ -161,7 +161,12 @@ export function useCreateCheckout() {
   return useTenantMutation(
     async (
       id,
-      input: { subscriptionId: string; couponCode?: string; coinsToSpend?: number },
+      input: {
+        subscriptionId: string;
+        couponCode?: string;
+        coinsToSpend?: number;
+        mode?: "ONLINE" | "COUNTER";
+      },
     ) => unwrap(await paymentsApi.createCheckout(id, input)),
   );
 }

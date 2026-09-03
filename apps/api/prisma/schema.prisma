@@ -16,7 +16,10 @@ datasource db {
 // TenantRole:   "MEMBER" | "COACH" | "ADMIN"
 // AccountStatus: "ACTIVE" | "SUSPENDED" | "DELETED"
 // PaymentStatus: "PENDING" | "COMPLETED" | "FAILED" | "REFUNDED"
-// OrderStatus:   "PENDING" | "SHIPPED" | "DELIVERED"
+// OrderStatus:   "PENDING" | "CONFIRMED" | "PACKED" | "SHIPPED" | "IN_TRANSIT" | "OUT_FOR_DELIVERY" | "DELIVERED" | "CANCELLED" | "RETURNED"
+// ShipmentKind:  "FORWARD" | "REVERSE"
+// ShipmentStatus:"PENDING" | "MANIFESTED" | "IN_TRANSIT" | "OUT_FOR_DELIVERY" | "DELIVERED" | "RTO" | "CANCELLED" | "FAILED"
+// ReturnStatus:  "REQUESTED" | "APPROVED" | "REJECTED" | "PICKED_UP" | "RECEIVED" | "REFUNDED" | "CANCELLED"
 // AuditAction:   "CREATE" | "UPDATE" | "DELETE" | "LOGIN" | "LOGOUT" | "ROLE_CHANGE" | "SETTINGS_CHANGE"
 // TodoVisibility: "PRIVATE" | "PROTECTED" | "PUBLIC"
 
@@ -761,6 +764,33 @@ model Product {
   stock       Int      @default(0)
   minOrderQty Int      @default(1)
   maxOrderQty Int      @default(100)
+  /// Shipping weight of one unit. Couriers price on this, so a wrong value is a
+  /// wrong quote; 500g is the shop's stock assumption for anything unmeasured.
+  weightGrams Int      @default(500)
+  /// Packed size of one unit, in centimetres. Couriers bill the greater of
+  /// actual and volumetric weight (L×W×H ÷ 5000), so a light bulky parcel — a
+  /// yoga mat, a foam roller — is priced on the space it takes, not its mass.
+  lengthCm    Int      @default(10)
+  widthCm     Int      @default(10)
+  heightCm    Int      @default(10)
+  /// Which warehouse ships this product. Null falls back to the default one,
+  /// which is what every product was before there was more than one warehouse.
+  warehouseId String?
+  warehouse   Warehouse? @relation(fields: [warehouseId], references: [id], onDelete: SetNull)
+  /// Whether a buyer may send this back at all. False for anything hygiene or
+  /// food-safety rules will not take back once opened.
+  isReturnable Boolean @default(true)
+  /// Whether a faulty or damaged one is swapped rather than refunded. Separate
+  /// from returnable: a sealed supplement can be replaceable without ever being
+  /// returnable for a change of mind.
+  isReplaceable Boolean @default(false)
+  /// Days after delivery this product may be returned. NULL follows the shop
+  /// setting, so changing that still moves everything that never asked for an
+  /// exception.
+  returnWindowDays Int?
+  /// Shown to the buyer beside the policy. For the case the flags cannot say —
+  /// "unopened only", "original packaging".
+  returnPolicyNote String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -770,6 +800,7 @@ model Product {
 
   @@index([isActive])
   @@index([category])
+  @@index([warehouseId])
 }
 
 model ProductReview {
@@ -833,30 +864,197 @@ model Order {
   buyerName      String
   buyerEmail     String
   buyerPhone     String
+  /// The street line. Kept as the whole address for orders placed before the
+  /// shop shipped anything, which is why the parts below are optional.
   buyerAddress   String
-  /// Fulfilment: PENDING, SHIPPED, DELIVERED. Not about money — see paymentStatus.
+  buyerCity      String?
+  buyerState     String?
+  /// Six digits. A courier can do nothing without it, so every new order has one.
+  buyerPincode   String?
+  /// Fulfilment: PENDING → CONFIRMED → PACKED → SHIPPED → IN_TRANSIT →
+  /// OUT_FOR_DELIVERY → DELIVERED, or CANCELLED / RETURNED. Not about money —
+  /// see paymentStatus.
   status         String   @default("PENDING")
   subtotalAmount Int      @default(0)
   gstRatePct     Int      @default(18)
   gstAmount      Int      @default(0)
+  /// What the courier costs the buyer. Quoted at checkout and frozen here, so a
+  /// later change to Delhivery's rates cannot re-price an order already placed.
+  shippingAmount Int      @default(0)
+  /// Why carriage came out unpriced, when it did. NULL is the ordinary case.
+  /// A quote can legitimately return zero — no courier token, nothing resolving
+  /// to a warehouse, a warehouse with no pincode — and the sale still goes
+  /// through, by design. This is how the shop finds out it happened instead of
+  /// absorbing the freight silently.
+  shippingQuoteIssue String?
   totalAmount    Int
-  /// Money: PENDING, COMPLETED, FAILED. An order placed before the shop took
-  /// cards stays PENDING here, which is what it always was.
+  /// Money: PENDING, COMPLETED, FAILED, REFUNDED. An order placed before the
+  /// shop took cards stays PENDING here, which is what it always was.
   paymentStatus    String    @default("PENDING")
   /// Razorpay's order id, which is what the browser and the webhook both
   /// return an order by. Indexed for exactly that lookup.
   gatewayOrderId   String?
   gatewayPaymentId String?
   paidAt           DateTime?
+  /// Razorpay's refund id and what it sent back, in paise. Partial refunds are
+  /// possible, so the amount is recorded rather than inferred from the total.
+  gatewayRefundId  String?
+  refundAmount     Int?
+  refundedAt       DateTime?
+  /// Fulfilment timestamps, each set once when the state is first reached.
+  confirmedAt    DateTime?
+  shippedAt      DateTime?
+  deliveredAt    DateTime?
+  cancelledAt    DateTime?
+  cancelReason   String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  items OrderItem[]
+  items     OrderItem[]
+  shipments Shipment[]
+  returns   ReturnRequest[]
 
   @@index([userId])
   @@index([status])
   @@index([createdAt])
   @@index([gatewayOrderId])
+}
+
+/// A place parcels leave from, and the pickup location Delhivery has on file.
+///
+/// `name` is the join between the two systems: Delhivery matches a manifest to
+/// a warehouse by that string and refuses anything it does not recognise, which
+/// is why it is unique here and why the app registers it through the API rather
+/// than trusting somebody to retype it.
+model Warehouse {
+  id            String  @id @default(cuid())
+  name          String  @unique
+  contactPerson String?
+  phone         String
+  email         String?
+  address       String
+  city          String
+  state         String
+  pincode       String
+  /// Where returns come back to, when that is not the pickup address.
+  returnAddress String?
+  returnCity    String?
+  returnState   String?
+  returnPincode String?
+  /// The one used for products that name no warehouse of their own. Exactly one
+  /// warehouse holds this at a time.
+  isDefault     Boolean @default(false)
+  isActive      Boolean @default(true)
+  /// When Delhivery last accepted this warehouse. Null means it exists here but
+  /// not there, and nothing can be manifested from it yet.
+  registeredAt  DateTime?
+  /// What Delhivery said if it refused the registration, kept for the operator.
+  registerError String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  products       Product[]
+  shipments      Shipment[]
+  pickupRequests PickupRequest[]
+
+  @@index([isActive])
+}
+
+/// A collection Delhivery has been asked to make from one warehouse.
+///
+/// Recorded rather than fired and forgotten: an operator asking twice for the
+/// same morning wants to see that the first request exists, and a courier that
+/// does not turn up is a conversation about a specific pickup id.
+model PickupRequest {
+  id          String    @id @default(cuid())
+  warehouseId String
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  /// Delhivery's own id for the collection.
+  pickupId    String?
+  pickupDate  String
+  pickupTime  String
+  expectedPackageCount Int
+  /// REQUESTED, or FAILED with the courier's reason in `note`.
+  status      String    @default("REQUESTED")
+  note        String?
+  requestedById String?
+  createdAt   DateTime  @default(now())
+
+  @@index([warehouseId])
+  @@index([pickupDate])
+}
+
+/// One courier consignment for an order — the parcel going out, or a return
+/// coming back. Kept apart from Order because an order can produce several: a
+/// forward shipment per warehouse the order draws on, then a reverse one when
+/// the buyer sends something back.
+model Shipment {
+  id       String @id @default(cuid())
+  orderId  String
+  order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  /// The warehouse this parcel left from, or comes back to. Null on parcels
+  /// booked before warehouses were records rather than a setting.
+  warehouseId String?
+  warehouse   Warehouse? @relation(fields: [warehouseId], references: [id], onDelete: SetNull)
+  /// Only "DELHIVERY" today. Named so a second courier does not need a migration.
+  provider String @default("DELHIVERY")
+  /// FORWARD (to the buyer) or REVERSE (back to the warehouse).
+  kind     String @default("FORWARD")
+  /// Delhivery's waybill — the number the buyer tracks and the courier scans.
+  waybill  String
+  /// PENDING, MANIFESTED, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, RTO,
+  /// CANCELLED, FAILED. Mapped from Delhivery's own status vocabulary.
+  status       String    @default("PENDING")
+  /// Delhivery's wording for the latest scan, shown to the buyer as-is.
+  statusDetail String?
+  /// Where the parcel was last seen, from the newest scan.
+  currentLocation String?
+  /// The warehouse this went out from, as registered with Delhivery.
+  pickupLocation  String?
+  estimatedDeliveryAt DateTime?
+  /// The scan history from the last sync. Stored so the tracking page can be
+  /// drawn without calling Delhivery on every page view.
+  scans        Json      @default("[]")
+  lastSyncedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  returnRequests ReturnRequest[]
+
+  @@unique([provider, waybill])
+  @@index([orderId])
+  @@index([status])
+  @@index([warehouseId])
+}
+
+/// A buyer asking for an order back, and everything that follows from it.
+/// Approval is a human decision; the refund that follows is not.
+model ReturnRequest {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  /// REQUESTED → APPROVED → PICKED_UP → RECEIVED → REFUNDED, or REJECTED /
+  /// CANCELLED. Rejected and cancelled requests are kept as a record.
+  status  String @default("REQUESTED")
+  reason  String
+  /// What the buyer typed beyond the canned reason.
+  comment String?
+  /// The reverse consignment, once approval has booked one.
+  shipmentId String?
+  shipment   Shipment? @relation(fields: [shipmentId], references: [id], onDelete: SetNull)
+  /// Who approved or rejected it, and when. A user id, not a membership: this
+  /// is platform staff acting on a platform order.
+  decidedById String?
+  decidedAt   DateTime?
+  decisionNote String?
+  refundAmount Int?
+  refundedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model OrderItem {

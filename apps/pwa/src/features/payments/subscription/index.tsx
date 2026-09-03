@@ -34,7 +34,7 @@ const COIN_REASONS: Record<string, string> = {
   REVERSAL: "Returned",
   ADJUSTMENT: "Adjusted by the gym",
 };
-import { Coins, CreditCard, Pencil, Plus, Power, Trash2, Package } from "lucide-react";
+import { Coins, CreditCard, Pencil, Plus, Power, Store, Trash2, Package } from "lucide-react";
 import type { Subscription } from "@/types/api";
 
 export default function SubscriptionsPage() {
@@ -120,15 +120,26 @@ export default function SubscriptionsPage() {
   const startCheckout = async (
     subscription: Subscription,
     redemption: { couponCode?: string; coinsToSpend?: number },
+    mode: "ONLINE" | "COUNTER" = "ONLINE",
   ) => {
     setPageError("");
     setPayingPlanId(subscription.id);
 
     try {
-      const { checkout: session } = await createCheckout.mutateAsync({
+      const { checkout: session, counter } = await createCheckout.mutateAsync({
         subscriptionId: subscription.id,
         ...redemption,
+        ...(mode === "COUNTER" ? { mode } : {}),
       });
+
+      // Booked for the desk. Nothing was charged and there is no window to
+      // open — the renewal is now a pending bill on the payments screen, which
+      // is where the member will watch it settle.
+      if (counter) {
+        setRedeeming(null);
+        navigate("/payments");
+        return;
+      }
 
       // A coupon and coins can clear a bill outright, and then the API has
       // already completed the purchase — there is no window to open.
@@ -348,7 +359,8 @@ export default function SubscriptionsPage() {
 
             <p className="text-xs text-muted-foreground">
               The gym works out the final price. Anything you still owe is added to
-              the same payment.
+              the same payment. A coupon and coins come off only when paying
+              online — at the desk the gym applies them as they take the money.
             </p>
 
             <div className="flex flex-wrap gap-2">
@@ -367,6 +379,18 @@ export default function SubscriptionsPage() {
                   <CreditCard className="h-4 w-4" />
                 )}
                 Continue to payment
+              </Button>
+              {/* The other way to settle it, the same pair the store offers.
+                  Deliberately without the coupon and coins above: nothing is
+                  charged here, and a coin spent against a renewal nobody turns
+                  up to pay for would have to be clawed back. */}
+              <Button
+                variant="outline"
+                disabled={payingPlanId === redeeming.id}
+                onClick={() => startCheckout(redeeming, {}, "COUNTER")}
+              >
+                <Store className="h-4 w-4" />
+                Pay at the counter
               </Button>
               <Button variant="ghost" onClick={() => setRedeeming(null)}>
                 Cancel

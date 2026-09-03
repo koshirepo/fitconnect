@@ -88,6 +88,9 @@ export default function RecordPaymentPage() {
   const queryClient = useQueryClient();
   const gymName = currentMembership()?.tenantName ?? "the gym";
   const today = React.useMemo(() => new Date().toISOString().slice(0, 10), []);
+  // Settling money owed is a coach's job; deciding what it should have been is
+  // not, so the price is theirs to read rather than to set.
+  const canEditAmount = can(Permission.PAYMENTS_UPDATE);
 
   // Form state
   const [fMembershipId, setFMembershipId] = React.useState(membershipId ?? "");
@@ -229,7 +232,13 @@ export default function RecordPaymentPage() {
       // belonged to a different plan.
       paidAmountEdited.current = false;
       setFPaidAmount(String(sub.amount));
-      const validUntil = new Date(today);
+      // Stacked on cover the member still holds, matching what the server
+      // does when a member pays for themselves: somebody paying early is
+      // paying in advance, not restarting their membership from today. Still
+      // only a prefill — the desk can overwrite the date.
+      const due = selectedMember?.dueDate?.slice(0, 10) ?? null;
+      const start = due && due > today ? due : today;
+      const validUntil = new Date(start);
       validUntil.setDate(validUntil.getDate() + sub.durationDays);
       setFValidUntil(validUntil.toISOString().slice(0, 10));
     }
@@ -508,19 +517,35 @@ export default function RecordPaymentPage() {
               )}
             </div>
 
-            {/* Amount */}
+            {/* Amount.
+
+                A coach may take the money but not reprice the plan, so the
+                field is theirs to read and not to edit. It used to be a
+                disabled input, which the theme renders at half opacity — the
+                one number the person at the desk most needs was the hardest
+                one to read. Shown as plain text for them instead. */}
             <div className="space-y-2">
               <Label htmlFor="amount">Amount (in rupees) *</Label>
-              <Input
-                id="amount"
-                type="number"
-                value={fAmount}
-                onChange={(e) => setFAmount(e.target.value)}
-                min={1}
-                step={1}
-                placeholder="Enter amount in rupees"
-                disabled={!can(Permission.PAYMENTS_UPDATE)}
-              />
+              {canEditAmount ? (
+                <Input
+                  id="amount"
+                  type="number"
+                  value={fAmount}
+                  onChange={(e) => setFAmount(e.target.value)}
+                  min={1}
+                  step={1}
+                  placeholder="Enter amount in rupees"
+                />
+              ) : (
+                <p
+                  id="amount"
+                  className="flex h-8 items-center rounded-none border border-input bg-input/30 px-2.5 text-sm font-semibold tabular-nums"
+                >
+                  {fAmount
+                    ? formatCurrency(Number(fAmount))
+                    : "Choose a plan to see the amount"}
+                </p>
+              )}
 
               {!fAmount && error.includes("amount") && (
                 <p className="text-sm text-destructive-foreground">{error}</p>

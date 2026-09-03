@@ -79,6 +79,10 @@ export const ModelName = {
   ProductReviewComment: 'ProductReviewComment',
   ProductReviewHelpful: 'ProductReviewHelpful',
   Order: 'Order',
+  Warehouse: 'Warehouse',
+  PickupRequest: 'PickupRequest',
+  Shipment: 'Shipment',
+  ReturnRequest: 'ReturnRequest',
   OrderItem: 'OrderItem',
   WorkoutPlan: 'WorkoutPlan',
   WorkoutPlanAssignment: 'WorkoutPlanAssignment',
@@ -521,6 +525,15 @@ export const ProductScalarFieldEnum = {
   stock: 'stock',
   minOrderQty: 'minOrderQty',
   maxOrderQty: 'maxOrderQty',
+  weightGrams: 'weightGrams',
+  lengthCm: 'lengthCm',
+  widthCm: 'widthCm',
+  heightCm: 'heightCm',
+  warehouseId: 'warehouseId',
+  isReturnable: 'isReturnable',
+  isReplaceable: 'isReplaceable',
+  returnWindowDays: 'returnWindowDays',
+  returnPolicyNote: 'returnPolicyNote',
   isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -576,20 +589,114 @@ export const OrderScalarFieldEnum = {
   buyerEmail: 'buyerEmail',
   buyerPhone: 'buyerPhone',
   buyerAddress: 'buyerAddress',
+  buyerCity: 'buyerCity',
+  buyerState: 'buyerState',
+  buyerPincode: 'buyerPincode',
   status: 'status',
   subtotalAmount: 'subtotalAmount',
   gstRatePct: 'gstRatePct',
   gstAmount: 'gstAmount',
+  shippingAmount: 'shippingAmount',
+  shippingQuoteIssue: 'shippingQuoteIssue',
   totalAmount: 'totalAmount',
   paymentStatus: 'paymentStatus',
   gatewayOrderId: 'gatewayOrderId',
   gatewayPaymentId: 'gatewayPaymentId',
   paidAt: 'paidAt',
+  gatewayRefundId: 'gatewayRefundId',
+  refundAmount: 'refundAmount',
+  refundedAt: 'refundedAt',
+  confirmedAt: 'confirmedAt',
+  shippedAt: 'shippedAt',
+  deliveredAt: 'deliveredAt',
+  cancelledAt: 'cancelledAt',
+  cancelReason: 'cancelReason',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type OrderScalarFieldEnum = (typeof OrderScalarFieldEnum)[keyof typeof OrderScalarFieldEnum]
+
+
+export const WarehouseScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  contactPerson: 'contactPerson',
+  phone: 'phone',
+  email: 'email',
+  address: 'address',
+  city: 'city',
+  state: 'state',
+  pincode: 'pincode',
+  returnAddress: 'returnAddress',
+  returnCity: 'returnCity',
+  returnState: 'returnState',
+  returnPincode: 'returnPincode',
+  isDefault: 'isDefault',
+  isActive: 'isActive',
+  registeredAt: 'registeredAt',
+  registerError: 'registerError',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WarehouseScalarFieldEnum = (typeof WarehouseScalarFieldEnum)[keyof typeof WarehouseScalarFieldEnum]
+
+
+export const PickupRequestScalarFieldEnum = {
+  id: 'id',
+  warehouseId: 'warehouseId',
+  pickupId: 'pickupId',
+  pickupDate: 'pickupDate',
+  pickupTime: 'pickupTime',
+  expectedPackageCount: 'expectedPackageCount',
+  status: 'status',
+  note: 'note',
+  requestedById: 'requestedById',
+  createdAt: 'createdAt'
+} as const
+
+export type PickupRequestScalarFieldEnum = (typeof PickupRequestScalarFieldEnum)[keyof typeof PickupRequestScalarFieldEnum]
+
+
+export const ShipmentScalarFieldEnum = {
+  id: 'id',
+  orderId: 'orderId',
+  warehouseId: 'warehouseId',
+  provider: 'provider',
+  kind: 'kind',
+  waybill: 'waybill',
+  status: 'status',
+  statusDetail: 'statusDetail',
+  currentLocation: 'currentLocation',
+  pickupLocation: 'pickupLocation',
+  estimatedDeliveryAt: 'estimatedDeliveryAt',
+  scans: 'scans',
+  lastSyncedAt: 'lastSyncedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ShipmentScalarFieldEnum = (typeof ShipmentScalarFieldEnum)[keyof typeof ShipmentScalarFieldEnum]
+
+
+export const ReturnRequestScalarFieldEnum = {
+  id: 'id',
+  orderId: 'orderId',
+  status: 'status',
+  reason: 'reason',
+  comment: 'comment',
+  shipmentId: 'shipmentId',
+  decidedById: 'decidedById',
+  decidedAt: 'decidedAt',
+  decisionNote: 'decisionNote',
+  refundAmount: 'refundAmount',
+  refundedAt: 'refundedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ReturnRequestScalarFieldEnum = (typeof ReturnRequestScalarFieldEnum)[keyof typeof ReturnRequestScalarFieldEnum]
 
 
 export const OrderItemScalarFieldEnum = {

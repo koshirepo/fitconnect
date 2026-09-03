@@ -262,7 +262,13 @@ export const signupService = {
 
     // One order for the whole bill: the member sees a single amount, and every
     // row it covers settles together.
-    const credentials = await gatewayService.resolveCredentials(tenant.id);
+    //
+    // Unless the visitor asked to pay at the desk, in which case there is no
+    // order to open: the same rows are written PENDING and settled by staff.
+    const payAtCounter = input.paymentMode === "COUNTER";
+    const credentials = payAtCounter
+      ? null
+      : await gatewayService.resolveCredentials(tenant.id);
     let order: { id: string; currency: string } | null = null;
     if (credentials) {
       try {

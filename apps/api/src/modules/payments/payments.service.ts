@@ -476,6 +476,14 @@ export const paymentService = {
     // Keep membership.dueDate in sync
     if (existing.membershipId) {
       await paymentRepository.refreshDueDate(existing.membershipId);
+
+      // And bring the member back if that date now reaches today, exactly as
+      // the gateway path does. A self-signup arrives here SUSPENDED by design
+      // and this is the moment it was waiting for; without it the desk could
+      // take the money and leave the membership inactive.
+      if (status === "COMPLETED") {
+        await paymentRepository.reactivateIfPaidUp(existing.membershipId);
+      }
     }
 
     // A pending row settling is the other way a chase ends, and the reminders

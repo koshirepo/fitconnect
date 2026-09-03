@@ -63,6 +63,47 @@ export function buildTenantPublicUrl(
 }
 
 /**
+ * A URL for a path on the app's own host, from wherever you are standing.
+ *
+ * Platform work — the tenant list, platform roles and audit, the shop and its
+ * warehouses — is not gym-scoped and exists only on the app host. A link to it
+ * written on a gym subdomain has to leave that subdomain, so it needs a whole
+ * URL rather than a path. Same protocol and port; only the hostname changes.
+ *
+ * Falls back to the plain path when the host cannot carry a subdomain at all
+ * (an IP, or a bare local host), where the app host is the current one anyway.
+ */
+export function buildApexUrl(
+  path = "/",
+  origin = typeof window !== "undefined" ? window.location.origin : "",
+) {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  if (!origin) return normalizedPath;
+
+  const parsedOrigin = new URL(origin);
+  const rootHost = getRootHostname(parsedOrigin.hostname);
+  if (!rootHost || rootHost === parsedOrigin.hostname) return normalizedPath;
+
+  const port = parsedOrigin.port ? `:${parsedOrigin.port}` : "";
+  return `${parsedOrigin.protocol}//${rootHost}${port}${normalizedPath}`;
+}
+
+/**
+ * Top-level segments that live only on the app host.
+ *
+ * Kept beside the tenant helpers because the two lists answer the same
+ * question from opposite sides: this one is what a gym subdomain does not
+ * serve, and must hand back to the app host.
+ */
+export const APEX_ONLY_SEGMENTS = new Set([
+  "tenants",
+  "platform-roles",
+  "platform-audit",
+  "platform-commerce",
+  "shop",
+]);
+
+/**
  * Rewrite a path to its gym-subdomain form, regardless of the current host.
  * On a gym subdomain the dashboard lives under `/dashboard`, so `/members`
  * becomes `/dashboard/members`.

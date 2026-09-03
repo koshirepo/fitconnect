@@ -130,6 +130,28 @@ api.interceptors.response.use(undefined, queueFailedMutation);
 export function getApiError(error: unknown): string {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data;
+
+    /**
+     * A rejected schema carries the reason; use it.
+     *
+     * The API answers a failed Zod parse with "Request validation failed." and
+     * puts the useful part — which field, and why — in `details.fieldErrors`.
+     * Showing only the headline told a buyer their form was wrong without
+     * saying what was wrong with it, which is no better than silence.
+     */
+    const fieldErrors = data?.error?.details?.fieldErrors as
+      | Record<string, string[] | undefined>
+      | undefined;
+
+    if (fieldErrors) {
+      const messages = Object.values(fieldErrors)
+        .flatMap((entry) => entry ?? [])
+        .filter(Boolean);
+      // Two at most: a wall of field errors reads as a stack trace, and the
+      // form highlights the rest anyway.
+      if (messages.length > 0) return messages.slice(0, 2).join(" ");
+    }
+
     // API returns { success: false, error: { code, message } }
     if (data?.error?.message) return data.error.message;
     if (typeof data?.error === "string") return data.error;

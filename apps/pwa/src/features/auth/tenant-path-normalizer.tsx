@@ -7,7 +7,7 @@
  * - Primary exports: TenantPathNormalizer, ApexPathNormalizer.
  */
 import { Navigate, useLocation } from "react-router-dom";
-import { toTenantDashboardPath } from "@/lib/subdomain";
+import { APEX_ONLY_SEGMENTS, buildApexUrl, toTenantDashboardPath } from "@/lib/subdomain";
 
 /**
  * Top-level segments that belong to the signed-in gym dashboard.
@@ -46,6 +46,20 @@ export function TenantPathNormalizer() {
         replace
       />
     );
+  }
+
+  /**
+   * Platform work has no gym-scoped form, so it cannot be rewritten — it has
+   * to be handed back to the app host. A bookmark or a pasted link to the
+   * shop, its warehouses, orders or returns otherwise died here on the
+   * landing page. A full page load, because this crosses an origin.
+   */
+  if (firstSegment && APEX_ONLY_SEGMENTS.has(firstSegment)) {
+    const target = buildApexUrl(location.pathname + location.search);
+    if (typeof window !== "undefined" && target.startsWith("http")) {
+      window.location.replace(target);
+      return null;
+    }
   }
 
   return <Navigate to="/" replace />;

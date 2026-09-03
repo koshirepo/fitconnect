@@ -14,6 +14,7 @@ import { tenantRoutes } from "./modules/tenants/tenants.routes";
 import { memberRoutes } from "./modules/members/members.routes";
 import { workoutRoutes } from "./modules/workouts/workouts.routes";
 import { paymentRoutes, gatewayWebhookRoutes } from "./modules/payments/payments.routes";
+import { courierWebhookRoutes } from "./modules/commerce/commerce.routes";
 import { badgeRoutes } from "./modules/badges/badges.routes";
 import { couponRoutes } from "./modules/coupons/coupons.routes";
 import { freezeRoutes } from "./modules/freezes/freezes.routes";
@@ -121,6 +122,9 @@ app.route("/uploads", uploadRoutes);
 // Payment gateway callbacks. No session — each delivery carries its own HMAC
 // signature, verified against the gym's webhook secret.
 app.route("/webhooks", gatewayWebhookRoutes);
+// Courier scan pushes. Delhivery signs nothing, so the route authenticates on a
+// shared secret and refuses every delivery until one is configured.
+app.route("/webhooks", courierWebhookRoutes);
 
 app.onError((err, c) => {
   if (

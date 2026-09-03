@@ -137,6 +137,12 @@ const AdminProductDetailPage = React.lazy(
 const AdminOrdersPage = React.lazy(
   () => import("@/features/commerce/AdminOrdersPage"),
 );
+const AdminReturnsPage = React.lazy(
+  () => import("@/features/commerce/AdminReturnsPage"),
+);
+const AdminWarehousesPage = React.lazy(
+  () => import("@/features/commerce/AdminWarehousesPage"),
+);
 const AdminOrderDetailPage = React.lazy(
   () => import("@/features/commerce/AdminOrderDetailPage"),
 );
@@ -679,6 +685,24 @@ export default function App() {
                       <Route
                         path="/platform-commerce/orders/:orderId"
                         element={<AdminOrderDetailPage />}
+                      />
+                      {/* The returns queue reads with the orders it belongs to;
+                          deciding on one still takes ORDERS_UPDATE, which the
+                          page enforces on the buttons themselves. */}
+                      <Route
+                        path="/platform-commerce/returns"
+                        element={<AdminReturnsPage />}
+                      />
+                    </Route>
+
+                    {/* Warehouses sit with the catalog: where a product ships
+                        from is part of what the product is. */}
+                    <Route
+                      element={<RequirePermission anyOf={[Permission.PLATFORM_PRODUCTS_READ]} />}
+                    >
+                      <Route
+                        path="/platform-commerce/warehouses"
+                        element={<AdminWarehousesPage />}
                       />
                     </Route>
 

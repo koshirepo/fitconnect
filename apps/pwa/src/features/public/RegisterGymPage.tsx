@@ -26,6 +26,8 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PhotoCapture } from "@/components/ui/photo-capture";
@@ -426,9 +428,8 @@ export default function RegisterGymPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="gym-phone">Gym phone</Label>
-                  <Input
+                  <PhoneInput
                     id="gym-phone"
-                    type="tel"
                     value={gym.phone}
                     onChange={(e) => setGymField("phone", e.target.value)}
                     placeholder="Optional"
@@ -524,9 +525,8 @@ export default function RegisterGymPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="owner-phone">Your phone</Label>
-                  <Input
+                  <PhoneInput
                     id="owner-phone"
-                    type="tel"
                     value={owner.phone}
                     onChange={(e) => setOwnerField("phone", e.target.value)}
                     placeholder="Optional"
@@ -536,9 +536,8 @@ export default function RegisterGymPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="owner-password">Password</Label>
-                <Input
+                <PasswordInput
                   id="owner-password"
-                  type="password"
                   value={owner.password}
                   onChange={(e) => setOwnerField("password", e.target.value)}
                   placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
@@ -549,9 +548,8 @@ export default function RegisterGymPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="owner-confirm">Confirm password</Label>
-                <Input
+                <PasswordInput
                   id="owner-confirm"
-                  type="password"
                   value={owner.confirmPassword}
                   onChange={(e) => setOwnerField("confirmPassword", e.target.value)}
                   autoComplete="new-password"

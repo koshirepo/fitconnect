@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { FormPageSkeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, ShoppingBag, AlertTriangle, Trash2 } from "lucide-react";
+import { ArrowLeft, ShoppingBag, AlertTriangle, Trash2, Truck, Loader2 } from "lucide-react";
 import type { PlaceOrderPayload, Product } from "@/types/api";
 import { calculateTotals, formatCurrency, validateQuantity } from "./pricing";
 import { clearCartItems, getCartItems, saveCartItems, type CartItem } from "./cart";
@@ -20,6 +21,31 @@ type BuyerForm = {
   buyerEmail: string;
   buyerPhone: string;
   buyerAddress: string;
+  buyerCity: string;
+  buyerState: string;
+  buyerPincode: string;
+};
+
+/**
+ * What the courier said about the pincode, and what carriage will cost.
+ *
+ * Both come from the API together because they are asked the same moment and
+ * a serviceable pincode with no price is not something the buyer can act on.
+ */
+type ShippingState = {
+  status: "idle" | "checking" | "ok" | "unserviceable" | "error";
+  amount: number;
+  city: string | null;
+  state: string | null;
+  message: string;
+};
+
+const IDLE_SHIPPING: ShippingState = {
+  status: "idle",
+  amount: 0,
+  city: null,
+  state: null,
+  message: "",
 };
 
 type CheckoutLine = {
@@ -41,7 +67,11 @@ export default function PublicCheckoutPage() {
     buyerEmail: user?.email ?? "",
     buyerPhone: user?.phone ?? "",
     buyerAddress: "",
+    buyerCity: "",
+    buyerState: "",
+    buyerPincode: "",
   });
+  const [shipping, setShipping] = React.useState<ShippingState>(IDLE_SHIPPING);
 
   React.useEffect(() => {
     setLoading(true);
@@ -59,10 +89,10 @@ export default function PublicCheckoutPage() {
   React.useEffect(() => {
     if (!user) return;
     setBuyer((prev) => ({
+      ...prev,
       buyerName: prev.buyerName || user.name || "",
       buyerEmail: prev.buyerEmail || user.email || "",
       buyerPhone: prev.buyerPhone || user.phone || "",
-      buyerAddress: prev.buyerAddress,
     }));
   }, [user]);
 
@@ -111,6 +141,94 @@ export default function PublicCheckoutPage() {
     [lines],
   );
   const totals = React.useMemo(() => calculateTotals(subtotalAmount), [subtotalAmount]);
+  const payable = totals.totalAmount + shipping.amount;
+
+  const pincode = buyer.buyerPincode.trim();
+  // Stable across renders that only reorder the cart, so a quote is not
+  // re-requested every time the summary re-renders.
+  const itemsKey = React.useMemo(
+    () =>
+      lines
+        .map((line) => `${line.product.id}:${line.quantity}`)
+        .sort()
+        .join(","),
+    [lines],
+  );
+
+  /**
+   * Ask the courier about the address as it is typed.
+   *
+   * Debounced, and abandoned when the pincode changes mid-flight, so the answer
+   * on screen always belongs to the pincode in the box. City and state are
+   * filled in from the courier's own answer — it knows them better than the
+   * buyer does, and a mismatch there is what gets a parcel misrouted.
+   */
+  React.useEffect(() => {
+    if (!/^[1-9][0-9]{5}$/.test(pincode) || !itemsKey) {
+      setShipping(IDLE_SHIPPING);
+      return;
+    }
+
+    let cancelled = false;
+    setShipping((prev) => ({ ...prev, status: "checking", message: "" }));
+
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await commerceApi.checkPincode(pincode);
+        if (cancelled) return;
+
+        const service = res.data.data;
+        if (!service.serviceable) {
+          setShipping({
+            status: "unserviceable",
+            amount: 0,
+            city: null,
+            state: null,
+            message: "We cannot deliver to this pincode yet.",
+          });
+          return;
+        }
+
+        setBuyer((prev) => ({
+          ...prev,
+          buyerCity: service.city ?? prev.buyerCity,
+          buyerState: service.state ?? prev.buyerState,
+        }));
+
+        const quote = await commerceApi.quoteShipping(
+          pincode,
+          lines.map((line) => ({ productId: line.product.id, quantity: line.quantity })),
+        );
+        if (cancelled) return;
+
+        setShipping({
+          status: "ok",
+          amount: quote.data.data.shippingAmount,
+          city: service.city ?? null,
+          state: service.state ?? null,
+          message: "",
+        });
+      } catch (err: unknown) {
+        if (cancelled) return;
+        // A courier that will not answer must not block a sale. The order goes
+        // through with carriage the server prices again at that moment.
+        setShipping({
+          status: "error",
+          amount: 0,
+          city: null,
+          state: null,
+          message: getApiError(err),
+        });
+      }
+    }, 400);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+    // `lines` is read inside, but `itemsKey` is what decides a re-quote.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pincode, itemsKey]);
 
   const placeOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,13 +251,33 @@ export default function PublicCheckoutPage() {
       !buyer.buyerName.trim() ||
       !buyer.buyerEmail.trim() ||
       !buyer.buyerPhone.trim() ||
-      !buyer.buyerAddress.trim()
+      !buyer.buyerAddress.trim() ||
+      !buyer.buyerCity.trim() ||
+      !buyer.buyerState.trim()
     ) {
-      setError("Please complete buyer details.");
+      setError("Please complete the delivery address.");
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyer.buyerEmail.trim())) {
       setError("Please enter a valid buyer email.");
+      return;
+    }
+    // These two mirror the API's own rules. Letting them through only to be
+    // refused server-side costs a round trip and returns a worse message.
+    if (buyer.buyerPhone.replace(/\D/g, "").length < 8) {
+      setError("Please enter a valid phone number the courier can call.");
+      return;
+    }
+    if (buyer.buyerAddress.trim().length < 10) {
+      setError("Please enter the full street address — house or flat, street, and landmark.");
+      return;
+    }
+    if (!/^[1-9][0-9]{5}$/.test(buyer.buyerPincode.trim())) {
+      setError("Please enter a valid 6-digit pincode.");
+      return;
+    }
+    if (shipping.status === "unserviceable") {
+      setError("We cannot deliver to this pincode yet. Try another address.");
       return;
     }
 
@@ -148,6 +286,9 @@ export default function PublicCheckoutPage() {
       buyerEmail: buyer.buyerEmail.trim(),
       buyerPhone: buyer.buyerPhone.trim(),
       buyerAddress: buyer.buyerAddress.trim(),
+      buyerCity: buyer.buyerCity.trim(),
+      buyerState: buyer.buyerState.trim(),
+      buyerPincode: buyer.buyerPincode.trim(),
       items: lines.map((line) => ({
         productId: line.product.id,
         quantity: line.quantity,
@@ -293,16 +434,18 @@ export default function PublicCheckoutPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="buyerPhone">Phone</Label>
-                  <Input
+                  <PhoneInput
                     id="buyerPhone"
+                    placeholder="9876543210"
                     value={buyer.buyerPhone}
                     onChange={(e) => setBuyer((prev) => ({ ...prev, buyerPhone: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="buyerAddress">Address</Label>
+                  <Label htmlFor="buyerAddress">Street address</Label>
                   <Input
                     id="buyerAddress"
+                    placeholder="House / flat, street, landmark"
                     value={buyer.buyerAddress}
                     onChange={(e) =>
                       setBuyer((prev) => ({ ...prev, buyerAddress: e.target.value }))
@@ -310,10 +453,81 @@ export default function PublicCheckoutPage() {
                   />
                 </div>
 
+                {/* Pincode leads, because it is what the courier answers on and
+                    what fills in the two fields beside it. */}
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="buyerPincode">Pincode</Label>
+                    <Input
+                      id="buyerPincode"
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder="560001"
+                      value={buyer.buyerPincode}
+                      onChange={(e) =>
+                        setBuyer((prev) => ({
+                          ...prev,
+                          buyerPincode: e.target.value.replace(/\D/g, "").slice(0, 6),
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="buyerCity">City</Label>
+                    <Input
+                      id="buyerCity"
+                      value={buyer.buyerCity}
+                      onChange={(e) => setBuyer((prev) => ({ ...prev, buyerCity: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="buyerState">State</Label>
+                    <Input
+                      id="buyerState"
+                      value={buyer.buyerState}
+                      onChange={(e) =>
+                        setBuyer((prev) => ({ ...prev, buyerState: e.target.value }))
+                      }
+                    />
+                  </div>
+                </div>
+
+                {/* One line, and only when it says something the buyer did not
+                    already know from typing the pincode. */}
+                {shipping.status === "checking" && (
+                  <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Checking delivery to {pincode}…
+                  </p>
+                )}
+                {shipping.status === "ok" && (
+                  <p className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-500">
+                    <Truck className="h-3.5 w-3.5" />
+                    Delivers to {shipping.city ?? (buyer.buyerCity || pincode)} —{" "}
+                    {shipping.amount === 0 ? "free shipping" : formatCurrency(shipping.amount)}
+                  </p>
+                )}
+                {shipping.status === "unserviceable" && (
+                  <p className="flex items-center gap-2 text-xs text-destructive">
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    {shipping.message}
+                  </p>
+                )}
+                {shipping.status === "error" && (
+                  <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    Shipping could not be priced right now. You can still place the order.
+                  </p>
+                )}
+
                 {error && <p className="text-sm text-destructive">{error}</p>}
 
-                <Button type="submit" className="w-full" disabled={submitting}>
-                  {submitting ? "Processing..." : `Pay ${formatCurrency(totals.totalAmount)}`}
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={submitting || shipping.status === "unserviceable"}
+                >
+                  {submitting ? "Processing..." : `Pay ${formatCurrency(payable)}`}
                 </Button>
               </form>
             </CardContent>
@@ -347,9 +561,23 @@ export default function PublicCheckoutPage() {
                   <span className="text-muted-foreground">GST ({totals.gstRatePct}%)</span>
                   <span>{formatCurrency(totals.gstAmount)}</span>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Shipping</span>
+                  <span>
+                    {shipping.status === "checking"
+                      ? "…"
+                      : shipping.status === "ok"
+                        ? shipping.amount === 0
+                          ? "Free"
+                          : formatCurrency(shipping.amount)
+                        : // Nothing to show until there is a pincode to price
+                          // against, and a dash reads better than ₹0 does.
+                          "—"}
+                  </span>
+                </div>
                 <div className="flex justify-between font-semibold">
                   <span>Total</span>
-                  <span>{formatCurrency(totals.totalAmount)}</span>
+                  <span>{formatCurrency(payable)}</span>
                 </div>
               </div>
             </CardContent>

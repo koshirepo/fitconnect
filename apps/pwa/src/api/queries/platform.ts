@@ -13,9 +13,13 @@ import { queryKeys } from "@/lib/query-keys";
 import type {
   CreateProductPayload,
   CreateTenantPayload,
+  CreateWarehousePayload,
   OrderStatus,
+  ReturnRequest,
+  SchedulePickupPayload,
   UpdateProductPayload,
   UpdateTenantPayload,
+  UpdateWarehousePayload,
 } from "@/types/api";
 import {
   unwrap,
@@ -290,5 +294,147 @@ export function useDeleteAdminOrder() {
       await commerceApi.deleteAdminOrder(orderId);
     },
     { invalidates: [[...COMMERCE_KEY, "orders"]] },
+  );
+}
+
+/**
+ * An order's parcels and returns, for the admin detail page.
+ *
+ * The same endpoint the buyer's own page reads, which is deliberate: two
+ * queries answering "where is this parcel" would eventually disagree.
+ */
+export function useOrderTracking(orderId: string | undefined) {
+  return useQuery({
+    queryKey: [...COMMERCE_KEY, "orders", orderId ?? "none", "tracking"],
+    enabled: Boolean(orderId),
+    queryFn: async () => unwrap(await commerceApi.getOrderTracking(orderId!)),
+  });
+}
+
+/** Book the courier by hand, for an order whose automatic booking failed. */
+export function useShipOrder() {
+  return useAppMutation(
+    async (orderId: string) => unwrap(await commerceApi.shipOrder(orderId)),
+    { invalidates: [[...COMMERCE_KEY, "orders"]] },
+  );
+}
+
+export function useAdminCancelOrder() {
+  return useAppMutation(
+    async (vars: { orderId: string; reason: string }) =>
+      unwrap(await commerceApi.adminCancelOrder(vars.orderId, vars.reason)),
+    { invalidates: [[...COMMERCE_KEY, "orders"]] },
+  );
+}
+
+export function useRefundOrder() {
+  return useAppMutation(
+    async (vars: { orderId: string; amount?: number; reason?: string }) =>
+      unwrap(
+        await commerceApi.refundOrder(vars.orderId, {
+          ...(vars.amount === undefined ? {} : { amount: vars.amount }),
+          ...(vars.reason ? { reason: vars.reason } : {}),
+        }),
+      ),
+    { invalidates: [[...COMMERCE_KEY, "orders"]] },
+  );
+}
+
+/** The returns queue across every order, paged for infinite scroll. */
+export function useReturnsInfinite(
+  filters: { status?: string } = {},
+  options: { enabled?: boolean; limit?: number } = {},
+) {
+  const { limit = 20 } = options;
+  return useAppInfiniteQuery<ReturnRequest>(
+    [...COMMERCE_KEY, "returns", "infinite", filters, limit],
+    async (page) => {
+      const { data, meta } = unwrapPaginated(
+        await commerceApi.listReturns(page, limit, filters.status),
+      );
+      return { data: data.returns, meta };
+    },
+    options,
+  );
+}
+
+export function useDecideReturn() {
+  return useAppMutation(
+    async (vars: { returnId: string; decision: "APPROVE" | "REJECT"; note?: string }) =>
+      unwrap(await commerceApi.decideReturn(vars.returnId, vars.decision, vars.note)),
+    { invalidates: [[...COMMERCE_KEY, "returns"], [...COMMERCE_KEY, "orders"]] },
+  );
+}
+
+/** Marks the parcel back with us, which is also what refunds the buyer. */
+export function useReceiveReturn() {
+  return useAppMutation(
+    async (returnId: string) => unwrap(await commerceApi.receiveReturn(returnId)),
+    { invalidates: [[...COMMERCE_KEY, "returns"], [...COMMERCE_KEY, "orders"]] },
+  );
+}
+
+// ─── Warehouses ───────────────────────────────────────────────────────────────
+
+const WAREHOUSE_KEY = [...COMMERCE_KEY, "warehouses"] as const;
+
+export function useWarehouses(includeInactive = true) {
+  return useQuery({
+    queryKey: [...WAREHOUSE_KEY, { includeInactive }],
+    queryFn: async () => unwrap(await commerceApi.listWarehouses(includeInactive)).warehouses,
+  });
+}
+
+export function useWarehouse(warehouseId: string | undefined) {
+  return useQuery({
+    queryKey: [...WAREHOUSE_KEY, warehouseId ?? "none"],
+    enabled: Boolean(warehouseId),
+    queryFn: async () => unwrap(await commerceApi.getWarehouse(warehouseId!)),
+  });
+}
+
+/**
+ * Creating a warehouse registers it with Delhivery in the same call.
+ *
+ * The mutation succeeds even when the courier refuses — the row exists — so
+ * callers read `registerError` rather than relying on the throw.
+ */
+export function useCreateWarehouse() {
+  return useAppMutation(
+    async (payload: CreateWarehousePayload) => unwrap(await commerceApi.createWarehouse(payload)),
+    { invalidates: [[...WAREHOUSE_KEY]] },
+  );
+}
+
+export function useUpdateWarehouse() {
+  return useAppMutation(
+    async (vars: { warehouseId: string; data: UpdateWarehousePayload }) =>
+      unwrap(await commerceApi.updateWarehouse(vars.warehouseId, vars.data)),
+    { invalidates: [[...WAREHOUSE_KEY]] },
+  );
+}
+
+/** Retry a registration Delhivery refused. */
+export function useRegisterWarehouse() {
+  return useAppMutation(
+    async (warehouseId: string) => unwrap(await commerceApi.registerWarehouse(warehouseId)),
+    { invalidates: [[...WAREHOUSE_KEY]] },
+  );
+}
+
+export function useDeleteWarehouse() {
+  return useAppMutation(
+    async (warehouseId: string) => {
+      await commerceApi.deleteWarehouse(warehouseId);
+    },
+    { invalidates: [[...WAREHOUSE_KEY]] },
+  );
+}
+
+export function useSchedulePickup() {
+  return useAppMutation(
+    async (vars: { warehouseId: string; data: SchedulePickupPayload }) =>
+      unwrap(await commerceApi.schedulePickup(vars.warehouseId, vars.data)),
+    { invalidates: [[...WAREHOUSE_KEY]] },
   );
 }

@@ -61,6 +61,28 @@ EMAIL_SECURE = "false"
 EMAIL_FROM = "Fit Connect <rudragymbakhri@gmail.com>"
 VAPID_EMAIL = "mailto:rudragymbakhri@gmail.com"
 VAPID_PUBLIC_KEY = "BGM8SxeUeDufKP-etZ5Q-GJpW9GTmBhay_fGHK2vBlsIWVfbsbHzPD_TLVbSl35oBOnjL2qdG47YibTHhwASP2c"
+# Delhivery. The tokens themselves are secrets (.dev.vars); these are not.
+#
+# Delhivery issues two accounts and two tokens: a staging one for integration
+# and UAT, and a production one released only after UAT passes. Every path is
+# identical between them — only the host changes — so the environment is this
+# one variable. Development points at staging so a dummy order can never
+# become a real, billed consignment; production points at the live host.
+#
+# A staging token in .dev.vars is what makes this work. Without one, override
+# DELHIVERY_BASE_URL there back to the production host, and know that local
+# bookings then spend real money.
+#
+# DELHIVERY_PICKUP_LOCATION must match the warehouse name in the Delhivery panel
+# character for character, or manifestation is refused. Shipping stays disabled
+# — quotes and bookings both — until both of these are filled in.
+DELHIVERY_BASE_URL = "https://staging-express.delhivery.com"
+# The account name on the Delhivery panel. Only the waybill-reservation calls
+# need it; everything else identifies the account from the token.
+DELHIVERY_CLIENT_NAME = ""
+DELHIVERY_PICKUP_LOCATION = ""
+DELHIVERY_ORIGIN_PINCODE = ""
+RETURN_WINDOW_DAYS = "7"
 
 # ─── Production ───────────────────────────────────────────────────────────────
 
@@ -101,3 +123,11 @@ EMAIL_SECURE = "false"
 EMAIL_FROM = "Fit Connect <rudragymbakhri@gmail.com>"
 VAPID_EMAIL = "mailto:rudragymbakhri@gmail.com"
 VAPID_PUBLIC_KEY = "BGM8SxeUeDufKP-etZ5Q-GJpW9GTmBhay_fGHK2vBlsIWVfbsbHzPD_TLVbSl35oBOnjL2qdG47YibTHhwASP2c"
+# Live Delhivery. Manifests here cost real money and move real parcels.
+DELHIVERY_BASE_URL = "https://track.delhivery.com"
+# The account name on the Delhivery panel. Only the waybill-reservation calls
+# need it; everything else identifies the account from the token.
+DELHIVERY_CLIENT_NAME = ""
+DELHIVERY_PICKUP_LOCATION = ""
+DELHIVERY_ORIGIN_PINCODE = ""
+RETURN_WINDOW_DAYS = "7"

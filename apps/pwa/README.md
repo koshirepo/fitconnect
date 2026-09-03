@@ -81,17 +81,37 @@ By default, Vite proxies `/api` and `/uploads` to `VITE_API_URL` during local de
 
 ## Local Test Credentials
 
-Use these seeded credentials to validate both the platform app and tenant public flows locally.
+Use these seeded credentials to validate both the platform app and tenant flows
+locally. Every account shares one password: **`Test@1234`**.
 
-- Platform super admin: `superadmin@seed.gym.test` / `Test@1234`
-- Support user: `support@seed.gym.test` / `Test@1234`
-- Tenant admin: `admin.<tenant-slug>@seed.gym.test` / `Test@1234`
+**Platform (app-level)** — `http://localhost:5173/login`:
+
+| Role | Email |
+| --- | --- |
+| `SUPER_ADMIN` | `superadmin@seed.gym.test` |
+| `SUPPORT` | `support@seed.gym.test` |
+
+**One gym's full staff and a member** — Seed Gym 5, at
+`http://seed-gym-5.localhost:5173/login`:
+
+| Tenant role | Email |
+| --- | --- |
+| `ADMIN` | `admin.seed-gym-5@seed.gym.test` |
+| `COACH` | `coach.1.seed-gym-5@seed.gym.test` |
+| `COACH` | `coach.2.seed-gym-5@seed.gym.test` |
+| `MEMBER` (active) | `member.6.seed-gym-5@seed.gym.test` |
+
+Other gyms follow the same pattern with their own slug (`seed-gym-1` through
+`seed-gym-6`): `admin.<slug>@`, `coach.<1-2>.<slug>@`, `member.<1-24>.<slug>@`.
+Most seeded members are `SUSPENDED` on purpose — they are the overdue fixture —
+so pick an active one like `member.6` when you need a member who can check in.
 
 Example routes:
 
 - App-level login: `http://localhost:5173/login`
 - Tenant login: `http://seed-gym-5.localhost:5173/login`
 - Tenant public page: `http://seed-gym-5.localhost:5173/`
+- Platform storefront: `http://localhost:5173/shop`
 
 The app uses the current hostname to decide whether the login is app-level or tenant-level. Tenant pages are served from subdomains; slug-based URLs are not used as the canonical route or redirect target.
 

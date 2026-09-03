@@ -37,6 +37,7 @@ import {
 import { useAllMembers } from "@/api/queries/members";
 import MemberSelector from "@/components/ui/memberSelector";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { StoreVariantPicker } from "./StoreVariantPicker";
 import type { TenantMember, StoreProduct, StoreVariant } from "@fitconnect/shared/types/models";
@@ -396,9 +397,8 @@ export default function StorePage() {
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="guest-phone">Phone</Label>
-                    <Input
+                    <PhoneInput
                       id="guest-phone"
-                      inputMode="tel"
                       value={guestPhone}
                       onChange={(event) => setGuestPhone(event.target.value)}
                     />

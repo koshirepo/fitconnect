@@ -115,13 +115,21 @@ export const paymentsApi = {
    */
   createCheckout: (
     tenantId: string,
-    payload: { subscriptionId: string; couponCode?: string; coinsToSpend?: number },
+    payload: {
+      subscriptionId: string;
+      couponCode?: string;
+      coinsToSpend?: number;
+      /** COUNTER books the renewal for the desk instead of opening Razorpay. */
+      mode?: "ONLINE" | "COUNTER";
+    },
   ) =>
     api.post<
       ApiResponse<{
         checkout: CheckoutSession | null;
         paymentId?: string;
         settled?: boolean;
+        /** True when the null checkout means the desk, not a bill coins cleared. */
+        counter?: boolean;
       }>
     >(`/tenants/${tenantId}/payments/checkout`, payload),
 

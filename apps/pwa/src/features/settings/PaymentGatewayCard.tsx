@@ -18,6 +18,7 @@ import { getApiError } from "@/api/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton, SkeletonText } from "@/components/ui/skeleton";
@@ -196,9 +197,8 @@ export default function PaymentGatewayCard() {
 
               <div className="space-y-2">
                 <Label htmlFor="razorpay-key-secret">Key Secret</Label>
-                <Input
+                <PasswordInput
                   id="razorpay-key-secret"
-                  type="password"
                   value={keySecret}
                   onChange={(e) => setKeySecret(e.target.value)}
                   placeholder={gateway?.hasKeySecret ? SECRET_PLACEHOLDER : "Paste the key secret"}
@@ -214,9 +214,8 @@ export default function PaymentGatewayCard() {
 
               <div className="space-y-2">
                 <Label htmlFor="razorpay-webhook-secret">Webhook Secret (optional)</Label>
-                <Input
+                <PasswordInput
                   id="razorpay-webhook-secret"
-                  type="password"
                   value={webhookSecret}
                   onChange={(e) => setWebhookSecret(e.target.value)}
                   placeholder={

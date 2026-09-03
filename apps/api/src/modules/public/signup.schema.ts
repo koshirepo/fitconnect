@@ -50,6 +50,15 @@ export const selfSignupSchema = z.object({
    */
   couponCode: z.string().trim().min(1).max(40).optional(),
   shiftId: z.string().optional(),
+  /**
+   * How the joining fee is being settled.
+   *
+   * The visitor chooses, the same way a store basket does. COUNTER skips the
+   * gateway entirely: the membership is created owing exactly the same money,
+   * and the front desk records it. Defaulted rather than required so an older
+   * client keeps the behaviour it has always had.
+   */
+  paymentMode: z.enum(["ONLINE", "COUNTER"]).default("ONLINE"),
 });
 
 /**

@@ -5,7 +5,6 @@ import { buildTenantPublicUrl } from "@/lib/subdomain";
 import { useAuthStore } from "@/stores/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import AvatarCard from "@/components/ui/avatarCard";
 import {
   Dumbbell,
   Users,
@@ -223,49 +222,86 @@ export default function LandingPage() {
 
       {/* ─── Gyms Directory ────────────────────────────────────────── */}
       {gyms.length > 0 && (
-        <section id="gyms" className="py-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Our Gyms</h2>
-              <p className="mt-4 text-muted-foreground">
+        <section id="gyms" className="relative py-24">
+          {/* A soft wash instead of another hard border: the directory reads as
+              its own band while still sitting on the page background. */}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary/[0.06] via-transparent to-transparent" />
+
+          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mb-12 text-center">
+              <span className="inline-flex items-center gap-2 rounded-full border bg-background/60 px-3 py-1 text-xs font-medium text-muted-foreground">
+                <Building2 className="h-3.5 w-3.5 text-primary" />
+                {gyms.length} partner {gyms.length === 1 ? "gym" : "gyms"}
+              </span>
+              <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Our Gyms</h2>
+              <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
                 Explore partner gyms and fitness studios on our platform.
               </p>
             </div>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {gyms.map((g) => {
                 const gymUrl = buildTenantPublicUrl(g.slug);
+                const initials = g.name
+                  .split(" ")
+                  .filter(Boolean)
+                  .slice(0, 2)
+                  .map((w) => w[0])
+                  .join("")
+                  .toUpperCase();
 
                 // Same tab: a gym's page is where the visitor was heading, not
                 // a detour they should have to close afterwards.
                 return (
-                  <a key={g.id} href={gymUrl} className="group block">
-                    <Card className="h-full hover:border-primary/40 transition-colors">
-                      <CardContent className="pt-6">
-                        <div className="flex items-center gap-4">
-                          {/* The identity block takes the room that is left so
-                              every card's chevron lands on the same edge, and a
-                              four-figure member count keeps to one line. */}
-                          <AvatarCard
-                            name={g.name}
-                            avatarUrl={g.logoUrl}
-                            variant="md"
-                            className="min-w-0 flex-1"
-                          >
-                            {g.address && (
-                              <p className="text-sm text-muted-foreground flex items-center gap-1 truncate">
-                                <MapPin className="h-3 w-3 shrink-0" />
-                                {g.address}
-                              </p>
-                            )}
-                            <p className="mt-1 flex items-center gap-1 text-xs whitespace-nowrap text-muted-foreground">
-                              <Users className="h-3 w-3 shrink-0" />
-                              {g._count.memberships} members
-                            </p>
-                          </AvatarCard>
-                          <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
-                        </div>
-                      </CardContent>
-                    </Card>
+                  <a
+                    key={g.id}
+                    href={gymUrl}
+                    className="group flex flex-col rounded-2xl border bg-card p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/5"
+                  >
+                    <div className="flex items-start gap-4">
+                      {/* A fixed square keeps every logo — wordmark, photo or
+                          none at all — on the same optical grid across a row. */}
+                      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border bg-muted">
+                        {g.logoUrl ? (
+                          <img
+                            src={g.logoUrl}
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5 text-lg font-bold text-primary">
+                            {initials}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <h3 className="truncate text-base font-semibold leading-tight transition-colors group-hover:text-primary">
+                          {g.name}
+                        </h3>
+                        {g.address && (
+                          <p className="mt-1.5 flex items-start gap-1.5 text-sm text-muted-foreground">
+                            <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                            <span className="line-clamp-2">{g.address}</span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* The footer row anchors to the card bottom so member
+                        counts and CTAs line up even when addresses wrap. */}
+                    <div className="mt-auto flex items-center justify-between gap-3 border-t pt-4">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium whitespace-nowrap text-muted-foreground">
+                        <Users className="h-3.5 w-3.5" />
+                        {g._count.memberships} members
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors group-hover:text-primary">
+                        View gym
+                        <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                      </span>
+                    </div>
                   </a>
                 );
               })}

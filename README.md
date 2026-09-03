@@ -77,11 +77,29 @@ Apply database migrations to the local D1 instance:
 npm run db:migrate:local --workspace @fitconnect/api
 ```
 
-Seed it with demo data (super admin, gyms, members; password `Test@1234`):
+Seed it with demo data — platform accounts, six gyms, their staff and members:
 
 ```bash
 npm run seed:local --workspace @fitconnect/api
 ```
+
+Everything it creates shares the password `Test@1234`:
+
+| Level | Role | Email |
+| --- | --- | --- |
+| Platform | `SUPER_ADMIN` | `superadmin@seed.gym.test` |
+| Platform | `SUPPORT` | `support@seed.gym.test` |
+| Seed Gym 5 | `ADMIN` | `admin.seed-gym-5@seed.gym.test` |
+| Seed Gym 5 | `COACH` | `coach.1.seed-gym-5@seed.gym.test` |
+| Seed Gym 5 | `COACH` | `coach.2.seed-gym-5@seed.gym.test` |
+| Seed Gym 5 | `MEMBER` | `member.6.seed-gym-5@seed.gym.test` |
+
+Platform accounts sign in at `localhost:5173/login`; gym accounts sign in on
+their own subdomain, `seed-gym-5.localhost:5173/login`. Other gyms follow the
+same pattern with their slug (`seed-gym-1` … `seed-gym-6`), and each has two
+coaches and twenty-four members. Most seeded members are suspended on an overdue
+subscription by design — that is the overdue-enforcement fixture — so use an
+active one such as `member.6` when you need a member who can check in.
 
 #### Testing gym subdomains locally
 

@@ -40,6 +40,7 @@ import { openRazorpayCheckout } from "@/lib/razorpay-checkout";
 import { useVirtualKeyboard } from "@/lib/use-virtual-keyboard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { CardsGridSkeleton } from "@/components/ui/skeleton";
@@ -822,9 +823,8 @@ export default function PublicStorePage() {
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="buyer-phone">Phone</Label>
-                    <Input
+                    <PhoneInput
                       id="buyer-phone"
-                      inputMode="tel"
                       value={buyerPhone}
                       onChange={(event) => setBuyerPhone(event.target.value)}
                     />

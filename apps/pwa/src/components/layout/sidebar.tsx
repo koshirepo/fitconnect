@@ -4,7 +4,11 @@ import { tenantsApi } from "@/api/tenants";
 import { useAuthStore } from "@/stores/auth";
 import { useUIStore } from "@/stores/ui";
 import { resolveAssetUrl } from "@/lib/assets";
-import { buildTenantPublicUrl, getTenantDashboardPath, isTenantSubdomain } from "@/lib/subdomain";
+import {
+  buildTenantPublicUrl,
+  getTenantDashboardPath,
+  isTenantSubdomain,
+} from "@/lib/subdomain";
 import { cn } from "@/lib/utils";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { usePermissions } from "@/features/auth/permission-gate";
@@ -19,6 +23,8 @@ import {
   Tag,
   ClipboardList,
   ShoppingBag,
+  RotateCcw,
+  Warehouse,
   ScrollText,
   Award,
   ListTodo,
@@ -76,13 +82,31 @@ const platformNav: NavItem[] = [
     label: "Commerce",
     icon: ShoppingBag,
     anyOf: [Permission.PLATFORM_PRODUCTS_READ],
-    excludePrefixes: ["/platform-commerce/orders"],
+    // Orders and warehouses are their own entries below, so the catalog link
+    // must not light up when the user is standing on one of them.
+    excludePrefixes: [
+      "/platform-commerce/orders",
+      "/platform-commerce/returns",
+      "/platform-commerce/warehouses",
+    ],
   },
   {
     to: "/platform-commerce/orders",
     label: "Orders",
     icon: Package,
     anyOf: [Permission.PLATFORM_ORDERS_READ],
+  },
+  {
+    to: "/platform-commerce/returns",
+    label: "Returns",
+    icon: RotateCcw,
+    anyOf: [Permission.PLATFORM_ORDERS_READ],
+  },
+  {
+    to: "/platform-commerce/warehouses",
+    label: "Warehouses",
+    icon: Warehouse,
+    anyOf: [Permission.PLATFORM_PRODUCTS_READ],
   },
   {
     to: "/platform-roles",
@@ -199,7 +223,8 @@ export function Sidebar() {
     : currentTenant?.slug
       ? buildTenantPublicUrl(currentTenant.slug)
       : "/";
-  const getTenantRoute = (path: string) => (isTenantSubdomain() ? getTenantDashboardPath(path) : path);
+  const onTenantHost = isTenantSubdomain();
+  const getTenantRoute = (path: string) => (onTenantHost ? getTenantDashboardPath(path) : path);
 
   const handleLogout = () => {
     logout();
@@ -291,8 +316,13 @@ export function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-          {/* Platform nav for super-admin / support */}
-          {isPlatformStaff() && (
+          {/* Platform nav for super-admin / support.
+
+              App host only. Platform work is not gym-scoped and has no route
+              on a gym subdomain, so listing it there offered screens that
+              address could not serve. The two scopes stay on their own
+              addresses rather than linking across. */}
+          {!onTenantHost && isPlatformStaff() && (
             <>
               <p className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Platform
@@ -324,8 +354,14 @@ export function Sidebar() {
             </>
           )}
 
-          {/* Tenant nav */}
-          {currentTenantId && (
+          {/* Tenant nav — the mirror of the rule above.
+
+              A gym is served from its own address, so its pages are listed
+              only there. `RequireTenantHost` still carries a deep link from
+              the app host over to the gym, which is what a bookmark or a push
+              notification needs; the sidebar simply does not advertise them
+              from the wrong side. */}
+          {onTenantHost && currentTenantId && (
             <>
               <p className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Gym

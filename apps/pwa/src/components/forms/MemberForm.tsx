@@ -4,6 +4,7 @@ import { Permission } from "@fitconnect/shared/types/permissions";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import MemberSelector from "@/components/ui/memberSelector";
 import { PhotoCapture } from "@/components/ui/photo-capture";
@@ -227,9 +228,8 @@ export default function MemberForm({
       {/* Phone */}
       <div className="space-y-2">
         <Label htmlFor="phone">Phone Number</Label>
-        <Input
+        <PhoneInput
           id="phone"
-          type="tel"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           placeholder="9876543210"

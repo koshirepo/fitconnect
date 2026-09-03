@@ -131,6 +131,54 @@ export async function fetchPayment(
   );
 }
 
+export type RazorpayRefund = {
+  id: string;
+  payment_id: string;
+  /** Paise, as Razorpay counts it. */
+  amount: number;
+  currency: string;
+  /** pending | processed | failed */
+  status: string;
+  speed_processed: string | null;
+};
+
+/**
+ * Send money back for a payment.
+ *
+ * Takes rupees like `createOrder` does, and converts here, so no caller has to
+ * remember which unit this API speaks. `speed: "normal"` is deliberate: instant
+ * refunds cost extra and a returned parcel is not an emergency.
+ *
+ * The idempotency key is the caller's to choose and should identify the reason
+ * for the refund — the return request, or the order being cancelled. Razorpay
+ * rejects a second refund carrying a key it has already seen, which is what
+ * stops a double-clicked approval from paying a buyer twice.
+ */
+export async function createRefund(
+  credentials: RazorpayCredentials,
+  input: {
+    paymentId: string;
+    /** Rupees. Omit to refund the payment in full. */
+    amount?: number;
+    idempotencyKey: string;
+    notes?: Record<string, string>;
+  },
+) {
+  return request<RazorpayRefund>(
+    credentials,
+    `/payments/${encodeURIComponent(input.paymentId)}/refund`,
+    {
+      method: "POST",
+      headers: { "X-Razorpay-Idempotency-Key": input.idempotencyKey },
+      body: JSON.stringify({
+        ...(input.amount === undefined ? {} : { amount: Math.round(input.amount * 100) }),
+        speed: "normal",
+        notes: input.notes,
+      }),
+    },
+  );
+}
+
 async function hmacSha256Hex(secret: string, message: string) {
   const key = await crypto.subtle.importKey(
     "raw",

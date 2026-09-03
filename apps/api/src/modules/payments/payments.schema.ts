@@ -191,13 +191,35 @@ export const updateGatewaySchema = z
  * Opening a checkout names only the plan. The price comes from the plan record,
  * never from the request, so a tampered body cannot change what is charged.
  */
-export const checkoutSchema = z.object({
-  subscriptionId: z.string().min(1),
-  /** A code the member typed. Priced by the server, never by the browser. */
-  couponCode: z.string().trim().min(1).max(40).optional(),
-  /** Coins to put against the bill. Clamped to the balance and the total. */
-  coinsToSpend: z.number().int().min(0).optional(),
-});
+export const checkoutSchema = z
+  .object({
+    subscriptionId: z.string().min(1),
+    /** A code the member typed. Priced by the server, never by the browser. */
+    couponCode: z.string().trim().min(1).max(40).optional(),
+    /** Coins to put against the bill. Clamped to the balance and the total. */
+    coinsToSpend: z.number().int().min(0).optional(),
+    /**
+     * Online, or settled at the front desk. Defaulted so an older client keeps
+     * the only behaviour it knows.
+     */
+    mode: z.enum(["ONLINE", "COUNTER"]).default("ONLINE"),
+  })
+  /**
+   * Coins and a coupon belong to the online path only.
+   *
+   * Nothing is charged at the desk until staff ring it through, and a coin
+   * spent against a renewal the member never turns up to pay for would have to
+   * be clawed back. Staff apply the code when they take the money instead.
+   */
+  .refine(
+    (value) =>
+      value.mode !== "COUNTER" ||
+      (!value.couponCode && !(value.coinsToSpend ?? 0)),
+    {
+      message: "Coupons and coins apply when paying online.",
+      path: ["mode"],
+    },
+  );
 
 /** The three values Razorpay's checkout widget hands back to the browser. */
 export const verifyCheckoutSchema = z.object({

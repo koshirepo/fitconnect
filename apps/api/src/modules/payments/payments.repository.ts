@@ -383,14 +383,85 @@ export const paymentRepository = {
    * Run the `update payment status` persistence operation for the payments module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
-  updatePaymentStatus(paymentId: string, status: PaymentStatus) {
+  /**
+   * When a plan just paid for should start, and when it should run out.
+   *
+   * A member who pays while still covered is paying in advance, so the new
+   * period is stacked on the end of the one they already hold rather than
+   * started today — otherwise every early renewal quietly burned whatever time
+   * was left on the old one. A lapsed member, or one who never had cover, gets
+   * the period from now.
+   *
+   * Continuous by construction: the new window opens at the exact instant the
+   * old one closes, so consecutive plans neither overlap nor leave a gap.
+   */
+  async nextValidityWindow(
+    membershipId: string,
+    durationDays: number,
+    from: Date,
+  ) {
+    const membership = await prisma.tenantMembership.findUnique({
+      where: { id: membershipId },
+      select: { dueDate: true },
+    });
+
+    const current = membership?.dueDate ?? null;
+    const validFrom = current && current.getTime() > from.getTime() ? current : from;
+
+    return {
+      validFrom,
+      validUntil: new Date(
+        validFrom.getTime() + durationDays * 24 * 60 * 60 * 1000,
+      ),
+    };
+  },
+
+  async updatePaymentStatus(paymentId: string, status: PaymentStatus) {
+    const existing = await prisma.payment.findUniqueOrThrow({
+      where: { id: paymentId },
+      select: {
+        membershipId: true,
+        validUntil: true,
+        subscription: { select: { durationDays: true } },
+      },
+    });
+
+    const paidAt = status === "COMPLETED" ? new Date() : undefined;
+
+    /**
+     * The validity a settled plan buys, stamped here as the gateway path
+     * stamps it.
+     *
+     * A plan row can reach this with no dates on it: a self-signup and a
+     * renewal booked for the counter both write their PENDING row without a
+     * window, because an unpaid bill has not bought any time yet. Settling it
+     * without filling that in left `refreshDueDate` — which only counts a
+     * completed row that carries a `validUntil` — with nothing to find, so the
+     * member came out paid, with no due date and still inactive.
+     *
+     * Only ever filled in, never overwritten: a date an admin typed on the
+     * payment is the one that stands.
+     */
+    const window =
+      paidAt && existing.subscription && !existing.validUntil
+        ? await paymentRepository.nextValidityWindow(
+            existing.membershipId,
+            existing.subscription.durationDays,
+            paidAt,
+          )
+        : {};
+
     return prisma.payment.update({
       where: { id: paymentId },
-      data: {
-        status,
-        paidAt: status === "COMPLETED" ? new Date() : undefined,
+      data: { status, paidAt, ...window },
+      select: {
+        id: true,
+        amount: true,
+        status: true,
+        paidAt: true,
+        validFrom: true,
+        validUntil: true,
       },
-      select: { id: true, amount: true, status: true, paidAt: true },
     });
   },
 
@@ -624,6 +695,31 @@ export const paymentRepository = {
    * checkout that may yet complete, and sweeping them into a second order is
    * how a member ends up paying the same due twice.
    */
+  /**
+   * A renewal this member already asked to settle at the desk.
+   *
+   * Nothing is charged when that row is written, so a member who taps twice
+   * would otherwise leave the front desk two bills for one renewal. Reusing
+   * the open one keeps the queue honest.
+   */
+  findPendingCounterPayment(
+    tenantId: string,
+    membershipId: string,
+    subscriptionId: string,
+  ) {
+    return prisma.payment.findFirst({
+      where: {
+        tenantId,
+        membershipId,
+        subscriptionId,
+        status: "PENDING",
+        gatewayOrderId: null,
+      },
+      orderBy: { createdAt: "desc" },
+      select: { id: true },
+    });
+  },
+
   findSettleablePending(tenantId: string, membershipId: string) {
     return prisma.payment.findMany({
       where: { tenantId, membershipId, status: "PENDING", gatewayOrderId: null },
@@ -700,13 +796,22 @@ export const paymentRepository = {
   async settleGatewayPayment(paymentId: string, gatewayPaymentId: string) {
     const existing = await prisma.payment.findUniqueOrThrow({
       where: { id: paymentId },
-      select: { subscription: { select: { durationDays: true } } },
+      select: {
+        membershipId: true,
+        subscription: { select: { durationDays: true } },
+      },
     });
 
     const paidAt = new Date();
-    const validUntil = existing.subscription
-      ? new Date(paidAt.getTime() + existing.subscription.durationDays * 24 * 60 * 60 * 1000)
-      : null;
+    // Stacked on any cover the member still holds, so paying early adds to the
+    // membership instead of restarting it. Same rule as the desk path below.
+    const window = existing.subscription
+      ? await paymentRepository.nextValidityWindow(
+          existing.membershipId,
+          existing.subscription.durationDays,
+          paidAt,
+        )
+      : { validFrom: paidAt, validUntil: null };
 
     return prisma.payment.update({
       where: { id: paymentId },
@@ -714,8 +819,8 @@ export const paymentRepository = {
         status: "COMPLETED",
         gatewayPaymentId,
         paidAt,
-        validFrom: paidAt,
-        validUntil,
+        validFrom: window.validFrom,
+        validUntil: window.validUntil,
       },
       select: {
         id: true,
