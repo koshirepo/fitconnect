@@ -10,6 +10,24 @@
 import { prisma } from "../../lib/prisma";
 
 /**
+ * The shapes these queries select, stated rather than inferred.
+ *
+ * The generated Prisma client is derived output, and how completely its types
+ * resolve depends on whether it was regenerated in the environment doing the
+ * checking — which is not the same locally and in CI. Naming the two shapes
+ * this file actually uses means the code compiles the same in both, and it
+ * documents what is being read besides.
+ */
+type DeviceRef = { id: string };
+type QueuedCommand = { id: string; command: string };
+type CardHolder = {
+  id: string;
+  deviceUserPin: number | null;
+  rfidCardNumber: string | null;
+  user: { name: string };
+};
+
+/**
  * One enrolment line, in the shape the firmware parses.
  *
  * `Pri=0` is an ordinary user rather than an administrator — a member must
@@ -105,7 +123,7 @@ export const provisioningService = {
     if (devices.length === 0) return { data: { queued: 0 } };
 
     await prisma.deviceCommand.createMany({
-      data: devices.map((device) => ({
+      data: devices.map((device: DeviceRef) => ({
         deviceId: device.id,
         tenantId,
         kind: input.kind,
@@ -125,7 +143,7 @@ export const provisioningService = {
    * card is enrolled by hand — which is the problem this whole file exists for.
    */
   async syncAllToDevice(tenantId: string, deviceId: string) {
-    const members = await prisma.tenantMembership.findMany({
+    const members: CardHolder[] = await prisma.tenantMembership.findMany({
       where: { tenantId, deviceUserPin: { not: null }, status: { not: "DELETED" } },
       select: {
         id: true,
@@ -138,7 +156,7 @@ export const provisioningService = {
     if (members.length === 0) return { data: { queued: 0 } };
 
     await prisma.deviceCommand.createMany({
-      data: members.map((member) => ({
+      data: members.map((member: CardHolder) => ({
         deviceId,
         tenantId,
         kind: "USER_SET",
@@ -161,8 +179,8 @@ export const provisioningService = {
    * enrolling four hundred members at once would otherwise hand it a payload it
    * silently truncates. The rest go out on the next poll, seconds later.
    */
-  async takePending(deviceId: string, limit = 10) {
-    const pending = await prisma.deviceCommand.findMany({
+  async takePending(deviceId: string, limit = 10): Promise<QueuedCommand[]> {
+    const pending: QueuedCommand[] = await prisma.deviceCommand.findMany({
       where: { deviceId, sentAt: null },
       orderBy: { createdAt: "asc" },
       take: limit,
@@ -176,7 +194,7 @@ export const provisioningService = {
     // completed, which is visible; re-sending on every poll until confirmation
     // would instead loop forever against a device that cannot apply it.
     await prisma.deviceCommand.updateMany({
-      where: { id: { in: pending.map((command) => command.id) } },
+      where: { id: { in: pending.map((command: QueuedCommand) => command.id) } },
       data: { sentAt: new Date() },
     });
 

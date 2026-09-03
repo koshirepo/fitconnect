@@ -502,6 +502,10 @@ model Payment {
   paidAt         DateTime?
   validFrom      DateTime?
   validUntil     DateTime?
+  /// Whether settling this buys membership time. False for a balance: the row
+  /// it split from already granted the window, and paying the remainder must
+  /// not grant another.
+  extendsValidity Boolean @default(true)
 
   /// "RAZORPAY" for online payments; null for cash and other manual entries.
   gateway          String?
@@ -1487,3 +1491,4 @@ model StoreOrderItem {
   @@index([orderId])
   @@index([variantId])
 }
+

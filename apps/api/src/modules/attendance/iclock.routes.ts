@@ -101,7 +101,9 @@ iclockRoutes.get("/getrequest", async (c) => {
   if (commands.length === 0) return ok();
 
   return ok(
-    commands.map((command) => `C:${command.id}:${command.command}`).join("\n"),
+    commands
+      .map((command: { id: string; command: string }) => `C:${command.id}:${command.command}`)
+      .join("\n"),
   );
 });
 

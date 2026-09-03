@@ -88,12 +88,50 @@ let phoneCounter = 9000000000;
  * Support the `should generate` step in the Prisma maintenance script.
  * Breaking the CLI workflow into helpers keeps client generation and deterministic seeding easier to maintain.
  */
+/**
+ * Where the hash of the schema that produced the current client is kept.
+ *
+ * Beside the client rather than in the repo, because it describes generated
+ * output and shares its lifetime: delete the client and the marker goes too.
+ */
+const stampPath = path.join(rootDir, "src", "generated", "prisma", ".schema-hash");
+
+/**
+ * Whether the generated client still matches the schema.
+ *
+ * This used to compare modification times, which is right on a developer's
+ * machine and wrong everywhere else: a fresh `git clone` or CI checkout writes
+ * every file at the same instant, so the schema is never newer than the client
+ * and generation is skipped — leaving whatever client happened to be checked
+ * out, however old. That is invisible until something references a model the
+ * stale client does not have, at which point the types quietly degrade to
+ * `any` and the failure surfaces somewhere unrelated.
+ *
+ * A hash of the schema does not care about timestamps, so it answers the same
+ * question the same way locally and in CI.
+ */
 function shouldGenerate() {
   if (!existsSync(clientPath)) {
     return true;
   }
 
-  return statSync(schemaPath).mtimeMs > statSync(clientPath).mtimeMs;
+  const schemaHash = createHash("sha256")
+    .update(readFileSync(schemaPath))
+    .digest("hex");
+
+  if (!existsSync(stampPath)) {
+    return true;
+  }
+
+  return readFileSync(stampPath, "utf8").trim() !== schemaHash;
+}
+
+/** Record which schema the client on disk was built from. */
+function writeSchemaStamp() {
+  const schemaHash = createHash("sha256")
+    .update(readFileSync(schemaPath))
+    .digest("hex");
+  writeFileSync(stampPath, schemaHash + "\n");
 }
 
 /**
@@ -117,6 +155,12 @@ function ensurePrismaClient() {
 
   if (result.error) {
     throw result.error;
+  }
+
+  // Only after a clean generation: stamping a failed run would make the next
+  // check believe the client matches a schema it was never built from.
+  if ((result.status ?? 1) === 0) {
+    writeSchemaStamp();
   }
 
   process.exit(result.status ?? 1);
