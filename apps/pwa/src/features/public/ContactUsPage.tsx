@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useSeo, absoluteUrl } from "@/lib/seo";
 import {
   Mail,
   MessageSquare,
@@ -67,6 +68,19 @@ const FAQ = [
 type FormState = "idle" | "submitting" | "success" | "error";
 
 export default function ContactUsPage() {
+  useSeo({
+    title: "Contact Us",
+    description:
+      "Talk to the FitConnect team about running your gym on the platform, pricing, migration, or anything already live.",
+    canonicalPath: "/contact",
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "ContactPage",
+      name: "Contact FitConnect",
+      url: absoluteUrl("/contact"),
+    },
+  });
+
   const [formState, setFormState] = React.useState<FormState>("idle");
   const [form, setForm] = React.useState({
     name: "",

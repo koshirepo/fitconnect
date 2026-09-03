@@ -22,6 +22,7 @@ import {
   MapPin,
 } from "lucide-react";
 import type { PublicGymSummary } from "@/types/api";
+import { useSeo, absoluteUrl } from "@/lib/seo";
 
 const FEATURES = [
   {
@@ -88,6 +89,27 @@ const STATS = [
 ];
 
 export default function LandingPage() {
+  useSeo({
+    title: "Gym Management Software & Gym Accessories Shop",
+    exactTitle: false,
+    description:
+      "Run your gym on one app: members, payments, attendance, subscriptions and workout plans — plus an online shop for apparel, shakers and accessories.",
+    canonicalPath: "/",
+    keywords:
+      "gym management software, gym software India, fitness center management, gym billing, member management, gym accessories online",
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "FitConnect",
+      url: absoluteUrl("/"),
+      potentialAction: {
+        "@type": "SearchAction",
+        target: absoluteUrl("/shop?search={search_term_string}"),
+        "query-input": "required name=search_term_string",
+      },
+    },
+  });
+
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
   const [gyms, setGyms] = React.useState<PublicGymSummary[]>([]);

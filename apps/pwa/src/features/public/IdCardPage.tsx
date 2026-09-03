@@ -18,6 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/spinner";
 import { AlertCircle, Download, RefreshCw } from "lucide-react";
 import type { MemberIdCard } from "@/types/api";
+import { useSeo } from "@/lib/seo";
 
 /** Card geometry, in the proportions of a printed membership card. */
 const CARD_WIDTH = 640;
@@ -344,6 +345,12 @@ function buildCardSvg(card: MemberIdCard, photo: string | null, logo: string | n
 }
 
 export default function IdCardPage() {
+  useSeo({
+    title: "Member ID Card",
+    description: "A gym membership card.",
+    noIndex: true,
+  });
+
   const { token } = useParams<{ token: string }>();
 
   const [card, setCard] = React.useState<MemberIdCard | null>(null);

@@ -15,6 +15,7 @@ import type { PlaceOrderPayload, Product } from "@/types/api";
 import { calculateTotals, formatCurrency, validateQuantity } from "./pricing";
 import { clearCartItems, getCartItems, saveCartItems, type CartItem } from "./cart";
 import { openRazorpayCheckout } from "@/lib/razorpay-checkout";
+import { useSeo } from "@/lib/seo";
 
 type BuyerForm = {
   buyerName: string;
@@ -54,6 +55,12 @@ type CheckoutLine = {
 };
 
 export default function PublicCheckoutPage() {
+  useSeo({
+    title: "Checkout",
+    description: "Complete your order.",
+    noIndex: true,
+  });
+
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuthStore();
 

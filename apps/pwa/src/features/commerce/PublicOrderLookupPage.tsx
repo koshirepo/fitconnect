@@ -5,8 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Search } from "lucide-react";
+import { useSeo } from "@/lib/seo";
 
 export default function PublicOrderLookupPage() {
+  useSeo({
+    title: "Find Your Order",
+    description: "Look up an order with its number and the phone number it was placed with.",
+    canonicalPath: "/shop/orders/lookup",
+  });
+
   const navigate = useNavigate();
   const [orderId, setOrderId] = React.useState("");
 

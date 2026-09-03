@@ -24,6 +24,7 @@ import {
 import type { Product } from "@/types/api";
 import { formatCurrency } from "./pricing";
 import { PRODUCT_IMAGE_ASPECT_CLASS } from "./product-image";
+import { useSeo, absoluteUrl } from "@/lib/seo";
 import {
   getCartItems,
   getCartTotalQuantity,
@@ -35,6 +36,23 @@ import {
 const ALL_CATEGORIES = "All";
 
 export default function PublicCatalogPage() {
+  useSeo({
+    title: "Shop Gym Accessories & Equipment",
+    description:
+      "Buy gym accessories online — performance apparel, hydration bottles, protein shakers and workout gear. Delivered across India.",
+    canonicalPath: "/shop",
+    keywords:
+      "buy gym accessories online, protein shaker, gym water bottle, gym apparel, workout gear India",
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: "FitConnect Shop",
+      url: absoluteUrl("/shop"),
+      description:
+        "Gym accessories and equipment: apparel, hydration, shakers and workout gear.",
+    },
+  });
+
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
 

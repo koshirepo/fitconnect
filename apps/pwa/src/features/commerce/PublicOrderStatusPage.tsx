@@ -47,6 +47,7 @@ import {
   Check,
 } from "lucide-react";
 import type { OrderTracking, ReturnReason, Shipment } from "@/types/api";
+import { useSeo } from "@/lib/seo";
 
 const STATUS_STYLE: Record<string, "warning" | "success" | "secondary" | "destructive"> = {
   PENDING: "warning",
@@ -135,6 +136,12 @@ function WaybillRow({ shipment }: { shipment: Shipment }) {
 }
 
 export default function PublicOrderStatusPage() {
+  useSeo({
+    title: "Order Status",
+    description: "Where your order is, and what you can still do about it.",
+    noIndex: true,
+  });
+
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
 

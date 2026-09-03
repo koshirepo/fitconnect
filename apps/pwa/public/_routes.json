@@ -1,5 +1,22 @@
 {
   "version": 1,
-  "include": ["/manifest.webmanifest"],
-  "exclude": []
+  "include": [
+    "/manifest.webmanifest",
+    "/robots.txt",
+    "/sitemap.xml",
+    "/",
+    "/shop",
+    "/shop/products/*",
+    "/gyms/*",
+    "/store",
+    "/store/products/*",
+    "/signup"
+  ],
+  "exclude": [
+    "/assets/*",
+    "/icons/*",
+    "/sw.js",
+    "/push-sw.js",
+    "/workbox-*"
+  ]
 }

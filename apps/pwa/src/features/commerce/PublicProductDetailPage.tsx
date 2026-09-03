@@ -29,6 +29,8 @@ import { ReviewForm } from "@/components/commerce/ReviewForm";
 import { ReviewList } from "@/components/commerce/ReviewList";
 import { RatingSummary } from "@/components/commerce/RatingSummary";
 import { PRODUCT_IMAGE_ASPECT_CLASS } from "./product-image";
+import { useSeo, absoluteUrl } from "@/lib/seo";
+import { ShareButton } from "@/components/ui/share-button";
 
 export default function PublicProductDetailPage() {
   const { productId } = useParams<{ productId: string }>();
@@ -77,6 +79,39 @@ export default function PublicProductDetailPage() {
   const cartCount = getCartTotalQuantity(cart);
   const cartQty = product ? (cart.find((i) => i.productId === product.id)?.quantity ?? 0) : 0;
   const unavailable = !product?.isActive || (product?.stock ?? 0) <= 0;
+
+  // Written from the product once it has loaded. While it is loading the title
+  // is generic rather than wrong — a crawler that renders will see the real one,
+  // and a crawler that does not is served the edge-rendered head instead.
+  useSeo({
+    title: product?.name ?? "Product",
+    description:
+      product?.description?.trim() ||
+      (product ? `Buy ${product.name} online at FitConnect. Delivered across India.` : "Gym accessories and equipment."),
+    canonicalPath: productId ? `/shop/products/${productId}` : undefined,
+    image: product?.photos?.[0],
+    type: "product",
+    jsonLd: product
+      ? {
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: product.name,
+          description: product.description ?? product.name,
+          image: product.photos ?? [],
+          sku: product.id,
+          offers: {
+            "@type": "Offer",
+            price: product.price,
+            priceCurrency: "INR",
+            availability: unavailable
+              ? "https://schema.org/OutOfStock"
+              : "https://schema.org/InStock",
+            url: absoluteUrl(`/shop/products/${product.id}`),
+          },
+        }
+      : undefined,
+  });
+
 
   const handleAdd = () => {
     if (!product || unavailable) return;
@@ -259,6 +294,22 @@ export default function PublicProductDetailPage() {
                   Min / Max: {product.minOrderQty} / {product.maxOrderQty}
                 </span>
               </div>
+
+              {/* Sharing sits beside buying rather than in a menu: a product
+                  link passed into a WhatsApp group is how most of this shop's
+                  traffic arrives, and the Open Graph tags rendered at the edge
+                  are what make that link preview as the product. */}
+              <ShareButton
+                className="w-full"
+                size="lg"
+                label="Share this product"
+                url={absoluteUrl(`/shop/products/${product.id}`)}
+                title={product.name}
+                text={
+                  product.description?.trim() ||
+                  `${product.name} — ${formatCurrency(product.price)}`
+                }
+              />
 
               {cartQty === 0 ? (
                 <Button className="w-full" size="lg" onClick={handleAdd} disabled={unavailable}>

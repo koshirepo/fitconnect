@@ -12,6 +12,7 @@ import { ShoppingCart, Trash2, ArrowLeft, AlertTriangle } from "lucide-react";
 import type { Product } from "@/types/api";
 import { calculateTotals, formatCurrency, validateQuantity } from "./pricing";
 import { getCartItems, removeCartItem, saveCartItems, upsertCartItem, type CartItem } from "./cart";
+import { useSeo } from "@/lib/seo";
 
 type CartLine = {
   product: Product;
@@ -19,6 +20,12 @@ type CartLine = {
 };
 
 export default function PublicCartPage() {
+  useSeo({
+    title: "Your Basket",
+    description: "The items you are about to buy.",
+    noIndex: true,
+  });
+
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
 

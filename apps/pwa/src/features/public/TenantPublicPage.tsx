@@ -37,6 +37,7 @@ import {
   QrCode as QrCodeIcon,
 } from "lucide-react";
 import type { PublicTenantDetail } from "@/types/api";
+import { useSeo, absoluteUrl } from "@/lib/seo";
 
 const fmt = (amount: number) =>
   new Intl.NumberFormat("en-IN", {
@@ -52,6 +53,35 @@ export default function TenantPublicPage() {
   const [tenant, setTenant] = React.useState<PublicTenantDetail | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
+
+  // A gym's own site: this is the page that should rank for the gym's name, and
+  // the one people paste into WhatsApp. The canonical stays "/" because a gym
+  // is served from its own subdomain.
+  useSeo({
+    title: tenant?.name ?? "Gym",
+    exactTitle: Boolean(tenant?.name),
+    description:
+      tenant?.description?.trim() ||
+      (tenant
+        ? `${tenant.name}${tenant.address ? ` in ${tenant.address}` : ""}. Memberships, timings, facilities and the gym store.`
+        : "Gym memberships, timings and facilities."),
+    canonicalPath: "/",
+    image: tenant?.logoUrl ?? undefined,
+    jsonLd: tenant
+      ? {
+          "@context": "https://schema.org",
+          "@type": "HealthAndBeautyBusiness",
+          additionalType: "https://schema.org/ExerciseGym",
+          name: tenant.name,
+          url: absoluteUrl("/"),
+          ...(tenant.description ? { description: tenant.description } : {}),
+          ...(tenant.logoUrl ? { image: tenant.logoUrl } : {}),
+          ...(tenant.address ? { address: tenant.address } : {}),
+          ...(tenant.phone ? { telephone: tenant.phone } : {}),
+        }
+      : undefined,
+  });
+
 
   React.useEffect(() => {
     if (!isTenantSubdomain()) {

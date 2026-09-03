@@ -44,6 +44,7 @@ import {
   XCircle,
 } from "lucide-react";
 import type { TenantSignupResult } from "@/types/api";
+import { useSeo } from "@/lib/seo";
 
 type GymDetails = {
   name: string;
@@ -87,6 +88,14 @@ const EMPTY_OWNER: OwnerDetails = {
 };
 
 export default function RegisterGymPage() {
+  useSeo({
+    title: "List Your Gym",
+    description:
+      "Put your gym on FitConnect in minutes. Get your own web address, take memberships and payments online, and manage members from one app.",
+    canonicalPath: "/register-gym",
+    keywords: "list your gym, gym software signup, register gym online, gym management free trial",
+  });
+
   const navigate = useNavigate();
   // 1 = the gym, 2 = the owner's account.
   const [step, setStep] = React.useState(1);

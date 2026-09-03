@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useSeo } from "@/lib/seo";
 import {
   Dumbbell,
   Users,
@@ -75,6 +76,13 @@ const MILESTONES = [
 ];
 
 export default function AboutUsPage() {
+  useSeo({
+    title: "About Us",
+    description:
+      "Why FitConnect exists, who builds it, and how it helps gyms run the everyday work of memberships, payments and attendance.",
+    canonicalPath: "/about",
+  });
+
   return (
     <>
       {/* ─── Hero ──────────────────────────────────────────────── */}
