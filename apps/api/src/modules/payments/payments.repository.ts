@@ -80,6 +80,29 @@ const gatewayPaymentSelect = {
   subscription: { select: { id: true, title: true, durationDays: true } },
 } as const;
 
+/**
+ * Days a payment buys, in proportion to the money it carried.
+ *
+ * A ₹600 plan running 30 days part-paid ₹300 buys 15 days, and the ₹300 balance
+ * buys the other 15 when it arrives — the shares sum back to exactly one period
+ * however many instalments it comes in.
+ *
+ * Floored, so a rounding error never hands out a day nobody paid for; a payment
+ * too small to buy one grants none rather than a token. A row with no basis is
+ * a payment in full of whatever it was for, which is what every row recorded
+ * before this rule existed.
+ */
+export function proratedDays(
+  durationDays: number,
+  paidAmount: number,
+  basisAmount: number | null,
+): number {
+  if (!basisAmount || basisAmount <= 0) return durationDays;
+  if (paidAmount >= basisAmount) return durationDays;
+
+  return Math.max(0, Math.floor((durationDays * paidAmount) / basisAmount));
+}
+
 export const paymentRepository = {
   /**
    * Run the `list payments` persistence operation for the payments module.
@@ -290,6 +313,8 @@ export const paymentRepository = {
     gatewayAccount?: string;
     /** False for a balance: the row it split from already granted the window. */
     extendsValidity?: boolean;
+    /** The payable this row is a share of, for pro-rata validity. */
+    validityBasisAmount?: number | null;
   }) {
     return prisma.payment.create({
       data,
@@ -322,8 +347,9 @@ export const paymentRepository = {
         status: true,
         membershipId: true,
         // Needed when only part of what is owed is handed over: the remainder
-        // is written as its own row against the same plan.
+        // is written as its own row against the same plan, sharing its basis.
         subscriptionId: true,
+        validityBasisAmount: true,
         amount: true,
         description: true,
         note: true,
@@ -443,6 +469,7 @@ export const paymentRepository = {
         validUntil: true,
         amount: true,
         extendsValidity: true,
+        validityBasisAmount: true,
         subscription: { select: { durationDays: true } },
       },
     });
@@ -470,7 +497,13 @@ export const paymentRepository = {
       paidAt && existing.extendsValidity && existing.subscription && !existing.validUntil
         ? await paymentRepository.nextValidityWindow(
             existing.membershipId,
-            existing.subscription.durationDays,
+            proratedDays(
+              existing.subscription.durationDays,
+              // The amount as it stands: a row reduced to a part payment just
+              // above carries the money actually taken.
+              existing.amount,
+              existing.validityBasisAmount,
+            ),
             paidAt,
           )
         : {};
@@ -795,21 +828,85 @@ export const paymentRepository = {
         description: true,
         subscriptionId: true,
         extendsValidity: true,
+        validityBasisAmount: true,
       },
     });
   },
 
   /** Close one pending row, recording who took the money. */
-  settleOnePending(paymentId: string, collectorId?: string) {
+  /**
+   * Close one pending row, granting whatever membership time it bought.
+   *
+   * The single place that settles a pending payment, because the validity is
+   * the half that is easy to forget: three paths reach this — a payment settled
+   * on its own, dues collected at the desk, and dues cleared alongside a new
+   * plan — and two of them originally marked the row COMPLETED and stopped.
+   * A member paying off a pending "3 Month" then had it recorded as paid while
+   * `refreshDueDate` found no completed row carrying a date, and their
+   * membership gained nothing.
+   *
+   * The window is stacked on cover they still hold and only ever filled in,
+   * never overwritten — the same rule the gateway and the desk already follow.
+   * A balance buys nothing, which is what `extendsValidity` records.
+   */
+  async settleOnePending(paymentId: string, collectorId?: string) {
+    const existing = await prisma.payment.findUniqueOrThrow({
+      where: { id: paymentId },
+      select: {
+        membershipId: true,
+        validUntil: true,
+        amount: true,
+        extendsValidity: true,
+        validityBasisAmount: true,
+        subscription: { select: { durationDays: true } },
+      },
+    });
+
+    const paidAt = new Date();
+
+    // Time is bought in proportion to the money that arrived, so a row settled
+    // for part of what it was raised for buys part of the period.
+    const window =
+      existing.extendsValidity && existing.subscription && !existing.validUntil
+        ? await paymentRepository.nextValidityWindow(
+            existing.membershipId!,
+            proratedDays(
+              existing.subscription.durationDays,
+              existing.amount,
+              existing.validityBasisAmount,
+            ),
+            paidAt,
+          )
+        : {};
+
     return prisma.payment.update({
       where: { id: paymentId },
       data: {
         status: "COMPLETED",
-        paidAt: new Date(),
+        paidAt,
         ...(collectorId ? { collectorId } : {}),
+        ...window,
       },
-      select: { id: true, amount: true, description: true },
+      select: {
+        id: true,
+        amount: true,
+        description: true,
+        membershipId: true,
+        validUntil: true,
+      },
     });
+  },
+
+  /** What the named pending rows add up to. */
+  async sumPendingByIds(tenantId: string, membershipId: string, paymentIds: string[]) {
+    if (paymentIds.length === 0) return 0;
+
+    const rows = await prisma.payment.findMany({
+      where: { id: { in: paymentIds }, tenantId, membershipId, status: "PENDING" },
+      select: { amount: true },
+    });
+
+    return rows.reduce((sum: number, row: { amount: number }) => sum + row.amount, 0);
   },
 
   /**
@@ -823,16 +920,6 @@ export const paymentRepository = {
    * The row the money runs out on is reduced to what it received and the
    * shortfall is returned, for the caller to write as its own pending balance.
    */
-  /** What the named pending rows add up to. */
-  async sumPendingByIds(tenantId: string, membershipId: string, paymentIds: string[]) {
-    if (paymentIds.length === 0) return 0;
-    const rows = await prisma.payment.findMany({
-      where: { id: { in: paymentIds }, tenantId, membershipId, status: "PENDING" },
-      select: { amount: true },
-    });
-    return rows.reduce((sum: number, row: { amount: number }) => sum + row.amount, 0);
-  },
-
   async settlePendingWithBudget(
     tenantId: string,
     membershipId: string,
@@ -840,41 +927,61 @@ export const paymentRepository = {
     budget: number,
     collectorId?: string,
   ) {
+    type Shortfall = {
+      amount: number;
+      description: string | null;
+      subscriptionId: string | null;
+      basisAmount: number;
+    };
+    type Settled = { id: string; amount: number; description: string | null };
+
     if (paymentIds.length === 0 || budget <= 0) {
-      return { settled: [] as Array<{ id: string; amount: number; description: string | null }>, shortfall: null as null | { amount: number; description: string | null; subscriptionId: string | null } };
+      return { settled: [] as Settled[], shortfall: null as Shortfall | null };
     }
 
     const rows = await prisma.payment.findMany({
       where: { id: { in: paymentIds }, tenantId, membershipId, status: "PENDING" },
       orderBy: { createdAt: "asc" },
-      select: { id: true, amount: true, description: true, subscriptionId: true },
+      select: {
+        id: true,
+        amount: true,
+        description: true,
+        subscriptionId: true,
+        membershipId: true,
+        validityBasisAmount: true,
+      },
     });
 
     let remaining = budget;
-    const settled: Array<{ id: string; amount: number; description: string | null }> = [];
-    let shortfall: null | { amount: number; description: string | null; subscriptionId: string | null } = null;
+    const settled: Settled[] = [];
+    let shortfall: Shortfall | null = null;
 
     for (const row of rows) {
       if (remaining <= 0) break;
 
       const takes = Math.min(remaining, row.amount);
+
       if (takes < row.amount) {
+        // The money ran out part-way through this row. It becomes what it
+        // received, and the rest carries on as its own debt — keeping the
+        // basis so the remainder buys the days this part did not.
         shortfall = {
           amount: row.amount - takes,
           description: row.description,
           subscriptionId: row.subscriptionId,
+          basisAmount: row.validityBasisAmount ?? row.amount,
         };
         await prisma.payment.update({ where: { id: row.id }, data: { amount: takes } });
       }
 
-      await prisma.payment.update({
-        where: { id: row.id },
-        data: {
-          status: "COMPLETED",
-          paidAt: new Date(),
-          ...(collectorId ? { collectorId } : {}),
-        },
-      });
+      // Through the shared settle, so this path grants membership time too.
+      const closed = await paymentRepository.settleOnePending(row.id, collectorId);
+
+      // Refreshed between rows so the next one stacks on the date this one just
+      // bought, rather than every plan in the batch starting from today.
+      if (closed.validUntil) {
+        await paymentRepository.refreshDueDate(row.membershipId ?? "");
+      }
 
       settled.push({ id: row.id, amount: takes, description: row.description });
       remaining -= takes;
@@ -883,32 +990,6 @@ export const paymentRepository = {
     return { settled, shortfall };
   },
 
-  async settlePendingAtDesk(
-    tenantId: string,
-    membershipId: string,
-    paymentIds: string[],
-    collectorId?: string,
-  ) {
-    if (paymentIds.length === 0) return [];
-
-    const rows = await prisma.payment.findMany({
-      where: { id: { in: paymentIds }, tenantId, membershipId, status: "PENDING" },
-      select: { id: true, amount: true, description: true },
-    });
-
-    if (rows.length === 0) return [];
-
-    await prisma.payment.updateMany({
-      where: { id: { in: rows.map((row) => row.id) } },
-      data: {
-        status: "COMPLETED",
-        paidAt: new Date(),
-        ...(collectorId ? { collectorId } : {}),
-      },
-    });
-
-    return rows;
-  },
   findPaymentsByOrderId(gatewayOrderId: string, tenantId: string) {
     return prisma.payment.findMany({
       where: { gatewayOrderId, tenantId },
@@ -929,20 +1010,37 @@ export const paymentRepository = {
       where: { id: paymentId },
       select: {
         membershipId: true,
+        amount: true,
+        extendsValidity: true,
+        validityBasisAmount: true,
         subscription: { select: { durationDays: true } },
       },
     });
 
     const paidAt = new Date();
-    // Stacked on any cover the member still holds, so paying early adds to the
-    // membership instead of restarting it. Same rule as the desk path below.
-    const window = existing.subscription
-      ? await paymentRepository.nextValidityWindow(
-          existing.membershipId,
-          existing.subscription.durationDays,
-          paidAt,
-        )
-      : { validFrom: paidAt, validUntil: null };
+
+    /**
+     * The same rule the desk paths follow, and for the same reasons.
+     *
+     * This settles whatever an order covered, and an order can carry arrears
+     * alongside the plan — including balance rows split from an earlier part
+     * payment. Granting each of those a full period would hand out months
+     * nobody bought, which is exactly what `extendsValidity` and the pro-rata
+     * basis exist to prevent. Before this, only the two desk paths consulted
+     * them and the online one did not.
+     */
+    const window =
+      existing.extendsValidity && existing.subscription
+        ? await paymentRepository.nextValidityWindow(
+            existing.membershipId,
+            proratedDays(
+              existing.subscription.durationDays,
+              existing.amount,
+              existing.validityBasisAmount,
+            ),
+            paidAt,
+          )
+        : { validFrom: paidAt, validUntil: null };
 
     return prisma.payment.update({
       where: { id: paymentId },

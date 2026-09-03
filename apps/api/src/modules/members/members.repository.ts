@@ -733,6 +733,10 @@ export const memberRepository = {
         role: true,
         status: true,
         dueDate: true,
+        // The RFID card this member carries, so the desk can see it and change
+        // it without going near the machine.
+        deviceUserPin: true,
+        rfidCardNumber: true,
         joinedAt: true,
         shift: { select: shiftSelect },
         referredBy: {

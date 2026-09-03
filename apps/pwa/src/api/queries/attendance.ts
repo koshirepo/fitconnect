@@ -218,3 +218,31 @@ export function useDeleteAttendanceDevice() {
     { invalidates: [deviceScope(tenantId)] },
   );
 }
+
+
+/**
+ * Give a member the card the readers will recognise them by.
+ *
+ * Invalidates members as well as devices: the card is shown on the member
+ * record, and assigning one queues an enrolment to every reader.
+ */
+export function useAssignMemberCard() {
+  const tenantId = useCurrentTenantId();
+  return useTenantMutation(
+    async (
+      id,
+      vars: {
+        membershipId: string;
+        deviceUserPin?: number | null;
+        rfidCardNumber?: string | null;
+      },
+    ) =>
+      unwrap(
+        await attendanceApi.assignCard(id, vars.membershipId, {
+          deviceUserPin: vars.deviceUserPin,
+          rfidCardNumber: vars.rfidCardNumber,
+        }),
+      ),
+    { invalidates: [deviceScope(tenantId), ["members", tenantId ?? "none"]] },
+  );
+}

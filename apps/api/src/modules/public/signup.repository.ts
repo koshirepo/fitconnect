@@ -151,6 +151,10 @@ export const signupRepository = {
           membershipId: input.membershipId,
           subscriptionId: input.subscription.id,
           amount: input.subscription.amount,
+          // What the joining fee is for, so a member who settles part of it at
+          // the desk gets part of the period. Without it a ₹300 instalment on
+          // a ₹600 plan would have opened a full month.
+          validityBasisAmount: input.subscription.amount,
           ...(input.subscription.discountAmount
             ? {
                 listAmount: input.subscription.listAmount,

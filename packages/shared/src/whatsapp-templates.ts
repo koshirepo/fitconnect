@@ -72,21 +72,28 @@ Thank you.`,
   },
   payment_receipt: {
     label: "Payment Receipt",
-    description: "Opened after a payment is recorded.",
+    description:
+      "Opened after a payment is recorded. Carries the part-payment lines too, so a member who paid some of what they owe is told what is left rather than being sent a receipt that reads as settled.",
     variables: [
       "memberName",
       "amount",
       "subscriptionTitle",
       "gymName",
       "status",
+      "totalLine",
+      "duesLine",
+      "balanceLine",
       "validUntilLine",
       "noteLine",
     ],
+    // The three new lines carry their own labels and newline, so a receipt for
+    // a payment in full renders exactly as it did before: the placeholders
+    // resolve to nothing and the blank lines collapse.
     defaultBody: `Hi {{memberName}},
 
 Your payment of {{amount}} for *{{subscriptionTitle}}* at *{{gymName}}* has been recorded.
 Status: {{status}}
-{{validUntilLine}}{{noteLine}}Thank you.`,
+{{totalLine}}{{duesLine}}{{balanceLine}}{{validUntilLine}}{{noteLine}}Thank you.`,
   },
 };
 

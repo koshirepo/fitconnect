@@ -11,6 +11,7 @@ import { emailService } from "../../lib/email";
 import { memberRepository } from "./members.repository";
 import { tenantRepository } from "../tenants/tenants.repository";
 import { reminderService } from "../reminders/reminders.service";
+import { provisioningService } from "../attendance/provisioning.service";
 
 type BackgroundTaskScheduler = (promise: Promise<unknown>) => void;
 
@@ -42,6 +43,14 @@ async function enforceOverdueMembershipsForTenant(
   }
 
   await memberRepository.suspendOverdue(tenantId, overdueDays);
+
+  // Withdraw the cards of everybody just suspended, so an unpaid membership
+  // stops opening the door rather than relying on somebody at the desk
+  // recognising them. A member who paid between the read and the update simply
+  // gets re-enrolled by that payment.
+  for (const member of overdueMembers) {
+    await provisioningService.syncMemberAccess(tenantId, member.id);
+  }
 
   for (const member of overdueMembers) {
     suspended.push({

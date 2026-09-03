@@ -45,6 +45,9 @@ const AttendanceCalendarPage = React.lazy(() => import("@/features/attendance/At
 const AttendanceDevicesPage = React.lazy(
   () => import("@/features/attendance/AttendanceDevicesPage"),
 );
+const AttendanceDeviceFormPage = React.lazy(
+  () => import("@/features/attendance/AttendanceDeviceFormPage"),
+);
 const ReminderCalendarPage = React.lazy(
   () => import("@/features/reminders/ReminderCalendarPage"),
 );
@@ -346,6 +349,14 @@ export default function App() {
             <Route element={<RequirePermission anyOf={[Permission.ATTENDANCE_CALENDAR_READ]} />}>
               <Route path="/dashboard/attendance/calendar" element={<AttendanceCalendarPage />} />
               <Route path="/dashboard/attendance/devices" element={<AttendanceDevicesPage />} />
+              <Route
+                path="/dashboard/attendance/devices/new"
+                element={<AttendanceDeviceFormPage />}
+              />
+              <Route
+                path="/dashboard/attendance/devices/:deviceId/edit"
+                element={<AttendanceDeviceFormPage />}
+              />
             </Route>
             <Route element={<RequirePermission anyOf={[Permission.PAYMENTS_READ]} />}>
               <Route path="/dashboard/reminders" element={<ReminderCalendarPage />} />
@@ -598,6 +609,14 @@ export default function App() {
                     <Route
                       path="/attendance/devices"
                       element={<AttendanceDevicesPage />}
+                    />
+                    <Route
+                      path="/attendance/devices/new"
+                      element={<AttendanceDeviceFormPage />}
+                    />
+                    <Route
+                      path="/attendance/devices/:deviceId/edit"
+                      element={<AttendanceDeviceFormPage />}
                     />
                   </Route>
                   <Route element={<RequirePermission anyOf={[Permission.PAYMENTS_READ]} />}>

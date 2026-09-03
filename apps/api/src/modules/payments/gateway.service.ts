@@ -17,6 +17,7 @@ import {
   RazorpayError,
   type RazorpayCredentials,
 } from "../../lib/razorpay";
+import { provisioningService } from "../attendance/provisioning.service";
 import { paymentRepository } from "./payments.repository";
 import { couponService } from "../coupons/coupons.service";
 import { pushService } from "../push/push.service";
@@ -474,6 +475,9 @@ export const gatewayService = {
         description: subscription.title,
         status: "PENDING",
         amount: subscription.amount,
+        // The full price this row is for, so settling part of it at the desk
+        // buys part of the period rather than all of it.
+        validityBasisAmount: subscription.amount,
       });
 
       return {
@@ -580,6 +584,7 @@ export const gatewayService = {
 
       await paymentRepository.refreshDueDate(membership.id);
       await paymentRepository.reactivateIfPaidUp(membership.id);
+      await provisioningService.syncMemberAccess(tenantId, membership.id);
 
       return { data: { checkout: null, paymentId: settled.id, settled: true } };
     }
@@ -617,6 +622,9 @@ export const gatewayService = {
       // their own rows on the same order, so this one still says what the
       // plan cost — and what came off it sits beside it.
       amount: planAmount,
+      // The discounted price is the basis: a plan bought with a coupon and
+      // paid in full is a full period, not the fraction of its list price.
+      validityBasisAmount: planAmount,
       ...(quote
         ? {
             listAmount: quote.data.listAmount,
@@ -789,14 +797,17 @@ export const gatewayService = {
       }
     }
 
+    const tenantId = payments[0]?.tenantId;
     const membershipId = payments[0]?.membershipId;
+
     if (membershipId) {
       await paymentRepository.reactivateIfPaidUp(membershipId);
+      // Paying online should open the door again on its own.
+      if (tenantId) await provisioningService.syncMemberAccess(tenantId, membershipId);
     }
 
     // One notification for the order rather than one per line item: the member
     // paid a single amount and that is what an admin wants to read.
-    const tenantId = payments[0]?.tenantId;
     if (tenantId && settled.length > 0) {
       const first = payments[0];
       await pushService.notifyPaymentReceived(tenantId, {

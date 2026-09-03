@@ -91,6 +91,33 @@ export const provisioningService = {
   },
 
   /**
+   * Make the readers agree with whether this member may train.
+   *
+   * A card is a key, and a lapsed membership should stop opening the door —
+   * otherwise the only thing between an unpaid member and the gym is somebody
+   * at the desk recognising them. Equally, paying should let them straight back
+   * in rather than waiting for staff to re-enrol the card by hand.
+   *
+   * Called wherever a membership status changes, so the door follows the
+   * account rather than drifting from it. Idempotent: these commands are
+   * upserts on the device, so re-sending one is how a correction propagates and
+   * is never worth avoiding.
+   */
+  async syncMemberAccess(tenantId: string, membershipId: string) {
+    const membership = await prisma.tenantMembership.findFirst({
+      where: { id: membershipId, tenantId },
+      select: { status: true, deviceUserPin: true },
+    });
+
+    // Nothing to say about somebody who carries no card.
+    if (!membership?.deviceUserPin) return { data: { queued: 0 } };
+
+    return membership.status === "ACTIVE"
+      ? this.syncMember(tenantId, membershipId)
+      : this.removeMember(tenantId, membership.deviceUserPin, membershipId);
+  },
+
+  /**
    * Queue the removal of a PIN from every machine.
    *
    * Takes the PIN rather than the membership because the usual caller is

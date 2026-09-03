@@ -31,6 +31,7 @@ import { genderMeta } from "@/lib/gender";
 import { useAdjacentRecord } from "@/lib/use-adjacent-record";
 import { useCoinBalance } from "@/api/queries/coupons";
 import { FreezeCard } from "@/components/ui/freeze-card";
+import { MemberRfidCard } from "@/features/members/MemberRfidCard";
 import { SwipePane } from "@/components/ui/swipe-pane";
 import { useToast } from "@/components/ui/toast";
 import { formatShiftLabel, formatShiftWindow } from "@/lib/shifts";
@@ -929,6 +930,18 @@ export default function MemberDetailPage() {
 
       {isMemberProfile && membershipId && (
         <FreezeCard membershipId={membershipId} isStaff />
+      )}
+
+      {/* The card that opens the door. Beside the freeze card because both are
+          things the desk does to a membership rather than facts about it. */}
+      {isMemberProfile && membershipId && (
+        <MemberRfidCard
+          membershipId={membershipId}
+          memberId={member.memberId}
+          deviceUserPin={member.deviceUserPin}
+          rfidCardNumber={member.rfidCardNumber}
+          onChanged={() => void memberQuery.refetch()}
+        />
       )}
 
       <div

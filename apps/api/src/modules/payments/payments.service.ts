@@ -12,6 +12,7 @@ import { couponService, type Quote } from "../coupons/coupons.service";
 import { freezeService } from "../freezes/freezes.service";
 import { referralRewardService } from "../members/referral-rewards.service";
 import { reminderService } from "../reminders/reminders.service";
+import { provisioningService } from "../attendance/provisioning.service";
 import { paymentRepository } from "./payments.repository";
 import { flattenNestedMember } from "../../lib/flatten";
 import type {
@@ -274,6 +275,9 @@ export const paymentService = {
       // `amount` is always what was collected, so every revenue query keeps
       // working; the list price and what came off it sit beside it.
       amount: input.status === "COMPLETED" ? paidAmount : payableAmount,
+      // The whole price this row is a share of. A part payment then buys its
+      // proportion of the period rather than the lot.
+      validityBasisAmount: payableAmount,
       ...(quote
         ? {
             listAmount: quote.listAmount,
@@ -303,9 +307,15 @@ export const paymentService = {
             status: "PENDING",
             amount: balanceAmount,
             collectorId: collector?.id,
+            // The same denominator as the row it split from, so the two halves
+            // together buy exactly one period and never more.
+            validityBasisAmount: payableAmount,
             // Stated rather than left to the default: the row above already
             // carried the membership its window.
-            extendsValidity: false,
+            // Under pro-rata a balance buys the days its own money is worth, so it
+        // does grant time — against the same payable the original row was a
+        // share of, which is what stops the two together exceeding one period.
+        extendsValidity: true,
           })
         : null;
 
@@ -403,10 +413,16 @@ export const paymentService = {
         description: duesResult.shortfall.description?.startsWith("Balance")
           ? duesResult.shortfall.description
           : `Balance — ${duesResult.shortfall.description ?? "dues"}`,
+        // The due's own price before the money reached it, so this remainder
+        // buys the days the part payment did not.
+        validityBasisAmount: duesResult.shortfall.basisAmount,
         status: "PENDING",
         amount: duesResult.shortfall.amount,
         collectorId: collector?.id,
-        extendsValidity: false,
+        // Under pro-rata a balance buys the days its own money is worth, so it
+        // does grant time — against the same payable the original row was a
+        // share of, which is what stops the two together exceeding one period.
+        extendsValidity: true,
       });
     }
 
@@ -553,6 +569,13 @@ export const paymentService = {
       if (remaining >= due.amount) {
         const row = await paymentRepository.settleOnePending(due.id, collector?.id);
         settled.push({ id: row.id, amount: row.amount });
+
+        // Carried to the membership before the next row is settled, so two
+        // plans paid off together stack rather than both starting today.
+        if (row.validUntil) {
+          await paymentRepository.refreshDueDate(membershipId);
+        }
+
         remaining -= due.amount;
         continue;
       }
@@ -571,12 +594,18 @@ export const paymentService = {
         description: due.description?.startsWith("Balance")
           ? due.description
           : `Balance — ${due.description ?? "payment"}`,
+        // Carried from the row this was split out of, so the instalments add
+        // back up to one period.
+        validityBasisAmount: due.validityBasisAmount ?? due.amount,
         ...(input.note ? { note: input.note } : {}),
         status: "PENDING",
         amount: shortfall,
         collectorId: collector?.id,
         // A debt split in two is still a debt against time already granted.
-        extendsValidity: false,
+        // Under pro-rata a balance buys the days its own money is worth, so it
+        // does grant time — against the same payable the original row was a
+        // share of, which is what stops the two together exceeding one period.
+        extendsValidity: true,
       });
 
       balancePayment = { id: balance.id, amount: balance.amount };
@@ -587,6 +616,9 @@ export const paymentService = {
     // lapsed one should come alive the moment they are paid up.
     await paymentRepository.refreshDueDate(membershipId);
     await paymentRepository.reactivateIfPaidUp(membershipId);
+    // Paying should open the door again, not wait for somebody to re-enrol the
+    // card by hand.
+    await provisioningService.syncMemberAccess(tenantId, membershipId);
 
     const collected = settled.reduce((sum, row) => sum + row.amount, 0);
 
@@ -681,9 +713,13 @@ export const paymentService = {
             description: existing.description?.startsWith("Balance")
               ? existing.description
               : `Balance — ${existing.description ?? "payment"}`,
+            validityBasisAmount: existing.validityBasisAmount ?? existing.amount,
             status: "PENDING",
             amount: balanceAmount,
-            extendsValidity: false,
+            // Under pro-rata a balance buys the days its own money is worth, so it
+        // does grant time — against the same payable the original row was a
+        // share of, which is what stops the two together exceeding one period.
+        extendsValidity: true,
           })
         : null;
 
@@ -697,6 +733,7 @@ export const paymentService = {
       // take the money and leave the membership inactive.
       if (status === "COMPLETED") {
         await paymentRepository.reactivateIfPaidUp(existing.membershipId);
+        await provisioningService.syncMemberAccess(tenantId, existing.membershipId);
       }
     }
 

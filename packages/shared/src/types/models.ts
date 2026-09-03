@@ -157,6 +157,10 @@ export interface TenantMember {
   joinedAt: string;
   isDue?: boolean;
   dueDate?: string | null;
+  /** The number the attendance machines report for this member. */
+  deviceUserPin?: number | null;
+  /** What is printed on the card in their hand. */
+  rfidCardNumber?: string | null;
   /** True while any payment against this member is still PENDING. */
   hasPendingPayment?: boolean;
   /** Sum of those pending rows, in rupees. */
@@ -262,6 +266,10 @@ export interface MemberDetail {
   status: AccountStatus;
   joinedAt: string;
   dueDate?: string | null;
+  /** The number the attendance machines report for this member. */
+  deviceUserPin?: number | null;
+  /** What is printed on the card in their hand. */
+  rfidCardNumber?: string | null;
   shift?: Shift | null;
   referralCount: number;
   referredBy?: MemberReferral | null;

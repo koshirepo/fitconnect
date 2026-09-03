@@ -466,15 +466,16 @@ export default function RecordPaymentPage() {
             amount: formatCurrency(result.collected),
             subscriptionTitle: "outstanding dues",
             gymName,
-            status: "Completed",
+            status: result.balancePayment ? "Part payment received" : "Completed",
+            // What the dues came to, so the member can see the collection was
+            // against a larger figure rather than wondering what it settled.
+            totalLine: `Dues selected: ${formatCurrency(duesTotal)}\n`,
+            duesLine: `Settled now: ${formatCurrency(result.collected)}\n`,
+            balanceLine: result.balancePayment
+              ? `Still pending: ${formatCurrency(result.balancePayment.amount)}\n`
+              : "",
             validUntilLine: "",
-            noteLine: result.balancePayment
-              ? `Still outstanding: ${formatCurrency(result.balancePayment.amount)}
-`
-              : fNote
-                ? `Note: ${fNote}
-`
-                : "",
+            noteLine: fNote ? `Note: ${fNote}\n` : "",
           });
           const whatsappUrl = buildWhatsAppUrl(selectedMember.phone, msg);
           if (whatsappUrl) {
@@ -525,7 +526,24 @@ export default function RecordPaymentPage() {
           amount: formatCurrency(balanceAmount > 0 ? receivedAmount : amount),
           subscriptionTitle: sub?.title ?? "subscription",
           gymName,
-          status: fStatus === "COMPLETED" ? "Completed" : "Pending",
+          // A part payment says so, rather than reading as settled when it is
+          // not — that is the receipt somebody argues about later.
+          status:
+            fStatus !== "COMPLETED"
+              ? "Pending"
+              : shortfallAmount > 0
+                ? "Part payment received"
+                : "Completed",
+          // Only shown when the collection was more than the plan, which is
+          // exactly when the plan price alone would be a confusing receipt.
+          totalLine:
+            duesTotal > 0 ? `Total due: ${formatCurrency(collectionTotal)}\n` : "",
+          duesLine:
+            duesTotal > 0 ? `Pending dues cleared: ${formatCurrency(duesTotal)}\n` : "",
+          balanceLine:
+            shortfallAmount > 0
+              ? `Still pending: ${formatCurrency(shortfallAmount)}\n`
+              : "",
           validUntilLine: fValidUntil ? `Valid until: ${fValidUntil}\n` : "",
           noteLine: fNote ? `Note: ${fNote}\n` : "",
         });

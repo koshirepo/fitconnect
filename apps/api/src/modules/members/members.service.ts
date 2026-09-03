@@ -33,6 +33,7 @@ import { pushService } from "../push/push.service";
 import { couponService } from "../coupons/coupons.service";
 import { buildIdCardUrl, idCardService } from "../public/id-card.service";
 import { renderWhatsAppTemplate } from "@fitconnect/shared/whatsapp-templates";
+import { provisioningService } from "../attendance/provisioning.service";
 
 type ServiceError = { error: string; status?: 400 | 403 | 404 | 409 };
 type AddMemberResult = {
@@ -985,6 +986,11 @@ Your membership card: ${idCardUrl}`
       membershipId,
       status,
     );
+
+    // The card is a key, so it follows the account: suspending somebody
+    // withdraws them from the readers, and activating them puts them back.
+    await provisioningService.syncMemberAccess(tenantId, membershipId);
+
     return { data: { membership: updated }, previousStatus: membership.status };
   },
 

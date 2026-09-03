@@ -506,6 +506,10 @@ model Payment {
   /// it split from already granted the window, and paying the remainder must
   /// not grant another.
   extendsValidity Boolean @default(true)
+  /// The payable this row is a share of, for pro-rata validity. Days granted
+  /// are durationDays x amount / this. NULL means the whole window, which is
+  /// what every row granted before part payments were prorated.
+  validityBasisAmount Int?
 
   /// "RAZORPAY" for online payments; null for cash and other manual entries.
   gateway          String?

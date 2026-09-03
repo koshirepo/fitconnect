@@ -13,7 +13,6 @@ import { Permission } from "@fitconnect/shared/types/permissions";
 import { usePermissions } from "@/features/auth/permission-gate";
 import {
   useAttendanceDevices,
-  useCreateAttendanceDevice,
   useDeleteAttendanceDevice,
   useUpdateAttendanceDevice,
 } from "@/api/queries/attendance";
@@ -22,37 +21,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { formatDateTime } from "@/lib/utils";
 import { ArrowLeft, Plus, Power, Radio, Trash2, Wifi, WifiOff } from "lucide-react";
 import type { AttendanceDevice } from "@/types/api";
-
-type DeviceForm = {
-  serialNumber: string;
-  name: string;
-  location: string;
-  timezone: string;
-};
-
-const EMPTY_FORM: DeviceForm = {
-  serialNumber: "",
-  name: "",
-  location: "",
-  // The zone every one of these gyms is in. The device reports local time with
-  // no offset, so this is what decides which day a punch lands on.
-  timezone: "Asia/Kolkata",
-};
 
 export default function AttendanceDevicesPage() {
   const navigate = useNavigate();
@@ -61,69 +35,20 @@ export default function AttendanceDevicesPage() {
   const canManage = can(Permission.ATTENDANCE_QR_MANAGE);
 
   const devicesQuery = useAttendanceDevices({ enabled: canManage });
-  const createDevice = useCreateAttendanceDevice();
   const updateDevice = useUpdateAttendanceDevice();
   const deleteDevice = useDeleteAttendanceDevice();
 
-  const [formOpen, setFormOpen] = React.useState(false);
-  const [form, setForm] = React.useState<DeviceForm>(EMPTY_FORM);
-  const [editing, setEditing] = React.useState<AttendanceDevice | null>(null);
   const [removing, setRemoving] = React.useState<AttendanceDevice | null>(null);
   const [working, setWorking] = React.useState(false);
-  const [error, setError] = React.useState("");
 
   const devices = devicesQuery.data ?? [];
 
-  const openCreate = () => {
-    setEditing(null);
-    setForm(EMPTY_FORM);
-    setError("");
-    setFormOpen(true);
-  };
-
-  const openEdit = (device: AttendanceDevice) => {
-    setEditing(device);
-    setForm({
-      serialNumber: device.serialNumber,
-      name: device.name,
-      location: device.location ?? "",
-      timezone: device.timezone,
-    });
-    setError("");
-    setFormOpen(true);
-  };
-
-  const save = async () => {
-    setWorking(true);
-    setError("");
-
-    try {
-      if (editing) {
-        await updateDevice.mutateAsync({
-          deviceId: editing.id,
-          data: {
-            name: form.name.trim(),
-            location: form.location.trim() || null,
-            timezone: form.timezone.trim(),
-          },
-        });
-        toast.success("Device updated.");
-      } else {
-        await createDevice.mutateAsync({
-          serialNumber: form.serialNumber.trim(),
-          name: form.name.trim(),
-          ...(form.location.trim() ? { location: form.location.trim() } : {}),
-          timezone: form.timezone.trim(),
-        });
-        toast.success("Device registered. It will appear online once it checks in.");
-      }
-      setFormOpen(false);
-    } catch (err: unknown) {
-      setError(getApiError(err));
-    } finally {
-      setWorking(false);
-    }
-  };
+  // Adding and editing are their own pages: a serial is copied off a label
+  // with the unit in hand, which is a poor fit for a modal on a phone, and a
+  // real URL means half-finished work survives a reload.
+  const openCreate = () => navigate("/attendance/devices/new");
+  const openEdit = (device: AttendanceDevice) =>
+    navigate(`/attendance/devices/${device.id}/edit`);
 
   const toggleActive = async (device: AttendanceDevice) => {
     try {
@@ -282,87 +207,6 @@ export default function AttendanceDevicesPage() {
           </CardContent>
         </Card>
       )}
-
-      <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editing ? "Edit machine" : "Add machine"}</DialogTitle>
-            <DialogDescription>
-              {editing
-                ? "The serial cannot change — it is what every punch is matched on."
-                : "Use the serial number printed on the back of the unit."}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="serialNumber">Serial number</Label>
-              <Input
-                id="serialNumber"
-                value={form.serialNumber}
-                disabled={Boolean(editing)}
-                placeholder="e.g. CGT9234500123"
-                className="font-mono"
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, serialNumber: e.target.value }))
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="deviceName">Name</Label>
-              <Input
-                id="deviceName"
-                value={form.name}
-                placeholder="Front door reader"
-                onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="deviceLocation">Location</Label>
-              <Input
-                id="deviceLocation"
-                value={form.location}
-                placeholder="Entrance"
-                onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="deviceTimezone">Clock timezone</Label>
-              <Input
-                id="deviceTimezone"
-                value={form.timezone}
-                placeholder="Asia/Kolkata"
-                onChange={(e) => setForm((prev) => ({ ...prev, timezone: e.target.value }))}
-              />
-              <p className="text-xs text-muted-foreground">
-                The machine reports the time on its own clock with no timezone, so
-                this is what decides the day a check-in is filed under.
-              </p>
-            </div>
-
-            {error && <p className="text-sm text-destructive">{error}</p>}
-
-            <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => setFormOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={() => void save()}
-                disabled={
-                  working ||
-                  !form.name.trim() ||
-                  (!editing && form.serialNumber.trim().length < 3)
-                }
-              >
-                {working ? "Saving…" : editing ? "Save" : "Register"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <ConfirmDialog
         open={Boolean(removing)}
