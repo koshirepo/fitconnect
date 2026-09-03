@@ -65,18 +65,34 @@ app.use("*", async (c, next) => {
   // makes these countable. Hono exposes it; the raw path is the fallback.
   const route = c.req.routePath ?? new URL(c.req.url).pathname;
 
-  console.log(
-    JSON.stringify({
-      event: "request_failed",
-      status,
-      method: c.req.method,
-      route,
-      durationMs: Date.now() - startedAt,
-      // Which gym, so one misconfigured tenant is distinguishable from a
-      // problem everybody has. An id, not a name.
-      tenantId: c.req.param("tenantId") ?? undefined,
-    }),
-  );
+  // The object, not a string of it. Workers Logs turns an object's own fields
+  // into queryable ones; `JSON.stringify` hands it a single opaque message
+  // instead, which reads fine and cannot be grouped or counted by route — the
+  // one thing this log exists to make possible.
+  /**
+   * A 401 is not a failure worth counting beside the others.
+   *
+   * Access tokens last an hour, and when one expires every request already in
+   * flight comes back 401 at once. The browser queues them behind a single
+   * refresh and replays them, so the person at the screen sees nothing — but a
+   * dashboard with a dozen parallel queries has just written a dozen "failed"
+   * lines for a session that renewed itself exactly as designed.
+   *
+   * Logged under its own name so it stays visible without drowning the signal:
+   * `request_failed` then means something that actually needs looking at, and
+   * a spike in `request_unauthenticated` means tokens expiring, which is the
+   * app working.
+   */
+  console.log({
+    event: status === 401 ? "request_unauthenticated" : "request_failed",
+    status,
+    method: c.req.method,
+    route,
+    durationMs: Date.now() - startedAt,
+    // Which gym, so one misconfigured tenant is distinguishable from a problem
+    // everybody has. An id, not a name.
+    tenantId: c.req.param("tenantId") ?? undefined,
+  });
 });
 
 /**
@@ -181,16 +197,14 @@ app.onError((err, c) => {
    * chart. The error class and message are what turn "597 errors" into
    * something with a cause — and the route is what says where to look.
    */
-  console.log(
-    JSON.stringify({
-      event: "request_error",
-      error: err.constructor?.name ?? "Error",
-      message: err.message?.slice(0, 300),
-      method: c.req.method,
-      route: c.req.routePath ?? new URL(c.req.url).pathname,
-      tenantId: c.req.param("tenantId") ?? undefined,
-    }),
-  );
+  console.log({
+    event: "request_error",
+    error: err.constructor?.name ?? "Error",
+    message: err.message?.slice(0, 300),
+    method: c.req.method,
+    route: c.req.routePath ?? new URL(c.req.url).pathname,
+    tenantId: c.req.param("tenantId") ?? undefined,
+  });
 
   if (
     err.constructor?.name === "PrismaClientKnownRequestError" &&
