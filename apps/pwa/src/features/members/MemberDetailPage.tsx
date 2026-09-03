@@ -91,6 +91,7 @@ import {
 import type { Badge, MemberDetail, Shift, TenantMember } from "@/types/api";
 import AvatarCard from "@/components/ui/avatarCard";
 import MemberForm, { type MemberFormData } from "@/components/forms/MemberForm";
+import { ShareButton } from "@/components/ui/share-button";
 
 const PAYMENT_AMOUNT_COLOR: Record<string, string> = {
   PENDING: "text-yellow-600",
@@ -551,13 +552,36 @@ export default function MemberDetailPage() {
           )}
 
           {member.idCardUrl && (
-            <a
-              href={member.idCardUrl}
-              className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent"
-            >
-              <CreditCard className="h-3.5 w-3.5" />
-              Membership card
-            </a>
+            <>
+              <a
+                href={member.idCardUrl}
+                className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent"
+              >
+                <CreditCard className="h-3.5 w-3.5" />
+                Membership card
+              </a>
+
+              {/* The card, not this page.
+
+                  A dashboard URL is no use to anybody without a login and the
+                  permission to read members, so sharing it would hand most
+                  recipients a sign-in screen. The card link is the member's own,
+                  works for whoever opens it, and is what the welcome message
+                  already sends — this is the same link, offered again when
+                  somebody at the desk needs to re-send it.
+
+                  What it exposes is deliberately narrow: a name, a number, a
+                  photo and the dates. Nothing more than the member would show
+                  at the front desk, which is the standard the card was built to. */}
+              <ShareButton
+                url={member.idCardUrl}
+                title={`${member.name} — membership card`}
+                text={`Your membership card at ${currentMembership()?.tenantName ?? "the gym"}.`}
+                label="Send card"
+                size="sm"
+                className="h-auto rounded-full px-3 py-1.5 text-xs"
+              />
+            </>
           )}
         </div>
       )}
