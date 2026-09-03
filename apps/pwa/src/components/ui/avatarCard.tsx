@@ -47,6 +47,8 @@ interface AvatarCardProps {
   memberId?: number;
   /** Stack avatar on top of text instead of side-by-side. */
   vertical?: boolean;
+  /** Allow the name to wrap instead of truncating to one line. */
+  wrapName?: boolean;
   avatarClassName?: string;
   children?: React.ReactNode;
   className?: string;
@@ -64,6 +66,7 @@ export default function AvatarCard({
   variant = "lg",
   memberId,
   vertical = false,
+  wrapName = false,
   avatarClassName,
   children,
   className,
@@ -118,6 +121,7 @@ export default function AvatarCard({
       size={size}
       variant="inline"
       subtitle={children}
+      wrapName={wrapName}
       className={className}
     />
   );

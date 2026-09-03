@@ -200,4 +200,23 @@ export const paymentsApi = {
         };
       }>
     >(`/tenants/${tenantId}/payments/analytics`),
+
+  /**
+   * Take money against dues a member already owes.
+   *
+   * No plan and no validity — the rows being settled already say what they
+   * were for. An amount below their total is allocated oldest first.
+   */
+  settleDues: (
+    tenantId: string,
+    membershipId: string,
+    data: { dueIds: string[]; amount: number; note?: string },
+  ) =>
+    api.post<
+      ApiResponse<{
+        settled: Array<{ id: string; amount: number }>;
+        collected: number;
+        balancePayment?: { id: string; amount: number };
+      }>
+    >(`/tenants/${tenantId}/payments/dues/${membershipId}/settle`, data),
 };

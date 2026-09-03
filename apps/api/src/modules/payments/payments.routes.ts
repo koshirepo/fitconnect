@@ -80,6 +80,17 @@ paymentRoutes.post(
   paymentController.createPayment,
 );
 
+// Taking money against dues a member already owes. Behind the same capability
+// as settling a single payment, because that is what it does — several at once,
+// and possibly only part of the last one.
+paymentRoutes.post(
+  "/:tenantId/payments/dues/:membershipId/settle",
+  authenticate,
+  idempotency,
+  requireAnyTenantPermission(Permission.PAYMENTS_UPDATE, Permission.PAYMENTS_SETTLE),
+  paymentController.settleDues,
+);
+
 paymentRoutes.get(
   "/:tenantId/payments/analytics",
   authenticate,

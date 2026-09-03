@@ -7,7 +7,9 @@ import { useAuthStore } from "@/stores/auth";
 import { paymentsApi } from "@/api/payments";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAllMembers, useMember } from "@/api/queries/members";
-import { usePayments, useSubscriptions } from "@/api/queries/payments";
+import {
+  useSettleDues,
+  usePayments, useSubscriptions } from "@/api/queries/payments";
 import { useTenantSettings } from "@/api/queries/catalog";
 import { useCoinBalance, useCouponQuote } from "@/api/queries/coupons";
 import { getApiError } from "@/api/client";
@@ -127,6 +129,7 @@ export default function RecordPaymentPage() {
   // the member is already decided, so the whole list is never fetched.
   const rosterQuery = useAllMembers({ enabled: !membershipId });
   const subscriptionsQuery = useSubscriptions();
+  const settleDues = useSettleDues();
   const settingsQuery = useTenantSettings();
   // What this member already owes. Collected with the plan by default, because
   // the desk taking money is the moment those dues are actually settleable.
@@ -158,6 +161,34 @@ export default function RecordPaymentPage() {
   const duesTotal = outstandingDues
     .filter((row) => settleDueIds.includes(row.id))
     .reduce((sum, row) => sum + row.amount, 0);
+
+  /**
+   * Collecting against what is already owed, with nothing new being sold.
+   *
+   * A member who owes ₹600 and comes to pay has no plan to choose — the rows
+   * they owe already say what they were for. Asking the desk to pick one would
+   * mean inventing a purchase to hang the money on, which is how a ledger stops
+   * meaning anything. So with dues ticked and no plan chosen, the form settles
+   * the dues instead of recording a sale.
+   */
+  const duesOnly = !fSubscriptionId && settleDueIds.length > 0;
+
+  /**
+   * With no plan selected, the amount is what is being collected against the
+   * dues: prefilled with their total, editable down for a part payment.
+   *
+   * Keyed on whether the desk has typed a figure rather than on "have we seeded
+   * once". The first attempt latched after the first render — before the dues
+   * had loaded, so it seeded zero — and then a plan being cleared blanked the
+   * field with no way back. Following `duesTotal` means unticking a due
+   * re-prices the collection, which is what the checkboxes are for.
+   */
+  const amountEdited = React.useRef(false);
+  React.useEffect(() => {
+    if (!duesOnly) return;
+    if (amountEdited.current) return;
+    setFAmount(duesTotal > 0 ? String(duesTotal) : "");
+  }, [duesOnly, duesTotal]);
 
   const selectedMemberDetail = selectedMemberQuery.data ?? null;
   const selectedMember = React.useMemo<TenantMember | null>(() => {
@@ -225,23 +256,36 @@ export default function RecordPaymentPage() {
     setFSubscriptionId(subId);
     clearCoupon();
     const sub = availableSubscriptions.find((s) => s.id === subId);
-    if (sub) {
-      setFAmount(String(sub.amount));
-      // Prefilled with the plan's price so the common case — paying in full —
-      // needs no typing, and cleared of any earlier edit because that figure
-      // belonged to a different plan.
+    if (!sub) {
+      // The "choose a plan" row was picked, so the previous plan's figures no
+      // longer apply — the amount was that plan's price, and the dates were
+      // stacked on the member's current cover.
+      // Back to being seeded from the dues, if there are any ticked: the desk
+      // removed the plan, so whatever it typed for that plan is not an answer
+      // to what is now a different question.
+      amountEdited.current = false;
       paidAmountEdited.current = false;
-      setFPaidAmount(String(sub.amount));
-      // Stacked on cover the member still holds, matching what the server
-      // does when a member pays for themselves: somebody paying early is
-      // paying in advance, not restarting their membership from today. Still
-      // only a prefill — the desk can overwrite the date.
-      const due = selectedMember?.dueDate?.slice(0, 10) ?? null;
-      const start = due && due > today ? due : today;
-      const validUntil = new Date(start);
-      validUntil.setDate(validUntil.getDate() + sub.durationDays);
-      setFValidUntil(validUntil.toISOString().slice(0, 10));
+      setFAmount("");
+      setFPaidAmount("");
+      setFValidUntil("");
+      return;
     }
+    amountEdited.current = true;
+    setFAmount(String(sub.amount));
+    // Prefilled with the plan's price so the common case — paying in full —
+    // needs no typing, and cleared of any earlier edit because that figure
+    // belonged to a different plan.
+    paidAmountEdited.current = false;
+    setFPaidAmount(String(sub.amount));
+    // Stacked on cover the member still holds, matching what the server
+    // does when a member pays for themselves: somebody paying early is
+    // paying in advance, not restarting their membership from today. Still
+    // only a prefill — the desk can overwrite the date.
+    const due = selectedMember?.dueDate?.slice(0, 10) ?? null;
+    const start = due && due > today ? due : today;
+    const validUntil = new Date(start);
+    validUntil.setDate(validUntil.getDate() + sub.durationDays);
+    setFValidUntil(validUntil.toISOString().slice(0, 10));
   };
 
   const coinBalance = useCoinBalance(fMembershipId || undefined);
@@ -289,17 +333,31 @@ export default function RecordPaymentPage() {
   // What the member owes after a coupon and coins, which is what a part
   // payment splits and what the receipt should name.
   const totalAmount = quote ? quote.netAmount : listAmount;
-  const receivedAmount = fPaidAmount === "" ? totalAmount : Number(fPaidAmount) || 0;
 
-  // A coupon or spent coins move the total after the plan was picked, so the
-  // prefilled figure follows it. An edited field is left alone — that number is
-  // what the member actually handed over.
+  /**
+   * Everything this collection is for: the plan and the dues ticked with it.
+   *
+   * The screen has always shown these added together as "Total to collect", so
+   * the money received is measured against the same figure. Measuring it
+   * against the plan alone is what refused ₹4,000 handed over for a ₹600 plan
+   * and ₹3,500 of arrears.
+   */
+  const collectionTotal = totalAmount + duesTotal;
+  const receivedAmount =
+    fPaidAmount === "" ? collectionTotal : Number(fPaidAmount) || 0;
+
+  // A coupon, spent coins, or a due being unticked all move the total after the
+  // plan was picked, so the prefilled figure follows it. An edited field is
+  // left alone — that number is what the member actually handed over.
   React.useEffect(() => {
     if (paidAmountEdited.current) return;
-    setFPaidAmount(totalAmount > 0 ? String(totalAmount) : "");
-  }, [totalAmount]);
-  const balanceAmount =
-    fStatus === "COMPLETED" ? Math.max(totalAmount - receivedAmount, 0) : 0;
+    setFPaidAmount(collectionTotal > 0 ? String(collectionTotal) : "");
+  }, [collectionTotal]);
+
+  /** Short on the whole collection, wherever the shortfall ends up landing. */
+  const shortfallAmount =
+    fStatus === "COMPLETED" ? Math.max(collectionTotal - receivedAmount, 0) : 0;
+  const balanceAmount = shortfallAmount;
 
   const paymentReceiptTemplateBody = React.useMemo(
     () => getTenantWhatsAppTemplateBody(tenantSettings, "payment_receipt"),
@@ -316,8 +374,14 @@ export default function RecordPaymentPage() {
       return;
     }
 
-    if (!fSubscriptionId) {
-      setError("Please select a subscription plan");
+    // A plan is what is being sold, so it is required only when something is.
+    // Settling dues sells nothing: the rows already say what they were for.
+    if (!fSubscriptionId && !duesOnly) {
+      setError(
+        outstandingDues.length > 0
+          ? "Choose a plan, or tick the dues you are collecting against."
+          : "Please select a subscription plan",
+      );
       return;
     }
 
@@ -326,7 +390,9 @@ export default function RecordPaymentPage() {
       return;
     }
 
-    if (!fValidUntil) {
+    // Validity comes from the plan being bought. Settling a debt buys no time,
+    // so there is no date to ask for.
+    if (!duesOnly && !fValidUntil) {
       setError("Please select a valid until date");
       return;
     }
@@ -337,13 +403,34 @@ export default function RecordPaymentPage() {
       return;
     }
 
-    if (fStatus === "COMPLETED" && fPaidAmount !== "") {
+    // What is owed is the ceiling when settling dues. The server refuses more
+    // than this too, but being told before handing over money is the point.
+    if (duesOnly && amount > duesTotal) {
+      setError(
+        `That is more than the ${formatCurrency(duesTotal)} owed on the ticked dues.`,
+      );
+      return;
+    }
+
+    /**
+     * The split between price and money received belongs to selling a plan.
+     *
+     * Settling dues has no such split — the amount above is the money — and the
+     * field is hidden in that mode. Left in the check it still held whatever
+     * the last plan put there, so collecting ₹500 against ₹600 of dues was
+     * refused for being "more than the total" by a number nobody could see.
+     */
+    if (!duesOnly && fStatus === "COMPLETED" && fPaidAmount !== "") {
       if (!Number.isInteger(receivedAmount) || receivedAmount <= 0) {
         setError("Amount received must be a positive whole number");
         return;
       }
-      if (receivedAmount > amount) {
-        setError("Amount received cannot be more than the total");
+      // Against the whole collection, not the plan alone. The screen adds the
+      // dues into "Total to collect", so validating against the plan price
+      // refused every payment that also cleared arrears — which is most of
+      // them at a desk.
+      if (receivedAmount > amount + duesTotal) {
+        setError("Amount received cannot be more than the total to collect");
         return;
       }
     }
@@ -355,14 +442,59 @@ export default function RecordPaymentPage() {
 
     setSubmitting(true);
     try {
+      /**
+       * Nothing is being sold — this is money against a debt.
+       *
+       * A different endpoint because it is a different act: no plan, no
+       * validity, and the server decides which of the ticked dues the amount
+       * closes, oldest first. Anything left over on the row it runs out on
+       * stays owed as its own balance.
+       */
+      if (duesOnly) {
+        const result = await settleDues.mutateAsync({
+          membershipId: fMembershipId,
+          dueIds: settleDueIds,
+          amount,
+          ...(fNote ? { note: fNote } : {}),
+        });
+
+        // The member is told what is still outstanding, because a part
+        // payment leaving a balance is the case somebody will ask about.
+        if (selectedMember?.phone) {
+          const msg = renderWhatsAppTemplateBody(paymentReceiptTemplateBody, {
+            memberName: selectedMember.name,
+            amount: formatCurrency(result.collected),
+            subscriptionTitle: "outstanding dues",
+            gymName,
+            status: "Completed",
+            validUntilLine: "",
+            noteLine: result.balancePayment
+              ? `Still outstanding: ${formatCurrency(result.balancePayment.amount)}
+`
+              : fNote
+                ? `Note: ${fNote}
+`
+                : "",
+          });
+          const whatsappUrl = buildWhatsAppUrl(selectedMember.phone, msg);
+          if (whatsappUrl) {
+            window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+          }
+        }
+
+        navigate("/payments");
+        return;
+      }
+
       const sub = availableSubscriptions.find((s) => s.id === fSubscriptionId);
       const payload: CreatePaymentPayloadWithOfflineMeta = {
         membershipId: fMembershipId,
         subscriptionId: fSubscriptionId,
         amount,
-        // Sent only when it is actually a part payment, so an ordinary
-        // payment in full keeps the simpler payload it always had.
-        ...(balanceAmount > 0 ? { paidAmount: receivedAmount } : {}),
+        // Sent whenever less than the whole collection was handed over. The
+        // server spreads it — the plan first, then the dues oldest first — and
+        // whatever it does not reach stays owed.
+        ...(shortfallAmount > 0 ? { paidAmount: receivedAmount } : {}),
         // The code, never the discounted figure — the server prices it.
         ...(quote?.coupon ? { couponCode: quote.coupon.code } : {}),
         ...(quote && quote.coinsRedeemed > 0
@@ -474,7 +606,9 @@ export default function RecordPaymentPage() {
 
             {/* Subscription Selection */}
             <div className="space-y-2">
-              <Label htmlFor="subscription">Subscription Plan *</Label>
+              <Label htmlFor="subscription">
+                Subscription Plan{duesOnly ? "" : " *"}
+              </Label>
               <p className="text-xs text-muted-foreground">
                 {!selectedMember
                   ? "Select a member first to load eligible plans."
@@ -507,6 +641,13 @@ export default function RecordPaymentPage() {
                   ))}
                 </SelectContent>
               </Select>
+              {duesOnly && (
+                <p className="rounded-md border border-primary/40 bg-primary/5 p-2 text-xs">
+                  No plan selected, so this collects against the ticked dues
+                  instead. Nothing new is sold and the membership gains no time —
+                  pay less than the total and the rest stays owed.
+                </p>
+              )}
               {selectedMember && !loadingMemberBadges && availableSubscriptions.length === 0 && (
                 <p className="text-xs text-muted-foreground">
                   No subscription plans match this member&apos;s badges yet.
@@ -531,7 +672,10 @@ export default function RecordPaymentPage() {
                   id="amount"
                   type="number"
                   value={fAmount}
-                  onChange={(e) => setFAmount(e.target.value)}
+                  onChange={(e) => {
+                    amountEdited.current = true;
+                    setFAmount(e.target.value);
+                  }}
                   min={1}
                   step={1}
                   placeholder="Enter amount in rupees"
@@ -676,22 +820,49 @@ export default function RecordPaymentPage() {
             {/* What the member actually hands over. */}
             {duesTotal > 0 && (
               <div className="space-y-1 rounded-lg border p-3 text-sm">
+                {/* No plan line when no plan is being sold: a row reading
+                    "Plan ₹0" invites the reader to wonder what it was for. */}
+                {!duesOnly && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Plan</span>
+                    <span>{formatCurrency(totalAmount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Plan</span>
-                  <span>{formatCurrency(totalAmount)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Pending dues</span>
+                  <span className="text-muted-foreground">
+                    {duesOnly ? "Dues selected" : "Pending dues"}
+                  </span>
                   <span>{formatCurrency(duesTotal)}</span>
                 </div>
+                {/* What is short, said before the money is taken rather than
+                    discovered on the receipt. */}
+                {duesOnly && Number(fAmount) > 0 && Number(fAmount) < duesTotal && (
+                  <div className="flex justify-between text-amber-600 dark:text-amber-400">
+                    <span>Still owed after this</span>
+                    <span>{formatCurrency(duesTotal - Number(fAmount))}</span>
+                  </div>
+                )}
                 <div className="flex justify-between border-t pt-1 font-semibold">
                   <span>Total to collect</span>
-                  <span>{formatCurrency(totalAmount + duesTotal)}</span>
+                  {/* In dues mode this is the figure in the amount box, not the
+                      dues total — the two differ precisely when a part payment
+                      is being taken, which is the moment the number matters. */}
+                  <span>
+                    {formatCurrency(
+                      duesOnly ? Number(fAmount) || 0 : totalAmount + duesTotal,
+                    )}
+                  </span>
                 </div>
               </div>
             )}
-            {/* Part payment — blank means paid in full. */}
-            {fStatus === "COMPLETED" && (
+            {/* Part payment — blank means paid in full.
+
+                Hidden when settling dues, where there is no split to make: the
+                amount above is the money being handed over, and the shortfall
+                against the ticked dues is worked out from it. Leaving the field
+                visible showed a figure left over from a plan that had since
+                been removed, which read as though that much was being taken. */}
+            {fStatus === "COMPLETED" && !duesOnly && (
               <div className="space-y-2">
                 <Label htmlFor="paidAmount">Amount Received Now</Label>
                 <Input
@@ -703,17 +874,22 @@ export default function RecordPaymentPage() {
                     setFPaidAmount(e.target.value);
                   }}
                   min={1}
-                  max={totalAmount || undefined}
+                  // The whole collection, not the plan alone. Left at the plan
+                  // price the browser refused the amount before any of this
+                  // code ran — "Value must be less than or equal to 600" on a
+                  // form whose own summary said ₹4,100 was due.
+                  max={collectionTotal || undefined}
                   step={1}
                   placeholder={
-                    totalAmount > 0
-                      ? `Full amount (${formatCurrency(totalAmount)})`
+                    collectionTotal > 0
+                      ? `Full amount (${formatCurrency(collectionTotal)})`
                       : "Full amount"
                   }
                 />
                 {balanceAmount > 0 ? (
                   <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                    {formatCurrency(balanceAmount)} will be logged as a pending balance for this member.
+                    {formatCurrency(balanceAmount)} will be logged as a pending balance
+                    for this member{duesTotal > 0 ? " — the plan is paid first, then the oldest dues" : ""}.
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground">
@@ -724,21 +900,28 @@ export default function RecordPaymentPage() {
               </div>
             )}
 
-            {/* Valid Until */}
-            <div className="space-y-2">
-              <Label htmlFor="validUntil">Valid Until *</Label>
-              <Input
-                id="validUntil"
-                type="date"
-                value={fValidUntil}
-                onChange={(e) => setFValidUntil(e.target.value)}
-                min={today}
-                required
-              />
-              {!fValidUntil && error.includes("valid until") && (
-                <p className="text-sm text-destructive-foreground">{error}</p>
-              )}
-            </div>
+            {/* Valid Until.
+
+                Hidden when settling dues: validity comes from the plan being
+                bought, and a debt buys none. Asking for a date here would
+                invite somebody to extend a membership that was never paid
+                for. */}
+            {!duesOnly && (
+              <div className="space-y-2">
+                <Label htmlFor="validUntil">Valid Until *</Label>
+                <Input
+                  id="validUntil"
+                  type="date"
+                  value={fValidUntil}
+                  onChange={(e) => setFValidUntil(e.target.value)}
+                  min={today}
+                  required
+                />
+                {!fValidUntil && error.includes("valid until") && (
+                  <p className="text-sm text-destructive-foreground">{error}</p>
+                )}
+              </div>
+            )}
 
             {/* Note */}
             <div className="space-y-2">

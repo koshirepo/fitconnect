@@ -60,7 +60,22 @@ export const createPaymentSchema = z
     }
 
     if (data.paidAmount !== undefined) {
-      if (data.paidAmount > data.amount) {
+      /**
+       * The ceiling is the plan, unless dues are being cleared with it.
+       *
+       * `amount` is the price of the thing being sold. When `settlePendingIds`
+       * comes with it, the money handed over covers that plan *and* those
+       * arrears — a ₹600 plan settled alongside ₹3,500 of dues is ₹4,100 across
+       * the counter, and measuring it against ₹600 refused every such payment.
+       *
+       * What those dues are worth is not in this request and must not be: a
+       * browser that could name the size of a debt could shrink one. So the
+       * ceiling is checked in the service, which reads the rows and clamps the
+       * collection to what is genuinely owed.
+       */
+      const settlesDues = (data.settlePendingIds?.length ?? 0) > 0;
+
+      if (!settlesDues && data.paidAmount > data.amount) {
         ctx.addIssue({
           code: "custom",
           message: "The amount received cannot be more than the total.",
@@ -102,6 +117,19 @@ export const createPaymentSchema = z
   });
 
 /**
+ * Money taken at the desk against dues a member already owes.
+ *
+ * No plan and no charge: the rows being settled already say what they were
+ * for. `amount` may be less than their total, in which case it is allocated
+ * oldest first and the row it runs out on keeps the shortfall as a balance.
+ */
+export const settleDuesSchema = z.object({
+  dueIds: z.array(z.string()).min(1, "Choose at least one due to settle.").max(20),
+  amount: z.number().int().min(1),
+  note: z.string().max(500).optional(),
+});
+
+/**
  * Every status a payment can be moved to, PENDING included.
  *
  * An admin correcting the record needs the whole set, not a one-way path: a
@@ -113,6 +141,14 @@ export const createPaymentSchema = z
  */
 export const updatePaymentStatusSchema = z.object({
   status: z.enum(["PENDING", "COMPLETED", "FAILED", "REFUNDED"]),
+  /**
+   * What was actually handed over, when it is less than the row is for.
+   *
+   * Settling ₹500 of a ₹600 due leaves the row at ₹500 and writes the ₹100 as
+   * its own pending balance. Omitted means the whole amount was paid, which is
+   * what every caller before this meant.
+   */
+  paidAmount: z.number().int().min(1).nullable().optional(),
 });
 
 export const updatePaymentSchema = z

@@ -228,9 +228,40 @@ export const paymentService = {
     // rest is written as a second row they still owe. The membership still
     // gets its validity window — the desk decided to let them train, and the
     // balance is tracked rather than blocking them at the door.
-    const paidAmount = Math.min(input.paidAmount ?? payableAmount, payableAmount);
+    /**
+     * What the desk collected, spread over what it was collecting for.
+     *
+     * `paidAmount` is the money that actually changed hands, and it covers the
+     * plan *and* any dues ticked alongside it — the screen adds them into one
+     * "total to collect", so the figure typed under it means the same thing.
+     *
+     * The plan is paid first because it is what grants the membership its
+     * window; the dues then take what is left, oldest first. Anything still
+     * short stays owed on the row it ran out on, rather than being settled
+     * because a checkbox was ticked.
+     */
+    const duesToSettle =
+      input.status === "COMPLETED" ? (input.settlePendingIds ?? []) : [];
+
+    const duesOwed =
+      duesToSettle.length > 0
+        ? await paymentRepository.sumPendingByIds(
+            tenantId,
+            input.membershipId,
+            duesToSettle,
+          )
+        : 0;
+
+    const collected = Math.min(
+      input.paidAmount ?? payableAmount + duesOwed,
+      payableAmount + duesOwed,
+    );
+
+    const paidAmount = Math.min(collected, payableAmount);
     const balanceAmount =
       input.status === "COMPLETED" ? payableAmount - paidAmount : 0;
+    /** What is left for the dues once the plan has taken its share. */
+    const duesBudget = Math.max(collected - paidAmount, 0);
 
     const payment = await paymentRepository.createPayment({
       tenantId,
@@ -272,6 +303,9 @@ export const paymentService = {
             status: "PENDING",
             amount: balanceAmount,
             collectorId: collector?.id,
+            // Stated rather than left to the default: the row above already
+            // carried the membership its window.
+            extendsValidity: false,
           })
         : null;
 
@@ -338,15 +372,43 @@ export const paymentService = {
     // Arrears the desk is collecting in the same breath as the plan. Settled
     // as their own rows rather than folded into the amount above: each keeps
     // its description and its date, so the ledger still says what was paid for.
-    const settledPending =
-      input.status === "COMPLETED" && input.settlePendingIds?.length
-        ? await paymentRepository.settlePendingAtDesk(
+    const duesResult =
+      duesToSettle.length > 0 && duesBudget > 0
+        ? await paymentRepository.settlePendingWithBudget(
             tenantId,
             input.membershipId,
-            input.settlePendingIds,
+            duesToSettle,
+            duesBudget,
             collector?.id,
           )
-        : [];
+        : { settled: [], shortfall: null };
+
+    const settledPending = duesResult.settled;
+
+    /**
+     * The part of a due the money did not reach, kept as a debt.
+     *
+     * Without this the ticked rows were closed whatever was handed over, so a
+     * member paying ₹4,000 against ₹4,100 had the last ₹100 written off by a
+     * checkbox. It stays owed instead, under the same name, and buys no
+     * membership time — the plan above already granted that.
+     */
+    if (duesResult.shortfall) {
+      await paymentRepository.createPayment({
+        tenantId,
+        membershipId: input.membershipId,
+        ...(duesResult.shortfall.subscriptionId
+          ? { subscriptionId: duesResult.shortfall.subscriptionId }
+          : {}),
+        description: duesResult.shortfall.description?.startsWith("Balance")
+          ? duesResult.shortfall.description
+          : `Balance — ${duesResult.shortfall.description ?? "dues"}`,
+        status: "PENDING",
+        amount: duesResult.shortfall.amount,
+        collectorId: collector?.id,
+        extendsValidity: false,
+      });
+    }
 
     if (settledPending.length > 0) {
       await paymentRepository.refreshDueDate(input.membershipId);
@@ -438,10 +500,124 @@ export const paymentService = {
    * Execute the `update payment status` workflow for the payments module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
+  /**
+   * Take money at the desk against what a member already owes.
+   *
+   * The other way to record a payment is `createPayment`, which records a
+   * payment *for* something and therefore needs a plan or a charge. This one
+   * needs neither: the rows being settled already say what they were for, so a
+   * member who owes ₹600 and hands over ₹500 can be served without inventing a
+   * plan to hang it on.
+   *
+   * Allocation is oldest first, and stops when the money runs out. The row the
+   * money runs out on is settled for what it received and the rest is written
+   * as its own pending balance — the same shape every other partial payment in
+   * this app produces, so the ledger reads the same however the money arrived.
+   */
+  async settleDues(
+    tenantId: string,
+    membershipId: string,
+    input: { dueIds: string[]; amount: number; note?: string },
+    actorUserId?: string,
+    scheduleBackgroundTask?: BackgroundTaskScheduler,
+  ) {
+    const dues = await paymentRepository.findPendingByIds(
+      tenantId,
+      membershipId,
+      input.dueIds,
+    );
+
+    if (dues.length === 0) {
+      return { error: "Those dues are no longer pending.", status: 409 as const };
+    }
+
+    const owed = dues.reduce((sum: number, due: { amount: number }) => sum + due.amount, 0);
+    if (input.amount > owed) {
+      return {
+        error: `That is more than the ${owed} owed on the selected dues.`,
+        status: 400 as const,
+      };
+    }
+
+    const collector = actorUserId
+      ? await paymentRepository.findMembershipByUser(tenantId, actorUserId)
+      : null;
+
+    let remaining = input.amount;
+    const settled: Array<{ id: string; amount: number }> = [];
+    let balancePayment: { id: string; amount: number } | null = null;
+
+    for (const due of dues) {
+      if (remaining <= 0) break;
+
+      if (remaining >= due.amount) {
+        const row = await paymentRepository.settleOnePending(due.id, collector?.id);
+        settled.push({ id: row.id, amount: row.amount });
+        remaining -= due.amount;
+        continue;
+      }
+
+      // The money ran out part-way through this row: it becomes what was
+      // handed over, and the shortfall carries on as its own debt.
+      const shortfall = due.amount - remaining;
+      await paymentRepository.reducePaymentAmount(due.id, remaining);
+      const row = await paymentRepository.settleOnePending(due.id, collector?.id);
+      settled.push({ id: row.id, amount: row.amount });
+
+      const balance = await paymentRepository.createPayment({
+        tenantId,
+        membershipId,
+        ...(due.subscriptionId ? { subscriptionId: due.subscriptionId } : {}),
+        description: due.description?.startsWith("Balance")
+          ? due.description
+          : `Balance — ${due.description ?? "payment"}`,
+        ...(input.note ? { note: input.note } : {}),
+        status: "PENDING",
+        amount: shortfall,
+        collectorId: collector?.id,
+        // A debt split in two is still a debt against time already granted.
+        extendsValidity: false,
+      });
+
+      balancePayment = { id: balance.id, amount: balance.amount };
+      remaining = 0;
+    }
+
+    // Settling arrears can carry a member back over their due date, and a
+    // lapsed one should come alive the moment they are paid up.
+    await paymentRepository.refreshDueDate(membershipId);
+    await paymentRepository.reactivateIfPaidUp(membershipId);
+
+    const collected = settled.reduce((sum, row) => sum + row.amount, 0);
+
+    if (collected > 0) {
+      notifyInBackground(scheduleBackgroundTask, () =>
+        pushService.notifyPaymentReceived(tenantId, {
+          amount: collected,
+          description:
+            settled.length === 1 ? (dues[0]?.description ?? null) : "Outstanding dues",
+          paymentId: settled.length === 1 ? settled[0]!.id : undefined,
+          source: "DESK",
+          actorUserId,
+        }),
+      );
+    }
+
+    return {
+      data: {
+        settled,
+        collected,
+        ...(balancePayment ? { balancePayment } : {}),
+      },
+    };
+  },
+
   async updatePaymentStatus(
     tenantId: string,
     paymentId: string,
     status: PaymentStatus,
+    /** What was actually handed over, when it is less than the row's amount. */
+    input?: { paidAmount?: number | null },
     actorUserId?: string,
     scheduleBackgroundTask?: BackgroundTaskScheduler,
     /**
@@ -471,7 +647,45 @@ export const paymentService = {
       }
     }
 
+    /**
+     * Settling only part of what is owed.
+     *
+     * Somebody owes ₹600 and hands over ₹500 at the desk. The row becomes the
+     * ₹500 that was actually taken, and the ₹100 left is written as its own
+     * pending balance — the same shape `createPayment` produces when a payment
+     * is part-paid from the start, so the ledger reads the same either way and
+     * the desk has one idea to understand rather than two.
+     *
+     * The balance never buys time: whatever period this payment was for was
+     * already granted by it, and the remainder is money owed against that.
+     */
+    const settlingShort =
+      status === "COMPLETED" &&
+      input?.paidAmount != null &&
+      input.paidAmount < existing.amount;
+
+    const balanceAmount = settlingShort ? existing.amount - input!.paidAmount! : 0;
+
+    if (settlingShort) {
+      await paymentRepository.reducePaymentAmount(paymentId, input!.paidAmount!);
+    }
+
     const payment = await paymentRepository.updatePaymentStatus(paymentId, status);
+
+    const balancePayment =
+      balanceAmount > 0
+        ? await paymentRepository.createPayment({
+            tenantId,
+            membershipId: existing.membershipId!,
+            ...(existing.subscriptionId ? { subscriptionId: existing.subscriptionId } : {}),
+            description: existing.description?.startsWith("Balance")
+              ? existing.description
+              : `Balance — ${existing.description ?? "payment"}`,
+            status: "PENDING",
+            amount: balanceAmount,
+            extendsValidity: false,
+          })
+        : null;
 
     // Keep membership.dueDate in sync
     if (existing.membershipId) {
@@ -512,7 +726,15 @@ export const paymentService = {
       );
     }
 
-    return { data: { payment }, previousStatus: existing.status };
+    return {
+      data: {
+        payment,
+        ...(balancePayment
+          ? { balancePayment: { id: balancePayment.id, amount: balancePayment.amount } }
+          : {}),
+      },
+      previousStatus: existing.status,
+    };
   },
 
   /**

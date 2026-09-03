@@ -22,6 +22,7 @@ import {
 }  from "../../lib/response";
 import {
   createPaymentSchema,
+  settleDuesSchema,
   updatePaymentStatusSchema,
   updatePaymentSchema,
   createSubscriptionSchema,
@@ -160,6 +161,43 @@ export const paymentController = {
    * Handle the `update payment status` HTTP action for the payments module.
    * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
    */
+  /**
+   * Collect against outstanding dues, with no plan involved.
+   *
+   * The counterpart to `createPayment` for a member who simply owes money: the
+   * desk takes what is handed over and the server decides which debts it
+   * closes, oldest first.
+   */
+  async settleDues(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    const membershipId = c.req.param("membershipId")!;
+    const parsed = await parseBody(c, settleDuesSchema);
+    if (!parsed.ok) return parsed.response;
+
+    const result = await paymentService.settleDues(
+      tenantId,
+      membershipId,
+      parsed.data,
+      c.get("authUser").id,
+      (promise) => c.executionCtx.waitUntil(promise),
+    );
+    if ("error" in result) return failWith(c, result);
+
+    await auditLog({
+      action: "UPDATE",
+      entity: "Payment",
+      entityId: membershipId,
+      actorId: c.get("authUser").id,
+      tenantId,
+      metadata: {
+        settledDues: result.data.settled.length,
+        collected: result.data.collected,
+      },
+    });
+
+    return ok(c, result.data);
+  },
+
   async updatePaymentStatus(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const paymentId = c.req.param("paymentId")!;
@@ -170,6 +208,7 @@ export const paymentController = {
       tenantId,
       paymentId,
       parsed.data.status,
+      { paidAmount: parsed.data.paidAmount ?? null },
       c.get("authUser").id,
       (promise) => c.executionCtx.waitUntil(promise),
       can(c, Permission.PAYMENTS_UPDATE),

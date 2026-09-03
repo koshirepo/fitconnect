@@ -213,6 +213,12 @@ type MemberCardProps = {
    * pass several lines of detail.
    */
   truncateSubtitle?: boolean;
+  /**
+   * Allow the name line to wrap instead of truncating to one ellipsised line.
+   * Off by default for list rows, where a ragged name breaks the rhythm; on for
+   * pickers, where the whole point is telling similar members apart.
+   */
+  wrapName?: boolean;
   /** Trailing content, right-aligned: actions, amounts, badges. */
   actions?: React.ReactNode;
   onClick?: () => void;
@@ -227,6 +233,7 @@ export function MemberCard({
   chips,
   subtitle,
   truncateSubtitle = variant === "card",
+  wrapName = false,
   actions,
   onClick,
   className,
@@ -296,7 +303,13 @@ export function MemberCard({
             </div>
           )}
 
-          <p className={cn(hasChips && "mt-2", "truncate", s.name)}>
+          <p
+            className={cn(
+              hasChips && "mt-2",
+              wrapName ? "" : "truncate",
+              s.name,
+            )}
+          >
             {person.memberId !== undefined && (
               <span className="font-semibold text-muted-foreground">#{person.memberId} – </span>
             )}

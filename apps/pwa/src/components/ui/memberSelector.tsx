@@ -62,6 +62,7 @@ export default function MemberSelector({
             memberId={selectedMember.memberId}
             dueDate={selectedMember.dueDate}
             variant="sm"
+            wrapName
           >
             <div className="text-xs text-muted-foreground">
               {selectedMember.phone && <p>{selectedMember.phone}</p>}
@@ -120,6 +121,7 @@ export default function MemberSelector({
                         memberId={m.memberId}
                         dueDate={m.dueDate}
                         variant="sm"
+                        wrapName
                       >
                         <div className="text-xs text-muted-foreground space-y-1">
                           {m.phone && <p>{m.phone}</p>}

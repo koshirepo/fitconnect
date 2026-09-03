@@ -288,6 +288,8 @@ export const paymentRepository = {
     gateway?: string;
     gatewayOrderId?: string;
     gatewayAccount?: string;
+    /** False for a balance: the row it split from already granted the window. */
+    extendsValidity?: boolean;
   }) {
     return prisma.payment.create({
       data,
@@ -319,6 +321,9 @@ export const paymentRepository = {
         id: true,
         status: true,
         membershipId: true,
+        // Needed when only part of what is owed is handed over: the remainder
+        // is written as its own row against the same plan.
+        subscriptionId: true,
         amount: true,
         description: true,
         note: true,
@@ -416,12 +421,28 @@ export const paymentRepository = {
     };
   },
 
+  /**
+   * Reduce a pending row to what was actually handed over.
+   *
+   * Used when the desk takes part of what is owed: this row becomes the money
+   * received, and the caller writes the remainder as its own pending balance.
+   */
+  reducePaymentAmount(paymentId: string, amount: number) {
+    return prisma.payment.update({
+      where: { id: paymentId },
+      data: { amount },
+      select: { id: true, amount: true },
+    });
+  },
+
   async updatePaymentStatus(paymentId: string, status: PaymentStatus) {
     const existing = await prisma.payment.findUniqueOrThrow({
       where: { id: paymentId },
       select: {
         membershipId: true,
         validUntil: true,
+        amount: true,
+        extendsValidity: true,
         subscription: { select: { durationDays: true } },
       },
     });
@@ -442,8 +463,11 @@ export const paymentRepository = {
      * Only ever filled in, never overwritten: a date an admin typed on the
      * payment is the one that stands.
      */
+    // A balance settles a debt against time already granted, so it buys none
+    // of its own. Without this check, paying the ₹100 remainder of a ₹600 plan
+    // would hand the member another full month.
     const window =
-      paidAt && existing.subscription && !existing.validUntil
+      paidAt && existing.extendsValidity && existing.subscription && !existing.validUntil
         ? await paymentRepository.nextValidityWindow(
             existing.membershipId,
             existing.subscription.durationDays,
@@ -752,6 +776,113 @@ export const paymentRepository = {
    * Scoped by membership and by PENDING as well as by id, so a stale form
    * cannot complete a row that has since been paid, refunded, or moved.
    */
+  /**
+   * Pending rows a member owes, oldest first.
+   *
+   * Ordered because money is allocated in that order: a debt from March is
+   * closed before one from April, which is both what a member expects and what
+   * keeps the oldest arrears from ageing indefinitely while newer ones clear.
+   */
+  findPendingByIds(tenantId: string, membershipId: string, paymentIds: string[]) {
+    if (paymentIds.length === 0) return Promise.resolve([]);
+
+    return prisma.payment.findMany({
+      where: { id: { in: paymentIds }, tenantId, membershipId, status: "PENDING" },
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        amount: true,
+        description: true,
+        subscriptionId: true,
+        extendsValidity: true,
+      },
+    });
+  },
+
+  /** Close one pending row, recording who took the money. */
+  settleOnePending(paymentId: string, collectorId?: string) {
+    return prisma.payment.update({
+      where: { id: paymentId },
+      data: {
+        status: "COMPLETED",
+        paidAt: new Date(),
+        ...(collectorId ? { collectorId } : {}),
+      },
+      select: { id: true, amount: true, description: true },
+    });
+  },
+
+  /**
+   * Settle dues with only so much money, oldest first.
+   *
+   * Replaces the assumption that ticking a due means it is paid in full. When
+   * somebody buys a ₹600 plan, owes ₹3,500, and hands over ₹4,000, the ₹100
+   * short has to land somewhere — and settling every ticked row regardless
+   * wrote it off silently.
+   *
+   * The row the money runs out on is reduced to what it received and the
+   * shortfall is returned, for the caller to write as its own pending balance.
+   */
+  /** What the named pending rows add up to. */
+  async sumPendingByIds(tenantId: string, membershipId: string, paymentIds: string[]) {
+    if (paymentIds.length === 0) return 0;
+    const rows = await prisma.payment.findMany({
+      where: { id: { in: paymentIds }, tenantId, membershipId, status: "PENDING" },
+      select: { amount: true },
+    });
+    return rows.reduce((sum: number, row: { amount: number }) => sum + row.amount, 0);
+  },
+
+  async settlePendingWithBudget(
+    tenantId: string,
+    membershipId: string,
+    paymentIds: string[],
+    budget: number,
+    collectorId?: string,
+  ) {
+    if (paymentIds.length === 0 || budget <= 0) {
+      return { settled: [] as Array<{ id: string; amount: number; description: string | null }>, shortfall: null as null | { amount: number; description: string | null; subscriptionId: string | null } };
+    }
+
+    const rows = await prisma.payment.findMany({
+      where: { id: { in: paymentIds }, tenantId, membershipId, status: "PENDING" },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, amount: true, description: true, subscriptionId: true },
+    });
+
+    let remaining = budget;
+    const settled: Array<{ id: string; amount: number; description: string | null }> = [];
+    let shortfall: null | { amount: number; description: string | null; subscriptionId: string | null } = null;
+
+    for (const row of rows) {
+      if (remaining <= 0) break;
+
+      const takes = Math.min(remaining, row.amount);
+      if (takes < row.amount) {
+        shortfall = {
+          amount: row.amount - takes,
+          description: row.description,
+          subscriptionId: row.subscriptionId,
+        };
+        await prisma.payment.update({ where: { id: row.id }, data: { amount: takes } });
+      }
+
+      await prisma.payment.update({
+        where: { id: row.id },
+        data: {
+          status: "COMPLETED",
+          paidAt: new Date(),
+          ...(collectorId ? { collectorId } : {}),
+        },
+      });
+
+      settled.push({ id: row.id, amount: takes, description: row.description });
+      remaining -= takes;
+    }
+
+    return { settled, shortfall };
+  },
+
   async settlePendingAtDesk(
     tenantId: string,
     membershipId: string,

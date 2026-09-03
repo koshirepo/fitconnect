@@ -253,3 +253,28 @@ export function useDeleteSubscription() {
     { invalidates: [["subscriptions", tenantId ?? "none"]] },
   );
 }
+
+
+/**
+ * Collect against dues a member already owes.
+ *
+ * Invalidates the whole payment scope: settling arrears closes rows, may write
+ * a new balance, and can carry the member back over their due date — the list,
+ * the member record and the dashboard all move at once.
+ */
+export function useSettleDues() {
+  return useTenantMutation(
+    async (
+      id,
+      vars: { membershipId: string; dueIds: string[]; amount: number; note?: string },
+    ) =>
+      unwrap(
+        await paymentsApi.settleDues(id, vars.membershipId, {
+          dueIds: vars.dueIds,
+          amount: vars.amount,
+          ...(vars.note ? { note: vars.note } : {}),
+        }),
+      ),
+    { invalidates: [["payments"], ["members"]] },
+  );
+}
