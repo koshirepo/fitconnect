@@ -38,7 +38,8 @@ import { formatShiftLabel, formatShiftWindow } from "@/lib/shifts";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { useLogReminder, useMemberReminders } from "@/api/queries/reminders";
 import { getTenantDashboardPath } from "@/lib/subdomain";
-import { resolveAssetUrl } from "@/lib/assets";
+import { AssetImage } from "@/components/ui/asset-image";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 import {
   getTenantWhatsAppTemplateBody,
   renderWhatsAppTemplateBody,
@@ -153,6 +154,7 @@ export default function MemberDetailPage() {
   const [showBadgePicker, setShowBadgePicker] = React.useState(false);
   const [statusLoading, setStatusLoading] = React.useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
+  const [photoZoomOpen, setPhotoZoomOpen] = React.useState(false);
   const [deletingMember, setDeletingMember] = React.useState(false);
   const paymentsSectionRef = React.useRef<HTMLDivElement>(null);
 
@@ -723,10 +725,14 @@ export default function MemberDetailPage() {
           )}
         >
           {member.avatarUrl ? (
-            <img
-              src={resolveAssetUrl(member.avatarUrl) ?? member.avatarUrl}
+            /* `AssetImage` rather than a bare tag: it falls back to the address
+               the photo was stored at when the proxy cannot serve it, which is
+               the difference between a face and a pair of initials. */
+            <AssetImage
+              src={member.avatarUrl}
               alt={member.name}
-              className="h-full w-full object-cover"
+              className="h-full w-full cursor-zoom-in object-cover"
+              onClick={() => setPhotoZoomOpen(true)}
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
@@ -742,6 +748,13 @@ export default function MemberDetailPage() {
             )}
           />
         </div>
+
+        <ImageLightbox
+          src={member.avatarUrl}
+          alt={member.name}
+          open={photoZoomOpen}
+          onOpenChange={setPhotoZoomOpen}
+        />
         <div className="text-center">
           <p className="text-xl font-semibold">
             <span className="text-muted-foreground font-normal">#{member.memberId} – </span>

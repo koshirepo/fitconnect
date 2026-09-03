@@ -2,6 +2,7 @@ import * as React from "react";
 import { Avatar as AvatarPrimitive } from "@base-ui/react/avatar";
 
 import { cn } from "@/lib/utils";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 
 function Avatar({
   className,
@@ -23,13 +24,52 @@ function Avatar({
   );
 }
 
-function AvatarImage({ className, ...props }: AvatarPrimitive.Image.Props) {
+function AvatarImage({
+  className,
+  zoomable = true,
+  onClick,
+  ...props
+}: AvatarPrimitive.Image.Props & {
+  /** Whether tapping the photo opens it full size. */
+  zoomable?: boolean;
+}) {
+  const [zoomOpen, setZoomOpen] = React.useState(false);
+  const src = typeof props.src === "string" ? props.src : undefined;
+  const canZoom = zoomable && Boolean(src);
+
   return (
-    <AvatarPrimitive.Image
-      data-slot="avatar-image"
-      className={cn("aspect-square size-full rounded-full object-cover", className)}
-      {...props}
-    />
+    <>
+      <AvatarPrimitive.Image
+        data-slot="avatar-image"
+        className={cn(
+          "aspect-square size-full rounded-full object-cover",
+          canZoom && "cursor-zoom-in",
+          className,
+        )}
+        onClick={(event) => {
+          onClick?.(event);
+          if (!canZoom || event.defaultPrevented) return;
+          /**
+           * The photo is its own target even inside a row or link that leads
+           * somewhere: the click is stopped here rather than allowed to reach
+           * the thing wrapping it, so tapping a face shows the face and tapping
+           * anywhere else still navigates.
+           */
+          event.preventDefault();
+          event.stopPropagation();
+          setZoomOpen(true);
+        }}
+        {...props}
+      />
+      {canZoom && (
+        <ImageLightbox
+          src={src}
+          alt={typeof props.alt === "string" && props.alt ? props.alt : "Photo"}
+          open={zoomOpen}
+          onOpenChange={setZoomOpen}
+        />
+      )}
+    </>
   );
 }
 

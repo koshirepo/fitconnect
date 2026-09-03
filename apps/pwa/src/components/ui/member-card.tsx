@@ -13,6 +13,7 @@ import { formatDate } from "@/lib/utils";
 import { Card } from "./card";
 import { Ban, CalendarClock, CheckCircle2, Dumbbell, Shield } from "lucide-react";
 import { genderMeta } from "@/lib/gender";
+import { ImageLightbox } from "./image-lightbox";
 
 export type PersonRole = "ADMIN" | "COACH" | "TRAINER" | "MEMBER" | string;
 
@@ -129,6 +130,7 @@ export function AvatarTile({
   size,
   rounded,
   stacked = false,
+  zoomable = true,
   className,
 }: {
   person: CardPerson;
@@ -136,9 +138,18 @@ export function AvatarTile({
   rounded?: boolean;
   /** Centred square rather than flush-left, for stacked profile headers. */
   stacked?: boolean;
+  /**
+   * Whether tapping the photo opens it full size.
+   *
+   * Off for tiles inside a row that is itself clickable, where the tap already
+   * means "open this person" and a viewer would be in the way of it.
+   */
+  zoomable?: boolean;
   className?: string;
 }) {
   const s = SIZES[size];
+  const [zoomOpen, setZoomOpen] = React.useState(false);
+  const canZoom = zoomable && Boolean(person.avatarUrl);
   const roleIcon = roleIconFor(person.role, cn(s.roleIcon, "text-white"));
 
   return (
@@ -167,7 +178,23 @@ export function AvatarTile({
           alt={person.name}
           loading="lazy"
           decoding="async"
-          className="absolute inset-0 size-full object-cover"
+          className={cn(
+            "absolute inset-0 size-full object-cover",
+            canZoom && "cursor-zoom-in",
+          )}
+          onClick={
+            canZoom
+              ? (event) => {
+                  // The row around this is usually a link or a click handler to
+                  // the person's page. Both are stopped here: tapping the face
+                  // shows the face, and every other part of the row still opens
+                  // the person.
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setZoomOpen(true);
+                }
+              : undefined
+          }
         />
       ) : (
         <div
@@ -188,6 +215,15 @@ export function AvatarTile({
         >
           {roleIcon}
         </div>
+      )}
+
+      {canZoom && (
+        <ImageLightbox
+          src={person.avatarUrl}
+          alt={person.name}
+          open={zoomOpen}
+          onOpenChange={setZoomOpen}
+        />
       )}
     </div>
   );
@@ -292,6 +328,9 @@ export function MemberCard({
         className={cn("flex min-w-0 flex-1 items-stretch", interactive && "cursor-pointer")}
         onClick={onClick}
       >
+        {/* The photo opens itself even though the row around it opens the
+            person: the tile stops the click from reaching the row, so the two
+            targets stay distinct rather than one swallowing the other. */}
         <AvatarTile person={person} size={size} rounded={isCard} />
 
         <div className={cn("min-w-0 flex-1 self-center", s.body)}>

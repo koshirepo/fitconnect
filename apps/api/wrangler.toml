@@ -162,7 +162,13 @@ APP_URL = "https://fitconnect.co.in"
 APP_ROOT_DOMAINS = "fitconnect.co.in"
 CLOUDFLARE_ACCOUNT_ID = "610fe4c99988bf13d33f49fbfe446fee"
 CLOUDFLARE_PAGES_PROJECT = "fitconnect-pwa"
-R2_PUBLIC_URL = "https://pub-2da141b1571a44ebb3e8f7633b6e5b61.r2.dev"
+# The bucket address that actually serves the stored objects. Every avatar and
+# logo URL in the database points at this host, and `uploads` falls back to it
+# when the bound bucket does not hold the key — which is the normal case for the
+# photos uploaded before the current bucket existed. Pointing this at a bucket
+# with none of them in it is indistinguishable from every member losing their
+# photo, because the fallback 404s and the UI renders initials instead.
+R2_PUBLIC_URL = "https://pub-f9794d5233bf467ca886bdf6c65a7cbe.r2.dev"
 CORS_ORIGIN = "https://fitconnect.co.in"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = "587"
