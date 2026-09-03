@@ -88,6 +88,8 @@ export const ModelName = {
   WorkoutPlanAssignment: 'WorkoutPlanAssignment',
   Badge: 'Badge',
   PlatformPayment: 'PlatformPayment',
+  AttendanceDevice: 'AttendanceDevice',
+  DeviceCommand: 'DeviceCommand',
   Attendance: 'Attendance',
   AuditLog: 'AuditLog',
   PushSubscription: 'PushSubscription',
@@ -309,6 +311,8 @@ export const TenantMembershipScalarFieldEnum = {
   shiftId: 'shiftId',
   referredByMembershipId: 'referredByMembershipId',
   idCardToken: 'idCardToken',
+  deviceUserPin: 'deviceUserPin',
+  rfidCardNumber: 'rfidCardNumber',
   joinedAt: 'joinedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -764,6 +768,40 @@ export const PlatformPaymentScalarFieldEnum = {
 } as const
 
 export type PlatformPaymentScalarFieldEnum = (typeof PlatformPaymentScalarFieldEnum)[keyof typeof PlatformPaymentScalarFieldEnum]
+
+
+export const AttendanceDeviceScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  serialNumber: 'serialNumber',
+  name: 'name',
+  location: 'location',
+  timezone: 'timezone',
+  isActive: 'isActive',
+  lastSeenAt: 'lastSeenAt',
+  lastPunchAt: 'lastPunchAt',
+  stamp: 'stamp',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AttendanceDeviceScalarFieldEnum = (typeof AttendanceDeviceScalarFieldEnum)[keyof typeof AttendanceDeviceScalarFieldEnum]
+
+
+export const DeviceCommandScalarFieldEnum = {
+  id: 'id',
+  deviceId: 'deviceId',
+  tenantId: 'tenantId',
+  command: 'command',
+  kind: 'kind',
+  membershipId: 'membershipId',
+  sentAt: 'sentAt',
+  completedAt: 'completedAt',
+  resultCode: 'resultCode',
+  createdAt: 'createdAt'
+} as const
+
+export type DeviceCommandScalarFieldEnum = (typeof DeviceCommandScalarFieldEnum)[keyof typeof DeviceCommandScalarFieldEnum]
 
 
 export const AttendanceScalarFieldEnum = {

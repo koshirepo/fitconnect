@@ -281,6 +281,20 @@ export type Badge = Prisma.BadgeModel
  */
 export type PlatformPayment = Prisma.PlatformPaymentModel
 /**
+ * Model AttendanceDevice
+ * An RFID attendance machine on a gym's wall. A gym may have several.
+ */
+export type AttendanceDevice = Prisma.AttendanceDeviceModel
+/**
+ * Model DeviceCommand
+ * A line waiting to be handed to a device the next time it polls.
+ * 
+ * These machines cannot be pushed to, so an enrolment has to wait somewhere
+ * until the device asks for work. One row per device per change: each is told
+ * separately and each can fail separately.
+ */
+export type DeviceCommand = Prisma.DeviceCommandModel
+/**
  * Model Attendance
  * 
  */

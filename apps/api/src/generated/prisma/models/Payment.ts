@@ -1002,14 +1002,6 @@ export type PaymentUncheckedUpdateManyWithoutSubscriptionNestedInput = {
   deleteMany?: Prisma.PaymentScalarWhereInput | Prisma.PaymentScalarWhereInput[]
 }
 
-export type NullableIntFieldUpdateOperationsInput = {
-  set?: number | null
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type PaymentCreateNestedOneWithoutRemindersInput = {
   create?: Prisma.XOR<Prisma.PaymentCreateWithoutRemindersInput, Prisma.PaymentUncheckedCreateWithoutRemindersInput>
   connectOrCreate?: Prisma.PaymentCreateOrConnectWithoutRemindersInput

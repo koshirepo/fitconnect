@@ -218,6 +218,7 @@ model Tenant {
   charges          TenantCharge[]
   platformPayments PlatformPayment[]
   attendances      Attendance[]
+  attendanceDevices AttendanceDevice[]
   todos            Todo[]
   rolePermissions  RolePermissionOverride[]
   roles            Role[]
@@ -359,6 +360,13 @@ model TenantMembership {
   /// Unguessable key for this member's public ID-card URL. Null until the
   /// card is first issued for a membership that predates the feature.
   idCardToken       String?                 @unique
+  /// The number an RFID attendance machine reports for this member. Its
+  /// attendance log carries only this, so it is the join between a punch and a
+  /// person. Unique per gym, not globally — every gym starts its own at 1.
+  deviceUserPin     Int?
+  /// What is printed on the card in the member's hand, kept so the desk can
+  /// find them by it when the card stops working.
+  rfidCardNumber    String?
   joinedAt          DateTime                @default(now())
   createdAt         DateTime                @default(now())
   updatedAt         DateTime                @updatedAt
@@ -1151,6 +1159,61 @@ model PlatformPayment {
 }
 
 // Attendance and audit log
+
+/// An RFID attendance machine on a gym's wall. A gym may have several.
+model AttendanceDevice {
+  id           String    @id @default(cuid())
+  tenantId     String
+  tenant       Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  /// Globally unique: it is the only thing an incoming punch carries that says
+  /// which gym it belongs to. These devices send no secret and no signature.
+  serialNumber String    @unique
+  name         String
+  location     String?
+  /// The zone the device's own clock is set to. Its punches carry a local time
+  /// with no offset, so without this they cannot be placed on a calendar.
+  timezone     String    @default("Asia/Kolkata")
+  isActive     Boolean   @default(true)
+  /// Any contact, including an idle command poll — this is what says "online".
+  lastSeenAt   DateTime?
+  /// The last real punch, which is what says the door is being used.
+  lastPunchAt  DateTime?
+  /// The device's own upload cursor, echoed back so it stops resending history.
+  stamp        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  commands     DeviceCommand[]
+
+  @@index([tenantId])
+}
+
+/// A line waiting to be handed to a device the next time it polls.
+///
+/// These machines cannot be pushed to, so an enrolment has to wait somewhere
+/// until the device asks for work. One row per device per change: each is told
+/// separately and each can fail separately.
+model DeviceCommand {
+  id           String           @id @default(cuid())
+  deviceId     String
+  device       AttendanceDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  tenantId     String
+  /// Handed to the device verbatim, minus the id prefix the protocol adds.
+  command      String
+  /// USER_SET or USER_DELETE, so the queue reads as something.
+  kind         String
+  /// Null once the member is gone; the command outlives them.
+  membershipId String?
+  /// Handed over. Not the same as applied — the device confirms separately.
+  sentAt       DateTime?
+  completedAt  DateTime?
+  /// The device's own return code. 0 is success.
+  resultCode   String?
+  createdAt    DateTime         @default(now())
+
+  @@index([deviceId, sentAt])
+  @@index([tenantId])
+  @@index([membershipId])
+}
 
 model Attendance {
   id           String            @id @default(cuid())

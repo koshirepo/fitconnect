@@ -8,7 +8,12 @@
 import { keepPreviousData } from "@tanstack/react-query";
 import { attendanceApi } from "@/api/attendance";
 import { queryKeys } from "@/lib/query-keys";
-import type { MarkAllAttendancePayload, MarkAttendancePayload } from "@/types/api";
+import type {
+  CreateAttendanceDevicePayload,
+  MarkAllAttendancePayload,
+  MarkAttendancePayload,
+  UpdateAttendanceDevicePayload,
+} from "@/types/api";
 import {
   unwrap,
   unwrapPaginated,
@@ -164,5 +169,52 @@ export function useRemoveAttendance() {
       await attendanceApi.remove(id, vars.membershipId, vars.date);
     },
     { invalidates: [attendanceScope(tenantId)] },
+  );
+}
+
+
+// ─── RFID attendance machines ────────────────────────────────────────────────
+
+function deviceScope(tenantId: string | null) {
+  return [...attendanceScope(tenantId), "devices"];
+}
+
+export function useAttendanceDevices(options: { enabled?: boolean } = {}) {
+  return useTenantQuery(
+    (tenantId) => deviceScope(tenantId),
+    async (tenantId) => unwrap(await attendanceApi.listDevices(tenantId)).devices,
+    {
+      // These report in on their own schedule, so a list left open should keep
+      // up rather than showing a device as offline long after it came back.
+      refetchInterval: 60_000,
+      ...options,
+    },
+  );
+}
+
+export function useCreateAttendanceDevice() {
+  const tenantId = useCurrentTenantId();
+  return useTenantMutation(
+    async (id, payload: CreateAttendanceDevicePayload) =>
+      unwrap(await attendanceApi.createDevice(id, payload)),
+    { invalidates: [deviceScope(tenantId)] },
+  );
+}
+
+export function useUpdateAttendanceDevice() {
+  const tenantId = useCurrentTenantId();
+  return useTenantMutation(
+    async (id, vars: { deviceId: string; data: UpdateAttendanceDevicePayload }) =>
+      unwrap(await attendanceApi.updateDevice(id, vars.deviceId, vars.data)),
+    { invalidates: [deviceScope(tenantId)] },
+  );
+}
+
+export function useDeleteAttendanceDevice() {
+  const tenantId = useCurrentTenantId();
+  return useTenantMutation(
+    async (id, deviceId: string) =>
+      unwrap(await attendanceApi.deleteDevice(id, deviceId)),
+    { invalidates: [deviceScope(tenantId)] },
   );
 }

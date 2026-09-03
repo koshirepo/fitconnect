@@ -29,10 +29,12 @@ export type AggregateTenantMembership = {
 
 export type TenantMembershipAvgAggregateOutputType = {
   memberId: number | null
+  deviceUserPin: number | null
 }
 
 export type TenantMembershipSumAggregateOutputType = {
   memberId: number | null
+  deviceUserPin: number | null
 }
 
 export type TenantMembershipMinAggregateOutputType = {
@@ -46,6 +48,8 @@ export type TenantMembershipMinAggregateOutputType = {
   shiftId: string | null
   referredByMembershipId: string | null
   idCardToken: string | null
+  deviceUserPin: number | null
+  rfidCardNumber: string | null
   joinedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -62,6 +66,8 @@ export type TenantMembershipMaxAggregateOutputType = {
   shiftId: string | null
   referredByMembershipId: string | null
   idCardToken: string | null
+  deviceUserPin: number | null
+  rfidCardNumber: string | null
   joinedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -78,6 +84,8 @@ export type TenantMembershipCountAggregateOutputType = {
   shiftId: number
   referredByMembershipId: number
   idCardToken: number
+  deviceUserPin: number
+  rfidCardNumber: number
   joinedAt: number
   createdAt: number
   updatedAt: number
@@ -87,10 +95,12 @@ export type TenantMembershipCountAggregateOutputType = {
 
 export type TenantMembershipAvgAggregateInputType = {
   memberId?: true
+  deviceUserPin?: true
 }
 
 export type TenantMembershipSumAggregateInputType = {
   memberId?: true
+  deviceUserPin?: true
 }
 
 export type TenantMembershipMinAggregateInputType = {
@@ -104,6 +114,8 @@ export type TenantMembershipMinAggregateInputType = {
   shiftId?: true
   referredByMembershipId?: true
   idCardToken?: true
+  deviceUserPin?: true
+  rfidCardNumber?: true
   joinedAt?: true
   createdAt?: true
   updatedAt?: true
@@ -120,6 +132,8 @@ export type TenantMembershipMaxAggregateInputType = {
   shiftId?: true
   referredByMembershipId?: true
   idCardToken?: true
+  deviceUserPin?: true
+  rfidCardNumber?: true
   joinedAt?: true
   createdAt?: true
   updatedAt?: true
@@ -136,6 +150,8 @@ export type TenantMembershipCountAggregateInputType = {
   shiftId?: true
   referredByMembershipId?: true
   idCardToken?: true
+  deviceUserPin?: true
+  rfidCardNumber?: true
   joinedAt?: true
   createdAt?: true
   updatedAt?: true
@@ -239,6 +255,8 @@ export type TenantMembershipGroupByOutputType = {
   shiftId: string | null
   referredByMembershipId: string | null
   idCardToken: string | null
+  deviceUserPin: number | null
+  rfidCardNumber: string | null
   joinedAt: Date
   createdAt: Date
   updatedAt: Date
@@ -278,6 +296,8 @@ export type TenantMembershipWhereInput = {
   shiftId?: Prisma.StringNullableFilter<"TenantMembership"> | string | null
   referredByMembershipId?: Prisma.StringNullableFilter<"TenantMembership"> | string | null
   idCardToken?: Prisma.StringNullableFilter<"TenantMembership"> | string | null
+  deviceUserPin?: Prisma.IntNullableFilter<"TenantMembership"> | number | null
+  rfidCardNumber?: Prisma.StringNullableFilter<"TenantMembership"> | string | null
   joinedAt?: Prisma.DateTimeFilter<"TenantMembership"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"TenantMembership"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TenantMembership"> | Date | string
@@ -320,6 +340,8 @@ export type TenantMembershipOrderByWithRelationInput = {
   shiftId?: Prisma.SortOrderInput | Prisma.SortOrder
   referredByMembershipId?: Prisma.SortOrderInput | Prisma.SortOrder
   idCardToken?: Prisma.SortOrderInput | Prisma.SortOrder
+  deviceUserPin?: Prisma.SortOrderInput | Prisma.SortOrder
+  rfidCardNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -367,6 +389,8 @@ export type TenantMembershipWhereUniqueInput = Prisma.AtLeast<{
   dueDate?: Prisma.DateTimeNullableFilter<"TenantMembership"> | Date | string | null
   shiftId?: Prisma.StringNullableFilter<"TenantMembership"> | string | null
   referredByMembershipId?: Prisma.StringNullableFilter<"TenantMembership"> | string | null
+  deviceUserPin?: Prisma.IntNullableFilter<"TenantMembership"> | number | null
+  rfidCardNumber?: Prisma.StringNullableFilter<"TenantMembership"> | string | null
   joinedAt?: Prisma.DateTimeFilter<"TenantMembership"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"TenantMembership"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TenantMembership"> | Date | string
@@ -409,6 +433,8 @@ export type TenantMembershipOrderByWithAggregationInput = {
   shiftId?: Prisma.SortOrderInput | Prisma.SortOrder
   referredByMembershipId?: Prisma.SortOrderInput | Prisma.SortOrder
   idCardToken?: Prisma.SortOrderInput | Prisma.SortOrder
+  deviceUserPin?: Prisma.SortOrderInput | Prisma.SortOrder
+  rfidCardNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -433,6 +459,8 @@ export type TenantMembershipScalarWhereWithAggregatesInput = {
   shiftId?: Prisma.StringNullableWithAggregatesFilter<"TenantMembership"> | string | null
   referredByMembershipId?: Prisma.StringNullableWithAggregatesFilter<"TenantMembership"> | string | null
   idCardToken?: Prisma.StringNullableWithAggregatesFilter<"TenantMembership"> | string | null
+  deviceUserPin?: Prisma.IntNullableWithAggregatesFilter<"TenantMembership"> | number | null
+  rfidCardNumber?: Prisma.StringNullableWithAggregatesFilter<"TenantMembership"> | string | null
   joinedAt?: Prisma.DateTimeWithAggregatesFilter<"TenantMembership"> | Date | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"TenantMembership"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"TenantMembership"> | Date | string
@@ -445,6 +473,8 @@ export type TenantMembershipCreateInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -487,6 +517,8 @@ export type TenantMembershipUncheckedCreateInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -521,6 +553,8 @@ export type TenantMembershipUpdateInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -563,6 +597,8 @@ export type TenantMembershipUncheckedUpdateInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -601,6 +637,8 @@ export type TenantMembershipCreateManyInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -613,6 +651,8 @@ export type TenantMembershipUpdateManyMutationInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -629,6 +669,8 @@ export type TenantMembershipUncheckedUpdateManyInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -670,6 +712,8 @@ export type TenantMembershipCountOrderByAggregateInput = {
   shiftId?: Prisma.SortOrder
   referredByMembershipId?: Prisma.SortOrder
   idCardToken?: Prisma.SortOrder
+  deviceUserPin?: Prisma.SortOrder
+  rfidCardNumber?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -677,6 +721,7 @@ export type TenantMembershipCountOrderByAggregateInput = {
 
 export type TenantMembershipAvgOrderByAggregateInput = {
   memberId?: Prisma.SortOrder
+  deviceUserPin?: Prisma.SortOrder
 }
 
 export type TenantMembershipMaxOrderByAggregateInput = {
@@ -690,6 +735,8 @@ export type TenantMembershipMaxOrderByAggregateInput = {
   shiftId?: Prisma.SortOrder
   referredByMembershipId?: Prisma.SortOrder
   idCardToken?: Prisma.SortOrder
+  deviceUserPin?: Prisma.SortOrder
+  rfidCardNumber?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -706,6 +753,8 @@ export type TenantMembershipMinOrderByAggregateInput = {
   shiftId?: Prisma.SortOrder
   referredByMembershipId?: Prisma.SortOrder
   idCardToken?: Prisma.SortOrder
+  deviceUserPin?: Prisma.SortOrder
+  rfidCardNumber?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -713,6 +762,7 @@ export type TenantMembershipMinOrderByAggregateInput = {
 
 export type TenantMembershipSumOrderByAggregateInput = {
   memberId?: Prisma.SortOrder
+  deviceUserPin?: Prisma.SortOrder
 }
 
 export type TenantMembershipScalarRelationFilter = {
@@ -822,6 +872,14 @@ export type TenantMembershipUncheckedCreateNestedManyWithoutReferredByInput = {
   connectOrCreate?: Prisma.TenantMembershipCreateOrConnectWithoutReferredByInput | Prisma.TenantMembershipCreateOrConnectWithoutReferredByInput[]
   createMany?: Prisma.TenantMembershipCreateManyReferredByInputEnvelope
   connect?: Prisma.TenantMembershipWhereUniqueInput | Prisma.TenantMembershipWhereUniqueInput[]
+}
+
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
 }
 
 export type TenantMembershipUpdateOneWithoutReferralsNestedInput = {
@@ -1247,6 +1305,8 @@ export type TenantMembershipCreateWithoutUserInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1287,6 +1347,8 @@ export type TenantMembershipUncheckedCreateWithoutUserInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1353,6 +1415,8 @@ export type TenantMembershipScalarWhereInput = {
   shiftId?: Prisma.StringNullableFilter<"TenantMembership"> | string | null
   referredByMembershipId?: Prisma.StringNullableFilter<"TenantMembership"> | string | null
   idCardToken?: Prisma.StringNullableFilter<"TenantMembership"> | string | null
+  deviceUserPin?: Prisma.IntNullableFilter<"TenantMembership"> | number | null
+  rfidCardNumber?: Prisma.StringNullableFilter<"TenantMembership"> | string | null
   joinedAt?: Prisma.DateTimeFilter<"TenantMembership"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"TenantMembership"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TenantMembership"> | Date | string
@@ -1365,6 +1429,8 @@ export type TenantMembershipCreateWithoutTenantInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1405,6 +1471,8 @@ export type TenantMembershipUncheckedCreateWithoutTenantInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1464,6 +1532,8 @@ export type TenantMembershipCreateWithoutReferralsInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1505,6 +1575,8 @@ export type TenantMembershipUncheckedCreateWithoutReferralsInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1543,6 +1615,8 @@ export type TenantMembershipCreateWithoutReferredByInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1583,6 +1657,8 @@ export type TenantMembershipUncheckedCreateWithoutReferredByInput = {
   dueDate?: Date | string | null
   shiftId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1637,6 +1713,8 @@ export type TenantMembershipUpdateWithoutReferralsInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1678,6 +1756,8 @@ export type TenantMembershipUncheckedUpdateWithoutReferralsInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1727,6 +1807,8 @@ export type TenantMembershipCreateWithoutShiftInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1767,6 +1849,8 @@ export type TenantMembershipUncheckedCreateWithoutShiftInput = {
   dueDate?: Date | string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1826,6 +1910,8 @@ export type TenantMembershipCreateWithoutCreatedTodosInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1867,6 +1953,8 @@ export type TenantMembershipUncheckedCreateWithoutCreatedTodosInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1905,6 +1993,8 @@ export type TenantMembershipCreateWithoutUpdatedTodosInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1946,6 +2036,8 @@ export type TenantMembershipUncheckedCreateWithoutUpdatedTodosInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1984,6 +2076,8 @@ export type TenantMembershipCreateWithoutCompletedTodosInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2025,6 +2119,8 @@ export type TenantMembershipUncheckedCreateWithoutCompletedTodosInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2074,6 +2170,8 @@ export type TenantMembershipUpdateWithoutCreatedTodosInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2115,6 +2213,8 @@ export type TenantMembershipUncheckedUpdateWithoutCreatedTodosInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2159,6 +2259,8 @@ export type TenantMembershipUpdateWithoutUpdatedTodosInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2200,6 +2302,8 @@ export type TenantMembershipUncheckedUpdateWithoutUpdatedTodosInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2244,6 +2348,8 @@ export type TenantMembershipUpdateWithoutCompletedTodosInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2285,6 +2391,8 @@ export type TenantMembershipUncheckedUpdateWithoutCompletedTodosInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2318,6 +2426,8 @@ export type TenantMembershipCreateWithoutPaymentsInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2359,6 +2469,8 @@ export type TenantMembershipUncheckedCreateWithoutPaymentsInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2397,6 +2509,8 @@ export type TenantMembershipCreateWithoutCollectedPaymentsInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2438,6 +2552,8 @@ export type TenantMembershipUncheckedCreateWithoutCollectedPaymentsInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2487,6 +2603,8 @@ export type TenantMembershipUpdateWithoutPaymentsInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2528,6 +2646,8 @@ export type TenantMembershipUncheckedUpdateWithoutPaymentsInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2572,6 +2692,8 @@ export type TenantMembershipUpdateWithoutCollectedPaymentsInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2613,6 +2735,8 @@ export type TenantMembershipUncheckedUpdateWithoutCollectedPaymentsInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2646,6 +2770,8 @@ export type TenantMembershipCreateWithoutPaymentRemindersInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2687,6 +2813,8 @@ export type TenantMembershipUncheckedCreateWithoutPaymentRemindersInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2725,6 +2853,8 @@ export type TenantMembershipCreateWithoutSentRemindersInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2766,6 +2896,8 @@ export type TenantMembershipUncheckedCreateWithoutSentRemindersInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2815,6 +2947,8 @@ export type TenantMembershipUpdateWithoutPaymentRemindersInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2856,6 +2990,8 @@ export type TenantMembershipUncheckedUpdateWithoutPaymentRemindersInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2900,6 +3036,8 @@ export type TenantMembershipUpdateWithoutSentRemindersInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2941,6 +3079,8 @@ export type TenantMembershipUncheckedUpdateWithoutSentRemindersInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2974,6 +3114,8 @@ export type TenantMembershipCreateWithoutCouponRedemptionsInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3015,6 +3157,8 @@ export type TenantMembershipUncheckedCreateWithoutCouponRedemptionsInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3064,6 +3208,8 @@ export type TenantMembershipUpdateWithoutCouponRedemptionsInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3105,6 +3251,8 @@ export type TenantMembershipUncheckedUpdateWithoutCouponRedemptionsInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3138,6 +3286,8 @@ export type TenantMembershipCreateWithoutCoinLedgerInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3179,6 +3329,8 @@ export type TenantMembershipUncheckedCreateWithoutCoinLedgerInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3228,6 +3380,8 @@ export type TenantMembershipUpdateWithoutCoinLedgerInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3269,6 +3423,8 @@ export type TenantMembershipUncheckedUpdateWithoutCoinLedgerInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3302,6 +3458,8 @@ export type TenantMembershipCreateWithoutFreezesInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3343,6 +3501,8 @@ export type TenantMembershipUncheckedCreateWithoutFreezesInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3392,6 +3552,8 @@ export type TenantMembershipUpdateWithoutFreezesInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3433,6 +3595,8 @@ export type TenantMembershipUncheckedUpdateWithoutFreezesInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3466,6 +3630,8 @@ export type TenantMembershipCreateWithoutBodyMetricsInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3507,6 +3673,8 @@ export type TenantMembershipUncheckedCreateWithoutBodyMetricsInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3545,6 +3713,8 @@ export type TenantMembershipCreateWithoutRecordedMetricsInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3586,6 +3756,8 @@ export type TenantMembershipUncheckedCreateWithoutRecordedMetricsInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3635,6 +3807,8 @@ export type TenantMembershipUpdateWithoutBodyMetricsInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3676,6 +3850,8 @@ export type TenantMembershipUncheckedUpdateWithoutBodyMetricsInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3720,6 +3896,8 @@ export type TenantMembershipUpdateWithoutRecordedMetricsInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3761,6 +3939,8 @@ export type TenantMembershipUncheckedUpdateWithoutRecordedMetricsInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3794,6 +3974,8 @@ export type TenantMembershipCreateWithoutCreatedPlansInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3835,6 +4017,8 @@ export type TenantMembershipUncheckedCreateWithoutCreatedPlansInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3884,6 +4068,8 @@ export type TenantMembershipUpdateWithoutCreatedPlansInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3925,6 +4111,8 @@ export type TenantMembershipUncheckedUpdateWithoutCreatedPlansInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3958,6 +4146,8 @@ export type TenantMembershipCreateWithoutPlanAssignmentsInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3999,6 +4189,8 @@ export type TenantMembershipUncheckedCreateWithoutPlanAssignmentsInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4048,6 +4240,8 @@ export type TenantMembershipUpdateWithoutPlanAssignmentsInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4089,6 +4283,8 @@ export type TenantMembershipUncheckedUpdateWithoutPlanAssignmentsInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4122,6 +4318,8 @@ export type TenantMembershipCreateWithoutBadgesInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4163,6 +4361,8 @@ export type TenantMembershipUncheckedCreateWithoutBadgesInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4217,6 +4417,8 @@ export type TenantMembershipCreateWithoutAttendancesInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4258,6 +4460,8 @@ export type TenantMembershipUncheckedCreateWithoutAttendancesInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4296,6 +4500,8 @@ export type TenantMembershipCreateWithoutMarkedAttendancesInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4337,6 +4543,8 @@ export type TenantMembershipUncheckedCreateWithoutMarkedAttendancesInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4386,6 +4594,8 @@ export type TenantMembershipUpdateWithoutAttendancesInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4427,6 +4637,8 @@ export type TenantMembershipUncheckedUpdateWithoutAttendancesInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4471,6 +4683,8 @@ export type TenantMembershipUpdateWithoutMarkedAttendancesInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4512,6 +4726,8 @@ export type TenantMembershipUncheckedUpdateWithoutMarkedAttendancesInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4545,6 +4761,8 @@ export type TenantMembershipCreateWithoutStoreLikesInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4586,6 +4804,8 @@ export type TenantMembershipUncheckedCreateWithoutStoreLikesInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4635,6 +4855,8 @@ export type TenantMembershipUpdateWithoutStoreLikesInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4676,6 +4898,8 @@ export type TenantMembershipUncheckedUpdateWithoutStoreLikesInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4709,6 +4933,8 @@ export type TenantMembershipCreateWithoutStoreCommentsInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4750,6 +4976,8 @@ export type TenantMembershipUncheckedCreateWithoutStoreCommentsInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4799,6 +5027,8 @@ export type TenantMembershipUpdateWithoutStoreCommentsInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4840,6 +5070,8 @@ export type TenantMembershipUncheckedUpdateWithoutStoreCommentsInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4873,6 +5105,8 @@ export type TenantMembershipCreateWithoutStoreOrdersInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4914,6 +5148,8 @@ export type TenantMembershipUncheckedCreateWithoutStoreOrdersInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4952,6 +5188,8 @@ export type TenantMembershipCreateWithoutSoldStoreOrdersInput = {
   status?: string
   dueDate?: Date | string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4993,6 +5231,8 @@ export type TenantMembershipUncheckedCreateWithoutSoldStoreOrdersInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -5042,6 +5282,8 @@ export type TenantMembershipUpdateWithoutStoreOrdersInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5083,6 +5325,8 @@ export type TenantMembershipUncheckedUpdateWithoutStoreOrdersInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5127,6 +5371,8 @@ export type TenantMembershipUpdateWithoutSoldStoreOrdersInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5168,6 +5414,8 @@ export type TenantMembershipUncheckedUpdateWithoutSoldStoreOrdersInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5204,6 +5452,8 @@ export type TenantMembershipCreateManyUserInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -5216,6 +5466,8 @@ export type TenantMembershipUpdateWithoutUserInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5256,6 +5508,8 @@ export type TenantMembershipUncheckedUpdateWithoutUserInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5293,6 +5547,8 @@ export type TenantMembershipUncheckedUpdateManyWithoutUserInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5308,6 +5564,8 @@ export type TenantMembershipCreateManyTenantInput = {
   shiftId?: string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -5320,6 +5578,8 @@ export type TenantMembershipUpdateWithoutTenantInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5360,6 +5620,8 @@ export type TenantMembershipUncheckedUpdateWithoutTenantInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5397,6 +5659,8 @@ export type TenantMembershipUncheckedUpdateManyWithoutTenantInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5412,6 +5676,8 @@ export type TenantMembershipCreateManyReferredByInput = {
   dueDate?: Date | string | null
   shiftId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -5424,6 +5690,8 @@ export type TenantMembershipUpdateWithoutReferredByInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5464,6 +5732,8 @@ export type TenantMembershipUncheckedUpdateWithoutReferredByInput = {
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5501,6 +5771,8 @@ export type TenantMembershipUncheckedUpdateManyWithoutReferredByInput = {
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5516,6 +5788,8 @@ export type TenantMembershipCreateManyShiftInput = {
   dueDate?: Date | string | null
   referredByMembershipId?: string | null
   idCardToken?: string | null
+  deviceUserPin?: number | null
+  rfidCardNumber?: string | null
   joinedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -5528,6 +5802,8 @@ export type TenantMembershipUpdateWithoutShiftInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5568,6 +5844,8 @@ export type TenantMembershipUncheckedUpdateWithoutShiftInput = {
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5605,6 +5883,8 @@ export type TenantMembershipUncheckedUpdateManyWithoutShiftInput = {
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5617,6 +5897,8 @@ export type TenantMembershipUpdateWithoutBadgesInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5658,6 +5940,8 @@ export type TenantMembershipUncheckedUpdateWithoutBadgesInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5695,6 +5979,8 @@ export type TenantMembershipUncheckedUpdateManyWithoutBadgesInput = {
   shiftId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredByMembershipId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idCardToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deviceUserPin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rfidCardNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5931,6 +6217,8 @@ export type TenantMembershipSelect<ExtArgs extends runtime.Types.Extensions.Inte
   shiftId?: boolean
   referredByMembershipId?: boolean
   idCardToken?: boolean
+  deviceUserPin?: boolean
+  rfidCardNumber?: boolean
   joinedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -5974,6 +6262,8 @@ export type TenantMembershipSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   shiftId?: boolean
   referredByMembershipId?: boolean
   idCardToken?: boolean
+  deviceUserPin?: boolean
+  rfidCardNumber?: boolean
   joinedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -5994,6 +6284,8 @@ export type TenantMembershipSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   shiftId?: boolean
   referredByMembershipId?: boolean
   idCardToken?: boolean
+  deviceUserPin?: boolean
+  rfidCardNumber?: boolean
   joinedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -6014,12 +6306,14 @@ export type TenantMembershipSelectScalar = {
   shiftId?: boolean
   referredByMembershipId?: boolean
   idCardToken?: boolean
+  deviceUserPin?: boolean
+  rfidCardNumber?: boolean
   joinedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type TenantMembershipOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "userId" | "memberId" | "role" | "status" | "dueDate" | "shiftId" | "referredByMembershipId" | "idCardToken" | "joinedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["tenantMembership"]>
+export type TenantMembershipOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "userId" | "memberId" | "role" | "status" | "dueDate" | "shiftId" | "referredByMembershipId" | "idCardToken" | "deviceUserPin" | "rfidCardNumber" | "joinedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["tenantMembership"]>
 export type TenantMembershipInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -6113,6 +6407,17 @@ export type $TenantMembershipPayload<ExtArgs extends runtime.Types.Extensions.In
      * card is first issued for a membership that predates the feature.
      */
     idCardToken: string | null
+    /**
+     * The number an RFID attendance machine reports for this member. Its
+     * attendance log carries only this, so it is the join between a punch and a
+     * person. Unique per gym, not globally — every gym starts its own at 1.
+     */
+    deviceUserPin: number | null
+    /**
+     * What is printed on the card in the member's hand, kept so the desk can
+     * find them by it when the card stops working.
+     */
+    rfidCardNumber: string | null
     joinedAt: Date
     createdAt: Date
     updatedAt: Date
@@ -6575,6 +6880,8 @@ export interface TenantMembershipFieldRefs {
   readonly shiftId: Prisma.FieldRef<"TenantMembership", 'String'>
   readonly referredByMembershipId: Prisma.FieldRef<"TenantMembership", 'String'>
   readonly idCardToken: Prisma.FieldRef<"TenantMembership", 'String'>
+  readonly deviceUserPin: Prisma.FieldRef<"TenantMembership", 'Int'>
+  readonly rfidCardNumber: Prisma.FieldRef<"TenantMembership", 'String'>
   readonly joinedAt: Prisma.FieldRef<"TenantMembership", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"TenantMembership", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"TenantMembership", 'DateTime'>

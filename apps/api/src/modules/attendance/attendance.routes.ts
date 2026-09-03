@@ -11,6 +11,7 @@ import { Permission } from "@fitconnect/shared/types/permissions";
 import { authenticate } from "../../middleware/authenticate";
 import { requireAnyTenantPermission, requireTenantPermissions } from "../../middleware/authorize";
 import { attendanceController } from "./attendance.controller";
+import { deviceController } from "./devices.controller";
 import type { AppBindings } from "../../types/app-context";
 
 export const attendanceRoutes = new Hono<AppBindings>();
@@ -114,4 +115,49 @@ attendanceRoutes.get(
     Permission.ATTENDANCE_READ_SELF,
   ),
   attendanceController.memberCalendar,
+);
+
+
+// ─── RFID attendance machines ────────────────────────────────────────────────
+//
+// Registering a device is what authorises it to write attendance for this gym —
+// the punch endpoint trusts a serial precisely because somebody added it here —
+// so it sits behind the same capability as managing the QR check-in codes
+// rather than behind plain attendance marking.
+
+attendanceRoutes.get(
+  "/:tenantId/attendance/devices",
+  authenticate,
+  requireTenantPermissions(Permission.ATTENDANCE_QR_MANAGE),
+  deviceController.listDevices,
+);
+
+attendanceRoutes.post(
+  "/:tenantId/attendance/devices",
+  authenticate,
+  requireTenantPermissions(Permission.ATTENDANCE_QR_MANAGE),
+  deviceController.createDevice,
+);
+
+attendanceRoutes.patch(
+  "/:tenantId/attendance/devices/:deviceId",
+  authenticate,
+  requireTenantPermissions(Permission.ATTENDANCE_QR_MANAGE),
+  deviceController.updateDevice,
+);
+
+attendanceRoutes.delete(
+  "/:tenantId/attendance/devices/:deviceId",
+  authenticate,
+  requireTenantPermissions(Permission.ATTENDANCE_QR_MANAGE),
+  deviceController.deleteDevice,
+);
+
+// Mapping a member to the PIN their card is enrolled under. Behind member
+// editing rather than device management: it changes whose visits get recorded.
+attendanceRoutes.put(
+  "/:tenantId/attendance/cards/:membershipId",
+  authenticate,
+  requireTenantPermissions(Permission.MEMBERS_UPDATE),
+  deviceController.assignCard,
 );

@@ -1,5 +1,8 @@
 import { api } from "./client";
 import type {
+  AttendanceDevice,
+  CreateAttendanceDevicePayload,
+  UpdateAttendanceDevicePayload,
   AttendanceRecord,
   AttendanceSummary,
   MarkAttendancePayload,
@@ -120,4 +123,49 @@ export const attendanceApi = {
       `/tenants/${tenantId}/attendance/member/${membershipId}/calendar`,
       { params: { month } },
     ),
+
+  // ─── RFID attendance machines ─────────────────────────────────────────────
+
+  listDevices: (tenantId: string) =>
+    api.get<ApiResponse<{ devices: AttendanceDevice[] }>>(
+      `/tenants/${tenantId}/attendance/devices`,
+    ),
+
+  createDevice: (tenantId: string, data: CreateAttendanceDevicePayload) =>
+    api.post<ApiResponse<{ device: AttendanceDevice }>>(
+      `/tenants/${tenantId}/attendance/devices`,
+      data,
+    ),
+
+  updateDevice: (
+    tenantId: string,
+    deviceId: string,
+    data: UpdateAttendanceDevicePayload,
+  ) =>
+    api.patch<ApiResponse<{ device: AttendanceDevice }>>(
+      `/tenants/${tenantId}/attendance/devices/${deviceId}`,
+      data,
+    ),
+
+  deleteDevice: (tenantId: string, deviceId: string) =>
+    api.delete<ApiResponse<{ deleted: boolean }>>(
+      `/tenants/${tenantId}/attendance/devices/${deviceId}`,
+    ),
+
+  /** Map a member to the PIN their card is enrolled under on the machine. */
+  assignCard: (
+    tenantId: string,
+    membershipId: string,
+    data: { deviceUserPin?: number | null; rfidCardNumber?: string | null },
+  ) =>
+    api.put<
+      ApiResponse<{
+        membership: {
+          id: string;
+          memberId: number;
+          deviceUserPin: number | null;
+          rfidCardNumber: string | null;
+        };
+      }>
+    >(`/tenants/${tenantId}/attendance/cards/${membershipId}`, data),
 };

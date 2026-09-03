@@ -23,6 +23,7 @@ import {
   Tag,
   ClipboardList,
   ShoppingBag,
+  Radio,
   RotateCcw,
   Warehouse,
   ScrollText,
@@ -183,6 +184,15 @@ const tenantNav: NavItem[] = [
     label: "Attendance",
     icon: CalendarCheck,
     anyOf: [Permission.ATTENDANCE_READ, Permission.ATTENDANCE_CHECKIN_SELF],
+    // The machines are their own entry below, so the attendance link must not
+    // light up while somebody is standing on that page.
+    excludePrefixes: ["/attendance/devices"],
+  },
+  {
+    to: "/attendance/devices",
+    label: "Attendance Machines",
+    icon: Radio,
+    anyOf: [Permission.ATTENDANCE_QR_MANAGE],
   },
   { to: "/orders/history", label: "My Orders", icon: ShoppingBag },
   { to: "/badges", label: "Badges", icon: Award, anyOf: [Permission.BADGES_READ] },

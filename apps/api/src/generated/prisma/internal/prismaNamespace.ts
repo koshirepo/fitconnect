@@ -434,6 +434,8 @@ export const ModelName = {
   WorkoutPlanAssignment: 'WorkoutPlanAssignment',
   Badge: 'Badge',
   PlatformPayment: 'PlatformPayment',
+  AttendanceDevice: 'AttendanceDevice',
+  DeviceCommand: 'DeviceCommand',
   Attendance: 'Attendance',
   AuditLog: 'AuditLog',
   PushSubscription: 'PushSubscription',
@@ -460,7 +462,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "webAuthnCredential" | "webAuthnChallenge" | "webhookDelivery" | "idempotencyKey" | "passwordResetToken" | "refreshToken" | "tenant" | "role" | "rolePermissionOverride" | "tenantSettings" | "tenantCharge" | "tenantMembership" | "subscription" | "shift" | "todo" | "payment" | "paymentReminder" | "coupon" | "couponRedemption" | "coinLedgerEntry" | "membershipFreeze" | "bodyMetric" | "product" | "productReview" | "productReviewComment" | "productReviewHelpful" | "order" | "warehouse" | "pickupRequest" | "shipment" | "returnRequest" | "orderItem" | "workoutPlan" | "workoutPlanAssignment" | "badge" | "platformPayment" | "attendance" | "auditLog" | "pushSubscription" | "storeProduct" | "tenantLike" | "tenantComment" | "storeProductLike" | "storeProductComment" | "storeVariant" | "storeOrder" | "storeOrderItem"
+    modelProps: "user" | "webAuthnCredential" | "webAuthnChallenge" | "webhookDelivery" | "idempotencyKey" | "passwordResetToken" | "refreshToken" | "tenant" | "role" | "rolePermissionOverride" | "tenantSettings" | "tenantCharge" | "tenantMembership" | "subscription" | "shift" | "todo" | "payment" | "paymentReminder" | "coupon" | "couponRedemption" | "coinLedgerEntry" | "membershipFreeze" | "bodyMetric" | "product" | "productReview" | "productReviewComment" | "productReviewHelpful" | "order" | "warehouse" | "pickupRequest" | "shipment" | "returnRequest" | "orderItem" | "workoutPlan" | "workoutPlanAssignment" | "badge" | "platformPayment" | "attendanceDevice" | "deviceCommand" | "attendance" | "auditLog" | "pushSubscription" | "storeProduct" | "tenantLike" | "tenantComment" | "storeProductLike" | "storeProductComment" | "storeVariant" | "storeOrder" | "storeOrderItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -3202,6 +3204,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    AttendanceDevice: {
+      payload: Prisma.$AttendanceDevicePayload<ExtArgs>
+      fields: Prisma.AttendanceDeviceFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AttendanceDeviceFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceDevicePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AttendanceDeviceFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceDevicePayload>
+        }
+        findFirst: {
+          args: Prisma.AttendanceDeviceFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceDevicePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AttendanceDeviceFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceDevicePayload>
+        }
+        findMany: {
+          args: Prisma.AttendanceDeviceFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceDevicePayload>[]
+        }
+        create: {
+          args: Prisma.AttendanceDeviceCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceDevicePayload>
+        }
+        createMany: {
+          args: Prisma.AttendanceDeviceCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AttendanceDeviceCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceDevicePayload>[]
+        }
+        delete: {
+          args: Prisma.AttendanceDeviceDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceDevicePayload>
+        }
+        update: {
+          args: Prisma.AttendanceDeviceUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceDevicePayload>
+        }
+        deleteMany: {
+          args: Prisma.AttendanceDeviceDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AttendanceDeviceUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AttendanceDeviceUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceDevicePayload>[]
+        }
+        upsert: {
+          args: Prisma.AttendanceDeviceUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceDevicePayload>
+        }
+        aggregate: {
+          args: Prisma.AttendanceDeviceAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAttendanceDevice>
+        }
+        groupBy: {
+          args: Prisma.AttendanceDeviceGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AttendanceDeviceGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AttendanceDeviceCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AttendanceDeviceCountAggregateOutputType> | number
+        }
+      }
+    }
+    DeviceCommand: {
+      payload: Prisma.$DeviceCommandPayload<ExtArgs>
+      fields: Prisma.DeviceCommandFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.DeviceCommandFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCommandPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.DeviceCommandFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCommandPayload>
+        }
+        findFirst: {
+          args: Prisma.DeviceCommandFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCommandPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.DeviceCommandFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCommandPayload>
+        }
+        findMany: {
+          args: Prisma.DeviceCommandFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCommandPayload>[]
+        }
+        create: {
+          args: Prisma.DeviceCommandCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCommandPayload>
+        }
+        createMany: {
+          args: Prisma.DeviceCommandCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.DeviceCommandCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCommandPayload>[]
+        }
+        delete: {
+          args: Prisma.DeviceCommandDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCommandPayload>
+        }
+        update: {
+          args: Prisma.DeviceCommandUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCommandPayload>
+        }
+        deleteMany: {
+          args: Prisma.DeviceCommandDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.DeviceCommandUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.DeviceCommandUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCommandPayload>[]
+        }
+        upsert: {
+          args: Prisma.DeviceCommandUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceCommandPayload>
+        }
+        aggregate: {
+          args: Prisma.DeviceCommandAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDeviceCommand>
+        }
+        groupBy: {
+          args: Prisma.DeviceCommandGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DeviceCommandGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.DeviceCommandCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DeviceCommandCountAggregateOutputType> | number
+        }
+      }
+    }
     Attendance: {
       payload: Prisma.$AttendancePayload<ExtArgs>
       fields: Prisma.AttendanceFieldRefs
@@ -4247,6 +4397,8 @@ export const TenantMembershipScalarFieldEnum = {
   shiftId: 'shiftId',
   referredByMembershipId: 'referredByMembershipId',
   idCardToken: 'idCardToken',
+  deviceUserPin: 'deviceUserPin',
+  rfidCardNumber: 'rfidCardNumber',
   joinedAt: 'joinedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -4704,6 +4856,40 @@ export const PlatformPaymentScalarFieldEnum = {
 export type PlatformPaymentScalarFieldEnum = (typeof PlatformPaymentScalarFieldEnum)[keyof typeof PlatformPaymentScalarFieldEnum]
 
 
+export const AttendanceDeviceScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  serialNumber: 'serialNumber',
+  name: 'name',
+  location: 'location',
+  timezone: 'timezone',
+  isActive: 'isActive',
+  lastSeenAt: 'lastSeenAt',
+  lastPunchAt: 'lastPunchAt',
+  stamp: 'stamp',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AttendanceDeviceScalarFieldEnum = (typeof AttendanceDeviceScalarFieldEnum)[keyof typeof AttendanceDeviceScalarFieldEnum]
+
+
+export const DeviceCommandScalarFieldEnum = {
+  id: 'id',
+  deviceId: 'deviceId',
+  tenantId: 'tenantId',
+  command: 'command',
+  kind: 'kind',
+  membershipId: 'membershipId',
+  sentAt: 'sentAt',
+  completedAt: 'completedAt',
+  resultCode: 'resultCode',
+  createdAt: 'createdAt'
+} as const
+
+export type DeviceCommandScalarFieldEnum = (typeof DeviceCommandScalarFieldEnum)[keyof typeof DeviceCommandScalarFieldEnum]
+
+
 export const AttendanceScalarFieldEnum = {
   id: 'id',
   tenantId: 'tenantId',
@@ -5156,6 +5342,8 @@ export type GlobalOmitConfig = {
   workoutPlanAssignment?: Prisma.WorkoutPlanAssignmentOmit
   badge?: Prisma.BadgeOmit
   platformPayment?: Prisma.PlatformPaymentOmit
+  attendanceDevice?: Prisma.AttendanceDeviceOmit
+  deviceCommand?: Prisma.DeviceCommandOmit
   attendance?: Prisma.AttendanceOmit
   auditLog?: Prisma.AuditLogOmit
   pushSubscription?: Prisma.PushSubscriptionOmit

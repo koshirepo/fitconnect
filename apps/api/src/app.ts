@@ -15,6 +15,7 @@ import { memberRoutes } from "./modules/members/members.routes";
 import { workoutRoutes } from "./modules/workouts/workouts.routes";
 import { paymentRoutes, gatewayWebhookRoutes } from "./modules/payments/payments.routes";
 import { courierWebhookRoutes } from "./modules/commerce/commerce.routes";
+import { iclockRoutes } from "./modules/attendance/iclock.routes";
 import { badgeRoutes } from "./modules/badges/badges.routes";
 import { couponRoutes } from "./modules/coupons/coupons.routes";
 import { freezeRoutes } from "./modules/freezes/freezes.routes";
@@ -125,6 +126,11 @@ app.route("/webhooks", gatewayWebhookRoutes);
 // Courier scan pushes. Delhivery signs nothing, so the route authenticates on a
 // shared secret and refuses every delivery until one is configured.
 app.route("/webhooks", courierWebhookRoutes);
+// RFID attendance machines. No session and no bearer token — a device on a wall
+// can hold neither — so this is mounted clear of the authenticated groups and
+// identifies a device by the serial it reports, which must already be
+// registered to a gym.
+app.route("/iclock", iclockRoutes);
 
 app.onError((err, c) => {
   if (

@@ -1459,3 +1459,40 @@ export interface StoreSaleResult {
     currency: string;
   } | null;
 }
+
+
+/**
+ * An RFID attendance machine on a gym's wall. A gym may have several.
+ *
+ * `online` is derived from `lastSeenAt` at read time rather than stored: these
+ * devices poll on their own schedule, so when they last spoke is the only
+ * honest signal that one is still plugged in.
+ */
+export interface AttendanceDevice {
+  id: string;
+  /** Printed on the back of the unit. What every punch is matched on. */
+  serialNumber: string;
+  name: string;
+  location?: string | null;
+  /** IANA zone the device's clock is set to. */
+  timezone: string;
+  isActive: boolean;
+  online: boolean;
+  lastSeenAt?: string | null;
+  lastPunchAt?: string | null;
+  createdAt: string;
+}
+
+export interface CreateAttendanceDevicePayload {
+  serialNumber: string;
+  name: string;
+  location?: string;
+  timezone?: string;
+}
+
+export type UpdateAttendanceDevicePayload = Partial<{
+  name: string;
+  location: string | null;
+  timezone: string;
+  isActive: boolean;
+}>;
