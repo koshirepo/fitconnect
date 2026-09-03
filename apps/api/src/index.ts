@@ -6,7 +6,7 @@
  * - Primary exports: default export.
  */
 import app from "./app";
-import { runWithD1 } from "./lib/prisma";
+import { setD1 } from "./lib/prisma";
 
 const DAILY_TENANT_REPORT_CRON = "30 3 * * *";
 /**
@@ -50,15 +50,10 @@ function withBindingAliases(env: WorkerEnv): WorkerEnv {
 export default {
   async fetch(request: Request, env: WorkerEnv, ctx: ExecutionContext): Promise<Response> {
     applyStringBindingsToEnv(env);
+    await setD1(env.DB);
 
     try {
-      // Every query this request makes resolves against a client of its own.
-      // Sharing one across requests let Prisma batch two requests' queries
-      // together and resolve one inside the other, which the runtime cancels —
-      // the request then hangs until it is killed.
-      return await runWithD1(env.DB, async () =>
-        app.fetch(request, withBindingAliases(env), ctx),
-      );
+      return await app.fetch(request, withBindingAliases(env), ctx);
     } catch (e: any) {
       console.error("[worker-uncaught]", e?.message, e?.stack);
       return new Response(
@@ -76,8 +71,8 @@ export default {
 
   async scheduled(controller: ScheduledController, env: WorkerEnv, ctx: ExecutionContext): Promise<void> {
     applyStringBindingsToEnv(env);
+    await setD1(env.DB);
 
-    await runWithD1(env.DB, async () => {
     try {
       // Imported here rather than at module scope so the cron path pulls in the
       // reporting code only when a schedule actually fires.
@@ -131,6 +126,5 @@ export default {
       console.error("[scheduled-overdue-enforcement-error]", e?.message, e?.stack);
       throw e;
     }
-    });
   },
 };
