@@ -68,5 +68,30 @@ export const config = {
    */
   get delhiveryWebhookToken() { return process.env.DELHIVERY_WEBHOOK_TOKEN ?? ""; },
 
+  /**
+   * Whether this deployment is allowed to book real consignments.
+   *
+   * Delhivery issues staging and production tokens separately, and until a
+   * staging one exists a developer's machine is pointed at the live host with a
+   * live token — where manifesting a seeded order creates a real parcel and
+   * bills a real account. The courier's own refusals are no protection: they
+   * stop when the balance is topped up.
+   *
+   * Derived from the host rather than set by hand, so it cannot be left wrong.
+   * Anything but Delhivery's production host is a test environment, and a test
+   * environment refuses to manifest an order that came from the seeder.
+   */
+  get delhiveryIsLive() {
+    return /(^|\.)track\.delhivery\.com$/i.test(
+      (() => {
+        try {
+          return new URL(config.delhiveryBaseUrl).hostname;
+        } catch {
+          return "";
+        }
+      })(),
+    );
+  },
+
   get returnWindowDays() { return parsePositiveNumber("RETURN_WINDOW_DAYS", "7"); },
 };

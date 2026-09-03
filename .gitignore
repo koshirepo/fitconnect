@@ -32,3 +32,9 @@ worker-configuration.d.ts
 # Wrangler dev logs
 wrangler-*.log
 wrangler-*.err.log
+
+# Generated Prisma client.
+# Rebuilt by scripts/ensure-prisma-client.mjs on postinstall, predev and prebuild,
+# so the copy in the tree is derived output rather than source. Committing it put
+# 58 machine-written files into every schema diff and buried the real change.
+apps/api/src/generated/

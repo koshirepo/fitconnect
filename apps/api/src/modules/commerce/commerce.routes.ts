@@ -9,6 +9,7 @@
 import { Hono } from "hono";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { authenticate } from "../../middleware/authenticate";
+import { idempotency } from "../../middleware/idempotency";
 import { optionalAuthenticate } from "../../middleware/optional-authenticate";
 import { requirePermissions } from "../../middleware/authorize";
 import { commerceController } from "./commerce.controller";
@@ -21,7 +22,10 @@ export const commerceRoutes = new Hono<AppBindings>();
 // Public catalog + ordering
 commerceRoutes.get("/products", commerceController.listPublicProducts);
 commerceRoutes.get("/products/:id", commerceController.getPublicProductById);
-commerceRoutes.post("/orders", optionalAuthenticate, commerceController.placeOrder);
+// A retried order must not become two orders. The middleware is a no-op for a
+// caller with no session, so this covers members and leaves guest checkout
+// still exposed to a double submit — a guest key has nobody to scope it to.
+commerceRoutes.post("/orders", optionalAuthenticate, idempotency, commerceController.placeOrder);
 /**
  * Paying for a shop order.
  *
@@ -31,7 +35,12 @@ commerceRoutes.post("/orders", optionalAuthenticate, commerceController.placeOrd
  * order only becomes paid against a signature produced with our key secret.
  * A deployment with no gateway configured still takes the order, unpaid.
  */
-commerceRoutes.post("/orders/checkout", optionalAuthenticate, commerceController.startCheckout);
+commerceRoutes.post(
+  "/orders/checkout",
+  optionalAuthenticate,
+  idempotency,
+  commerceController.startCheckout,
+);
 commerceRoutes.post("/orders/checkout/verify", commerceController.verifyOrderPayment);
 
 /**

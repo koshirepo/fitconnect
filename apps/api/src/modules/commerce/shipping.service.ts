@@ -72,6 +72,52 @@ function chargeableWeight(
   };
 }
 
+/**
+ * The box a parcel is declared in.
+ *
+ * The largest single item is a floor, not an answer: two of a thing do not fit
+ * in the space of one, and a basket of six shakers was being declared as one
+ * shaker. Delhivery re-measures at the hub and bills the difference, so the
+ * under-declaration was not a saving — it was a surprise on the invoice, and
+ * one the quote shown at checkout had already got wrong.
+ *
+ * So the box is grown until it holds the volume actually going into it, which
+ * is the same total the volumetric weight is computed from. Growing the
+ * shortest side keeps the carton compact rather than turning it into a long
+ * thin thing no courier would recognise. Still an estimate — packing several
+ * shapes into one box properly is bin-packing, and no courier's own calculator
+ * attempts it either — but an estimate that errs the way an invoice does.
+ */
+function cartonFor(
+  box: { lengthCm: number; widthCm: number; heightCm: number },
+  cubicCm: number,
+) {
+  const dimensions = [
+    Math.max(1, box.lengthCm),
+    Math.max(1, box.widthCm),
+    Math.max(1, box.heightCm),
+  ];
+
+  // Grow the smallest side until the box holds what is going in it. Bounded
+  // rather than looped on a float comparison: 64 doublings is far past any
+  // real basket, and an unbounded loop here would be a hang.
+  for (let attempt = 0; attempt < 64; attempt += 1) {
+    const volume = dimensions[0]! * dimensions[1]! * dimensions[2]!;
+    if (volume >= cubicCm) break;
+
+    const shortest = dimensions.indexOf(Math.min(...dimensions));
+    dimensions[shortest] = Math.ceil(
+      dimensions[shortest]! * Math.min(2, Math.max(1.2, cubicCm / volume)),
+    );
+  }
+
+  return {
+    lengthCm: dimensions[0]!,
+    widthCm: dimensions[1]!,
+    heightCm: dimensions[2]!,
+  };
+}
+
 /** Once a parcel reaches one of these there is nothing further to sync. */
 const TERMINAL_SHIPMENT_STATUSES = new Set(["DELIVERED", "RTO", "CANCELLED"]);
 
@@ -290,10 +336,10 @@ export const shippingService = {
     }
 
     return {
-      groups: [...groups.values()].map((group) => ({
-        ...group,
-        ...chargeableWeight(group.measures, divisor),
-      })),
+      groups: [...groups.values()].map((group) => {
+        const weight = chargeableWeight(group.measures, divisor);
+        return { ...group, ...weight, ...cartonFor(group, weight.cubicCm) };
+      }),
       unassigned,
     };
   },
@@ -400,6 +446,29 @@ export const shippingService = {
    * so none of it reads as a failure of the order itself.
    */
   /**
+   * Why this order must not reach a real courier.
+   *
+   * Seed data exists to be walked through, and every screen it drives should
+   * work — but manifesting it books a parcel to an invented address and bills
+   * the account for it. The seeder says as much in its own header: dummy data
+   * must not be able to manifest a real consignment.
+   *
+   * The check is on the live host rather than on some environment name,
+   * because the host is what actually decides whose money is at stake. Against
+   * Delhivery staging these orders book freely, which is the point of staging.
+   */
+  demoOrderReason(orderId: string): string | null {
+    if (!config.delhiveryIsLive) return null;
+    if (!orderId.startsWith("seed-")) return null;
+
+    return (
+      "This is a seeded demo order, and this deployment is pointed at live Delhivery. " +
+      "Booking it would create a real consignment to an invented address and bill the account. " +
+      "Point DELHIVERY_BASE_URL at staging to book it, or use a real order."
+    );
+  },
+
+  /**
    * A courier refusal, said in a way the operator can act on.
    *
    * Delhivery sometimes ends a failure with "Package might have been partially
@@ -418,6 +487,9 @@ export const shippingService = {
   async bookForwardShipment(order: ShippableOrder) {
     const blocked = await this.bookingBlockedReason();
     if (blocked) return { error: blocked, status: 409 as const };
+
+    const demo = this.demoOrderReason(order.id);
+    if (demo) return { error: demo, status: 409 as const };
 
     const delhivery = this.resolveConfig()!;
     if (!order.buyerPincode || !order.buyerCity || !order.buyerState) {
@@ -540,6 +612,9 @@ export const shippingService = {
   async bookReverseShipment(order: ShippableOrder, returnRequestId: string) {
     const blocked = await this.bookingBlockedReason();
     if (blocked) return { error: blocked, status: 409 as const };
+
+    const demo = this.demoOrderReason(order.id);
+    if (demo) return { error: demo, status: 409 as const };
 
     const delhivery = this.resolveConfig()!;
     if (!order.buyerPincode || !order.buyerCity || !order.buyerState) {

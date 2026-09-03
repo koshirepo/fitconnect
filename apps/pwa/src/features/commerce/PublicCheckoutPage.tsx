@@ -81,16 +81,11 @@ export default function PublicCheckoutPage() {
   const [shipping, setShipping] = React.useState<ShippingState>(IDLE_SHIPPING);
 
   React.useEffect(() => {
-    setLoading(true);
     commerceApi
       .listProducts(1, 200)
       .then((res) => setProducts(res.data.data.products))
       .catch((err: unknown) => setError(getApiError(err)))
       .finally(() => setLoading(false));
-  }, []);
-
-  React.useEffect(() => {
-    setCart(getCartItems());
   }, []);
 
   React.useEffect(() => {
