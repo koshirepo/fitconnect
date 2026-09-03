@@ -19,7 +19,19 @@
 name = "fitconnect-api-dev"
 main = "src/index.ts"
 compatibility_date = "2026-03-27"
-compatibility_flags = ["nodejs_compat"]
+# `no_handle_cross_request_promise_resolution` is load-bearing. Do not drop it
+# without first reading the note in src/lib/prisma.ts.
+#
+# One Prisma client is shared by every request in an isolate, and its query
+# batching means a promise created while serving request A can be resolved while
+# serving request B. Current workerd sees that cross-request resolution and
+# cancels the continuation, so request A never resumes and is killed 30s later
+# with "your Worker's code had hung and would never generate a response" — a 503
+# to the person at the screen. Nothing in this repo changed to start it; the
+# runtime behaviour did, and it took out parallel dashboard queries in bursts.
+#
+# This flag restores the previous behaviour, letting those continuations run.
+compatibility_flags = ["nodejs_compat", "no_handle_cross_request_promise_resolution"]
 
 # ─── Observability ────────────────────────────────────────────────────────────
 #

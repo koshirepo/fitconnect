@@ -4,6 +4,22 @@
  * - Caches the generated Prisma client per active D1 binding and exposes a proxy so downstream code can import `prisma` directly.
  * - `setD1` must run before any repository query; the Worker entrypoint is responsible for that initialization order.
  * - Primary exports: prisma, setD1.
+ *
+ * One client per isolate, shared by every request it serves. That is the
+ * intended shape for Prisma on Workers — building one per request would pay for
+ * the adapter and engine setup on every call — but it has a consequence worth
+ * knowing about before touching this file.
+ *
+ * The client batches queries, so a promise created while serving one request can
+ * be resolved while serving another. Current workerd treats that as a bug and
+ * cancels the continuation, which leaves the first request awaiting something
+ * that will never settle; 30s later the runtime kills it as hung and the caller
+ * gets a 503. It arrived without a code change on our side and showed up as
+ * whole dashboards failing at once, since parallel queries share the batch.
+ *
+ * `no_handle_cross_request_promise_resolution` in wrangler.toml is what makes
+ * this safe. Remove one and you must remove the other: without the flag, the
+ * shared client hangs requests under load.
  */
 import { PrismaClient } from "../generated/prisma/client";
 
