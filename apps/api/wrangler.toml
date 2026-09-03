@@ -21,6 +21,27 @@ main = "src/index.ts"
 compatibility_date = "2026-03-27"
 compatibility_flags = ["nodejs_compat"]
 
+# ─── Observability ────────────────────────────────────────────────────────────
+#
+# Declared here rather than left to the dashboard so it survives a deploy: a
+# setting toggled in the UI is overwritten by the next `wrangler deploy`, which
+# is how logging quietly turns itself off between releases.
+#
+# Full sampling because the traffic is a handful of gyms, not a firehose, and
+# the whole point is being able to read the one request that failed. Invocation
+# logs are what make an error attributable to a route at all — without them a
+# spike on the metrics chart has no story attached to it.
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+persist = true
+
+[observability.traces]
+enabled = true
+head_sampling_rate = 1
+persist = true
+
 [triggers]
 crons = ["30 3 * * *", "30 4 * * *"] # 03:30 UTC tenant reports, 04:30 UTC renewal reminders
 
@@ -88,6 +109,20 @@ RETURN_WINDOW_DAYS = "7"
 
 [env.production]
 name = "fitconnect-api"
+
+# Repeated for this environment on purpose: a named environment does not inherit
+# the top-level observability block, so leaving it out here is how production
+# ends up as the one deployment with no logs.
+[env.production.observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+persist = true
+
+[env.production.observability.traces]
+enabled = true
+head_sampling_rate = 1
+persist = true
 
 [env.production.triggers]
 crons = ["30 3 * * *", "30 4 * * *"]

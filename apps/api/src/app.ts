@@ -39,6 +39,47 @@ const app = new Hono();
 app.use("*", logger());
 
 /**
+ * A structured line for every request that did not succeed.
+ *
+ * Workers Logs can group and count by field, but only on fields that exist:
+ * the default logger writes `--> GET /tenants/abc/members/xyz 403 719ms`, which
+ * is readable and useless in aggregate — every id makes its own unique string,
+ * so "which route is failing, and how often" cannot be asked of it.
+ *
+ * This emits the same fact as JSON with the ids replaced by their parameter
+ * names, so a hundred failures on one route collapse into one row with a count
+ * of a hundred. Only non-2xx is logged: the successes are already counted by
+ * the metrics chart, and logging them would multiply the volume for nothing.
+ *
+ * Deliberately no user id, email, or body. This goes to a log store with a
+ * long retention and none of that is needed to find a broken route.
+ */
+app.use("*", async (c, next) => {
+  const startedAt = Date.now();
+  await next();
+
+  const status = c.res.status;
+  if (status < 400) return;
+
+  // The matched route pattern rather than the concrete path, which is what
+  // makes these countable. Hono exposes it; the raw path is the fallback.
+  const route = c.req.routePath ?? new URL(c.req.url).pathname;
+
+  console.log(
+    JSON.stringify({
+      event: "request_failed",
+      status,
+      method: c.req.method,
+      route,
+      durationMs: Date.now() - startedAt,
+      // Which gym, so one misconfigured tenant is distinguishable from a
+      // problem everybody has. An id, not a name.
+      tenantId: c.req.param("tenantId") ?? undefined,
+    }),
+  );
+});
+
+/**
  * Every gym is served from its own subdomain, so the browser origin varies per
  * request (`https://rudra.fitconnect.co.in`). A single fixed `CORS_ORIGIN` would
  * therefore reject every gym while allowing only the apex, so the allowlist is
@@ -133,6 +174,24 @@ app.route("/webhooks", courierWebhookRoutes);
 app.route("/iclock", iclockRoutes);
 
 app.onError((err, c) => {
+  /**
+   * Every uncaught throw, named and countable.
+   *
+   * An exception that becomes a 500 was previously visible only as a bar on a
+   * chart. The error class and message are what turn "597 errors" into
+   * something with a cause — and the route is what says where to look.
+   */
+  console.log(
+    JSON.stringify({
+      event: "request_error",
+      error: err.constructor?.name ?? "Error",
+      message: err.message?.slice(0, 300),
+      method: c.req.method,
+      route: c.req.routePath ?? new URL(c.req.url).pathname,
+      tenantId: c.req.param("tenantId") ?? undefined,
+    }),
+  );
+
   if (
     err.constructor?.name === "PrismaClientKnownRequestError" &&
     (err as any).code === "P2002"
