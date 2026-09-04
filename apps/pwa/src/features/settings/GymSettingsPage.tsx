@@ -40,6 +40,7 @@ import {
   Shield,
   MessageSquare,
   Globe,
+  Radio,
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FormPageSkeleton } from "@/components/ui/skeleton";
@@ -357,6 +358,31 @@ export default function GymSettingsPage() {
           </p>
           <Button type="button" variant="outline" onClick={() => navigate("/settings/public-page")}>
             Edit Public Page
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Radio className="h-5 w-5" />
+            Attendance machines
+          </CardTitle>
+          <CardDescription>
+            The RFID card readers on the door, and the members enrolled on them.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            Add or edit a machine, check when each was last seen, and re-sync
+            member cards to every device in this gym.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate("/attendance/devices")}
+          >
+            Manage machines
           </Button>
         </CardContent>
       </Card>

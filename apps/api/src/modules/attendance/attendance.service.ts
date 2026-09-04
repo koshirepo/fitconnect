@@ -342,7 +342,16 @@ export const attendanceService = {
 
     const dayMap: Record<
       string,
-      { count: number; members: { id: string; memberId: number | null; name: string }[] }
+      {
+        count: number;
+        members: {
+          id: string;
+          memberId: number | null;
+          name: string;
+          avatarUrl: string | null;
+          checkInAt: Date;
+        }[];
+      }
     > = {};
     for (const r of records as any[]) {
       const key = r.date.toISOString().slice(0, 10);
@@ -352,6 +361,8 @@ export const attendanceService = {
         id: r.member.id,
         memberId: r.member.memberId,
         name: r.member.user.name,
+        avatarUrl: r.member.user.avatarUrl ?? null,
+        checkInAt: r.checkInAt,
       });
     }
 

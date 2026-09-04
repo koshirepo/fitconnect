@@ -26,11 +26,19 @@ export function AssetImage({
   // proxied one; otherwise the retry would fetch the same failing address.
   const original = src && src !== proxied ? src : null;
 
-  const [stage, setStage] = React.useState<"proxy" | "original" | "failed">("proxy");
+  /**
+   * Which src the attempts belong to, alongside how far they got.
+   *
+   * Pairing the two is what lets a new image start over without an effect to
+   * reset the stage: progress recorded against a different address simply does
+   * not apply, so the read below falls back to the first attempt on its own.
+   */
+  const [attempt, setAttempt] = React.useState<{
+    src: string | null | undefined;
+    stage: "original" | "failed";
+  } | null>(null);
 
-  // A new src is a new image, so the attempts start again rather than
-  // inheriting the previous one's failure.
-  React.useEffect(() => setStage("proxy"), [src]);
+  const stage = attempt && attempt.src === src ? attempt.stage : "proxy";
 
   if (!proxied || stage === "failed") return null;
 
@@ -42,10 +50,10 @@ export function AssetImage({
       decoding="async"
       onError={() => {
         if (stage === "proxy" && original) {
-          setStage("original");
+          setAttempt({ src, stage: "original" });
           return;
         }
-        setStage("failed");
+        setAttempt({ src, stage: "failed" });
         onUnavailable?.();
       }}
       {...props}

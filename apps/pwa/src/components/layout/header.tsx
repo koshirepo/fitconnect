@@ -1,7 +1,7 @@
 import { useUIStore } from "@/stores/ui";
 import { useAuthStore } from "@/stores/auth";
 import { useLocation, Link } from "react-router-dom";
-import { Menu } from "lucide-react";
+import { Dumbbell, Menu, Shield, ShieldCheck, User, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ModeToggle } from "@/components/ui/mode-toggle";
@@ -47,6 +47,21 @@ const SEGMENT_LABELS: Record<string, string> = {
 };
 
 const OPAQUE_ID_REGEX = /^[a-z0-9]{18,}$/i;
+
+/**
+ * The role as a glyph, for the phone header where the word will not fit.
+ *
+ * Gyms can define roles of their own, so this maps the ones the app ships with
+ * and gives everything else a generic badge rather than falling back to nothing
+ * — an empty pill beside the theme toggle reads as a bug.
+ */
+function roleIconFor(role: string, className: string) {
+  const key = role.toUpperCase();
+  if (key === "ADMIN" || key === "OWNER") return <Shield className={className} />;
+  if (key === "COACH" || key === "TRAINER") return <Dumbbell className={className} />;
+  if (key === "MEMBER") return <User className={className} />;
+  return <UserCog className={className} />;
+}
 
 function toTitle(value: string) {
   return value.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -125,10 +140,19 @@ export function Header() {
 
       <div className="flex items-center gap-2">
         <ModeToggle />
-        {membership && <Badge variant="secondary">{membership.role}</Badge>}
+        {/* Glyph on a phone, word from `sm` up. The label stays in the
+            accessibility tree either way, so the badge is still announced as
+            the role it is rather than as an unlabelled image. */}
+        {membership && (
+          <Badge variant="secondary" title={membership.role}>
+            {roleIconFor(membership.role, "sm:hidden")}
+            <span className="sr-only sm:not-sr-only">{membership.role}</span>
+          </Badge>
+        )}
         {isPlatformStaff() && (
-          <Badge variant="accent" className="text-accent">
-            Platform Staff
+          <Badge variant="accent" className="text-accent" title="Platform Staff">
+            <ShieldCheck className="sm:hidden" />
+            <span className="sr-only sm:not-sr-only">Platform Staff</span>
           </Badge>
         )}
       </div>

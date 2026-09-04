@@ -223,7 +223,20 @@ export default function AttendanceCalendarPage() {
                       className="flex w-full rounded-lg px-2.5 py-2 text-left hover:bg-muted/60 transition-colors"
                       onClick={() => navigate(getTenantDashboardPath(`/members/${m.id}`))}
                     >
-                      <AvatarCard name={m.name} memberId={m.memberId ?? undefined} variant="sm" />
+                      <AvatarCard
+                        name={m.name}
+                        avatarUrl={m.avatarUrl}
+                        memberId={m.memberId ?? undefined}
+                        variant="sm"
+                        wrapName
+                        className="min-w-0 flex-1"
+                      />
+                      <span className="shrink-0 self-center pl-3 text-xs text-muted-foreground tabular-nums">
+                        {new Date(m.checkInAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
                     </button>
                   ))}
                 </div>

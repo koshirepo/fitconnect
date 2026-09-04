@@ -258,6 +258,7 @@ export default function ReminderDetailPage() {
               avatarUrl={reminder.member?.user.avatarUrl}
               memberId={reminder.member?.memberId ?? undefined}
               variant="md"
+              wrapName
               className="min-w-0 flex-1"
             >
               {reminder.member?.dueDate && (

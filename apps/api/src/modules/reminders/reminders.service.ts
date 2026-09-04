@@ -160,6 +160,7 @@ export const reminderService = {
           membershipId: string;
           memberId: number | null;
           memberName: string;
+          memberAvatarUrl: string | null;
           channel: string;
           reason: string;
           message: string | null;
@@ -186,6 +187,9 @@ export const reminderService = {
         membershipId: row.membershipId,
         memberId: row.member?.memberId ?? null,
         memberName: row.member?.user.name ?? "Removed member",
+        // Already selected by the repository; the calendar shows the same
+        // person tile as every other list and needs the photo to do it.
+        memberAvatarUrl: row.member?.user.avatarUrl ?? null,
         channel: row.channel,
         reason: row.reason,
         message: row.message,

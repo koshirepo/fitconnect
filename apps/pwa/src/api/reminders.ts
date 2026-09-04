@@ -38,6 +38,7 @@ export type ReminderDay = {
     membershipId: string;
     memberId: number | null;
     memberName: string;
+    memberAvatarUrl: string | null;
     channel: ReminderChannel;
     reason: ReminderReason;
     message: string | null;

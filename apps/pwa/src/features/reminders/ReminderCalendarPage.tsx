@@ -20,6 +20,7 @@ import {
   Bell,
   BellOff,
   CalendarDays,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   MessageCircle,
@@ -27,7 +28,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getTenantDashboardPath } from "@/lib/subdomain";
-import AvatarCard from "@/components/ui/avatarCard";
+import { AvatarTile, PersonChip } from "@/components/ui/member-card";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -124,8 +125,8 @@ export default function ReminderCalendarPage() {
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Reminders sent</h1>
-          <p className="text-muted-foreground">
-            Every renewal nudge, expiry notice, and payment chase — by the day it went out.
+          <p className="text-sm text-muted-foreground">
+            Every nudge, notice, and payment chase — by the day it went out.
           </p>
         </div>
       </div>
@@ -173,17 +174,17 @@ export default function ReminderCalendarPage() {
             </div>
 
             {/* Channel filter */}
-            <div className="mb-4 flex justify-center gap-1">
+            <div className="mx-auto mb-4 grid max-w-xs grid-cols-3 gap-1 rounded-lg bg-muted p-1">
               {CHANNEL_TABS.map((tab) => (
                 <button
                   key={tab.value}
                   type="button"
                   onClick={() => setChannel(tab.value)}
                   className={cn(
-                    "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                    "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
                     channel === tab.value
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:text-foreground",
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   {tab.label}
@@ -282,54 +283,82 @@ export default function ReminderCalendarPage() {
                   </Button>
                 </div>
 
-                <div className="-mx-1 space-y-1 px-1">
+                {/* Three lines per message, in the order they are read: what it
+                    was and when it went, then who it went to, then what it said.
+                    Each line truncates on its own rather than wrapping, which is
+                    what made this list unscannable on a phone. */}
+                <ul className="-mx-1 divide-y divide-border/60 px-1">
                   {selectedReminders.map((reminder) => (
-                    <button
-                      key={reminder.id}
-                      type="button"
-                      className="flex w-full items-start gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-muted/60"
-                      onClick={() =>
-                        navigate(
-                          getTenantDashboardPath(
-                            `/reminders/${reminder.id}?month=${currentMonth}`,
-                          ),
-                        )
-                      }
-                    >
-                      <div className="min-w-0 flex-1">
-                        <AvatarCard
-                          name={reminder.memberName}
-                          memberId={reminder.memberId ?? undefined}
-                          variant="sm"
-                          className="min-w-0"
-                        >
-                          <p className="truncate text-xs text-muted-foreground">
-                            {REASON_LABELS[reminder.reason] ?? reminder.reason}
-                            {reminder.message ? ` — ${reminder.message}` : ""}
+                    <li key={reminder.id}>
+                      <button
+                        type="button"
+                        className="flex w-full items-start gap-3 rounded-lg py-2.5 text-left transition-colors hover:bg-muted/60"
+                        onClick={() =>
+                          navigate(
+                            getTenantDashboardPath(
+                              `/reminders/${reminder.id}?month=${currentMonth}`,
+                            ),
+                          )
+                        }
+                      >
+                        <AvatarTile
+                          person={{
+                            name: reminder.memberName,
+                            avatarUrl: reminder.memberAvatarUrl,
+                          }}
+                          size="sm"
+                          stacked
+                          className="h-10 w-10 rounded-lg"
+                        />
+
+                        <div className="min-w-0 flex-1">
+                          {/* What it was and when it went — the two things being
+                              scanned for, on the line the eye lands on first. */}
+                          <div className="flex min-w-0 items-center justify-between gap-2">
+                            <div className="flex min-w-0 items-center gap-1">
+                              <PersonChip
+                                icon={reminder.channel === "WHATSAPP" ? MessageCircle : Bell}
+                                className={
+                                  reminder.channel === "WHATSAPP"
+                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                    : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                                }
+                              >
+                                {REASON_LABELS[reminder.reason] ?? reminder.reason}
+                              </PersonChip>
+                              {reminder.settled && (
+                                <PersonChip
+                                  icon={CheckCircle2}
+                                  className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                >
+                                  Settled
+                                </PersonChip>
+                              )}
+                            </div>
+                            <span className="shrink-0 text-[11px] whitespace-nowrap tabular-nums text-muted-foreground">
+                              {formatTime(reminder.sentAt)}
+                            </span>
+                          </div>
+
+                          <p className="mt-1 truncate text-sm font-medium">
+                            {reminder.memberId !== null && (
+                              <span className="text-muted-foreground">#{reminder.memberId} </span>
+                            )}
+                            {reminder.memberName}
                           </p>
-                        </AvatarCard>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <p className="flex items-center justify-end gap-1 text-xs text-muted-foreground">
-                          {reminder.channel === "WHATSAPP" ? (
-                            <MessageCircle className="h-3 w-3 text-emerald-600" />
-                          ) : (
-                            <Bell className="h-3 w-3 text-blue-600" />
+
+                          {(reminder.actorName || reminder.message) && (
+                            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                              {reminder.actorName ? `by ${reminder.actorName}` : ""}
+                              {reminder.actorName && reminder.message ? " · " : ""}
+                              {reminder.message ?? ""}
+                            </p>
                           )}
-                          {formatTime(reminder.sentAt)}
-                        </p>
-                        {reminder.actorName && (
-                          <p className="text-[10px] text-muted-foreground">
-                            by {reminder.actorName}
-                          </p>
-                        )}
-                        {reminder.settled && (
-                          <p className="text-[10px] text-emerald-600">settled</p>
-                        )}
-                      </div>
-                    </button>
+                        </div>
+                      </button>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
             )}
 

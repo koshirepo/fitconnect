@@ -242,11 +242,14 @@ export const attendanceRepository = {
       where: { tenantId, date: { gte: from, lte: to } },
       select: {
         date: true,
+        // The clock time of the punch, not just the day it fell on — the
+        // calendar lists who came, and when is half of that.
+        checkInAt: true,
         member: {
           select: {
             id: true,
             memberId: true,
-            user: { select: { name: true } },
+            user: { select: { name: true, avatarUrl: true } },
           },
         },
       },

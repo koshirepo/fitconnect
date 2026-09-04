@@ -112,7 +112,16 @@ export const attendanceApi = {
         month: string;
         days: Record<
           string,
-          { count: number; members: { id: string; memberId: number | null; name: string }[] }
+          {
+            count: number;
+            members: {
+              id: string;
+              memberId: number | null;
+              name: string;
+              avatarUrl: string | null;
+              checkInAt: string;
+            }[];
+          }
         >;
       }>
     >(`/tenants/${tenantId}/attendance/calendar`, { params: { month } }),

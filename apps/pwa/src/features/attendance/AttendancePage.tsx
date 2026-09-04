@@ -24,6 +24,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Spinner } from "@/components/ui/spinner";
 import { SkeletonRow } from "@/components/ui/skeleton";
 import AvatarCard from "@/components/ui/avatarCard";
+import { AvatarTile } from "@/components/ui/member-card";
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { getTenantDashboardPath } from "@/lib/subdomain";
@@ -41,6 +42,7 @@ import {
   ExternalLink,
   QrCode as QrCodeIcon,
   Clock3,
+  Radio,
 } from "lucide-react";
 import type { AttendanceRecord } from "@/types/api";
 
@@ -62,6 +64,8 @@ export default function AttendancePage() {
   const isStaff = can(Permission.ATTENDANCE_READ);
   const canMarkAttendance = can(Permission.ATTENDANCE_MARK);
   const canDeleteAttendance = can(Permission.ATTENDANCE_DELETE);
+  // The machines used to be their own sidebar entry. They belong to this page.
+  const canManageDevices = can(Permission.ATTENDANCE_QR_MANAGE);
 
   const [date, setDate] = React.useState(() => {
     const d = new Date();
@@ -256,11 +260,17 @@ export default function AttendancePage() {
             {isStaff ? "Track daily gym attendance" : "Check in for today"}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {isStaff && (
             <Button variant="outline" onClick={() => navigate("/attendance/calendar")}>
               <CalendarDays className="h-4 w-4 mr-2" />
               Calendar
+            </Button>
+          )}
+          {canManageDevices && (
+            <Button variant="outline" onClick={() => navigate("/attendance/devices")}>
+              <Radio className="h-4 w-4 mr-2" />
+              Machines
             </Button>
           )}
           {isToday && (
@@ -464,32 +474,44 @@ export default function AttendancePage() {
               <div className="space-y-2">
                 {records.map((r) => (
                   <Card key={r.id} className="hover:shadow-sm transition-shadow">
-                    <div className="flex items-center justify-between p-3">
+                    {/* Who, then when. Both had to share one line before, which
+                        on a phone truncated the person to "Rudra Gym Ad…" and
+                        broke "06:00 AM" across two lines. */}
+                    <div className="flex items-start gap-2 p-3">
                       <button
                         type="button"
-                        className="flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
+                        className="flex min-w-0 flex-1 items-start gap-3 text-left transition-opacity hover:opacity-80"
                         onClick={() =>
                           r.membershipId && navigate(getTenantDashboardPath(`/members/${r.membershipId}#attendance`))
                         }
                       >
-                        <AvatarCard
-                          name={r.memberName ?? ""}
-                          avatarUrl={r.memberAvatarUrl}
-                          memberId={r.memberId}
-                          variant="sm"
-                          isActive
+                        <AvatarTile
+                          person={{
+                            name: r.memberName ?? "",
+                            avatarUrl: r.memberAvatarUrl,
+                            status: "ACTIVE",
+                          }}
+                          size="sm"
+                          stacked
+                          className="h-10 w-10 rounded-lg"
                         />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">
+                            {r.memberId !== undefined && r.memberId !== null && (
+                              <span className="text-muted-foreground">#{r.memberId} </span>
+                            )}
+                            {r.memberName}
+                          </p>
+                          <p className="mt-0.5 truncate text-xs text-muted-foreground tabular-nums">
+                            {new Date(r.checkInAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                            {r.markedBy ? ` · by ${r.markedBy.name}` : ""}
+                          </p>
+                        </div>
                       </button>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        {r.markedBy && (
-                          <span className="hidden sm:inline">by {r.markedBy.name}</span>
-                        )}
-                        <span>
-                          {new Date(r.checkInAt).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
+                      <div className="flex shrink-0 items-center gap-1 text-sm text-muted-foreground">
                         {canDeleteAttendance && (
                           <Button
                             variant="ghost"
