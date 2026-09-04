@@ -197,12 +197,6 @@ const tenantNav: NavItem[] = [
   },
   { to: "/orders/history", label: "My Orders", icon: ShoppingBag },
   {
-    to: "/salary",
-    label: "Staff salary",
-    icon: BadgeIndianRupee,
-    anyOf: [Permission.SALARY_READ],
-  },
-  {
     // Their own payslips. Staff who can see everybody's reach it through the
     // salary list instead, so this is hidden for them rather than duplicated.
     to: "/my-salary",

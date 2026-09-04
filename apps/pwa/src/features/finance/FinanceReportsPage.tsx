@@ -25,6 +25,7 @@ import {
   Activity,
   CreditCard,
   Wallet,
+  BadgeIndianRupee,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -63,6 +64,7 @@ export default function FinanceReportsPage() {
   const navigate = useNavigate();
   const { can } = usePermissions();
   const canReadBooks = can(Permission.FINANCE_READ);
+  const canReadSalary = can(Permission.SALARY_READ);
 
   const reportQuery = useMemberReport();
   const analyticsQuery = usePaymentAnalytics();
@@ -232,7 +234,7 @@ export default function FinanceReportsPage() {
             Your gym's performance, members, and finances.
           </p>
         </div>
-        <div className="flex shrink-0 flex-wrap gap-2 *:flex-1 sm:*:flex-none">
+        <div className="flex shrink-0 flex-wrap gap-2">
           {/* This page reports what came in. The books — what went out, and what
               is left after it — are one click away rather than a sidebar entry
               of their own, since nobody looks at one without the other. */}
@@ -244,6 +246,16 @@ export default function FinanceReportsPage() {
             >
               <Wallet className="mr-2 h-4 w-4" />
               Income &amp; expenses
+            </Button>
+          )}
+          {canReadSalary && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(getTenantDashboardPath("/salary"))}
+            >
+              <BadgeIndianRupee className="mr-2 h-4 w-4" />
+              Staff salary
             </Button>
           )}
           <Button
