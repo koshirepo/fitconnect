@@ -196,7 +196,6 @@ const MEMBER_PERMISSIONS: Permission[] = [
   Permission.ATTENDANCE_CHECKIN_SELF,
   Permission.PAYMENTS_READ_SELF,
   Permission.PAYMENTS_CHECKOUT_SELF,
-  Permission.SALARY_READ_SELF,
   Permission.SUBSCRIPTIONS_READ,
   Permission.WORKOUTS_READ,
   Permission.BADGES_READ,
@@ -211,6 +210,18 @@ const MEMBER_PERMISSIONS: Permission[] = [
 /** Coaches add day-to-day floor operations on top of the member baseline. */
 const COACH_PERMISSIONS: Permission[] = [
   ...MEMBER_PERMISSIONS,
+  /**
+   * Own payslips, granted from here rather than to every member.
+   *
+   * A gym has hundreds of members and a handful of staff. Granting this at the
+   * member baseline put a "My salary" link in every one of those sidebars,
+   * leading to an empty page about a wage they are not paid.
+   *
+   * A gym that does put somebody on payroll while leaving their role as MEMBER
+   * — which the salary list deliberately supports — grants them this one
+   * permission on the roles screen.
+   */
+  Permission.SALARY_READ_SELF,
   Permission.COUPONS_APPLY,
   Permission.STORE_SELL,
   Permission.STORE_ORDERS_READ,
