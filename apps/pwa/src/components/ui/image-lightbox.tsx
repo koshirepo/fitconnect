@@ -44,13 +44,44 @@ export function ImageLightbox({
   const [failedSrc, setFailedSrc] = React.useState<string | null>(null);
   const unavailable = Boolean(src) && failedSrc === src;
 
+  /**
+   * Hold the page still underneath.
+   *
+   * Synchronising the document with React state is what an effect is for, and
+   * this one earns its place: without it the list behind keeps scrolling under
+   * the photo, which is what makes opening one picture feel like the whole
+   * screen moved. The previous value is restored rather than assumed to be
+   * `visible`, so two of these open at once cannot leave the page locked.
+   */
+  React.useEffect(() => {
+    if (!open) return;
+
+    const { body } = document;
+    const previous = body.style.overflow;
+    body.style.overflow = "hidden";
+
+    return () => {
+      body.style.overflow = previous;
+    };
+  }, [open]);
+
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Backdrop
           data-slot="image-lightbox-backdrop"
           onClick={(event) => event.stopPropagation()}
-          className="fixed inset-0 z-[70] bg-black/90 duration-150 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0"
+          /**
+           * Opaque, blurred, and above everything.
+           *
+           * The page behind must stop competing for attention entirely — a
+           * viewer that leaves the list legible underneath reads as the whole
+           * screen having changed rather than one photo having opened. The
+           * z-index clears the app's own chrome (which tops out at z-50) with
+           * room to spare, and the blur means even a partly transparent pixel
+           * cannot show a readable row through it.
+           */
+          className="fixed inset-0 z-[9998] bg-black/95 backdrop-blur-md duration-150 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0"
         />
         <DialogPrimitive.Popup
           data-slot="image-lightbox"
@@ -69,7 +100,10 @@ export function ImageLightbox({
             if (event.target === event.currentTarget) onOpenChange(false);
           }}
           className={cn(
-            "fixed inset-0 z-[70] flex items-center justify-center p-4 outline-none duration-150 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+            // Its own dark ground as well as the backdrop's: one layer covering
+            // the screen is what the photo sits on, so nothing shows through
+            // even if the backdrop fails to paint.
+            "fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 p-4 outline-none duration-150 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
             className,
           )}
         >
@@ -83,7 +117,9 @@ export function ImageLightbox({
               alt={alt}
               // `contain` rather than `cover`: the point of opening it is to see
               // the whole picture, including whatever the circle cropped away.
-              className="max-h-[90vh] max-w-full rounded-lg object-contain shadow-2xl"
+              // Bounded on both axes so a tall portrait cannot push past the
+              // screen and a wide one cannot touch the edges.
+              className="max-h-[85vh] max-w-[92vw] rounded-lg object-contain shadow-2xl"
               onUnavailable={() => setFailedSrc(src ?? null)}
               onClick={(event) => event.stopPropagation()}
             />
