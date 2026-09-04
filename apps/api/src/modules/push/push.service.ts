@@ -160,6 +160,29 @@ export const pushService = {
   },
 
   /** Money arrived, by whatever route. */
+  /**
+   * Tell one staff member their pay moved.
+   *
+   * Sent to the person it is about, not to the gym's admins: the admins are the
+   * ones who just did it. Failures are swallowed for the same reason the other
+   * notifiers swallow them — a push provider having a slow day must not fail
+   * the payment that triggered it.
+   */
+  async notifySalary(
+    userId: string,
+    payload: { title: string; body: string; url?: string },
+  ) {
+    try {
+      await pushService.sendToUser(userId, {
+        title: payload.title,
+        body: payload.body,
+        url: payload.url ?? "/dashboard/my-salary",
+      });
+    } catch (err) {
+      console.error("[push] salary notification failed", err);
+    }
+  },
+
   notifyPaymentReceived(
     tenantId: string,
     payment: {

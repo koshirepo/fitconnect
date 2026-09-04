@@ -10,6 +10,9 @@ import { StatCard } from "@/components/ui/stat-card";
 import { ChartTooltip } from "@/components/ui/chart-tooltip";
 import { formatCurrency } from "@/lib/utils";
 import { getApiError } from "@/api/client";
+import { getTenantDashboardPath } from "@/lib/subdomain";
+import { usePermissions } from "@/features/auth/permission-gate";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import {
   Users,
   IndianRupee,
@@ -58,6 +61,8 @@ function formatCompact(amount: number) {
 
 export default function FinanceReportsPage() {
   const navigate = useNavigate();
+  const { can } = usePermissions();
+  const canReadBooks = can(Permission.FINANCE_READ);
 
   const reportQuery = useMemberReport();
   const analyticsQuery = usePaymentAnalytics();
@@ -225,17 +230,32 @@ export default function FinanceReportsPage() {
             Complete overview of your gym's performance, members, and finances
           </p>
         </div>
-        <Button
-          onClick={() => {
-            void reportQuery.refetch();
-            void analyticsQuery.refetch();
-          }}
-          disabled={loading}
-          size="sm"
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-          {loading ? "Refreshing…" : "Refresh"}
-        </Button>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {/* This page reports what came in. The books — what went out, and what
+              is left after it — are one click away rather than a sidebar entry
+              of their own, since nobody looks at one without the other. */}
+          {canReadBooks && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(getTenantDashboardPath("/expenses"))}
+            >
+              <Wallet className="mr-2 h-4 w-4" />
+              Income &amp; expenses
+            </Button>
+          )}
+          <Button
+            onClick={() => {
+              void reportQuery.refetch();
+              void analyticsQuery.refetch();
+            }}
+            disabled={loading}
+            size="sm"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            {loading ? "Refreshing…" : "Refresh"}
+          </Button>
+        </div>
       </div>
 
       {error && (

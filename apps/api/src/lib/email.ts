@@ -211,6 +211,51 @@ export const emailService = {
   },
 
   /**
+   * Tell a staff member their pay changed.
+   *
+   * One template for the three things that can happen to a month — money paid,
+   * the monthly figure changed, something added or taken off — because they are
+   * the same message to the person receiving it: here is what moved, here is
+   * where the month stands now.
+   */
+  sendSalaryEmail(payload: {
+    to: string;
+    staffName: string;
+    gymName: string;
+    subject: string;
+    headline: string;
+    monthLabel: string;
+    lines: { label: string; value: string }[];
+  }) {
+    const rows = payload.lines
+      .map(
+        (line) =>
+          `<tr>
+            <td style="padding:4px 0;color:#6b7280;">${line.label}</td>
+            <td style="padding:4px 0;text-align:right;font-weight:600;">${line.value}</td>
+          </tr>`,
+      )
+      .join("");
+
+    return getTransporter().sendMail({
+      from: getFrom(),
+      to: payload.to,
+      subject: payload.subject,
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;">
+          <h2 style="margin-bottom:8px;">${payload.headline}</h2>
+          <p>Hi ${payload.staffName},</p>
+          <p>This is about your pay at <strong>${payload.gymName}</strong> for <strong>${payload.monthLabel}</strong>.</p>
+          <table style="width:100%;border-collapse:collapse;font-size:14px;margin:16px 0;">${rows}</table>
+          <p style="color:#6b7280;font-size:13px;">If anything here looks wrong, please speak to the desk.</p>
+          <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;"/>
+          <p style="color:#9ca3af;font-size:12px;">${payload.gymName} &middot; Powered by Fit Connect</p>
+        </div>
+      `,
+    });
+  },
+
+  /**
    * Utility helper for the email module that owns the `send report email` step.
    * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
    */

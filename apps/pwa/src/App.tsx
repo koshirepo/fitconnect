@@ -66,6 +66,10 @@ const SubscriptionFormPage = React.lazy(() => import("@/features/payments/subscr
 const GymSettingsPage = React.lazy(() => import("@/features/settings/GymSettingsPage"));
 const MessagesPage = React.lazy(() => import("@/features/settings/MessagesPage"));
 const FinanceReportsPage = React.lazy(() => import("@/features/finance/FinanceReportsPage"));
+const ExpensesPage = React.lazy(() => import("@/features/finance/ExpensesPage"));
+const SalaryPage = React.lazy(() => import("@/features/salary/SalaryPage"));
+const StaffSalaryPage = React.lazy(() => import("@/features/salary/StaffSalaryPage"));
+const MySalaryPage = React.lazy(() => import("@/features/salary/MySalaryPage"));
 const AuditLogsPage = React.lazy(() => import("@/features/audit/AuditLogsPage"));
 import LoginPage from "@/features/auth/LoginPage";
 const UserOrderHistoryPage = React.lazy(() => import("@/features/commerce/UserOrderHistoryPage"));
@@ -366,6 +370,23 @@ export default function App() {
             <Route element={<RequirePermission anyOf={[Permission.PAYMENTS_ANALYTICS_READ]} />}>
               <Route path="/dashboard/finance" element={<FinanceReportsPage />} />
             </Route>
+            <Route element={<RequirePermission anyOf={[Permission.FINANCE_READ]} />}>
+              <Route path="/dashboard/expenses" element={<ExpensesPage />} />
+            </Route>
+            <Route element={<RequirePermission anyOf={[Permission.SALARY_READ]} />}>
+              <Route path="/dashboard/salary" element={<SalaryPage />} />
+              <Route path="/dashboard/salary/:membershipId" element={<StaffSalaryPage />} />
+            </Route>
+            {/* Anybody on payroll, including staff who cannot see a colleague's. */}
+            <Route
+              element={
+                <RequirePermission
+                  anyOf={[Permission.SALARY_READ_SELF, Permission.SALARY_READ]}
+                />
+              }
+            >
+              <Route path="/dashboard/my-salary" element={<MySalaryPage />} />
+            </Route>
             <Route element={<RequirePermission anyOf={[Permission.AUDIT_TENANT_READ]} />}>
               <Route path="/dashboard/audit" element={<AuditLogsPage scope="tenant" />} />
             </Route>
@@ -651,6 +672,22 @@ export default function App() {
                     element={<RequirePermission anyOf={[Permission.PAYMENTS_ANALYTICS_READ]} />}
                   >
                     <Route path="/finance" element={<FinanceReportsPage />} />
+                  </Route>
+                  <Route element={<RequirePermission anyOf={[Permission.FINANCE_READ]} />}>
+                    <Route path="/expenses" element={<ExpensesPage />} />
+                  </Route>
+                  <Route element={<RequirePermission anyOf={[Permission.SALARY_READ]} />}>
+                    <Route path="/salary" element={<SalaryPage />} />
+                    <Route path="/salary/:membershipId" element={<StaffSalaryPage />} />
+                  </Route>
+                  <Route
+                    element={
+                      <RequirePermission
+                        anyOf={[Permission.SALARY_READ_SELF, Permission.SALARY_READ]}
+                      />
+                    }
+                  >
+                    <Route path="/my-salary" element={<MySalaryPage />} />
                   </Route>
                   <Route element={<RequirePermission anyOf={[Permission.AUDIT_TENANT_READ]} />}>
                     <Route

@@ -20,6 +20,8 @@ export const whatsappTemplateKeys = [
   "payment_reminder",
   "pending_payment_reminder",
   "payment_receipt",
+  "salary_payment",
+  "salary_updated",
 ] as const satisfies readonly WhatsAppTemplateKey[];
 
 const WHATSAPP_TEMPLATE_METADATA: Record<WhatsAppTemplateKey, TemplateMetadata> = {
@@ -94,6 +96,38 @@ Thank you.`,
 Your payment of {{amount}} for *{{subscriptionTitle}}* at *{{gymName}}* has been recorded.
 Status: {{status}}
 {{totalLine}}{{duesLine}}{{balanceLine}}{{validUntilLine}}{{noteLine}}Thank you.`,
+  },
+  salary_payment: {
+    label: "Salary Payment",
+    description:
+      "Opened after a salary payment is recorded for a staff member. Carries the outstanding line, so somebody paid part of a month is told what is still to come rather than being sent a slip that reads as settled.",
+    variables: [
+      "staffName",
+      "gymName",
+      "amount",
+      "monthLabel",
+      "method",
+      "paidLine",
+      "outstandingLine",
+      "noteLine",
+    ],
+    defaultBody: `Hi {{staffName}},
+
+{{gymName}} has recorded a salary payment of *{{amount}}* to you for *{{monthLabel}}*.
+Paid by: {{method}}
+{{paidLine}}{{outstandingLine}}{{noteLine}}
+Thank you.`,
+  },
+  salary_updated: {
+    label: "Salary Updated",
+    description:
+      "Opened when a staff member's pay changes — a new monthly figure, or a bonus, incentive, benefit or deduction added to a month.",
+    variables: ["staffName", "gymName", "changeLine", "monthLabel", "payableLine"],
+    defaultBody: `Hi {{staffName}},
+
+There is an update to your pay at *{{gymName}}*.
+{{changeLine}}{{payableLine}}
+Please speak to the desk if anything looks wrong.`,
   },
 };
 

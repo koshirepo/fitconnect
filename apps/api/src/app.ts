@@ -33,6 +33,7 @@ import { uploadRoutes } from "./modules/uploads/uploads.routes";
 import { shiftRoutes } from "./modules/shifts/shifts.routes";
 import { todoRoutes } from "./modules/todos/todos.routes";
 import { platformRoleRoutes, tenantRoleRoutes } from "./modules/roles/roles.routes";
+import { financeRoutes } from "./modules/finance/finance.routes";
 
 const app = new Hono();
 
@@ -170,6 +171,7 @@ app.route("/tenants", attendanceRoutes);
 app.route("/tenants", shiftRoutes);
 app.route("/tenants", todoRoutes);
 app.route("/tenants", tenantRoleRoutes);
+app.route("/tenants", financeRoutes);
 app.route("/platform", platformRoleRoutes);
 app.route("/audit", auditRoutes);
 app.route("/public", publicRoutes);

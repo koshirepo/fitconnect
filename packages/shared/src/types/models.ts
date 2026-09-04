@@ -1135,7 +1135,9 @@ export type WhatsAppTemplateKey =
   | "new_member_welcome"
   | "payment_reminder"
   | "pending_payment_reminder"
-  | "payment_receipt";
+  | "payment_receipt"
+  | "salary_payment"
+  | "salary_updated";
 
 export interface WhatsAppTemplate {
   key: WhatsAppTemplateKey;

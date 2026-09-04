@@ -23,6 +23,7 @@ import {
   Tag,
   ClipboardList,
   ShoppingBag,
+  BadgeIndianRupee,
   RotateCcw,
   Warehouse,
   ScrollText,
@@ -53,6 +54,14 @@ type NavItem = {
   label: string;
   icon: typeof LayoutDashboard;
   anyOf?: Permission[];
+  /**
+   * Hide the item from anybody holding one of these.
+   *
+   * For entries that a broader permission supersedes: an admin who can see
+   * every payslip reaches their own through the salary list, so showing them a
+   * second "My salary" link would be two doors to the same room.
+   */
+  noneOf?: Permission[];
   excludePrefixes?: string[];
   /**
    * Link to the path as written, without the gym-subdomain /dashboard prefix.
@@ -187,6 +196,21 @@ const tenantNav: NavItem[] = [
     // sidebar, so this stays lit while somebody is on them.
   },
   { to: "/orders/history", label: "My Orders", icon: ShoppingBag },
+  {
+    to: "/salary",
+    label: "Staff salary",
+    icon: BadgeIndianRupee,
+    anyOf: [Permission.SALARY_READ],
+  },
+  {
+    // Their own payslips. Staff who can see everybody's reach it through the
+    // salary list instead, so this is hidden for them rather than duplicated.
+    to: "/my-salary",
+    label: "My salary",
+    icon: BadgeIndianRupee,
+    anyOf: [Permission.SALARY_READ_SELF],
+    noneOf: [Permission.SALARY_READ],
+  },
   { to: "/badges", label: "Badges", icon: Award, anyOf: [Permission.BADGES_READ] },
   {
     to: "/settings",
@@ -330,7 +354,11 @@ export function Sidebar() {
                 Platform
               </p>
               {platformNav
-                .filter((item) => !item.anyOf?.length || canAny(...item.anyOf))
+                .filter(
+                  (item) =>
+                    (!item.anyOf?.length || canAny(...item.anyOf)) &&
+                    !(item.noneOf?.length && canAny(...item.noneOf)),
+                )
                 .map((item) => (
                   <NavLink
                     key={item.to}
@@ -369,7 +397,11 @@ export function Sidebar() {
                 Gym
               </p>
               {tenantNav
-                .filter((item) => !item.anyOf?.length || canAny(...item.anyOf))
+                .filter(
+                  (item) =>
+                    (!item.anyOf?.length || canAny(...item.anyOf)) &&
+                    !(item.noneOf?.length && canAny(...item.noneOf)),
+                )
                 .map((item) => (
                   <NavLink
                     key={`${item.to}:${item.label}`}

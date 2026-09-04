@@ -107,4 +107,24 @@ export const queryKeys = {
       ["audit", tenantId, params ?? null] as const,
     platform: (params?: unknown) => ["audit", "platform", params ?? null] as const,
   },
+  finance: {
+    // The month is in every key: paging back and forth reuses months already
+    // fetched instead of refetching them.
+    summary: (tenantId: string, month: string) => ["finance", tenantId, "summary", month] as const,
+    expenses: (tenantId: string, month: string) =>
+      ["finance", tenantId, "expenses", month] as const,
+    recurring: (tenantId: string, month: string) =>
+      ["finance", tenantId, "recurring", month] as const,
+    /** Everything under this gym's books, for invalidating after a write. */
+    all: (tenantId: string) => ["finance", tenantId] as const,
+  },
+  salary: {
+    list: (tenantId: string, month: string) => ["salary", tenantId, "list", month] as const,
+    cycle: (tenantId: string, membershipId: string, month: string) =>
+      ["salary", tenantId, "cycle", membershipId, month] as const,
+    history: (tenantId: string, membershipId: string) =>
+      ["salary", tenantId, "history", membershipId] as const,
+    mine: (tenantId: string) => ["salary", tenantId, "mine"] as const,
+    all: (tenantId: string) => ["salary", tenantId] as const,
+  },
 } as const;

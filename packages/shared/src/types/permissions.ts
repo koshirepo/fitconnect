@@ -161,6 +161,19 @@ export const Permission = {
   PLATFORM_ORDERS_DELETE: "platform:orders:delete",
   PLATFORM_ROLES_READ: "platform:roles:read",
   PLATFORM_ROLES_UPDATE: "platform:roles:update",
+
+  // The gym's books: what it took in, what it spent, and what it pays its staff
+  FINANCE_READ: "finance:read",
+  FINANCE_MANAGE: "finance:manage",
+  /**
+   * Everyone's pay, and the power to change it. Separate from FINANCE_* because
+   * a manager may well be trusted with the rent and the electricity bill and
+   * still have no business knowing what their colleagues earn.
+   */
+  SALARY_READ: "salary:read",
+  SALARY_MANAGE: "salary:manage",
+  /** One's own pay and payslip, and nobody else's. */
+  SALARY_READ_SELF: "salary:read:self",
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];
@@ -183,6 +196,7 @@ const MEMBER_PERMISSIONS: Permission[] = [
   Permission.ATTENDANCE_CHECKIN_SELF,
   Permission.PAYMENTS_READ_SELF,
   Permission.PAYMENTS_CHECKOUT_SELF,
+  Permission.SALARY_READ_SELF,
   Permission.SUBSCRIPTIONS_READ,
   Permission.WORKOUTS_READ,
   Permission.BADGES_READ,
@@ -227,6 +241,10 @@ const COACH_PERMISSIONS: Permission[] = [
 /** Tenant admins hold every tenant-scoped capability. */
 const ADMIN_PERMISSIONS: Permission[] = [
   ...COACH_PERMISSIONS,
+  Permission.FINANCE_READ,
+  Permission.FINANCE_MANAGE,
+  Permission.SALARY_READ,
+  Permission.SALARY_MANAGE,
   Permission.COUPONS_CREATE,
   Permission.COUPONS_UPDATE,
   Permission.COUPONS_DELETE,
