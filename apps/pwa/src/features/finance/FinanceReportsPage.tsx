@@ -223,14 +223,16 @@ export default function FinanceReportsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Gym Analytics Dashboard</h1>
-          <p className="text-muted-foreground">
-            Complete overview of your gym's performance, members, and finances
+      {/* Stacked on a phone: sharing one row with the buttons squeezed the
+          title into three lines and pushed Refresh off the screen. */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight">Gym Analytics</h1>
+          <p className="text-sm text-muted-foreground">
+            Your gym's performance, members, and finances.
           </p>
         </div>
-        <div className="flex shrink-0 flex-wrap gap-2">
+        <div className="flex shrink-0 flex-wrap gap-2 *:flex-1 sm:*:flex-none">
           {/* This page reports what came in. The books — what went out, and what
               is left after it — are one click away rather than a sidebar entry
               of their own, since nobody looks at one without the other. */}

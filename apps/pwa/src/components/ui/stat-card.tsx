@@ -72,7 +72,7 @@ export function StatCard({
             <Icon className="h-5 w-5 text-muted-foreground" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-muted-foreground truncate">{label}</p>
+            <p className="text-xs leading-tight text-balance text-muted-foreground">{label}</p>
             <p className={`text-xl font-bold ${color}`}>{value}</p>
             {subtext && <p className="text-xs text-muted-foreground">{subtext}</p>}
           </div>
