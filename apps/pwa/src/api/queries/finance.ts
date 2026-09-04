@@ -36,7 +36,7 @@ export function useRecurringExpenses(month: string) {
 }
 
 /** Everything the books show, so one write refreshes the whole page. */
-function financeKeys(tenantId: string | undefined) {
+function financeKeys(tenantId: string | null | undefined) {
   return tenantId ? [queryKeys.finance.all(tenantId)] : [];
 }
 
@@ -185,7 +185,7 @@ export function useSalaryHistory(membershipId: string | undefined) {
  * A salary payment creates an expense row; refreshing only the payslip would
  * leave the books showing a month that has already moved.
  */
-function payKeys(tenantId: string | undefined) {
+function payKeys(tenantId: string | null | undefined) {
   return tenantId ? [queryKeys.salary.all(tenantId), queryKeys.finance.all(tenantId)] : [];
 }
 

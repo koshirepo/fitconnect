@@ -12,10 +12,17 @@ import { cn } from "@/lib/utils";
 import { getTenantDashboardPath } from "@/lib/subdomain";
 import AvatarCard from "@/components/ui/avatarCard";
 
-type DayData = {
-  count: number;
-  members: { id: string; memberId: number | null; name: string }[];
-};
+/**
+ * One day of the calendar, taken from the API client rather than restated.
+ *
+ * A hand-written copy of the response shape is a second source of truth: this
+ * one silently kept its old three fields after the endpoint grew a photo and a
+ * check-in time, and the cast below meant the compiler had nothing to object
+ * to until CI ran a stricter config.
+ */
+type DayData = NonNullable<
+  ReturnType<typeof useAttendanceCalendar>["data"]
+>["days"][string];
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
