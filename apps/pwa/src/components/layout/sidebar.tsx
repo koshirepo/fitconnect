@@ -183,7 +183,11 @@ const tenantNav: NavItem[] = [
   },
   {
     // The shop itself. Public, and the only place anybody buys anything.
-    to: "/dashboard/store",
+    //
+    // Points at the storefront, not the counter. Both of these entries used to
+    // lead to the same path, so whichever page won the route match served both
+    // links and the other was unreachable from the sidebar.
+    to: "/shop",
     label: "Store",
     icon: ShoppingBag,
     anyOf: [Permission.STORE_READ],
