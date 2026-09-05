@@ -4,15 +4,15 @@
 #
 # Environments
 # ------------
-#   (top level)    local development — `npm run dev`, backed by the local miniflare D1/R2 state
-#   env.production live deployment    — `npm run deploy:production`
+#   (top level)    local development — `pnpm run dev`, backed by the local miniflare D1/R2 state
+#   env.production live deployment    — `pnpm run deploy:production`
 #
 # Wrangler does NOT inherit `vars`, `d1_databases`, `r2_buckets`, or `triggers`
 # into named environments, so the production block below repeats everything it needs.
 #
-# Secrets are NOT stored here. Set them all with `npm run secrets:production`, or
+# Secrets are NOT stored here. Set them all with `pnpm run secrets:production`, or
 # one at a time:
-#   npx wrangler secret put JWT_SECRET --env production
+#   pnpm exec wrangler secret put JWT_SECRET --env production
 # For local development put the same keys in `.dev.vars` (gitignored) — see
 # `.dev.vars.example`.
 
@@ -75,6 +75,17 @@ namespace_id = "1001"
 
 [ratelimits.simple]
 limit = 5
+period = 60
+
+# Sign-in attempts per IP. Kept separate from signup, and a little looser: a gym
+# front desk shares one address, so several staff logging in within a minute is
+# ordinary traffic, while credential stuffing is not.
+[[ratelimits]]
+name = "LOGIN_RATE_LIMITER"
+namespace_id = "1002"
+
+[ratelimits.simple]
+limit = 10
 period = 60
 
 [vars]
@@ -155,6 +166,14 @@ namespace_id = "1001"
 
 [env.production.ratelimits.simple]
 limit = 5
+period = 60
+
+[[env.production.ratelimits]]
+name = "LOGIN_RATE_LIMITER"
+namespace_id = "1002"
+
+[env.production.ratelimits.simple]
+limit = 10
 period = 60
 
 [env.production.vars]

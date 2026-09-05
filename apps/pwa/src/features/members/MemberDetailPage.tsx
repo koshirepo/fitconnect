@@ -1,6 +1,7 @@
 import { getMonthStr, parseMonth, formatMonthLabel } from "@/lib/month";
 import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
+import { GiftCoinsDialog } from "@/components/members/gift-coins-dialog";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useParams, useLocation, Link } from "react-router-dom";
 import { useAppNavigate } from "@/lib/use-app-navigate";
@@ -188,6 +189,10 @@ export default function MemberDetailPage() {
   // Only worth showing when they actually have some.
   const coinsQuery = useCoinBalance(membershipId);
   const coinBalance = coinsQuery.data?.balance ?? 0;
+  // The same grant that lets somebody invent a discount. Writing coins into a
+  // balance is that act by another route and should not be a lesser permission.
+  const canGiftCoins = can(Permission.COUPONS_CREATE);
+  const [giftOpen, setGiftOpen] = React.useState(false);
 
   const settingsQuery = useTenantSettings();
   const tenantSettings = settingsQuery.data ?? null;
@@ -542,26 +547,65 @@ export default function MemberDetailPage() {
         )}
       </div>
 
-      {/* Coins and the card link share a row: they are both things this member
-          holds rather than facts about them, and stacked one per line they
-          pushed the badges — which staff actually edit — below the fold. */}
-      {(coinBalance > 0 || member.idCardUrl) && (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          {coinBalance > 0 && (
-            <span className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
-              <Coins className="h-3.5 w-3.5" />
-              {coinBalance} coins to spend
-            </span>
+      {/* One row for everything this member holds: coins, their card, and their
+          badges. These used to be two containers that each wrapped on their
+          own, so a short first row still forced the badges onto a line of their
+          own and pushed what staff actually edit below the fold. Wrapping only
+          happens now when the row genuinely runs out of width. */}
+      {/* On a phone these carry their icon alone. Four labelled pills wrap onto
+          three lines on a 390px screen and push the actions below the fold; the
+          icons are the same controls, and every one keeps its words in a
+          `title` and an accessible name so nothing is lost to a screen reader
+          or a long press. The coin *count* survives on mobile — a bare coin
+          icon says a member has coins but not whether it is five or five
+          hundred. */}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        {(coinBalance > 0 || canGiftCoins || member.idCardUrl) && (
+          <>
+          {/* A button for whoever may change it, a plain badge for everyone
+              else. Shown at zero too, because giving coins to somebody who has
+              none is the common case. */}
+          {canGiftCoins ? (
+            <button
+              type="button"
+              onClick={() => setGiftOpen(true)}
+              title={coinBalance > 0 ? `${coinBalance} coins to spend` : "Give coins"}
+              aria-label={coinBalance > 0 ? `${coinBalance} coins to spend` : "Give coins"}
+              className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-500/20 dark:text-amber-400"
+            >
+              <Coins className="h-3.5 w-3.5 shrink-0" />
+              {coinBalance > 0 ? (
+                <>
+                  {coinBalance}
+                  <span className="hidden sm:inline">coins to spend</span>
+                </>
+              ) : (
+                <span className="hidden sm:inline">Give coins</span>
+              )}
+            </button>
+          ) : (
+            coinBalance > 0 && (
+              <span
+                title={`${coinBalance} coins to spend`}
+                className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-400"
+              >
+                <Coins className="h-3.5 w-3.5 shrink-0" />
+                {coinBalance}
+                <span className="hidden sm:inline">coins to spend</span>
+              </span>
+            )
           )}
 
           {member.idCardUrl && (
             <>
               <a
                 href={member.idCardUrl}
-                className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent"
+                title="Membership card"
+                aria-label="Membership card"
+                className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent"
               >
-                <CreditCard className="h-3.5 w-3.5" />
-                Membership card
+                <CreditCard className="h-3.5 w-3.5 shrink-0" />
+                <span className="hidden sm:inline">Membership card</span>
               </a>
 
               {/* The card, not this page.
@@ -582,18 +626,18 @@ export default function MemberDetailPage() {
                 text={`Your membership card at ${currentMembership()?.tenantName ?? "the gym"}.`}
                 label="Send card"
                 size="sm"
+                iconOnlyOnMobile
                 className="h-auto rounded-full px-3 py-1.5 text-xs"
               />
             </>
           )}
-        </div>
-      )}
+          </>
+        )}
 
-      {/* Badges row */}
-      <div className="flex flex-wrap items-center gap-2 mt-3">
         {member.badges.map((badge) => (
           <span
             key={badge.id}
+            title={badge.name}
             className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium"
           >
             <span
@@ -602,7 +646,9 @@ export default function MemberDetailPage() {
             >
               {(badge.icon ?? badge.name).charAt(0).toUpperCase()}
             </span>
-            {badge.name}
+            {/* The coloured initial is the badge on a phone. Its name is in the
+                `title`, and the remove control beside it keeps its own label. */}
+            <span className="hidden sm:inline">{badge.name}</span>
             {canManageBadges && (
               <button
                 type="button"
@@ -621,10 +667,11 @@ export default function MemberDetailPage() {
             type="button"
             onClick={() => setShowBadgePicker(true)}
             className="flex items-center gap-1 rounded-full border border-dashed px-2.5 py-1 text-xs text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-            title="Assign badge"
+            title="Add badge"
+            aria-label="Add badge"
           >
-            <Plus className="h-3 w-3" />
-            Add Badge
+            <Plus className="h-3 w-3 shrink-0" />
+            <span className="hidden sm:inline">Add Badge</span>
           </button>
         )}
 
@@ -1307,6 +1354,15 @@ export default function MemberDetailPage() {
             )}
           </CardContent>
         </Card>
+      )}
+      {canGiftCoins && (
+        <GiftCoinsDialog
+          membershipId={membershipId!}
+          memberName={member.name}
+          balance={coinBalance}
+          open={giftOpen}
+          onOpenChange={setGiftOpen}
+        />
       )}
     </SwipePane>
   );

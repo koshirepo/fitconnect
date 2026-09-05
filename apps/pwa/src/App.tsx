@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate, useParams } from "react-router-dom";
 import {
   RequireAuth,
   RequirePlatformStaff,
@@ -65,6 +65,10 @@ const SubscriptionsPage = React.lazy(() => import("@/features/payments/subscript
 const SubscriptionFormPage = React.lazy(() => import("@/features/payments/subscription/SubscriptionFormPage"));
 const GymSettingsPage = React.lazy(() => import("@/features/settings/GymSettingsPage"));
 const MessagesPage = React.lazy(() => import("@/features/settings/MessagesPage"));
+// Keep this module name in sync with the `**/assets/FinanceReportsPage-*.js` entry
+// in vite.config.ts: the service worker keeps this chunk (recharts, ~420 KB) out
+// of the precache by matching the filename Rollup derives from this import, so
+// renaming or moving the file silently puts it back in every first visit.
 const FinanceReportsPage = React.lazy(() => import("@/features/finance/FinanceReportsPage"));
 const ExpensesPage = React.lazy(() => import("@/features/finance/ExpensesPage"));
 const SalaryPage = React.lazy(() => import("@/features/salary/SalaryPage"));
@@ -108,6 +112,7 @@ const StoreProductFormPage = React.lazy(
   () => import("@/features/store/StoreProductFormPage"),
 );
 const CouponFormPage = React.lazy(() => import("@/features/coupons/CouponFormPage"));
+const CoinAnalyticsPage = React.lazy(() => import("@/features/coupons/CoinAnalyticsPage"));
 const IdCardPage = React.lazy(() => import("@/features/public/IdCardPage"));
 const TenantPublicPage = React.lazy(
   () => import("@/features/public/TenantPublicPage"),
@@ -158,6 +163,12 @@ const AdminOrderDetailPage = React.lazy(
 );
 const RolesPage = React.lazy(() => import("@/features/roles/RolesPage"));
 const RoleFormPage = React.lazy(() => import("@/features/roles/RoleFormPage"));
+
+/** Keeps an old `/store/products/:id` link working after the move to `/shop`. */
+function TenantStoreProductRedirect() {
+  const { productId } = useParams<{ productId: string }>();
+  return <Navigate to={`/shop/products/${productId}`} replace />;
+}
 
 export default function App() {
   const { isAuthenticated, accessToken, fetchMe } = useAuthStore();
@@ -216,9 +227,22 @@ export default function App() {
       <Route element={<TenantPublicLayout />}>
         <Route path="/" element={<TenantPublicPage />} />
         {/* The shop window. Public on purpose: a visitor can see what the gym
-            sells, and buy, before deciding to join. */}
-        <Route path="/store" element={<PublicStorePage />} />
-        <Route path="/store/products/:productId" element={<PublicStoreProductPage />} />
+            sells, and buy, before deciding to join.
+
+            `/shop` on a gym subdomain and `/shop` on the platform host are the
+            same page of the same catalogue, differing only in who owns the
+            products — so they read the same in the address bar too.
+
+            `/store` still answers, permanently redirected. Gyms have put those
+            links in bios and WhatsApp messages, and a tidier URL is not worth
+            breaking them. */}
+        <Route path="/shop" element={<PublicStorePage />} />
+        <Route path="/shop/products/:productId" element={<PublicStoreProductPage />} />
+        <Route path="/store" element={<Navigate to="/shop" replace />} />
+        <Route
+          path="/store/products/:productId"
+          element={<TenantStoreProductRedirect />}
+        />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route element={<RedirectIfAuth />}>
@@ -290,6 +314,7 @@ export default function App() {
             </Route>
             <Route element={<RequirePermission anyOf={[Permission.COUPONS_READ]} />}>
               <Route path="/dashboard/coupons" element={<CouponsPage />} />
+              <Route path="/dashboard/coins" element={<CoinAnalyticsPage />} />
             </Route>
             <Route
               element={
@@ -556,6 +581,11 @@ export default function App() {
                   </Route>
                   <Route element={<RequirePermission anyOf={[Permission.COUPONS_READ]} />}>
                     <Route path="/coupons" element={<CouponsPage />} />
+                    {/* Coins get their own page; coupon usage lives on the
+                        coupon list. Coupons mint coins, but so do referrals and
+                        staff gifts, so "what do we owe in coins" is a different
+                        question from "which discount code works". */}
+                    <Route path="/coins" element={<CoinAnalyticsPage />} />
                   </Route>
                   <Route
                     element={
@@ -564,17 +594,21 @@ export default function App() {
                 />
                     }
                   >
-                    <Route path="/store" element={<StorePage />} />
+                    {/* The counter, not the shop window. Moved under /dashboard
+                        when the public storefront took /shop: both used to be
+                        "/store" in this same route tree, and the public one —
+                        being first and unguarded — matched for staff too. */}
+                    <Route path="/dashboard/store" element={<StorePage />} />
                     <Route
-                      path="/store/products/:productId"
+                      path="/dashboard/store/products/:productId"
                       element={<StoreProductDetailPage />}
                     />
                   </Route>
                   <Route element={<RequirePermission anyOf={[Permission.STORE_MANAGE]} />}>
-                    <Route path="/store/manage" element={<StoreManagePage />} />
-                    <Route path="/store/manage/new" element={<StoreProductFormPage />} />
+                    <Route path="/dashboard/store/manage" element={<StoreManagePage />} />
+                    <Route path="/dashboard/store/manage/new" element={<StoreProductFormPage />} />
                     <Route
-                      path="/store/manage/:productId/edit"
+                      path="/dashboard/store/manage/:productId/edit"
                       element={<StoreProductFormPage />}
                     />
                   </Route>

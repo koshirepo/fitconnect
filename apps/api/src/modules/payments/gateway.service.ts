@@ -775,7 +775,46 @@ export const gatewayService = {
       member?: { memberId: number; user: { name: string } } | null;
     }[],
     gatewayPaymentId: string,
+    /** Razorpay's own charge for this payment, when the caller has it. */
+    deductions?: { feePaise: number | null; taxPaise: number | null },
   ) {
+    /**
+     * Razorpay charges once per payment; this settles the several rows that
+     * payment covered — a plan plus the arrears it was bundled with.
+     *
+     * Writing the whole fee onto each row would count it as many times as the
+     * order had lines, and every payout would then overstate what was deducted.
+     * So it is split by what each row was worth, with the last row taking the
+     * rounding remainder so the shares add back to exactly what Razorpay took.
+     */
+    const shareOf = (() => {
+      const pending = payments.filter((row) => row.status !== "COMPLETED");
+      const total = pending.reduce((sum, row) => sum + row.amount, 0);
+
+      const split = (whole: number | null | undefined) => {
+        const shares = new Map<string, number>();
+        if (whole == null || total <= 0) return shares;
+
+        let assigned = 0;
+        pending.forEach((row, index) => {
+          const last = index === pending.length - 1;
+          const share = last
+            ? whole - assigned
+            : Math.round((whole * row.amount) / total);
+          assigned += share;
+          shares.set(row.id, share);
+        });
+        return shares;
+      };
+
+      const fees = split(deductions?.feePaise);
+      const taxes = split(deductions?.taxPaise);
+      return (rowId: string) => ({
+        feePaise: fees.get(rowId) ?? null,
+        taxPaise: taxes.get(rowId) ?? null,
+      });
+    })();
+
     const settled = [];
     for (const row of payments) {
       // A row the webhook already settled is left exactly as it was, so the
@@ -784,6 +823,7 @@ export const gatewayService = {
       const paid = await paymentRepository.settleGatewayPayment(
         row.id,
         gatewayPaymentId,
+        shareOf(row.id),
       );
       settled.push(paid);
 
@@ -1008,7 +1048,14 @@ export const gatewayService = {
         }
 
         if (remote.status === "captured" || remote.status === "authorized") {
-          await gatewayService.settleOrder(payments, entity.id);
+          // Razorpay reports its fee only on the payment it confirms, and only
+          // once captured. Taken from `remote` rather than the webhook body for
+          // the same reason the status is: the signature proves who sent the
+          // message, not that the message is true.
+          await gatewayService.settleOrder(payments, entity.id, {
+            feePaise: remote.fee ?? null,
+            taxPaise: remote.tax ?? null,
+          });
         }
 
         await recordDelivery({

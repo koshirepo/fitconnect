@@ -6,16 +6,20 @@ import { useAuthStore } from "@/stores/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Input } from "@/components/ui/input";
 import { SkeletonRow } from "@/components/ui/skeleton";
 import { ShoppingCart, Trash2, ArrowLeft, AlertTriangle } from "lucide-react";
 import type { Product } from "@/types/api";
 import { calculateTotals, formatCurrency, validateQuantity } from "./pricing";
+import { CartLine as CartLineRow, CartSummary } from "@/components/catalog/cart-line";
+import { FulfilmentBadge } from "@/components/catalog/fulfilment-badge";
 import { getCartItems, removeCartItem, saveCartItems, upsertCartItem, type CartItem } from "./cart";
 import { useSeo } from "@/lib/seo";
 
 type CartLine = {
   product: Product;
+  /** The form bought. Null on a line saved before variants existed. */
+  variantId: string | null;
+  variant: Product["variants"][number] | undefined;
   quantity: number;
 };
 
@@ -31,7 +35,6 @@ export default function PublicCartPage() {
 
   const [products, setProducts] = React.useState<Product[]>([]);
   const [cart, setCart] = React.useState<CartItem[]>(() => getCartItems());
-  const [draftQty, setDraftQty] = React.useState<Record<string, string>>({});
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
 
@@ -44,12 +47,6 @@ export default function PublicCartPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  React.useEffect(() => {
-    const next: Record<string, string> = {};
-    for (const item of cart) next[item.productId] = String(item.quantity);
-    setDraftQty(next);
-  }, [cart]);
-
   const productMap = React.useMemo(
     () => new Map(products.map((product) => [product.id, product])),
     [products],
@@ -61,7 +58,13 @@ export default function PublicCartPage() {
         .map((item) => {
           const product = productMap.get(item.productId);
           if (!product) return null;
-          return { product, quantity: item.quantity };
+          // A legacy line names no variant; a product with one form has an
+          // obvious answer, which is the same rule the API applies at checkout.
+          const sellable = (product.variants ?? []).filter((variant) => variant.isActive);
+          const variant =
+            sellable.find((candidate) => candidate.id === item.variantId) ??
+            (sellable.length === 1 ? sellable[0] : undefined);
+          return { product, variantId: item.variantId, variant, quantity: item.quantity };
         })
         .filter((line): line is CartLine => Boolean(line)),
     [cart, productMap],
@@ -89,29 +92,32 @@ export default function PublicCartPage() {
     [lines],
   );
 
-  const applyQty = (line: CartLine) => {
-    const value = Number(draftQty[line.product.id]);
-    if (!Number.isFinite(value)) {
-      setError(`Please enter a valid quantity for ${line.product.name}.`);
+  /**
+   * One step up or down.
+   *
+   * Replaces a number field with a separate "Update Qty" button, which let
+   * somebody type 3, not press it, and check out with 1. Stepping below the
+   * minimum is how a line is removed, matching the control on the catalogue.
+   */
+  const changeQuantity = (line: CartLine, delta: number) => {
+    const next = line.quantity + delta;
+
+    if (next < line.product.minOrderQty) {
+      setError("");
+      setCart(removeCartItem(line.product.id, line.variantId));
       return;
     }
 
-    const parsed = Math.floor(value);
-    const issue = validateQuantity(line.product, parsed);
+    const issue = validateQuantity(line.product, next);
     if (issue) {
       setError(`${line.product.name}: ${issue}`);
       return;
     }
 
     setError("");
-    const updated = upsertCartItem(line.product.id, parsed);
-    setCart(updated);
+    setCart(upsertCartItem(line.product.id, line.variantId, next));
   };
 
-  const removeLine = (productId: string) => {
-    const updated = removeCartItem(productId);
-    setCart(updated);
-  };
 
   const proceedToCheckout = () => {
     if (lines.length === 0) {
@@ -195,52 +201,31 @@ export default function PublicCartPage() {
                 </div>
               )}
 
-              {lines.map((line) => {
-                const issue = validateQuantity(line.product, line.quantity);
-                const inputValue = draftQty[line.product.id] ?? String(line.quantity);
-                return (
-                  <div key={line.product.id} className="rounded-md border p-3 space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-medium">{line.product.name}</p>
-                        <p className="text-sm text-muted-foreground">{line.product.category}</p>
-                        <p className="text-sm">
-                          {formatCurrency(line.product.price)} each | Stock {line.product.stock}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Min {line.product.minOrderQty} / Max {line.product.maxOrderQty}
-                        </p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeLine(line.product.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Remove
-                      </Button>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Input
-                        type="number"
-                        min={line.product.minOrderQty}
-                        max={Math.min(line.product.maxOrderQty, line.product.stock)}
-                        value={inputValue}
-                        onChange={(e) =>
-                          setDraftQty((prev) => ({ ...prev, [line.product.id]: e.target.value }))
-                        }
-                        className="w-36"
-                      />
-                      <Button variant="outline" onClick={() => applyQty(line)}>
-                        Update Qty
-                      </Button>
-                    </div>
-
-                    {issue && <p className="text-sm text-destructive">{issue}</p>}
-                  </div>
-                );
-              })}
+              {lines.map((line) => (
+                <CartLineRow
+                  key={line.product.id}
+                  name={line.product.name}
+                  subtitle={line.variant?.name ?? line.product.category}
+                  photo={line.product.photos[0]}
+                  price={`${formatCurrency(line.variant?.price ?? line.product.price)} each`}
+                  meta={
+                    <>
+                      Stock {line.variant?.stock ?? line.product.stock} · Min{" "}
+                      {line.product.minOrderQty} / Max {line.product.maxOrderQty}
+                      <FulfilmentBadge fulfilment="DELIVERY" className="mt-1 flex w-fit" />
+                    </>
+                  }
+                  quantity={line.quantity}
+                  atMinimum={line.quantity <= line.product.minOrderQty}
+                  canIncrease={
+                    line.quantity < line.product.maxOrderQty &&
+                    line.quantity < (line.variant?.stock ?? line.product.stock)
+                  }
+                  onDecrease={() => changeQuantity(line, -1)}
+                  onIncrease={() => changeQuantity(line, 1)}
+                  issue={validateQuantity(line.product, line.quantity)}
+                />
+              ))}
             </CardContent>
           </Card>
 
@@ -248,33 +233,28 @@ export default function PublicCartPage() {
             <CardHeader>
               <CardTitle>Summary</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="rounded-md border p-3 text-sm space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span>{formatCurrency(totals.subtotalAmount)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">GST ({totals.gstRatePct}%)</span>
-                  <span>{formatCurrency(totals.gstAmount)}</span>
-                </div>
-                <div className="flex justify-between font-semibold">
-                  <span>Total</span>
-                  <span>{formatCurrency(totals.totalAmount)}</span>
-                </div>
-              </div>
+            <CardContent>
+              <CartSummary
+                rows={[
+                  { label: "Subtotal", value: formatCurrency(totals.subtotalAmount) },
+                  {
+                    label: `GST (${totals.gstRatePct}%)`,
+                    value: formatCurrency(totals.gstAmount),
+                  },
+                  { label: "Total", value: formatCurrency(totals.totalAmount), strong: true },
+                ]}
+                footnote={
+                  !isAuthenticated
+                    ? "Guest checkout is supported. You will enter buyer details on the next step."
+                    : undefined
+                }
+              >
+                {error && <p className="text-sm text-destructive">{error}</p>}
 
-              {!isAuthenticated && (
-                <p className="text-xs text-muted-foreground">
-                  Guest checkout is supported. You will enter buyer details on the next step.
-                </p>
-              )}
-
-              {error && <p className="text-sm text-destructive">{error}</p>}
-
-              <Button className="w-full" onClick={proceedToCheckout}>
-                Proceed to Checkout
-              </Button>
+                <Button className="w-full" onClick={proceedToCheckout}>
+                  Proceed to Checkout
+                </Button>
+              </CartSummary>
             </CardContent>
           </Card>
         </div>

@@ -50,7 +50,12 @@ export const reviewRepository = {
    * Run the `list by product` persistence operation for the commerce module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
-  async listByProduct(productId: string, page: number, limit: number) {
+  async listByProduct(
+    productId: string,
+    page: number,
+    limit: number,
+    viewerId?: string | null,
+  ) {
     const [reviews, total] = await Promise.all([
       prisma.productReview.findMany({
         where: { productId },
@@ -62,8 +67,29 @@ export const reviewRepository = {
       prisma.productReview.count({ where: { productId } }),
     ]);
 
+    // Which of these the caller has already marked helpful. One query for the
+    // whole page rather than one per row, and skipped entirely when nobody is
+    // signed in, because a signed-out reader has no votes to report.
+    //
+    // The list could not answer this before, which is why the PWA kept the
+    // answer in component state: that Set started empty on every mount, so a
+    // returning reader saw their own vote missing and could cast it again.
+    const helpfulIds = viewerId
+      ? new Set(
+          (
+            await prisma.productReviewHelpful.findMany({
+              where: { userId: viewerId, reviewId: { in: reviews.map((r) => r.id) } },
+              select: { reviewId: true },
+            })
+          ).map((row) => row.reviewId),
+        )
+      : null;
+
     return {
-      reviews,
+      reviews: reviews.map((review) => ({
+        ...review,
+        helpfulByMe: helpfulIds?.has(review.id) ?? false,
+      })),
       total,
       page,
       limit,

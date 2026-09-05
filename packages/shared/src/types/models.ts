@@ -679,16 +679,35 @@ export interface RecordPlatformPaymentPayload {
 
 // ─── Workout Plans ────────────────────────────────────────────────────────────
 
+/** One buyable form of a product: a colour, a size, a flavour. */
+export interface ProductVariant {
+  id: string;
+  name: string;
+  attributes?: Record<string, string> | null;
+  sku?: string | null;
+  price: number;
+  stock: number;
+  isActive: boolean;
+}
+
 export interface Product {
   id: string;
+  /** Null for the platform shop; a gym's id for that gym's store. */
+  tenantId?: string | null;
   name: string;
   description?: string | null;
   markdown?: string | null;
   photos: string[];
   videos: string[];
   category: string;
+  /** Every form this is sold in. At least one, always. */
+  variants: ProductVariant[];
+  /** Cheapest live variant. Derived by the API; not stored. */
   price: number;
+  /** Total across live variants. Derived by the API; not stored. */
   stock: number;
+  /** True where `price` is a "from", so a card can say "onwards". */
+  hasChoice?: boolean;
   minOrderQty: number;
   maxOrderQty: number;
   /** Grams per unit. What the courier prices carriage on. */

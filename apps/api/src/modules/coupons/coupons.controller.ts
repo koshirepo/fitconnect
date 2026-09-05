@@ -7,6 +7,8 @@
  */
 import type { Context } from "hono";
 import { couponRepository } from "./coupons.repository";
+import { coinAnalyticsService } from "./coin-analytics.service";
+import { couponAnalyticsService } from "./coupon-analytics.service";
 import { coinAdminService, couponService } from "./coupons.service";
 import {
   coinAdjustSchema,
@@ -165,6 +167,44 @@ export const couponController = {
     }
 
     return ok(c, { quote: result.data });
+  },
+
+  /** Every coupon with what it has actually cost. */
+  async couponOverview(c: AppContext) {
+    const result = await couponAnalyticsService.overview(c.req.param("tenantId")!);
+    return ok(c, result.data);
+  },
+
+  /** The most recent redemptions across the gym. */
+  async couponActivity(c: AppContext) {
+    const result = await couponAnalyticsService.recent(c.req.param("tenantId")!);
+    return ok(c, result.data);
+  },
+
+  /** The gym's coins as a whole: issued, spent, and still outstanding. */
+  async coinOverview(c: AppContext) {
+    const result = await coinAnalyticsService.overview(c.req.param("tenantId")!);
+    return ok(c, result.data);
+  },
+
+  /** Who is holding coins, biggest balance first. */
+  async coinHolders(c: AppContext) {
+    const result = await coinAnalyticsService.holders(c.req.param("tenantId")!);
+    return ok(c, result.data);
+  },
+
+  /**
+   * Every coin movement in the gym, newest first.
+   *
+   * Capped rather than paged: a gym running this for years will want a page
+   * eventually, but a cap that returns everything for all of them today is
+   * honest, where a page-one that silently hides the rest is not.
+   */
+  async coinActivity(c: AppContext) {
+    const requested = Number.parseInt(c.req.query("limit") ?? "", 10);
+    const limit = Number.isFinite(requested) ? Math.min(Math.max(requested, 1), 1000) : 500;
+    const result = await coinAnalyticsService.recent(c.req.param("tenantId")!, limit);
+    return ok(c, result.data);
   },
 
   /** A member's coin balance and recent history. */

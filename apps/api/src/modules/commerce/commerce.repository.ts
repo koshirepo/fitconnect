@@ -6,33 +6,12 @@
  * - Primary exports: commerceRepository.
  */
 import { prisma } from "../../lib/prisma";
+import {
+  catalogueRepository,
+  PLATFORM_CATALOGUE,
+} from "../catalogue/catalogue.repository";
 import type { OrderStatus } from "@fitconnect/shared/types/enums";
 import type { CreateProductInput, UpdateProductInput } from "./commerce.schema";
-
-const productSelect = {
-  id: true,
-  name: true,
-  description: true,
-  markdown: true,
-  photos: true,
-  category: true,
-  price: true,
-  stock: true,
-  minOrderQty: true,
-  maxOrderQty: true,
-  isReturnable: true,
-  isReplaceable: true,
-  returnWindowDays: true,
-  returnPolicyNote: true,
-  weightGrams: true,
-  lengthCm: true,
-  widthCm: true,
-  heightCm: true,
-  warehouseId: true,
-  isActive: true,
-  createdAt: true,
-  updatedAt: true,
-} as const;
 
 const orderSelect = {
   id: true,
@@ -69,6 +48,8 @@ const orderSelect = {
       id: true,
       productId: true,
       productName: true,
+      variantId: true,
+      variantName: true,
       quantity: true,
       unitPrice: true,
       lineTotal: true,
@@ -82,92 +63,38 @@ export const commerceRepository = {
    * Run the `list public products` persistence operation for the commerce module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
-  async listPublicProducts(page: number, limit: number, category?: string, search?: string) {
-    const where = {
-      isActive: true,
-      ...(category ? { category } : {}),
-      ...(search
-        ? {
-            OR: [
-              { name: { contains: search, mode: "insensitive" as const } },
-              { category: { contains: search, mode: "insensitive" as const } },
-            ],
-          }
-        : {}),
-    };
-
-    const [products, total] = await Promise.all([
-      prisma.product.findMany({
-        where,
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: [{ category: "asc" }, { createdAt: "desc" }],
-        select: productSelect,
-      }),
-      prisma.product.count({ where }),
-    ]);
-
-    return { products, total };
+  listPublicProducts(page: number, limit: number, category?: string, search?: string) {
+    return catalogueRepository.listProducts(PLATFORM_CATALOGUE, {
+      category,
+      search,
+      skip: (page - 1) * limit,
+      take: limit,
+      orderBy: [{ category: "asc" }, { createdAt: "desc" }],
+    });
   },
 
-  /**
-   * Run the `list admin products` persistence operation for the commerce module.
-   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
-   */
-  async listAdminProducts(
+  listAdminProducts(
     page: number,
     limit: number,
     includeInactive: boolean,
     category?: string,
     search?: string,
   ) {
-    const where = {
-      ...(includeInactive ? {} : { isActive: true }),
-      ...(category ? { category } : {}),
-      ...(search
-        ? {
-            OR: [
-              { name: { contains: search, mode: "insensitive" as const } },
-              { category: { contains: search, mode: "insensitive" as const } },
-            ],
-          }
-        : {}),
-    };
-
-    const [products, total] = await Promise.all([
-      prisma.product.findMany({
-        where,
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: [{ createdAt: "desc" }],
-        select: productSelect,
-      }),
-      prisma.product.count({ where }),
-    ]);
-
-    return { products, total };
+    return catalogueRepository.listProducts(PLATFORM_CATALOGUE, {
+      category,
+      search,
+      includeInactive,
+      skip: (page - 1) * limit,
+      take: limit,
+    });
   },
 
-  /**
-   * Run the `find product by id` persistence operation for the commerce module.
-   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
-   */
   findProductById(productId: string) {
-    return prisma.product.findUnique({
-      where: { id: productId },
-      select: productSelect,
-    });
+    return catalogueRepository.findProduct(PLATFORM_CATALOGUE, productId);
   },
 
-  /**
-   * Run the `find public product by id` persistence operation for the commerce module.
-   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
-   */
   findPublicProductById(productId: string) {
-    return prisma.product.findFirst({
-      where: { id: productId, isActive: true },
-      select: productSelect,
-    });
+    return catalogueRepository.findSellableProduct(PLATFORM_CATALOGUE, productId);
   },
 
   /**
@@ -175,20 +102,22 @@ export const commerceRepository = {
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
   createProduct(input: CreateProductInput) {
-    return prisma.product.create({
-      data: {
-        name: input.name,
-        description: input.description,
-        markdown: input.markdown,
-        photos: input.photos,
-        category: input.category,
-        price: input.price,
-        stock: input.stock,
-        minOrderQty: input.minOrderQty,
-        maxOrderQty: input.maxOrderQty,
-        isActive: input.isActive ?? true,
+    // The shop's admin form still describes a product with one price and one
+    // stock number. That is now a product with a single variant carrying both,
+    // created in the same write — the model has no other place to put them, and
+    // a product without a variant is one nobody can buy.
+    return catalogueRepository.createProduct(PLATFORM_CATALOGUE, {
+      name: input.name,
+      description: input.description,
+      markdown: input.markdown,
+      photos: input.photos,
+      category: input.category,
+      minOrderQty: input.minOrderQty,
+      maxOrderQty: input.maxOrderQty,
+      isActive: input.isActive ?? true,
+      variants: {
+        create: [{ name: input.name, price: input.price, stock: input.stock }],
       },
-      select: productSelect,
     });
   },
 
@@ -196,23 +125,36 @@ export const commerceRepository = {
    * Run the `update product` persistence operation for the commerce module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
-  updateProduct(productId: string, input: UpdateProductInput) {
-    return prisma.product.update({
-      where: { id: productId },
-      data: {
-        ...(input.name !== undefined ? { name: input.name } : {}),
-        ...(input.description !== undefined ? { description: input.description } : {}),
-        ...(input.markdown !== undefined ? { markdown: input.markdown } : {}),
-        ...(input.photos !== undefined ? { photos: input.photos } : {}),
-        ...(input.category !== undefined ? { category: input.category } : {}),
+  /**
+   * Update a shop product, and its price or stock where the form sent either.
+   *
+   * Price and stock live on variants now. A product the shop admin created has
+   * exactly one, so "the price" is unambiguous; a product that has grown several
+   * is left alone here, because this form cannot say which one was meant.
+   */
+  async updateProduct(productId: string, input: UpdateProductInput) {
+    const updated = await catalogueRepository.updateProduct(PLATFORM_CATALOGUE, productId, {
+      ...(input.name !== undefined ? { name: input.name } : {}),
+      ...(input.description !== undefined ? { description: input.description } : {}),
+      ...(input.markdown !== undefined ? { markdown: input.markdown } : {}),
+      ...(input.photos !== undefined ? { photos: input.photos } : {}),
+      ...(input.category !== undefined ? { category: input.category } : {}),
+      ...(input.minOrderQty !== undefined ? { minOrderQty: input.minOrderQty } : {}),
+      ...(input.maxOrderQty !== undefined ? { maxOrderQty: input.maxOrderQty } : {}),
+      ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
+    });
+    if (!updated) return null;
+
+    const movesMoney = input.price !== undefined || input.stock !== undefined;
+    if (movesMoney && updated.variants.length === 1) {
+      await catalogueRepository.updateVariant(PLATFORM_CATALOGUE, updated.variants[0]!.id, {
         ...(input.price !== undefined ? { price: input.price } : {}),
         ...(input.stock !== undefined ? { stock: input.stock } : {}),
-        ...(input.minOrderQty !== undefined ? { minOrderQty: input.minOrderQty } : {}),
-        ...(input.maxOrderQty !== undefined ? { maxOrderQty: input.maxOrderQty } : {}),
-        ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
-      },
-      select: productSelect,
-    });
+      });
+      return catalogueRepository.findProduct(PLATFORM_CATALOGUE, productId);
+    }
+
+    return updated;
   },
 
   /**
@@ -229,11 +171,19 @@ export const commerceRepository = {
    * Run the `delete product` persistence operation for the commerce module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
-  deleteProduct(productId: string) {
-    return prisma.product.delete({
-      where: { id: productId },
-      select: productSelect,
-    });
+  /**
+   * Delete a shop product.
+   *
+   * Read first, then delete through the catalogue: `prisma.product.delete` takes
+   * a unique id and so cannot carry the ownership filter, which after the
+   * catalogues merged meant a gym's product was one guessed id away.
+   */
+  async deleteProduct(productId: string) {
+    const product = await catalogueRepository.findProduct(PLATFORM_CATALOGUE, productId);
+    if (!product) return null;
+
+    const deleted = await catalogueRepository.deleteProduct(PLATFORM_CATALOGUE, productId);
+    return deleted ? product : null;
   },
 
   /**
@@ -286,21 +236,26 @@ export const commerceRepository = {
     shippingAmount?: number;
     /** Why that quote came out short, when it did. Null is the ordinary case. */
     shippingQuoteIssue?: string | null;
-    items: Array<{ productId: string; quantity: number }>;
+    items: Array<{ productId: string; variantId?: string; quantity: number }>;
   }) {
     // D1 doesn't support interactive transactions.
     // Validate products first, then decrement stock with optimistic checks,
     // then create the order.
     const productIds = [...new Set(data.items.map((item) => item.productId))];
+    // `tenantId: null` is the platform catalogue. Product now holds every gym's
+    // stock as well, so without this a shop order could name a gym's product and
+    // sell it out from under them.
     const products = await prisma.product.findMany({
-      where: { id: { in: productIds }, isActive: true },
+      where: { id: { in: productIds }, isActive: true, tenantId: null },
       select: {
         id: true,
         name: true,
-        price: true,
-        stock: true,
         minOrderQty: true,
         maxOrderQty: true,
+        variants: {
+          where: { isActive: true },
+          select: { id: true, name: true, price: true, stock: true },
+        },
       },
     });
 
@@ -310,36 +265,61 @@ export const commerceRepository = {
       if (!product) {
         throw new Error(`PRODUCT_NOT_FOUND:${item.productId}`);
       }
+
+      // Which form of the product is being bought. Named explicitly where the
+      // buyer chose one; inferred only where there is exactly one to infer, and
+      // refused otherwise — guessing here would ship the wrong colour.
+      const variant = item.variantId
+        ? product.variants.find((candidate) => candidate.id === item.variantId)
+        : product.variants.length === 1
+          ? product.variants[0]
+          : undefined;
+
+      if (!variant) {
+        throw new Error(
+          item.variantId
+            ? `VARIANT_NOT_FOUND:${item.variantId}`
+            : `VARIANT_REQUIRED:${product.name}`,
+        );
+      }
+
       if (item.quantity < product.minOrderQty || item.quantity > product.maxOrderQty) {
         throw new Error(
           `QTY_RANGE:${product.name}:${product.minOrderQty}:${product.maxOrderQty}`,
         );
       }
-      if (item.quantity > product.stock) {
-        throw new Error(`INSUFFICIENT_STOCK:${product.name}:${product.stock}`);
+      if (item.quantity > variant.stock) {
+        throw new Error(`INSUFFICIENT_STOCK:${product.name}:${variant.stock}`);
       }
+
       return {
         productId: product.id,
         productName: product.name,
+        variantId: variant.id,
+        variantName: variant.name,
         quantity: item.quantity,
-        unitPrice: product.price,
-        lineTotal: product.price * item.quantity,
+        unitPrice: variant.price,
+        lineTotal: variant.price * item.quantity,
       };
     });
 
     // Optimistic stock decrement — WHERE stock >= quantity guards against races
-    const decrementedItems: Array<{ productId: string; quantity: number }> = [];
+    const decrementedItems: Array<{ variantId: string; quantity: number }> = [];
 
     try {
       for (const item of orderItems) {
-        const updated = await prisma.product.updateMany({
-          where: { id: item.productId, stock: { gte: item.quantity } },
-          data: { stock: { decrement: item.quantity } },
-        });
-        if (updated.count === 0) {
+        // Through the catalogue, so the claim is scoped to the platform shop.
+        // A variant id alone would reach a gym's stock — the same hole that
+        // existed on the gym side until the owner became a required argument.
+        const took = await catalogueRepository.claimStock(
+          PLATFORM_CATALOGUE,
+          item.variantId,
+          item.quantity,
+        );
+        if (!took) {
           throw new Error(`INSUFFICIENT_STOCK:${item.productName}:0`);
         }
-        decrementedItems.push({ productId: item.productId, quantity: item.quantity });
+        decrementedItems.push({ variantId: item.variantId, quantity: item.quantity });
       }
 
       const subtotalAmount = orderItems.reduce((sum, item) => sum + item.lineTotal, 0);
@@ -373,11 +353,7 @@ export const commerceRepository = {
       if (decrementedItems.length > 0) {
         await Promise.allSettled(
           decrementedItems.map((item) =>
-            prisma.product.update({
-              where: { id: item.productId },
-              data: { stock: { increment: item.quantity } },
-              select: { id: true },
-            }),
+            catalogueRepository.releaseStock(PLATFORM_CATALOGUE, item.variantId, item.quantity),
           ),
         );
       }
@@ -572,13 +548,9 @@ export const commerceRepository = {
    * Run the `restore stock for order items` persistence operation for the commerce module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
-  async restoreStockForOrderItems(items: Array<{ productId: string; quantity: number }>) {
+  async restoreStockForOrderItems(items: Array<{ variantId: string; quantity: number }>) {
     for (const item of items) {
-      await prisma.product.update({
-        where: { id: item.productId },
-        data: { stock: { increment: item.quantity } },
-        select: { id: true },
-      });
+      await catalogueRepository.releaseStock(PLATFORM_CATALOGUE, item.variantId, item.quantity);
     }
   },
 };

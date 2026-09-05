@@ -3,9 +3,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { commerceApi } from "@/api/commerce";
-import { reviewsApi } from "@/api/reviews";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DetailPageSkeleton } from "@/components/ui/skeleton";
 import {
@@ -13,22 +13,21 @@ import {
   PackageSearch,
   ShoppingCart,
 
-  Plus,
-  Minus,
-  Trash2,
   Star,
   MessageSquare,
   FileText,
 } from "lucide-react";
 import type { Product } from "@/types/api";
-import type { ProductReview, RatingStats } from "@/api/reviews";
 import { formatCurrency } from "./pricing";
 import { ShopHeader } from "./ShopHeader";
-import { getCartItems, getCartTotalQuantity, upsertCartItem, removeCartItem } from "./cart";
+import { getCartItems, getCartTotalQuantity, upsertCartItem } from "./cart";
+import { useProductRatingStats, useProductReviews } from "@/api/queries/reviews";
 import { ReviewForm } from "@/components/commerce/ReviewForm";
 import { ReviewList } from "@/components/commerce/ReviewList";
 import { RatingSummary } from "@/components/commerce/RatingSummary";
-import { PRODUCT_IMAGE_ASPECT_CLASS } from "./product-image";
+import { ProductDetailLayout } from "@/components/catalog/product-detail-layout";
+import { stockLabel, stockState } from "@/components/catalog/stock";
+import { VariantOptionsCard } from "@/components/catalog/variant-options";
 import { useSeo, absoluteUrl } from "@/lib/seo";
 import { ShareButton } from "@/components/ui/share-button";
 
@@ -38,30 +37,20 @@ export default function PublicProductDetailPage() {
 
   const [product, setProduct] = React.useState<Product | null>(null);
   const [cart, setCart] = React.useState(() => getCartItems());
-  const [selectedPhoto, setSelectedPhoto] = React.useState(0);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
 
   const [activeTab, setActiveTab] = React.useState<"details" | "write">("details");
-  const [reviews, setReviews] = React.useState<ProductReview[]>([]);
-  const [ratingStats, setRatingStats] = React.useState<RatingStats | null>(null);
-  const [reviewsLoading, setReviewsLoading] = React.useState(false);
 
-  const loadReviewsAndStats = async (pId: string) => {
-    try {
-      setReviewsLoading(true);
-      const [statsRes, reviewsRes] = await Promise.all([
-        reviewsApi.getRatingStats(pId),
-        reviewsApi.listByProduct(pId, 1, 10),
-      ]);
-      setRatingStats(statsRes.data.data);
-      setReviews(reviewsRes.data.data);
-    } catch (err) {
-      console.error("Failed to load reviews:", err);
-    } finally {
-      setReviewsLoading(false);
-    }
-  };
+  // Reviews and the rating histogram come from react-query rather than a fetch
+  // in an effect. A posted review or comment invalidates the product's review
+  // prefix, so the list, the average and the histogram refresh together — the
+  // old version reloaded them by hand and did not after a helpful vote.
+  const reviewsQuery = useProductReviews(productId);
+  const ratingStatsQuery = useProductRatingStats(productId);
+  const reviews = reviewsQuery.data ?? [];
+  const ratingStats = ratingStatsQuery.data ?? null;
+  const reviewsLoading = reviewsQuery.isPending;
 
   React.useEffect(() => {
     if (!productId) return;
@@ -72,12 +61,22 @@ export default function PublicProductDetailPage() {
       .then((res) => setProduct(res.data.data.product))
       .catch((err: unknown) => setError(getApiError(err)))
       .finally(() => setLoading(false));
-    loadReviewsAndStats(productId);
   }, [productId]);
 
 
   const cartCount = getCartTotalQuantity(cart);
-  const cartQty = product ? (cart.find((i) => i.productId === product.id)?.quantity ?? 0) : 0;
+  const sellableVariants = React.useMemo(
+    () => (product?.variants ?? []).filter((variant) => variant.isActive),
+    [product],
+  );
+
+  /** Everything of this product in the cart, across its forms. */
+  const cartQtyForProduct = product
+    ? cart
+        .filter((item) => item.productId === product.id)
+        .reduce((total, item) => total + item.quantity, 0)
+    : 0;
+
   const unavailable = !product?.isActive || (product?.stock ?? 0) <= 0;
 
   // Written from the product once it has loaded. While it is loading the title
@@ -113,39 +112,6 @@ export default function PublicProductDetailPage() {
   });
 
 
-  const handleAdd = () => {
-    if (!product || unavailable) return;
-    const next = cartQty + product.minOrderQty;
-    if (next > product.maxOrderQty) return;
-    if (next > product.stock) return;
-    setCart(upsertCartItem(product.id, next));
-  };
-
-  const handleIncrease = () => {
-    if (!product) return;
-    const next = cartQty + 1;
-    if (next > product.maxOrderQty) {
-      setError(`Max order quantity is ${product.maxOrderQty}.`);
-      return;
-    }
-    if (next > product.stock) {
-      setError(`Only ${product.stock} units in stock.`);
-      return;
-    }
-    setError("");
-    setCart(upsertCartItem(product.id, next));
-  };
-
-  const handleDecrease = () => {
-    if (!product) return;
-    setError("");
-    if (cartQty <= product.minOrderQty) {
-      setCart(removeCartItem(product.id));
-    } else {
-      setCart(upsertCartItem(product.id, cartQty - 1));
-    }
-  };
-
   if (loading) return <DetailPageSkeleton />;
 
   if (!product) {
@@ -165,8 +131,6 @@ export default function PublicProductDetailPage() {
       </div>
     );
   }
-
-  const activePhoto = product.photos[selectedPhoto] ?? product.photos[0];
 
   return (
     <div className="min-h-screen bg-background">
@@ -188,198 +152,119 @@ export default function PublicProductDetailPage() {
           </div>
         )}
 
-        <div className="grid gap-8 lg:grid-cols-[1fr_420px]">
-          {/* ── Gallery ── */}
-          <div className="space-y-3">
-            <div
-              className={`relative ${PRODUCT_IMAGE_ASPECT_CLASS} max-h-[70vh] w-full overflow-hidden rounded-2xl border bg-muted`}
-            >
-              {activePhoto ? (
-                <img src={activePhoto} alt={product.name} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                  No image available
-                </div>
-              )}
-              {product.stock <= 5 && product.stock > 0 && (
-                <span className="absolute top-3 left-3 rounded-full bg-yellow-500/90 px-2.5 py-1 text-xs font-semibold text-black">
-                  Only {product.stock} left
-                </span>
-              )}
-              {product.stock === 0 && (
-                <div className="absolute inset-0 flex items-center justify-center bg-background/70 text-sm font-semibold text-muted-foreground rounded-2xl">
-                  Out of stock
-                </div>
-              )}
-            </div>
-            {product.photos.length > 1 && (
-              <div className="grid grid-cols-5 gap-2 sm:grid-cols-6">
-                {product.photos.map((photo, index) => (
-                  <button
-                    type="button"
-                    key={`${photo}-${index}`}
-                    onClick={() => setSelectedPhoto(index)}
-                    className={`aspect-square overflow-hidden rounded-lg border transition-all ${
-                      selectedPhoto === index
-                        ? "ring-2 ring-primary ring-offset-1"
-                        : "opacity-70 hover:opacity-100"
-                    }`}
-                  >
-                    <img
-                      src={photo}
-                      alt={`${product.name} ${index + 1}`}
-                      className="h-full w-full object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* ── Info panel ── */}
-          <div className="flex flex-col gap-5">
-            <div>
-              {product.category && (
-                <p className="mb-1 text-sm font-medium text-primary">{product.category}</p>
-              )}
-              <h1 className="text-2xl font-bold leading-tight sm:text-3xl">{product.name}</h1>
-              {ratingStats && ratingStats.totalReviews > 0 && (
-                <div className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span className="font-medium text-foreground">
-                    {ratingStats.averageRating.toFixed(1)}
-                  </span>
-                  <span>·</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      document
-                        .getElementById("reviews-section")
-                        ?.scrollIntoView({ behavior: "smooth" });
-                    }}
-                    className="hover:underline underline-offset-2"
-                  >
-                    {ratingStats.totalReviews}{" "}
-                    {ratingStats.totalReviews === 1 ? "review" : "reviews"}
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {product.description && (
-              <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
-            )}
-
-            <div className="rounded-xl border bg-card p-5 space-y-4">
-              <div className="flex items-baseline justify-between">
-                <span className="text-3xl font-bold">{formatCurrency(product.price)}</span>
-                <span className="text-sm text-muted-foreground">per unit</span>
-              </div>
-
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span>
-                  Stock:{" "}
-                  <span
-                    className={
-                      product.stock > 0
-                        ? "text-foreground font-medium"
-                        : "text-destructive font-medium"
-                    }
-                  >
-                    {product.stock}
-                  </span>
+        <ProductDetailLayout
+          name={product.name}
+          photos={product.photos}
+          summary={product.description}
+          badges={
+            product.category ? (
+              <Badge variant="secondary" className="text-xs">
+                {product.category}
+              </Badge>
+            ) : undefined
+          }
+          meta={
+            ratingStats && ratingStats.totalReviews > 0 ? (
+              <div className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                <span className="font-medium text-foreground">
+                  {ratingStats.averageRating.toFixed(1)}
                 </span>
                 <span>·</span>
-                <span>
-                  Min / Max: {product.minOrderQty} / {product.maxOrderQty}
-                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    document
+                      .getElementById("reviews-section")
+                      ?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="underline-offset-2 hover:underline"
+                >
+                  {ratingStats.totalReviews}{" "}
+                  {ratingStats.totalReviews === 1 ? "review" : "reviews"}
+                </button>
               </div>
-
-              {/* Sharing sits beside buying rather than in a menu: a product
-                  link passed into a WhatsApp group is how most of this shop's
-                  traffic arrives, and the Open Graph tags rendered at the edge
-                  are what make that link preview as the product. */}
-              <ShareButton
-                className="w-full"
-                size="lg"
-                label="Share this product"
-                url={absoluteUrl(`/shop/products/${product.id}`)}
-                title={product.name}
-                text={
-                  product.description?.trim() ||
-                  `${product.name} — ${formatCurrency(product.price)}`
-                }
-              />
-
-              {cartQty === 0 ? (
-                <Button className="w-full" size="lg" onClick={handleAdd} disabled={unavailable}>
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  {unavailable ? "Unavailable" : "Add to Cart"}
-                </Button>
-              ) : (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <button
-                      type="button"
-                      onClick={handleDecrease}
-                      className="flex h-11 w-11 items-center justify-center rounded-lg border bg-background text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                      title={cartQty <= product.minOrderQty ? "Remove from cart" : "Decrease"}
-                    >
-                      {cartQty <= product.minOrderQty ? (
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      ) : (
-                        <Minus className="h-4 w-4" />
-                      )}
-                    </button>
-
-                    <div className="flex-1 text-center">
-                      <span className="text-2xl font-bold tabular-nums">{cartQty}</span>
-                      <p className="text-xs text-muted-foreground">in cart</p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleIncrease}
-                      disabled={cartQty >= product.maxOrderQty || cartQty >= product.stock}
-                      className="flex h-11 w-11 items-center justify-center rounded-lg border bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
-                      title="Increase quantity"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => navigate("/shop/cart")}
-                  >
-                    View Cart
-                  </Button>
+            ) : undefined
+          }
+          actions={
+            /* Beside the title, matching a gym's product page. A link passed
+               into a WhatsApp group is how most of this shop's traffic
+               arrives, so it is a control, not a footnote. */
+            <ShareButton
+              label="Share"
+              url={absoluteUrl(`/shop/products/${product.id}`)}
+              title={product.name}
+              text={
+                product.description?.trim() ||
+                `${product.name} — ${formatCurrency(product.price)}`
+              }
+            />
+          }
+          galleryFallback={
+            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+              No image available
+            </div>
+          }
+          galleryOverlay={
+            stockLabel(product.stock, product.isActive) ? (
+              stockState(product.stock, product.isActive) === "out" ? (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/70 text-sm font-semibold text-muted-foreground">
+                  {stockLabel(product.stock, product.isActive)}
                 </div>
-              )}
+              ) : (
+                <span className="absolute top-3 left-3 rounded-full bg-amber-500 px-2.5 py-1 text-xs font-semibold text-amber-950">
+                  {stockLabel(product.stock, product.isActive)}
+                </span>
+              )
+            ) : null
+          }
+        >
+            {/* Always, even for a product sold in one form. A card listing a
+                single option is not clutter — it is the row that carries the
+                price and the quantity, and it is what the gym store has always
+                shown. The panel that used to sit under it is gone: it repeated
+                the price the rows already give, and its "Stock" was a total
+                across variants that no single one of them had. */}
+            <VariantOptionsCard
+              variants={sellableVariants}
+              maxPerOrder={product.maxOrderQty}
+              disabled={!product.isActive}
+              quantityFor={(variant) =>
+                cart.find(
+                  (item) => item.productId === product.id && item.variantId === variant.id,
+                )?.quantity ?? 0
+              }
+              onQuantityChange={(variant, quantity) => {
+                setError("");
+                setCart(upsertCartItem(product.id, variant.id, quantity));
+              }}
+            />
 
-              {!product.isActive && (
-                <p className="text-center text-sm text-destructive">
-                  This product is currently unavailable.
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
+            {cartQtyForProduct > 0 && (
+              <Button variant="outline" className="w-full" onClick={() => navigate("/shop/cart")}>
+                <ShoppingCart className="h-4 w-4" />
+                View cart · {cartQtyForProduct}
+              </Button>
+            )}
 
-        {/* ── Markdown description ─────────────────────────────────────── */}
-        {product.markdown && (
-          <div className="mt-10">
-            <div className="flex items-center gap-2 mb-4">
-              <FileText className="h-5 w-5 text-muted-foreground" />
-              <h2 className="text-lg font-semibold">Product Details</h2>
-            </div>
-            <div className="rounded-2xl border bg-card px-6 py-8 sm:px-10">
-              <div className="prose prose-neutral dark:prose-invert max-w-none prose-headings:font-bold prose-a:text-primary prose-img:rounded-xl prose-pre:rounded-xl">
-                <Markdown remarkPlugins={[remarkGfm]}>{product.markdown}</Markdown>
+            {!product.isActive && (
+              <p className="text-center text-sm text-destructive">
+                This product is currently unavailable.
+              </p>
+            )}
+
+            {product.markdown && (
+              <div className="rounded-xl border bg-card p-5">
+                <div className="mb-3 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <h2 className="text-base font-semibold">Details</h2>
+                </div>
+                <div className="prose prose-sm prose-neutral dark:prose-invert max-w-none prose-a:text-primary prose-img:rounded-xl prose-pre:rounded-xl">
+                  <Markdown remarkPlugins={[remarkGfm]}>{product.markdown}</Markdown>
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            )}
+        </ProductDetailLayout>
 
         {/* ── Reviews ─────────────────────────────────────────────────── */}
         <div id="reviews-section" className="mt-10">
@@ -427,11 +312,7 @@ export default function PublicProductDetailPage() {
                     {reviewsLoading ? (
                       <p className="text-center text-muted-foreground py-8">Loading reviews…</p>
                     ) : (
-                      <ReviewList
-                        reviews={reviews}
-                        onCommentAdded={() => loadReviewsAndStats(productId!)}
-                        onHelpfulToggled={() => {}}
-                      />
+                      <ReviewList productId={productId!} reviews={reviews} />
                     )}
                   </div>
                 </>
@@ -439,10 +320,7 @@ export default function PublicProductDetailPage() {
               {activeTab === "write" && (
                 <ReviewForm
                   productId={productId!}
-                  onSuccess={() => {
-                    loadReviewsAndStats(productId!);
-                    setActiveTab("details");
-                  }}
+                  onSuccess={() => setActiveTab("details")}
                 />
               )}
             </div>

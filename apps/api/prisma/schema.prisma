@@ -48,6 +48,8 @@ model User {
   reviews                  ProductReview[]
   comments                 ProductReviewComment[]
   helpful                  ProductReviewHelpful[]
+  /// Coin adjustments this account made, not ones it received.
+  coinAdjustments          CoinLedgerEntry[]      @relation("CoinLedgerActor")
   pushSubscriptions        PushSubscription[]
   recordedPlatformPayments PlatformPayment[]
   tenantLikes              TenantLike[]
@@ -188,6 +190,20 @@ model RefreshToken {
 model Tenant {
   id                String            @id @default(cuid())
   name              String
+  /// What FitConnect keeps from money collected into the platform account, in
+  /// BASIS POINTS — 50 is 0.50%, the default every gym starts on.
+  ///
+  /// Two rates because the two sales are different businesses: a membership is
+  /// recurring revenue the gym already owns, while a tub of protein is stock
+  /// somebody had to buy. A gym can be charged differently for each, and often
+  /// should be.
+  ///
+  /// Basis points rather than a percent so 2.25% is expressible without a float
+  /// and money arithmetic stays in integers end to end. Both apply only where
+  /// `Payment.gatewayAccount` is "PLATFORM"; a gym collecting into its own
+  /// Razorpay account is never touched by either.
+  subscriptionCommissionBps Int       @default(50)
+  storeCommissionBps        Int       @default(50)
   slug              String            @unique /// URL-friendly identifier (e.g. "ironworks-gym")
   email             String?
   phone             String?           @unique
@@ -226,7 +242,9 @@ model Tenant {
   couponRedemptions CouponRedemption[]
   coinLedger        CoinLedgerEntry[]
   membershipFreezes MembershipFreeze[]
-  storeProducts     StoreProduct[]
+  products          Product[]
+  bankAccount       TenantBankAccount?
+  payouts           TenantPayout[]
   storeOrders       StoreOrder[]
   likes             TenantLike[]
   comments          TenantComment[]
@@ -390,8 +408,8 @@ model TenantMembership {
   coinLedger             CoinLedgerEntry[]
   freezes                MembershipFreeze[]
   storeOrders            StoreOrder[]            @relation("StoreOrderBuyer")
-  storeLikes             StoreProductLike[]
-  storeComments          StoreProductComment[]
+  storeLikes             ProductLike[]
+  storeComments          ProductComment[]
   soldStoreOrders        StoreOrder[]            @relation("StoreOrderSeller")
   paymentReminders       PaymentReminder[]
   sentReminders          PaymentReminder[]       @relation("ReminderActor")
@@ -527,7 +545,17 @@ model Payment {
   /// Gateway payment id, set once the charge is authorized or captured.
   gatewayPaymentId String?
   /// Whether this gym's own gateway account collected it, or the platform's.
+  /// "PLATFORM" is what makes a payment owe the gym a payout: the money landed
+  /// in FitConnect's account and has to be forwarded.
   gatewayAccount   String?
+  /// What Razorpay charged, and the GST on that charge, both in PAISE.
+  ///
+  /// Paise, not rupees, because a fee is ₹23.60 and rounding it to whole rupees
+  /// makes a payout statement that does not add up. Read straight off the
+  /// `payment.captured` webhook, so no extra API call. Null for a payment taken
+  /// before this was recorded, and for anything that never touched a gateway.
+  gatewayFeePaise  Int?
+  gatewayTaxPaise  Int?
 
   freezes    MembershipFreeze[]
   /// Set when this row is a gym-store sale rather than a membership payment.
@@ -681,7 +709,17 @@ model CoinLedgerEntry {
   note               String?
   couponRedemptionId String?
   paymentId          String?
+  /// The staff member who made this entry by hand.
+  ///
+  /// Null for anything the rules granted — a coupon redemption or a referral
+  /// reward was earned, not given by a person, and naming somebody for those
+  /// would put a staff member against a decision they did not make.
+  ///
+  /// `SetNull` on delete rather than cascade: an account being removed must not
+  /// take the ledger row with it. What happened to a member's balance outlives
+  /// whoever recorded it.
   createdById        String?
+  createdBy          User?            @relation("CoinLedgerActor", fields: [createdById], references: [id], onDelete: SetNull)
   createdAt          DateTime         @default(now())
 
   @@index([membershipId])
@@ -778,15 +816,32 @@ model BodyMetric {
 
 // Commerce
 
+/// One catalogue for both storefronts.
+///
+/// `tenantId` decides where a product appears and nothing else does: null means
+/// the platform owns it and it lists on /shop; a gym's id means that gym owns it
+/// and it lists on their subdomain. This replaces the old split between
+/// `Product` and `StoreProduct`, which were the same idea stored twice and had
+/// already drifted apart on category, media and stock.
+///
+/// Price and stock are NOT here. They live on `ProductVariant`, always, for both
+/// owners — see the note there.
 model Product {
   id               String     @id @default(cuid())
+  /// Null for the platform's own catalogue; a gym's id for that gym's store.
+  tenantId         String?
+  tenant           Tenant?    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name             String
   description      String?
   markdown         String? /// Optional markdown rich description for the product
   photos           Json       @default("[]")
   category         String
-  price            Int
-  stock            Int        @default(0)
+  /// A single video, usually YouTube. Stored as the URL somebody pasted; the
+  /// player turns it into an embed, so a share link and a watch link both work.
+  videoUrl         String?
+  /// Coins the buyer earns when an order containing this completes. Gym stores
+  /// use it; the platform shop leaves it at zero.
+  coinsGranted     Int        @default(0)
   minOrderQty      Int        @default(1)
   maxOrderQty      Int        @default(100)
   /// Shipping weight of one unit. Couriers price on this, so a wrong value is a
@@ -820,12 +875,53 @@ model Product {
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
+  variants   ProductVariant[]
   orderItems OrderItem[]
   reviews    ProductReview[]
+  likes      ProductLike[]
+  comments   ProductComment[]
 
   @@index([isActive])
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@index([tenantId, category])
   @@index([category])
   @@index([warehouseId])
+}
+
+/// One buyable form of a product: chocolate 1kg, or black large.
+///
+/// Every product has at least one, for both owners. That is deliberate and it is
+/// the one rule worth defending here: the alternative — price and stock on the
+/// product, overridden by variants when present — leaves both fields
+/// authoritative for some rows and dead for others, with nothing in the type
+/// saying which. A product sold in one form gets one variant named after it.
+///
+/// Was `StoreVariant`, which only gym stores had. The platform shop kept price
+/// and stock on the product itself and so could not sell the same bottle in two
+/// colours at all.
+model ProductVariant {
+  id         String  @id @default(cuid())
+  productId  String
+  product    Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  /// What the counter says out loud, e.g. "Chocolate · 1kg".
+  name       String
+  /// The axes that make this variant, e.g. `{"flavour":"Chocolate","size":"1kg"}`.
+  /// Free-form because supplements and accessories do not share axes.
+  attributes Json    @default("{}")
+  sku        String?
+  price      Int
+  stock      Int     @default(0)
+  isActive   Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orderItems      OrderItem[]
+  storeOrderItems StoreOrderItem[]
+
+  @@index([productId])
+  @@index([productId, isActive])
 }
 
 model ProductReview {
@@ -1089,14 +1185,22 @@ model OrderItem {
   productId   String
   product     Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
   productName String
+  variantId   String
+  variant     ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  /// Copied at purchase like `productName`: a receipt must still read
+  /// "Black · 700ml" after the shop renames or retires that variant.
+  variantName String
   quantity    Int
   unitPrice   Int
   lineTotal   Int
   createdAt   DateTime @default(now())
 
-  @@unique([orderId, productId])
+  /// Was [orderId, productId]. Two variants of one product are two lines of the
+  /// same order, so the product alone can no longer identify a line.
+  @@unique([orderId, variantId])
   @@index([orderId])
   @@index([productId])
+  @@index([variantId])
 }
 
 // Workout plans
@@ -1292,40 +1396,6 @@ model PushSubscription {
 // filter, and variants would change the platform storefront for no benefit.
 
 /// Something a gym sells. The sellable unit is the variant, not this — a
-/// supplement is bought as a flavour and a size, never as "the supplement".
-model StoreProduct {
-  id           String  @id @default(cuid())
-  tenantId     String
-  tenant       Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  name         String
-  /// One plain line, shown on the storefront card.
-  description  String?
-  /// The long form, rendered as markdown on the product page. Where a gym
-  /// writes ingredients, dosage, or what the kit is actually made of.
-  markdown     String?
-  /// "SUPPLEMENT" | "ACCESSORY"
-  category     String
-  photos       Json    @default("[]")
-  /// A single video, usually YouTube. Stored as the URL a gym pasted; the
-  /// player turns it into an embed, so a share link and a watch link both work.
-  videoUrl     String?
-  /// Coins the buyer earns when an order containing this completes. Per product
-  /// because a ₹3,000 protein tub and a ₹200 pair of gloves should not reward
-  /// the same. Zero turns the gift off.
-  coinsGranted Int     @default(0)
-  isActive     Boolean @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  variants StoreVariant[]
-  likes    StoreProductLike[]
-  comments StoreProductComment[]
-
-  @@index([tenantId])
-  @@index([tenantId, isActive])
-  @@index([tenantId, category])
-}
 
 /// Approval of a gym itself, from its public profile.
 ///
@@ -1362,10 +1432,11 @@ model TenantComment {
 
 /// A member's approval of a product. One per member per product — the unique
 /// key is what makes the button a toggle rather than a counter anyone can run up.
-model StoreProductLike {
+/// A member liking a product in their gym's store.
+model ProductLike {
   id           String           @id @default(cuid())
   productId    String
-  product      StoreProduct     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product      Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
   membershipId String
   membership   TenantMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
   createdAt    DateTime         @default(now())
@@ -1377,10 +1448,10 @@ model StoreProductLike {
 
 /// What a member said about a product. Plain text on purpose: this is a gym's
 /// shop, not a forum, and anything richer would need moderation nobody staffs.
-model StoreProductComment {
+model ProductComment {
   id           String           @id @default(cuid())
   productId    String
-  product      StoreProduct     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product      Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
   membershipId String
   membership   TenantMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
   body         String
@@ -1391,33 +1462,6 @@ model StoreProductComment {
   @@index([membershipId])
 }
 
-/// One buyable combination: chocolate 1kg, or black large. Price and stock live
-/// here because the combinations sell independently of each other.
-model StoreVariant {
-  id         String       @id @default(cuid())
-  productId  String
-  product    StoreProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
-  /// What the counter says out loud, e.g. "Chocolate · 1kg".
-  name       String
-  /// The axes that make this variant, e.g. `{"flavour":"Chocolate","size":"1kg"}`
-  /// or `{"size":"L","colour":"Black"}`. Free-form because supplements and
-  /// accessories do not share axes, and a gym may invent its own.
-  attributes Json         @default("{}")
-  sku        String?
-  price      Int
-  stock      Int          @default(0)
-  isActive   Boolean      @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  orderItems StoreOrderItem[]
-
-  @@index([productId])
-  @@index([productId, isActive])
-}
-
-/// A purchase from a gym's store, whether taken online or over the counter.
 model StoreOrder {
   id           String            @id @default(cuid())
   tenantId     String
@@ -1488,7 +1532,7 @@ model StoreOrderItem {
   orderId   String
   order     StoreOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   variantId String
-  variant   StoreVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
 
   productName String
   variantName String
@@ -1514,6 +1558,87 @@ model StoreOrderItem {
 /// What a staff member is paid per month, as agreed. One per person: changing
 /// the figure edits this row, and the months already run keep their own snapshot
 /// in `SalaryCycle.baseAmount` so history does not move when a raise is given.
+/// Where a gym wants its money sent.
+///
+/// One per gym. The account number is sealed at rest with `lib/secret-box`, the
+/// same way gateway secrets are: it is the one field here that is worth stealing,
+/// and a payout screen only ever needs the last four digits to confirm.
+///
+/// IFSC and the holder's name are not sealed. They are needed in the clear to
+/// make the transfer, and neither identifies an account on its own.
+model TenantBankAccount {
+  id            String @id @default(cuid())
+  tenantId      String @unique
+  tenant        Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  accountHolder String
+  /// Sealed. Unsealed only when a payout statement is being prepared.
+  accountNumber String
+  /// The last four digits, in the clear, so a screen can say which account
+  /// without unsealing anything.
+  accountLast4  String
+  ifsc          String
+  bankName      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// A gym asking for the money FitConnect collected on its behalf.
+///
+/// The app owns the ledger and the paperwork; it never moves money. Platform
+/// staff make the transfer from their own bank and record the reference here,
+/// which is what `PAID` means.
+///
+/// Every amount is in PAISE. The gateway's fee is quoted in paise and a payout
+/// that rounded it to rupees would not reconcile against a Razorpay statement.
+///
+/// The three deductions are snapshotted rather than recomputed, because a gym's
+/// commission rate can change and a settled payout has to keep saying what was
+/// actually taken on the day.
+model TenantPayout {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  /// "REQUESTED" | "APPROVED" | "PAID" | "REJECTED"
+  status String @default("REQUESTED")
+
+  /// What the members actually paid, before anything came off.
+  grossPaise      Int
+  /// Razorpay's fee plus the GST on it.
+  gatewayFeePaise Int
+  /// FitConnect's cut, at the rate that applied when this was requested.
+  commissionPaise Int
+  /// The rate used, kept so a statement can explain the number above.
+  commissionBps   Int
+  /// What the gym receives: gross, less the two deductions above.
+  netPaise        Int
+
+  /// Who asked, and who settled it.
+  requestedById String?
+  decidedById   String?
+
+  /// The account as it stood when the payout was made. A gym that later changes
+  /// its bank details must not rewrite where last month's money went.
+  accountHolder String
+  accountLast4  String
+  ifsc          String
+
+  /// The bank's own reference for the transfer — a UTR, usually.
+  reference String?
+  /// Why a request was refused, for the gym to read.
+  note      String?
+
+  requestedAt DateTime  @default(now())
+  decidedAt   DateTime?
+  paidAt      DateTime?
+  updatedAt   DateTime  @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([status])
+}
+
 model StaffCompensation {
   id            String           @id @default(cuid())
   tenantId      String

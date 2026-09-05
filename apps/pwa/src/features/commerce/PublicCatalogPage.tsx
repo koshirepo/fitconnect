@@ -3,8 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { commerceApi } from "@/api/commerce";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/stores/auth";
 import { CardsGridSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -22,8 +20,12 @@ import {
   ReceiptText,
 } from "lucide-react";
 import type { Product } from "@/types/api";
-import { formatCurrency } from "./pricing";
-import { PRODUCT_IMAGE_ASPECT_CLASS } from "./product-image";
+import { ProductCard } from "@/components/catalog/product-card";
+import {
+  CartCountBadge,
+  ProductGrid,
+  StorefrontToolbar,
+} from "@/components/catalog/storefront-toolbar";
 import { useSeo, absoluteUrl } from "@/lib/seo";
 import {
   getCartItems,
@@ -95,6 +97,18 @@ export default function PublicCatalogPage() {
     });
   }, [products, query, category]);
 
+  /**
+   * The variant a card acts on.
+   *
+   * A product sold in one form is unambiguous, so the card can add it. More than
+   * one is a choice, and the choice belongs on the product page — the same rule
+   * the gym store already followed.
+   */
+  const soleVariant = (product: Product) => {
+    const sellable = (product.variants ?? []).filter((variant) => variant.isActive);
+    return sellable.length === 1 ? sellable[0]! : null;
+  };
+
   const getCartQty = (productId: string) =>
     cart.find((item) => item.productId === productId)?.quantity ?? 0;
 
@@ -110,7 +124,7 @@ export default function PublicCatalogPage() {
       setError(`${product.name}: only ${product.stock} units available.`);
       return;
     }
-    setCart(upsertCartItem(product.id, nextQty));
+    setCart(upsertCartItem(product.id, soleVariant(product)?.id ?? null, nextQty));
   };
 
   const handleIncrease = (product: Product) => {
@@ -125,20 +139,21 @@ export default function PublicCatalogPage() {
       setError(`${product.name}: only ${product.stock} units in stock.`);
       return;
     }
-    setCart(upsertCartItem(product.id, nextQty));
+    setCart(upsertCartItem(product.id, soleVariant(product)?.id ?? null, nextQty));
   };
 
   const handleDecrease = (product: Product) => {
     setError("");
     const current = getCartQty(product.id);
+    const variantId = soleVariant(product)?.id ?? null;
     if (current <= product.minOrderQty) {
-      setCart(removeCartItem(product.id));
+      setCart(removeCartItem(product.id, variantId));
     } else {
-      setCart(upsertCartItem(product.id, current - 1));
+      setCart(upsertCartItem(product.id, variantId, current - 1));
     }
   };
 
-  if (loading) return <CardsGridSkeleton count={8} className="gap-5 xl:grid-cols-4" />;
+  if (loading) return <CardsGridSkeleton count={8} className="grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4" />;
 
   return (
     <div className="min-h-screen bg-background">
@@ -164,7 +179,10 @@ export default function PublicCatalogPage() {
             </span>
             <span className="inline-flex items-center gap-1.5">
               <Truck className="h-3.5 w-3.5 text-primary" />
-              Pick up at your gym
+              {/* The platform shop couriers everything. Collecting at a counter
+                  is a gym store's promise, and this badge was making it on a
+                  page that cannot keep it. */}
+              Delivered to your address
             </span>
             <span className="inline-flex items-center gap-1.5">
               <ReceiptText className="h-3.5 w-3.5 text-primary" />
@@ -178,24 +196,25 @@ export default function PublicCatalogPage() {
       {/* Sticks directly under the site header (65px tall, border included) so
           search and the cart stay in reach while the grid scrolls. */}
       {products.length > 0 && (
-        <div className="sticky top-[65px] z-30 border-y bg-background/85 backdrop-blur-sm">
-          <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-3">
-              <div className="relative flex-1 sm:max-w-md">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search products…"
-                  aria-label="Search products"
-                  className="pl-9"
-                />
-              </div>
-
-              <p className="ml-auto hidden text-sm whitespace-nowrap text-muted-foreground sm:block">
+        <StorefrontToolbar
+          stickyTop={65}
+          search={query}
+          onSearchChange={setQuery}
+          categories={categories.map((name) => ({
+            value: name,
+            label: name,
+            count:
+              name === ALL_CATEGORIES
+                ? products.length
+                : products.filter((product) => product.category === name).length,
+          }))}
+          activeCategory={category}
+          onCategoryChange={setCategory}
+          actions={
+            <>
+              <p className="hidden text-sm whitespace-nowrap text-muted-foreground sm:block">
                 {visible.length} {visible.length === 1 ? "product" : "products"}
               </p>
-
               {isAuthenticated && (
                 <Button
                   variant="ghost"
@@ -206,50 +225,20 @@ export default function PublicCatalogPage() {
                   My Orders
                 </Button>
               )}
-
-              <Button
-                onClick={() => navigate("/shop/cart")}
-                disabled={cartCount === 0}
-                className="relative shrink-0"
-              >
-                <ShoppingCart className="h-4 w-4" />
-                <span className="ml-1.5">Cart</span>
-                {cartCount > 0 && (
-                  <Badge
-                    variant="secondary"
-                    className="absolute -top-2 -right-2 flex h-5 min-w-5 items-center justify-center bg-accent-foreground px-1 text-xs"
-                  >
-                    {cartCount}
-                  </Badge>
-                )}
-              </Button>
-            </div>
-
-            {/* Chips scroll sideways on a phone rather than stacking into a
-                wall of categories above the grid. */}
-            {categories.length > 1 && (
-              <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
-                {categories.map((c) => {
-                  const active = c === category;
-                  return (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setCategory(c)}
-                      className={`whitespace-nowrap rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors ${
-                        active
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                      }`}
-                    >
-                      {c}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
+            </>
+          }
+          cart={
+            <Button
+              onClick={() => navigate("/shop/cart")}
+              disabled={cartCount === 0}
+              className="relative"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              <span className="ml-1.5">Cart</span>
+              <CartCountBadge count={cartCount} />
+            </Button>
+          }
+        />
       )}
 
       {/* ── Content ─────────────────────────────────────────────────────── */}
@@ -286,151 +275,101 @@ export default function PublicCatalogPage() {
                 }
               />
             ) : (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <ProductGrid>
                 {visible.map((product) => {
                   const inCart = getCartQty(product.id);
                   const unavailable = !product.isActive || product.stock <= 0;
                   const firstPhoto = product.photos[0];
 
                   return (
-                    <div
+                    <ProductCard
                       key={product.id}
-                      className={`group flex flex-col overflow-hidden rounded-2xl border bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 ${
-                        unavailable ? "opacity-60" : ""
-                      }`}
-                    >
-                      {/* Image */}
-                      <button
-                        type="button"
-                        className={`relative ${PRODUCT_IMAGE_ASPECT_CLASS} w-full overflow-hidden bg-muted`}
-                        onClick={() => navigate(`/shop/products/${product.id}`)}
-                      >
-                        {firstPhoto ? (
-                          <img
-                            src={firstPhoto}
-                            alt={product.name}
-                            loading="lazy"
-                            decoding="async"
-                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted to-muted/40 text-muted-foreground">
-                            <PackageOpen className="h-10 w-10 opacity-40" />
-                          </div>
-                        )}
-
-                        {/* Category rides on the image so the info block below
-                            stays a clean name → price → action column. */}
-                        {product.category && (
-                          <span className="absolute left-3 top-3 rounded-full bg-background/85 px-2.5 py-0.5 text-xs font-medium backdrop-blur-sm">
+                      name={product.name}
+                      description={product.description}
+                      photo={firstPhoto}
+                      price={product.price}
+                      stock={product.stock}
+                      isActive={product.isActive}
+                      onOpen={() => navigate(`/shop/products/${product.id}`)}
+                      topLeft={
+                        product.category ? (
+                          <span className="rounded-full bg-background/85 px-2 py-0.5 text-[10px] font-semibold backdrop-blur-sm">
                             {product.category}
                           </span>
-                        )}
-
-                        {/* Stock badge */}
-                        {product.stock <= 5 && product.stock > 0 && (
-                          <span className="absolute bottom-3 left-3 rounded-full bg-yellow-500/90 px-2.5 py-0.5 text-xs font-semibold text-black">
-                            Only {product.stock} left
-                          </span>
-                        )}
-                        {product.stock === 0 && (
-                          <span className="absolute inset-0 flex items-center justify-center bg-background/70 text-sm font-semibold text-muted-foreground">
-                            Out of stock
-                          </span>
-                        )}
-                        {!product.isActive && (
-                          <span className="absolute inset-0 flex items-center justify-center bg-background/70 text-sm font-semibold text-muted-foreground">
-                            Unavailable
-                          </span>
-                        )}
-                        {inCart > 0 && (
-                          <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">
+                        ) : undefined
+                      }
+                      topRight={
+                        inCart > 0 ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
                             <Check className="h-3 w-3" />
                             In cart
                           </span>
-                        )}
-                      </button>
+                        ) : undefined
+                      }
+                      action={
+                        // More than one form to buy is a decision, and the card
+                        // has no room to make it. Same as the gym store: the
+                        // choice happens on the product page.
+                        !soleVariant(product) ? (
+                          <Button
+                            className="w-full"
+                            disabled={unavailable}
+                            onClick={() => navigate(`/shop/products/${product.id}`)}
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                            Options
+                          </Button>
+                        ) : inCart === 0 ? (
+                <Button
+                  className="w-full"
+                  onClick={() => handleAdd(product)}
+                  disabled={unavailable}
+                >
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Add to Cart
+                </Button>
+              ) : (
+                <div className="flex items-center justify-between gap-2 rounded-lg border bg-muted/40 p-1">
+                  <button
+                    type="button"
+                    onClick={() => handleDecrease(product)}
+                    className="flex h-9 w-9 items-center justify-center rounded-md bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    title={
+                      inCart <= product.minOrderQty ? "Remove from cart" : "Decrease"
+                    }
+                  >
+                    {inCart <= product.minOrderQty ? (
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    ) : (
+                      <Minus className="h-4 w-4" />
+                    )}
+                  </button>
 
-                      {/* Info */}
-                      <div className="flex flex-1 flex-col gap-1.5 p-4">
-                        <button
-                          type="button"
-                          className="text-left"
-                          onClick={() => navigate(`/shop/products/${product.id}`)}
-                        >
-                          <p className="font-semibold leading-snug line-clamp-2 transition-colors group-hover:text-primary">
-                            {product.name}
-                          </p>
-                        </button>
-                        {product.description && (
-                          <p className="text-xs text-muted-foreground line-clamp-2">
-                            {product.description}
-                          </p>
-                        )}
+                  <div className="flex-1 text-center">
+                    <span className="text-lg font-bold tabular-nums leading-none">
+                      {inCart}
+                    </span>
+                    <p className="text-xs text-muted-foreground leading-none">
+                      in cart
+                    </p>
+                  </div>
 
-                        <div className="mt-auto space-y-3 pt-3">
-                          <div className="flex items-baseline justify-between gap-2">
-                            <span className="text-xl font-bold tracking-tight">
-                              {formatCurrency(product.price)}
-                            </span>
-                            <span className="text-xs whitespace-nowrap text-muted-foreground">
-                              {product.stock} in stock
-                            </span>
-                          </div>
-
-                          {/* Cart controls */}
-                          {inCart === 0 ? (
-                            <Button
-                              className="w-full"
-                              onClick={() => handleAdd(product)}
-                              disabled={unavailable}
-                            >
-                              <ShoppingCart className="h-4 w-4 mr-2" />
-                              Add to Cart
-                            </Button>
-                          ) : (
-                            <div className="flex items-center justify-between gap-2 rounded-lg border bg-muted/40 p-1">
-                              <button
-                                type="button"
-                                onClick={() => handleDecrease(product)}
-                                className="flex h-9 w-9 items-center justify-center rounded-md bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                                title={
-                                  inCart <= product.minOrderQty ? "Remove from cart" : "Decrease"
-                                }
-                              >
-                                {inCart <= product.minOrderQty ? (
-                                  <Trash2 className="h-4 w-4 text-destructive" />
-                                ) : (
-                                  <Minus className="h-4 w-4" />
-                                )}
-                              </button>
-
-                              <div className="flex-1 text-center">
-                                <span className="text-lg font-bold tabular-nums leading-none">
-                                  {inCart}
-                                </span>
-                                <p className="text-xs text-muted-foreground leading-none">
-                                  in cart
-                                </p>
-                              </div>
-
-                              <button
-                                type="button"
-                                onClick={() => handleIncrease(product)}
-                                disabled={inCart >= product.maxOrderQty || inCart >= product.stock}
-                                className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-                                title="Increase quantity"
-                              >
-                                <Plus className="h-4 w-4" />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                  <button
+                    type="button"
+                    onClick={() => handleIncrease(product)}
+                    disabled={inCart >= product.maxOrderQty || inCart >= product.stock}
+                    className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                    title="Increase quantity"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+                        )
+                      }
+                    />
                   );
                 })}
-              </div>
+              </ProductGrid>
             )}
           </>
         )}

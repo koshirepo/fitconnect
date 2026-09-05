@@ -45,6 +45,64 @@ export function useCoinBalance(
   );
 }
 
+// ─── Gym-wide analytics ──────────────────────────────────────────────────────
+
+/** Coins issued, spent, and still owed, for the whole gym. */
+export function useCoinOverview() {
+  return useTenantQuery(
+    (tenantId) => queryKeys.coupons.coinOverview(tenantId),
+    async (tenantId) => unwrap(await couponsApi.coinOverview(tenantId)),
+  );
+}
+
+/** Who is holding coins, biggest balance first. */
+export function useCoinHolders() {
+  return useTenantQuery(
+    (tenantId) => queryKeys.coupons.coinHolders(tenantId),
+    async (tenantId) => unwrap(await couponsApi.coinHolders(tenantId)).holders,
+  );
+}
+
+/** The most recent coin movements across the gym. */
+export function useCoinActivity() {
+  return useTenantQuery(
+    (tenantId) => queryKeys.coupons.coinActivity(tenantId),
+    async (tenantId) => unwrap(await couponsApi.coinActivity(tenantId)).entries,
+  );
+}
+
+/** Every coupon with what it has actually cost. */
+export function useCouponAnalytics() {
+  return useTenantQuery(
+    (tenantId) => queryKeys.coupons.analytics(tenantId),
+    async (tenantId) => unwrap(await couponsApi.couponAnalytics(tenantId)),
+  );
+}
+
+/** The most recent redemptions. */
+export function useCouponActivity() {
+  return useTenantQuery(
+    (tenantId) => queryKeys.coupons.activity(tenantId),
+    async (tenantId) => unwrap(await couponsApi.couponActivity(tenantId)).redemptions,
+  );
+}
+
+/**
+ * Give coins to a member, or take them back.
+ *
+ * Invalidates the whole coupon scope rather than the one balance: a gift moves
+ * that member's balance, the gym's outstanding total, the holder list, and the
+ * activity feed, and they are all on this screen or one tap away.
+ */
+export function useAdjustCoins(membershipId: string | undefined) {
+  const tenantId = useCurrentTenantId();
+  return useTenantMutation(
+    async (id, payload: { amount: number; note: string }) =>
+      unwrap(await couponsApi.adjustCoins(id, membershipId!, payload)),
+    { invalidates: [scope(tenantId)] },
+  );
+}
+
 export function useCreateCoupon() {
   const tenantId = useCurrentTenantId();
   return useTenantMutation(

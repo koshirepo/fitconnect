@@ -1,13 +1,10 @@
 {
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ],
+  // NOT a solution file. A `{ "files": [], "references": [...] }` root compiles
+  // zero files, so `tsc --noEmit -p tsconfig.json` exits 0 having checked
+  // nothing. This extends the app config instead, so pointing any tool at the
+  // root gets a real type-check. The build uses `tsc -b` on the leaf configs.
+  "extends": "./tsconfig.app.json",
   "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.root.tsbuildinfo"
   }
 }

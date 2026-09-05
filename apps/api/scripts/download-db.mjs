@@ -6,7 +6,7 @@
  * - Targets the production database (`fit-db`), the only remote environment.
  * - Writes next to the repo root by default so the file lands beside the
  *   project, e.g. `fit-db-export.sql`.
- * - Usage: `node scripts/download-db.mjs [production] [outputPath]` (or `npm run db:download`).
+ * - Usage: `node scripts/download-db.mjs [production] [outputPath]` (or `pnpm run db:download`).
  */
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
@@ -49,7 +49,7 @@ const outputPath = process.argv[3]
   : path.join(repoRoot, db.file);
 
 if (!wranglerCli) {
-  console.error("Wrangler CLI not found. Run `npm install` first.");
+  console.error("Wrangler CLI not found. Run `pnpm install` first.");
   process.exit(1);
 }
 

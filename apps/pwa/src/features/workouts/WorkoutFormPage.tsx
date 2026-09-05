@@ -34,36 +34,17 @@ import { AlertCircle, ArrowLeft, Plus, X } from "lucide-react";
 import type { Exercise } from "@/types/api";
 
 type ExerciseField = keyof Exercise;
+type WorkoutPlan = NonNullable<ReturnType<typeof useWorkoutPlan>["data"]>;
 
 export default function WorkoutFormPage() {
   const navigate = useAppNavigate();
   const { planId } = useParams<{ planId?: string }>();
   const isEdit = Boolean(planId);
-  const { currentTenantId } = useAuthStore();
   const { can } = usePermissions();
   const allowed = isEdit ? can(Permission.WORKOUTS_UPDATE) : can(Permission.WORKOUTS_CREATE);
 
-  const [title, setTitle] = React.useState("");
-  const [description, setDescription] = React.useState("");
-  const [exercises, setExercises] = React.useState<Exercise[]>([]);
-  const [error, setError] = React.useState("");
-  const [submitting, setSubmitting] = React.useState(false);
-
-  const createPlan = useCreateWorkoutPlan();
-  const updatePlan = useUpdateWorkoutPlan();
-
   const planQuery = useWorkoutPlan(allowed && isEdit ? planId : undefined);
   const plan = planQuery.data;
-
-  // Seeded once: re-seeding on a refetch would discard edits in progress.
-  const [seeded, setSeeded] = React.useState(false);
-  React.useEffect(() => {
-    if (!isEdit || seeded || !plan) return;
-    setTitle(plan.title);
-    setDescription(plan.description ?? "");
-    setExercises(plan.exercises ?? []);
-    setSeeded(true);
-  }, [isEdit, seeded, plan]);
 
   if (!allowed) {
     return <Navigate to="/workouts" replace />;
@@ -90,6 +71,39 @@ export default function WorkoutFormPage() {
       </div>
     );
   }
+
+  return <WorkoutForm key={plan?.id ?? "new"} planId={planId} plan={plan} isEdit={isEdit} />;
+}
+
+/**
+ * The form itself, mounted only once its plan has loaded.
+ *
+ * The `key` replaces a seed-once effect: this used to start with empty fields
+ * and copy the loaded plan into state from a `useEffect`, guarded by a `seeded`
+ * flag so a background refetch could not discard edits in progress. Keying on
+ * the plan's id gets the same protection from React — a different plan mounts a
+ * fresh form, anything else leaves this one alone — without the extra render.
+ */
+function WorkoutForm({
+  planId,
+  plan,
+  isEdit,
+}: {
+  planId?: string;
+  plan?: WorkoutPlan;
+  isEdit: boolean;
+}) {
+  const navigate = useAppNavigate();
+  const { currentTenantId } = useAuthStore();
+
+  const [title, setTitle] = React.useState(plan?.title ?? "");
+  const [description, setDescription] = React.useState(plan?.description ?? "");
+  const [exercises, setExercises] = React.useState<Exercise[]>(plan?.exercises ?? []);
+  const [error, setError] = React.useState("");
+  const [submitting, setSubmitting] = React.useState(false);
+
+  const createPlan = useCreateWorkoutPlan();
+  const updatePlan = useUpdateWorkoutPlan();
 
   const addExercise = () => {
     setExercises((prev) => [...prev, { name: "", sets: 3, reps: 10 }]);

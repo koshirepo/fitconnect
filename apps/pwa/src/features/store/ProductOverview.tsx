@@ -11,85 +11,54 @@ import { Coins } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MarkdownView } from "@/components/ui/markdown-view";
-import { formatCurrency } from "@/lib/utils";
-import type { StoreProduct, StoreVariant } from "@fitconnect/shared/types/models";
-import { ProductMedia } from "./ProductMedia";
+import type { StoreProduct } from "@fitconnect/shared/types/models";
+import { ProductDetailLayout } from "@/components/catalog/product-detail-layout";
+import { VariantOptionsCard, type VariantRow } from "@/components/catalog/variant-options";
 
 export function ProductOverview({
   product,
   action,
-  renderVariantAction,
+  quantityFor,
+  onQuantityChange,
 }: {
   product: StoreProduct;
   /** The page's own controls — a like button, a link back, whatever fits. */
   action?: React.ReactNode;
-  /** A per-variant control, for the pages where a variant can be bought. */
-  renderVariantAction?: (variant: StoreVariant) => React.ReactNode;
+  /** How many of a variant the caller currently holds. */
+  quantityFor?: (variant: VariantRow) => number;
+  /** Where a variant can be bought. Omitted on a read-only preview. */
+  onQuantityChange?: (variant: VariantRow, quantity: number) => void;
 }) {
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      <ProductMedia photos={product.photos} videoUrl={product.videoUrl} name={product.name} />
-
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="text-2xl font-bold tracking-tight">{product.name}</h1>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <Badge variant="secondary" className="text-xs">
-                {product.category === "ACCESSORY" ? "Accessory" : "Supplement"}
-              </Badge>
-              {product.coinsGranted > 0 && (
-                <Badge variant="accent" className="text-xs">
-                  <Coins className="mr-1 h-3 w-3" />+{product.coinsGranted} coins
-                </Badge>
-              )}
-              {!product.isActive && (
-                <Badge variant="warning" className="text-xs">
-                  Retired
-                </Badge>
-              )}
-            </div>
-          </div>
-          {action}
-        </div>
-
-        {product.description && (
-          <p className="text-sm text-muted-foreground">{product.description}</p>
-        )}
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Options</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {product.variants.map((variant) => {
-              const soldOut = variant.stock <= 0;
-
-              return (
-                <div
-                  key={variant.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border px-3 py-2"
-                >
-                  <div className="min-w-0">
-                    {/* Wrapped, not truncated: "Chocolate 1kg" losing its size
-                        to an ellipsis would price the wrong thing. */}
-                    <p className="break-words text-sm font-medium">{variant.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {soldOut ? "Out of stock" : `${variant.stock} left`}
-                    </p>
-                  </div>
-
-                  <div className="flex shrink-0 items-center gap-2">
-                    <span className="text-sm font-semibold tabular-nums">
-                      {formatCurrency(variant.price)}
-                    </span>
-                    {renderVariantAction?.(variant)}
-                  </div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
+    <ProductDetailLayout
+      name={product.name}
+      photos={product.photos}
+      videoUrl={product.videoUrl}
+      summary={product.description}
+      actions={action}
+      badges={
+        <>
+          <Badge variant="secondary" className="text-xs">
+            {product.category}
+          </Badge>
+          {product.coinsGranted > 0 && (
+            <Badge variant="accent" className="text-xs">
+              <Coins className="mr-1 h-3 w-3" />+{product.coinsGranted} coins
+            </Badge>
+          )}
+          {!product.isActive && (
+            <Badge variant="warning" className="text-xs">
+              Retired
+            </Badge>
+          )}
+        </>
+      }
+    >
+        <VariantOptionsCard
+          variants={product.variants}
+          quantityFor={quantityFor ?? (() => 0)}
+          onQuantityChange={onQuantityChange ?? (() => {})}
+        />
 
         {product.markdown && (
           <Card>
@@ -100,8 +69,7 @@ export function ProductOverview({
               <MarkdownView>{product.markdown}</MarkdownView>
             </CardContent>
           </Card>
-        )}
-      </div>
-    </div>
+      )}
+    </ProductDetailLayout>
   );
 }

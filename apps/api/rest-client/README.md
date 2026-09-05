@@ -4,7 +4,7 @@ These `.http` files are written for the VS Code REST Client extension and mirror
 
 ## Basic Workflow
 
-1. Start the API with `npm run dev`.
+1. Start the API with `pnpm run dev`.
 2. Open a file in this folder.
 3. Run the named login or setup request near the top of that file first.
 4. Run the remaining requests in that collection. Most later requests reuse access tokens or ids captured from earlier responses through REST Client variables.

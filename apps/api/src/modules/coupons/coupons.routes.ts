@@ -39,6 +39,44 @@ couponRoutes.post(
   couponController.quote,
 );
 
+// Coupon usage. Ahead of `/:couponId` so "analytics" is not read as an id.
+couponRoutes.get(
+  "/:tenantId/coupons/analytics",
+  authenticate,
+  requireTenantPermissions(Permission.COUPONS_READ),
+  couponController.couponOverview,
+);
+
+couponRoutes.get(
+  "/:tenantId/coupons/activity",
+  authenticate,
+  requireTenantPermissions(Permission.COUPONS_READ),
+  couponController.couponActivity,
+);
+
+// The gym's coins in aggregate. Declared before the `:membershipId` route so
+// "overview" is not read as somebody's membership id.
+couponRoutes.get(
+  "/:tenantId/coins/overview",
+  authenticate,
+  requireTenantPermissions(Permission.COUPONS_READ),
+  couponController.coinOverview,
+);
+
+couponRoutes.get(
+  "/:tenantId/coins/holders",
+  authenticate,
+  requireTenantPermissions(Permission.COUPONS_READ),
+  couponController.coinHolders,
+);
+
+couponRoutes.get(
+  "/:tenantId/coins/activity",
+  authenticate,
+  requireTenantPermissions(Permission.COUPONS_READ),
+  couponController.coinActivity,
+);
+
 couponRoutes.get(
   "/:tenantId/coupons/coins/:membershipId",
   authenticate,

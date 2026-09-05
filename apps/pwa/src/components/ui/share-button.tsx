@@ -19,6 +19,7 @@ export function ShareButton({
   title,
   text,
   label = "Share",
+  iconOnlyOnMobile = false,
   variant = "outline",
   size = "sm",
   className,
@@ -30,6 +31,14 @@ export function ShareButton({
   label?: string;
   variant?: React.ComponentProps<typeof Button>["variant"];
   size?: React.ComponentProps<typeof Button>["size"];
+  /**
+   * Drop the words below `sm`, keeping the icon.
+   *
+   * For rows of pills on a phone, where four labelled controls wrap onto three
+   * lines. The feedback after a share still shows its words at every width: a
+   * silent icon that has just changed shape is not feedback.
+   */
+  iconOnlyOnMobile?: boolean;
   className?: string;
 }) {
   const [outcome, setOutcome] = React.useState<"copied" | "failed" | null>(null);
@@ -57,6 +66,8 @@ export function ShareButton({
       variant={variant}
       size={size}
       onClick={handleShare}
+      title={label}
+      aria-label={label}
       className={cn(className)}
     >
       {outcome === "copied" ? (
@@ -71,8 +82,8 @@ export function ShareButton({
         </>
       ) : (
         <>
-          <Share2 className="h-4 w-4" />
-          {label}
+          <Share2 className="h-4 w-4 shrink-0" />
+          <span className={cn(iconOnlyOnMobile && "hidden sm:inline")}>{label}</span>
         </>
       )}
     </Button>

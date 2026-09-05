@@ -11,15 +11,18 @@ import { Permission } from "@fitconnect/shared/types/permissions";
 import { authenticate } from "../../middleware/authenticate";
 import { optionalAuthenticate } from "../../middleware/optional-authenticate";
 import { requirePermissions } from "../../middleware/authorize";
-import { rateLimitSignup } from "../../middleware/abuse-guard";
+import { rateLimitSignup, rateLimitLogin } from "../../middleware/abuse-guard";
 import { authController } from "./auth.controller";
 import { passkeyController } from "./passkeys.controller";
 import type { AppBindings } from "../../types/app-context";
 
 export const authRoutes = new Hono<AppBindings>();
 
-authRoutes.post("/login", authController.login);
-authRoutes.post("/refresh", authController.refresh);
+// The unauthenticated entry points. Each one either verifies a password (~0.3s
+// of CPU at 12 bcrypt rounds) or accepts a bearer token to trade, so all three
+// are worth guessing at and all three are expensive to guess at.
+authRoutes.post("/login", rateLimitLogin, authController.login);
+authRoutes.post("/refresh", rateLimitLogin, authController.refresh);
 authRoutes.post("/logout", optionalAuthenticate, authController.logout);
 authRoutes.get("/me", authenticate, authController.me);
 authRoutes.post(
@@ -45,4 +48,4 @@ authRoutes.post("/passkeys/login/options", rateLimitSignup, passkeyController.lo
 authRoutes.post("/passkeys/login/verify", rateLimitSignup, passkeyController.loginVerify);
 
 authRoutes.post("/forgot-password", rateLimitSignup, authController.forgotPassword);
-authRoutes.post("/reset-password", authController.resetPassword);
+authRoutes.post("/reset-password", rateLimitLogin, authController.resetPassword);

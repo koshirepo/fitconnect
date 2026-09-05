@@ -3,7 +3,7 @@
  *
  * - Resolves the schema path, migration directory, and datasource URL for CLI commands in local and non-local environments.
  * - Where a local Wrangler D1 database exists, that SQLite file is preferred so diffing and generation work against the same data the Worker sees. Everywhere else — CI, a fresh clone, a machine that has never run `wrangler dev` — there is no such file and none is needed.
- * - Nothing here may throw. This module is evaluated by the Prisma CLI before it decides what it was asked to do, so an exception during resolution fails `generate` too — a command that needs no datasource at all. That is exactly how a missing `.wrangler` directory once broke every install: the scan for a local database ran during `npm ci`, found no directory, and threw before Prisma could get as far as generating a client.
+ * - Nothing here may throw. This module is evaluated by the Prisma CLI before it decides what it was asked to do, so an exception during resolution fails `generate` too — a command that needs no datasource at all. That is exactly how a missing `.wrangler` directory once broke every install: the scan for a local database ran during `npm ci`, back when this repo used npm, found no directory, and threw before Prisma could get as far as generating a client.
  * - So the local lookup is guarded twice: the directory is checked first, and the scan itself is wrapped. A failure to find a local database is an ordinary outcome, not an error.
  * - Primary exports: default export.
  */

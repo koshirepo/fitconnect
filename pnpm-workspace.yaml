@@ -1,0 +1,27 @@
+# Workspace layout for pnpm.
+#
+# The package list replaces the `workspaces` field that used to live in the root
+# package.json — pnpm reads this file instead, and ignores that field entirely.
+packages:
+  - apps/*
+  - packages/*
+
+# pnpm does not run a dependency's install scripts unless it is allowed here.
+#
+# That default is a supply-chain measure: a postinstall script is arbitrary code
+# from a package you may never import. The four below genuinely need one — each
+# fetches or builds a platform-specific binary, and without it the package is an
+# empty shell that fails at first use rather than at install time:
+#
+#   esbuild          - fetches the esbuild binary (Vite's transform step)
+#   workerd          - fetches the Workers runtime that backs `wrangler dev`
+#   prisma           - preinstall entry point for the CLI
+#   @prisma/engines  - fetches the query engine the D1 adapter drives
+#
+# Setting one of these to true is a decision to execute that package's code at
+# install time. Do it deliberately, not to clear a warning.
+allowBuilds:
+  '@prisma/engines': true
+  esbuild: true
+  prisma: true
+  workerd: true

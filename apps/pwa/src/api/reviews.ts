@@ -11,6 +11,12 @@ export interface ProductReview {
   isAnonymous: boolean;
   verifiedBuyer: boolean;
   helpfulCount: number;
+  /**
+   * Whether the caller has already marked this review helpful. Resolved per
+   * viewer by the server (`review.repository.ts`), so a returning reader sees
+   * their own vote rather than an empty button they can press a second time.
+   */
+  helpfulByMe: boolean;
   createdAt: string;
   updatedAt: string;
   user?: {

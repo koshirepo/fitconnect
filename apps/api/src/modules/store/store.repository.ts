@@ -7,6 +7,11 @@
  * - Primary exports: storeRepository.
  */
 import { prisma } from "../../lib/prisma";
+import {
+  catalogueRepository,
+  tenantCatalogue,
+} from "../catalogue/catalogue.repository";
+import { toStorefrontProduct } from "../catalogue/catalogue.service";
 import type {
   CreateProductInput,
   CreateVariantInput,
@@ -16,48 +21,6 @@ import type {
 } from "./store.schema";
 
 /** What a storefront or catalogue row needs; never the whole record. */
-const productSelect = {
-  id: true,
-  name: true,
-  description: true,
-  markdown: true,
-  category: true,
-  photos: true,
-  videoUrl: true,
-  coinsGranted: true,
-  isActive: true,
-  createdAt: true,
-  // Counts rather than the rows: a catalogue page wants to say "12 likes", and
-  // loading twelve rows per product to render one number would not scale past
-  // a gym that is doing well.
-  _count: { select: { likes: true, comments: true } },
-  variants: {
-    select: {
-      id: true,
-      name: true,
-      attributes: true,
-      sku: true,
-      price: true,
-      stock: true,
-      isActive: true,
-    },
-    orderBy: { createdAt: "asc" },
-  },
-} as const;
-
-/** What a product looks like straight out of `productSelect`. */
-type SelectedProduct = { _count: { likes: number; comments: number } } & Record<string, unknown>;
-
-/**
- * Flatten Prisma's `_count` into the two numbers a page actually renders.
- *
- * Done here rather than in each caller so the storefront, the public shop
- * window, and the admin catalogue cannot disagree about the shape.
- */
-function shapeProduct<T extends SelectedProduct>({ _count, ...product }: T) {
-  return { ...product, likeCount: _count.likes, commentCount: _count.comments };
-}
-
 export const storeRepository = {
   /**
    * A gym's catalogue.
@@ -66,21 +29,18 @@ export const storeRepository = {
    * and, within the ones that remain, retired variants.
    */
   async listProducts(tenantId: string, filters: ListProductsInput) {
-    const products = await prisma.storeProduct.findMany({
-      where: {
-        tenantId,
-        ...(filters.includeInactive ? {} : { isActive: true }),
-        ...(filters.category ? { category: filters.category } : {}),
-        ...(filters.search ? { name: { contains: filters.search } } : {}),
-      },
-      select: productSelect,
-      orderBy: { name: "asc" },
+    const { products } = await catalogueRepository.listProducts(tenantCatalogue(tenantId), {
+      category: filters.category,
+      search: filters.search,
+      includeInactive: filters.includeInactive,
+      orderBy: [{ name: "asc" }],
     });
 
-    if (filters.includeInactive) return products.map(shapeProduct);
+    if (filters.includeInactive) return products.map(toStorefrontProduct);
 
+    // A shopper sees only what can be bought, down to the variant.
     return products.map((product) =>
-      shapeProduct({
+      toStorefrontProduct({
         ...product,
         variants: product.variants.filter((variant) => variant.isActive),
       }),
@@ -88,12 +48,8 @@ export const storeRepository = {
   },
 
   async findProduct(tenantId: string, productId: string) {
-    const product = await prisma.storeProduct.findFirst({
-      where: { id: productId, tenantId },
-      select: productSelect,
-    });
-
-    return product ? shapeProduct(product) : null;
+    const product = await catalogueRepository.findProduct(tenantCatalogue(tenantId), productId);
+    return product ? toStorefrontProduct(product) : null;
   },
 
   /**
@@ -105,144 +61,64 @@ export const storeRepository = {
   async createProduct(tenantId: string, input: CreateProductInput) {
     const { variants, ...product } = input;
 
-    const created = await prisma.storeProduct.create({
-      data: {
-        tenantId,
-        ...product,
-        photos: product.photos,
-        variants: {
-          create: variants.map((variant) => ({
-            ...variant,
-            attributes: variant.attributes ?? {},
-          })),
-        },
+    const created = await catalogueRepository.createProduct(tenantCatalogue(tenantId), {
+      ...product,
+      photos: product.photos,
+      variants: {
+        create: variants.map((variant) => ({
+          ...variant,
+          attributes: variant.attributes ?? {},
+        })),
       },
-      select: productSelect,
     });
 
-    return shapeProduct(created);
+    return toStorefrontProduct(created);
   },
 
   async updateProduct(tenantId: string, productId: string, input: UpdateProductInput) {
-    // Scoped update: `updateMany` takes a where clause, so another gym's id
-    // matches nothing rather than updating a record it does not own.
-    const result = await prisma.storeProduct.updateMany({
-      where: { id: productId, tenantId },
-      data: input,
-    });
-    if (result.count === 0) return null;
-
-    return storeRepository.findProduct(tenantId, productId);
+    const updated = await catalogueRepository.updateProduct(
+      tenantCatalogue(tenantId),
+      productId,
+      input,
+    );
+    return updated ? toStorefrontProduct(updated) : null;
   },
 
   async deleteProduct(tenantId: string, productId: string) {
-    const result = await prisma.storeProduct.deleteMany({
-      where: { id: productId, tenantId },
-    });
-    return result.count > 0;
+    return catalogueRepository.deleteProduct(tenantCatalogue(tenantId), productId);
   },
 
   /** Add a variant to a product this gym owns. */
-  async addVariant(tenantId: string, productId: string, input: CreateVariantInput) {
-    const product = await prisma.storeProduct.findFirst({
-      where: { id: productId, tenantId },
-      select: { id: true },
-    });
-    if (!product) return null;
-
-    return prisma.storeVariant.create({
-      data: {
-        productId,
-        ...input,
-        attributes: input.attributes ?? {},
-      },
-      select: {
-        id: true,
-        name: true,
-        attributes: true,
-        sku: true,
-        price: true,
-        stock: true,
-        isActive: true,
-      },
+  addVariant(tenantId: string, productId: string, input: CreateVariantInput) {
+    return catalogueRepository.addVariant(tenantCatalogue(tenantId), productId, {
+      ...input,
+      attributes: input.attributes ?? {},
     });
   },
 
-  async updateVariant(tenantId: string, variantId: string, input: UpdateVariantInput) {
-    const result = await prisma.storeVariant.updateMany({
-      // The tenant reaches this through the product it hangs from.
-      where: { id: variantId, product: { tenantId } },
-      data: input,
-    });
-    if (result.count === 0) return null;
-
-    return prisma.storeVariant.findUnique({
-      where: { id: variantId },
-      select: {
-        id: true,
-        name: true,
-        attributes: true,
-        sku: true,
-        price: true,
-        stock: true,
-        isActive: true,
-      },
-    });
+  updateVariant(tenantId: string, variantId: string, input: UpdateVariantInput) {
+    return catalogueRepository.updateVariant(tenantCatalogue(tenantId), variantId, input);
   },
 
-  async deleteVariant(tenantId: string, variantId: string) {
-    const result = await prisma.storeVariant.deleteMany({
-      where: { id: variantId, product: { tenantId } },
-    });
-    return result.count > 0;
+  deleteVariant(tenantId: string, variantId: string) {
+    return catalogueRepository.deleteVariant(tenantCatalogue(tenantId), variantId);
   },
 
-  /**
-   * Move a variant's stock by a delta.
-   *
-   * A decrement is refused when it would go below zero, so a correction cannot
-   * quietly create negative stock.
-   */
-  async adjustStock(tenantId: string, variantId: string, delta: number) {
-    const result = await prisma.storeVariant.updateMany({
-      where: {
-        id: variantId,
-        product: { tenantId },
-        ...(delta < 0 ? { stock: { gte: -delta } } : {}),
-      },
-      data: { stock: { increment: delta } },
-    });
-
-    return result.count > 0;
+  adjustStock(tenantId: string, variantId: string, delta: number) {
+    return catalogueRepository.adjustStock(tenantCatalogue(tenantId), variantId, delta);
   },
 
-  /**
-   * Take `quantity` off a variant, but only while that much remains.
-   *
-   * The condition lives in the WHERE clause rather than in a prior read, so two
-   * sales of the last tub cannot both succeed: the second matches no row and is
-   * told so. Returns false when the stock was not there.
-   */
-  async decrementStock(variantId: string, quantity: number) {
-    const result = await prisma.storeVariant.updateMany({
-      where: { id: variantId, stock: { gte: quantity } },
-      data: { stock: { decrement: quantity } },
-    });
-
-    return result.count > 0;
+  decrementStock(tenantId: string, variantId: string, quantity: number) {
+    return catalogueRepository.claimStock(tenantCatalogue(tenantId), variantId, quantity);
   },
 
-  /** Put stock back, for a cancelled or reversed sale. */
-  async restoreStock(variantId: string, quantity: number) {
-    await prisma.storeVariant.update({
-      where: { id: variantId },
-      data: { stock: { increment: quantity } },
-    });
+  restoreStock(tenantId: string, variantId: string, quantity: number) {
+    return catalogueRepository.releaseStock(tenantCatalogue(tenantId), variantId, quantity);
   },
 
   /** The variants a basket names, with what they cost and what they earn. */
   findVariantsForSale(tenantId: string, variantIds: string[]) {
-    return prisma.storeVariant.findMany({
+    return prisma.productVariant.findMany({
       where: {
         id: { in: variantIds },
         isActive: true,

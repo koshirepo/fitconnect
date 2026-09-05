@@ -53,7 +53,7 @@ export const shippingRepository = {
     if (items.length === 0) return 0;
 
     const products = await prisma.product.findMany({
-      where: { id: { in: [...new Set(items.map((item) => item.productId))] } },
+      where: { id: { in: [...new Set(items.map((item) => item.productId))] }, tenantId: null },
       select: { id: true, weightGrams: true },
     });
 
@@ -78,7 +78,7 @@ export const shippingRepository = {
    */
   async productShippingFacts(productIds: string[]) {
     const products = await prisma.product.findMany({
-      where: { id: { in: [...new Set(productIds)] } },
+      where: { id: { in: [...new Set(productIds)] }, tenantId: null },
       select: {
         id: true,
         name: true,

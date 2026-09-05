@@ -195,14 +195,15 @@ async function priceForSale(
  * later line cannot be met.
  */
 async function claimStock(
+  tenantId: string,
   lines: { variantId: string; quantity: number; variantName?: string }[],
 ): Promise<{ claimed: { variantId: string; quantity: number }[] } | SaleError> {
   const claimed: { variantId: string; quantity: number }[] = [];
 
   for (const line of lines) {
-    const took = await storeRepository.decrementStock(line.variantId, line.quantity);
+    const took = await storeRepository.decrementStock(tenantId, line.variantId, line.quantity);
     if (!took) {
-      await releaseStock(claimed);
+      await releaseStock(tenantId, claimed);
       return {
         error: `${line.variantName ?? "That item"} just sold out. Recount and try again.`,
         status: 409,
@@ -215,9 +216,9 @@ async function claimStock(
 }
 
 /** Put stock back, for a failed claim or an abandoned checkout. */
-async function releaseStock(lines: { variantId: string; quantity: number }[]) {
+async function releaseStock(tenantId: string, lines: { variantId: string; quantity: number }[]) {
   for (const line of lines) {
-    await storeRepository.restoreStock(line.variantId, line.quantity);
+    await storeRepository.restoreStock(tenantId, line.variantId, line.quantity);
   }
 }
 
@@ -343,7 +344,7 @@ export const storeSaleService = {
     const priced = await priceForSale(tenantId, input.membershipId, input);
     if ("error" in priced) return priced;
 
-    const claim = await claimStock(priced.lines);
+    const claim = await claimStock(tenantId, priced.lines);
     if ("error" in claim) return claim;
 
     const payment = await paymentRepository.createPayment({
@@ -403,7 +404,7 @@ export const storeCheckoutService = {
     // Coins and a coupon can legitimately clear a bill. There is nothing to
     // send a gateway, so the sale simply completes.
     if (priced.priced.total === 0) {
-      const claim = await claimStock(priced.lines);
+      const claim = await claimStock(tenantId, priced.lines);
       if ("error" in claim) return claim;
 
       const payment = await paymentRepository.createPayment({
@@ -443,7 +444,7 @@ export const storeCheckoutService = {
       return { error: "This gym has not set up online payments yet.", status: 409 as const };
     }
 
-    const claim = await claimStock(priced.lines);
+    const claim = await claimStock(tenantId, priced.lines);
     if ("error" in claim) return claim;
 
     try {
@@ -493,7 +494,7 @@ export const storeCheckoutService = {
     } catch (error) {
       // The gateway refused, or a write failed. Either way nothing was sold, so
       // the stock goes back rather than sitting reserved for nobody.
-      await releaseStock(claim.claimed);
+      await releaseStock(tenantId, claim.claimed);
       throw error;
     }
   },
@@ -578,7 +579,7 @@ export const storeCheckoutService = {
       return { data: { orderId: order.id, cancelled: false } };
     }
 
-    await releaseStock(order.items);
+    await releaseStock(tenantId, order.items);
 
     if (order.paymentId) {
       await prisma.payment.update({
@@ -748,7 +749,7 @@ export const storeGuestService = {
       return { error: "That reservation was not found, or is already closed.", status: 404 as const };
     }
 
-    const claim = await claimStock(order.items);
+    const claim = await claimStock(tenantId, order.items);
     if ("error" in claim) return claim;
 
     // Conditional on still being pending: two staff pressing Complete at once
@@ -759,7 +760,7 @@ export const storeGuestService = {
     });
 
     if (completed.count === 0) {
-      await releaseStock(claim.claimed);
+      await releaseStock(tenantId, claim.claimed);
       return { data: { orderId: order.id, completed: false } };
     }
 
@@ -823,7 +824,7 @@ export const storeGuestService = {
     const priced = await storeGuestService.quote(tenantId, input.items);
     if ("error" in priced) return priced;
 
-    const claim = await claimStock(priced.lines);
+    const claim = await claimStock(tenantId, priced.lines);
     if ("error" in claim) return claim;
 
     try {
@@ -871,7 +872,7 @@ export const storeGuestService = {
     } catch (error) {
       // Nothing was sold, so the stock goes back rather than sitting claimed
       // against an order that does not exist.
-      await releaseStock(claim.claimed);
+      await releaseStock(tenantId, claim.claimed);
       throw error;
     }
   },
@@ -981,7 +982,7 @@ export const storeGuestService = {
       };
     }
 
-    const claim = await claimStock(priced.lines);
+    const claim = await claimStock(tenantId, priced.lines);
     if ("error" in claim) return claim;
 
     try {
@@ -1044,7 +1045,7 @@ export const storeGuestService = {
     } catch (error) {
       // Nothing was sold, so the stock goes back rather than sitting held
       // against an order nobody can pay for.
-      await releaseStock(claim.claimed);
+      await releaseStock(tenantId, claim.claimed);
       if (error instanceof RazorpayError) {
         return {
           error: `Could not start the payment: ${error.message}`,
@@ -1135,7 +1136,7 @@ export const storeGuestService = {
     });
     if (cancelled.count === 0) return { data: { orderId, cancelled: false } };
 
-    await releaseStock(order.items);
+    await releaseStock(tenantId, order.items);
     return { data: { orderId, cancelled: true } };
   },
 

@@ -20,8 +20,8 @@ The reasoning, since it comes up:
   There is no shared schema to centralize into — a combined file would just be two
   unrelated configs in one place.
 - **Wrangler resolves config from the working directory.** Co-located means
-  `npm run deploy:test --workspace @fitconnect/api` works with no `--config` path
-  juggling, and running `npx wrangler ...` inside an app directory behaves the way
+  `pnpm run deploy:test --workspace @fitconnect/api` works with no `--config` path
+  juggling, and running `pnpm exec wrangler ...` inside an app directory behaves the way
   the docs say it does.
 - **Independent deployability.** A broken PWA build cannot block an API hotfix,
   and CI can path-filter on `apps/api/**` vs `apps/pwa/**` to deploy only what
@@ -75,11 +75,11 @@ Losing it does not lose money: gyms simply re-enter their keys.
 Set them all interactively:
 
 ```bash
-npm run secrets:test --workspace @fitconnect/api
+pnpm run secrets:test --workspace @fitconnect/api
 ```
 
 ```bash
-npm run secrets:production --workspace @fitconnect/api
+pnpm run secrets:production --workspace @fitconnect/api
 ```
 
 Locally they go in `apps/api/.dev.vars`, which is gitignored.
@@ -91,44 +91,44 @@ block for its environment.
 ## First-time test environment setup
 
 ```bash
-npx wrangler d1 create fit-db-test
+pnpm exec wrangler d1 create fit-db-test
 ```
 
 ```bash
-npx wrangler r2 bucket create fit-bucket-test
+pnpm exec wrangler r2 bucket create fit-bucket-test
 ```
 
 Paste the returned `database_id` into `[[env.test.d1_databases]]` in
 `apps/api/wrangler.toml`, then:
 
 ```bash
-npm run secrets:test --workspace @fitconnect/api
+pnpm run secrets:test --workspace @fitconnect/api
 ```
 
 ```bash
-npm run db:migrate:test --workspace @fitconnect/api
+pnpm run db:migrate:test --workspace @fitconnect/api
 ```
 
 Create the Pages project once (or let the first deploy create it):
 
 ```bash
-npx wrangler pages project create fitconnect-pwa-test --production-branch=test
+pnpm exec wrangler pages project create fitconnect-pwa-test --production-branch=test
 ```
 
 ## Deploying
 
 ```bash
-npm run deploy:test --workspaces --if-present
+pnpm run deploy:test --workspaces --if-present
 ```
 
 ```bash
-npm run deploy:production --workspaces --if-present
+pnpm run deploy:production --workspaces --if-present
 ```
 
 Single app:
 
 ```bash
-npm run deploy:test --workspace @fitconnect/api
+pnpm run deploy:test --workspace @fitconnect/api
 ```
 
 A push to `main` applies migrations before deploying the Worker, so new code
@@ -136,7 +136,7 @@ never meets an old schema. A manual deploy skips that, and so does any deploy
 run from a machine rather than CI — apply them first:
 
 ```bash
-npm run db:migrate:production --workspace @fitconnect/api
+pnpm run db:migrate:production --workspace @fitconnect/api
 ```
 
 Applying is idempotent: wrangler records which files a database has already
@@ -206,8 +206,8 @@ by the branch:
 | `test` | test Worker `fitconnect-api-test` + Pages `fitconnect-pwa-test` |
 | anything else | build, type-check, and lint only — nothing deployed |
 
-Every push runs a `test` job (`npm ci`, `npm run typecheck`, `npm run lint`,
-`npm run build`) for fast feedback, then the `deploy` job only when the branch is
+Every push runs a `test` job (`pnpm install --frozen-lockfile`, `pnpm run typecheck`, `pnpm run lint`,
+`pnpm run build`) for fast feedback, then the `deploy` job only when the branch is
 `main` or `test`.
 
 ### Required GitHub secrets
@@ -227,12 +227,12 @@ single token spans multiple accounts, in which case add it to the workflow's
 ### One-time setup (cannot run from CI)
 
 CI only *deploys*; it cannot create resources or set secrets. Do these once with
-a locally-logged-in wrangler (`npx wrangler login`):
+a locally-logged-in wrangler (`pnpm exec wrangler login`):
 
 1. Create the test D1 database and R2 bucket (see "First-time test environment
    setup" below) and paste the returned id into `apps/api/wrangler.toml`.
-2. Set the Worker secrets for both environments (`npm run secrets:*`).
-3. Apply migrations (`npm run db:migrate:*`).
+2. Set the Worker secrets for both environments (`pnpm run secrets:*`).
+3. Apply migrations (`pnpm run db:migrate:*`).
 4. Create the Pages projects once, or let the first deploy create them.
 
 After that, the GitHub token deploys both apps on the matching branch.

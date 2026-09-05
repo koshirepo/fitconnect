@@ -10,7 +10,7 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { CartCountBadge } from "@/components/catalog/storefront-toolbar";
 import { ArrowLeft, Search, ShoppingCart } from "lucide-react";
 import { useAuthStore } from "@/stores/auth";
 
@@ -66,14 +66,7 @@ export function ShopHeader({
           >
             <ShoppingCart className="h-4 w-4" />
             <span className="ml-1.5">Cart</span>
-            {cartCount > 0 && (
-              <Badge
-                variant="secondary"
-                className="absolute bg-accent-foreground -top-2 -right-2 h-5 min-w-5 px-1 text-xs flex items-center justify-center"
-              >
-                {cartCount}
-              </Badge>
-            )}
+            <CartCountBadge count={cartCount} />
           </Button>
         </div>
       </div>

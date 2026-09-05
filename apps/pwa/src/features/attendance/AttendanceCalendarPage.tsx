@@ -39,7 +39,9 @@ export default function AttendanceCalendarPage() {
   // The month is part of the cache key, so paging back and forth reuses months
   // already fetched instead of refetching each time.
   const calendarQuery = useAttendanceCalendar(currentMonth);
-  const days = (calendarQuery.data?.days ?? {}) as Record<string, DayData>;
+  // Annotated, not cast: if the response shape drifts, this line fails to
+  // compile instead of silently agreeing with a stale local type.
+  const days: Record<string, DayData> = calendarQuery.data?.days ?? {};
   const loading = calendarQuery.isPending;
   const error = calendarQuery.isError ? getApiError(calendarQuery.error) : "";
 
