@@ -2,7 +2,9 @@
   "extends": "@fitconnect/tsconfig/react-app.json",
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-    "baseUrl": ".",
+    // No `baseUrl`: TypeScript 7 removed it. Without one, a `paths` entry is
+    // resolved relative to the config file that declares it, which is this
+    // directory — the same place `baseUrl: "."` used to point at.
     "paths": {
       "@/*": ["./src/*"]
     }

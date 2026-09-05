@@ -5,9 +5,11 @@
  * - On a gym subdomain both are that gym's, by name and by logo — the branding lookup is awaited rather than read from cache, because a first visit is exactly when the cache is cold and the offer matters most.
  * - Android and desktop Chrome hand over a real install prompt; iOS never does, so there it explains the Share → Add to Home Screen route instead. Without that half, every member on an iPhone would be offered nothing at all.
  * - Notifications are only offered to a signed-in member: the subscription is registered against their account, and `Notification.requestPermission` must be called from a tap, which is why the button asks rather than the effect.
+ * - The install offer is withheld on the platform's own public pages — the shopfront and the marketing screens on the root host. See `isPlatformPublicPage`. A gym subdomain is not one of those: its store is public too, and that is where installing is worth offering.
  * - Primary exports: AppNudges.
  */
 import * as React from "react";
+import { useLocation } from "react-router-dom";
 import { Bell, Download, Share, SquarePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +30,7 @@ import {
 } from "@/lib/nudge-schedule";
 import { useAuthStore } from "@/stores/auth";
 import { useToast } from "@/components/ui/toast";
+import { isTenantSubdomain } from "@/lib/subdomain";
 
 /** Seconds of quiet before either offer appears, so it never lands mid-load. */
 const APPEAR_AFTER_MS = 4000;
@@ -59,11 +62,37 @@ function isIosSafari() {
   return isIos && /safari/i.test(ua) && !/crios|fxios|edgios/i.test(ua);
 }
 
+
+/**
+ * The platform's own public pages, where installing is not offered.
+ *
+ * These are shopfront and marketing screens on the root host: somebody who has
+ * arrived to read about the product or buy one thing has no use for it on their
+ * home screen, and an install card over a checkout is in the way of the only
+ * thing they came to do. The offer belongs where somebody is using the app —
+ * the dashboard, and a gym's own subdomain, where it is that gym's app being
+ * installed rather than ours.
+ *
+ * Tenant hosts are excluded by the host check, not by path: a gym's store is
+ * public too, and that is exactly where the offer is worth making.
+ */
+const PLATFORM_PUBLIC_PATHS = ["/shop", "/about", "/contact", "/register-gym"];
+
+function isPlatformPublicPage(pathname: string) {
+  if (isTenantSubdomain()) return false;
+  if (pathname === "/") return true;
+  return PLATFORM_PUBLIC_PATHS.some(
+    (path) => pathname === path || pathname.startsWith(path + "/"),
+  );
+}
+
 type Nudge = "install" | "ios-install" | "notifications" | null;
 
 export function AppNudges() {
   const toast = useToast();
+  const { pathname } = useLocation();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const installOffered = !isPlatformPublicPage(pathname);
   const branding = useTenantInstallBranding();
   const appName = branding?.name ?? "FitConnect";
 
@@ -91,7 +120,7 @@ export function AppNudges() {
     let cancelled = false;
 
     const decide = async (): Promise<Nudge> => {
-      if (!isInstalled() && shouldNudgeToday("install")) {
+      if (installOffered && !isInstalled() && shouldNudgeToday("install")) {
         if (deferredPrompt) return "install";
         if (isIosSafari()) return "ios-install";
       }
@@ -122,7 +151,13 @@ export function AppNudges() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [deferredPrompt, isAuthenticated, nudge]);
+  }, [deferredPrompt, isAuthenticated, installOffered, nudge]);
+
+  // Derived rather than cleared in an effect: an install card already on screen
+  // when somebody navigates into the shop would otherwise sit over the checkout
+  // it was meant to stay out of, and hiding it during render costs no extra pass.
+  const shown: Nudge =
+    !installOffered && (nudge === "install" || nudge === "ios-install") ? null : nudge;
 
   const close = (key: NudgeKey, forGood = false) => {
     if (forGood) silenceNudge(key);
@@ -172,7 +207,7 @@ export function AppNudges() {
     }
   };
 
-  if (!nudge) return null;
+  if (!shown) return null;
 
   const logo = branding?.logoUrl ? (
     <img
@@ -195,7 +230,7 @@ export function AppNudges() {
     </div>
   );
 
-  if (nudge === "notifications") {
+  if (shown === "notifications") {
     return shell(
       <div className="flex items-center gap-3 pr-6">
         {logo ?? <Bell className="h-6 w-6 shrink-0 text-primary" />}
@@ -213,7 +248,7 @@ export function AppNudges() {
     );
   }
 
-  if (nudge === "ios-install") {
+  if (shown === "ios-install") {
     return shell(
       <div className="space-y-2 pr-6">
         <div className="flex items-center gap-3">

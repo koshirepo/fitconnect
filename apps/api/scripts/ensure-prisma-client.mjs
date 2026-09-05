@@ -77,6 +77,7 @@ const TABLE_DUMP_ORDER = [
   "Shift",
   "Payment",
   "Product",
+  "ProductVariant",
   "Order",
   "OrderItem",
   "WorkoutPlan",
@@ -456,15 +457,22 @@ function seedDatabase(db, options) {
   `);
   const insertProduct = db.prepare(`
     INSERT INTO "Product" (
-      "id", "name", "description", "markdown", "photos", "category", "price",
-      "stock", "minOrderQty", "maxOrderQty", "isActive", "createdAt", "updatedAt"
+      "id", "tenantId", "name", "description", "markdown", "photos", "category",
+      "minOrderQty", "maxOrderQty", "isActive", "createdAt", "updatedAt"
     ) VALUES (
-      $id, $name, $description, $markdown, $photos, $category, $price,
-      $stock, $minOrderQty, $maxOrderQty, $isActive, $createdAt, $updatedAt
+      $id, NULL, $name, $description, $markdown, $photos, $category,
+      $minOrderQty, $maxOrderQty, $isActive, $createdAt, $updatedAt
     )
   `);
+  // Price and stock live on variants now, for the platform shop as well as a
+  // gym's. A seeded product sold in one form gets exactly one, named after
+  // itself — the same shape migration 0042 gave the products that predate this.
+  const insertProductVariant = db.prepare(`
+    INSERT INTO "ProductVariant" ("id", "productId", "name", "price", "stock", "isActive", "createdAt", "updatedAt")
+    VALUES ($id, $productId, $name, $price, $stock, 1, $createdAt, $updatedAt)
+  `);
   const updateProductStock = db.prepare(
-    'UPDATE "Product" SET "stock" = $stock, "updatedAt" = $updatedAt WHERE "id" = $id'
+    'UPDATE "ProductVariant" SET "stock" = $stock, "updatedAt" = $updatedAt WHERE "id" = $id'
   );
   const insertOrder = db.prepare(`
     INSERT INTO "Order" (
@@ -476,8 +484,8 @@ function seedDatabase(db, options) {
     )
   `);
   const insertOrderItem = db.prepare(`
-    INSERT INTO "OrderItem" ("id", "orderId", "productId", "productName", "quantity", "unitPrice", "lineTotal", "createdAt")
-    VALUES ($id, $orderId, $productId, $productName, $quantity, $unitPrice, $lineTotal, $createdAt)
+    INSERT INTO "OrderItem" ("id", "orderId", "productId", "productName", "variantId", "variantName", "quantity", "unitPrice", "lineTotal", "createdAt")
+    VALUES ($id, $orderId, $productId, $productName, $variantId, $variantName, $quantity, $unitPrice, $lineTotal, $createdAt)
   `);
   const insertWorkoutPlan = db.prepare(`
     INSERT INTO "WorkoutPlan" ("id", "tenantId", "creatorId", "title", "description", "exercises", "createdAt", "updatedAt")
@@ -985,8 +993,12 @@ function seedDatabase(db, options) {
     const categories = ["Supplements", "Apparel", "Accessories", "Equipment"];
     for (let index = 1; index <= options.products; index += 1) {
       const category = categories[(index - 1) % categories.length];
+      const productId = nextId("product");
       const product = {
-        id: nextId("product"),
+        id: productId,
+        // Mirrors what migration 0042 does for products that predate variants:
+        // one variant per product, id derived from the product's.
+        variantId: `pv_${productId}`,
         name: `${category} Product ${index}`,
         description: `Seeded ${category.toLowerCase()} item ${index}`,
         markdown: `## Seed Product ${index}`,
@@ -1000,7 +1012,23 @@ function seedDatabase(db, options) {
         createdAt: iso(daysAgo(now, randomInt(5, 180, random), 10, 0)),
         updatedAt: iso(daysAgo(now, randomInt(0, 10, random), 10, 0)),
       };
-      run(insertProduct, product, "products");
+      // `variantId` is bookkeeping for the rows below, not a Product column, and
+      // node:sqlite rejects a named parameter the statement never declared.
+      const { variantId, price, stock, ...productRow } = product;
+      run(insertProduct, productRow, "products");
+      run(
+        insertProductVariant,
+        {
+          id: variantId,
+          productId: product.id,
+          name: product.name,
+          price,
+          stock,
+          createdAt: product.createdAt,
+          updatedAt: product.updatedAt,
+        },
+        "productVariants",
+      );
       products.push(product);
     }
 
@@ -1025,6 +1053,8 @@ function seedDatabase(db, options) {
           id: nextId("order_item"),
           productId: product.id,
           productName: product.name,
+          variantId: product.variantId,
+          variantName: product.name,
           quantity,
           unitPrice: product.price,
           lineTotal: quantity * product.price,
@@ -1063,7 +1093,7 @@ function seedDatabase(db, options) {
     }
 
     for (const product of products) {
-      updateProductStock.run({ id: product.id, stock: product.stock, updatedAt: iso(now) });
+      updateProductStock.run({ id: product.variantId, stock: product.stock, updatedAt: iso(now) });
     }
 
     for (let index = 1; index <= 12; index += 1) {

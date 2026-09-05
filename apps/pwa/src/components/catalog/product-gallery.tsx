@@ -1,10 +1,12 @@
 /**
- * Documentation: A product's photos and its video.
+ * Documentation: A product's photos and its video, for either storefront.
  *
- * - One large frame with thumbnails under it, because a gym photographing a tub of protein takes the label, the back, and the scoop, and a reader wants to move between them without scrolling.
+ * - One large frame with thumbnails under it, because somebody photographing a tub of protein takes the label, the back, and the scoop, and a reader wants to move between them without scrolling.
+ * - Was `features/store/ProductMedia`, used only by the gym store. The platform shop had its own copy of the same idea written inline in the product page: raw `<img>` tags with no lazy loading, no video support, and no guard on the selected index. This is that component with the shop's two additions folded in as props, so neither surface keeps a private version.
+ * - `OptimizedImage` throughout. That was the substantive difference between the two implementations — the shop's gallery loaded every full-size photo eagerly.
  * - The video is a thumbnail like any other. Putting it in the same strip means a product with a video and three photos has one control surface rather than two competing ones, and a product with only a video still gets the large frame.
- * - Renders nothing at all when there is neither. An empty grey box saying "no image" is worse than the card simply being shorter.
- * - Primary exports: ProductMedia.
+ * - Renders nothing at all when there is neither, unless the caller passes a `fallback`. An empty grey box saying "no image" is worse than the card simply being shorter — but a product *page* needs to fill the column, so it may say otherwise.
+ * - Primary exports: ProductGallery.
  */
 import * as React from "react";
 import { Play } from "lucide-react";
@@ -14,17 +16,29 @@ import { cn } from "@/lib/utils";
 
 type Slide = { kind: "photo"; url: string } | { kind: "video"; embedUrl: string };
 
-export function ProductMedia({
+export function ProductGallery({
   photos,
   videoUrl,
   name,
   className,
+  frameClassName = "aspect-square",
+  thumbsClassName = "flex flex-wrap gap-2",
+  overlay,
+  fallback,
 }: {
   photos: string[];
   videoUrl?: string | null;
   /** Used for the alt text, so a screen reader hears which product this is. */
   name: string;
   className?: string;
+  /** The shop runs 4:3 and capped at 70vh; the store runs square. */
+  frameClassName?: string;
+  /** The shop lays thumbnails on a fixed grid; the store wraps them. */
+  thumbsClassName?: string;
+  /** Absolutely positioned over the frame — stock badges, a discount flag. */
+  overlay?: React.ReactNode;
+  /** Shown instead of nothing when there is no media at all. */
+  fallback?: React.ReactNode;
 }) {
   const slides = React.useMemo<Slide[]>(() => {
     const embedUrl = youTubeEmbedUrl(videoUrl);
@@ -39,11 +53,21 @@ export function ProductMedia({
   // must not leave the frame pointing past the end of the strip.
   const active = slides[Math.min(index, slides.length - 1)];
 
-  if (!active) return null;
+  if (!active) {
+    if (!fallback) return null;
+    return (
+      <div className={cn("space-y-3", className)}>
+        <div className={cn("relative overflow-hidden rounded-xl border bg-muted", frameClassName)}>
+          {fallback}
+          {overlay}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("space-y-3", className)}>
-      <div className="overflow-hidden rounded-xl border bg-muted">
+      <div className={cn("relative overflow-hidden rounded-xl border bg-muted", frameClassName)}>
         {active.kind === "video" ? (
           <iframe
             src={active.embedUrl}
@@ -53,16 +77,13 @@ export function ProductMedia({
             allowFullScreen
           />
         ) : (
-          <OptimizedImage
-            src={active.url}
-            alt={name}
-            className="aspect-square w-full object-cover"
-          />
+          <OptimizedImage src={active.url} alt={name} className="h-full w-full object-cover" />
         )}
+        {overlay}
       </div>
 
       {slides.length > 1 && (
-        <div className="flex flex-wrap gap-2">
+        <div className={thumbsClassName}>
           {slides.map((slide, position) => (
             <button
               key={slide.kind === "photo" ? slide.url : slide.embedUrl}
@@ -73,8 +94,11 @@ export function ProductMedia({
               }
               aria-current={position === index}
               className={cn(
+                // A fixed size, not just an aspect. A bare `aspect-square` in a
+                // flex row has no width to be square against, so each thumbnail
+                // grew to fill the strip.
                 "h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2",
-                position === index ? "border-primary" : "border-transparent",
+                position === index ? "border-primary" : "border-transparent opacity-70 hover:opacity-100",
               )}
             >
               {slide.kind === "video" ? (

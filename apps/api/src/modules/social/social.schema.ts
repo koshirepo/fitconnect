@@ -7,15 +7,16 @@
  * - Primary exports: the schemas, and the inferred input types.
  */
 import { z } from "zod";
+import { FEEDBACK_LIMITS, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "@fitconnect/shared/constants";
 
 export const commentSchema = z.object({
-  body: z.string().trim().min(1, "A comment cannot be empty.").max(2000),
+  body: z.string().trim().min(1, "A comment cannot be empty.").max(FEEDBACK_LIMITS.COMMENT_MAX_LENGTH),
 });
 
 export const listCommentsSchema = z.object({
   /** Newest first, in pages, because a popular product accumulates these. */
   page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
+  limit: z.coerce.number().int().min(1).max(MAX_PAGE_SIZE).default(DEFAULT_PAGE_SIZE),
 });
 
 export type CommentInput = z.infer<typeof commentSchema>;

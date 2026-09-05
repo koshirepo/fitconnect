@@ -1,7 +1,7 @@
 /**
  * Documentation: The store from behind the counter.
  *
- * - Not a shop. Members and visitors buy on the public storefront at `/store`; this is where staff work the other side of it — reservations to hand over, money to take, stock to correct. That split is why this screen needs `STORE_SELL` or `STORE_MANAGE` rather than the browse grant every member holds.
+ * - Not a shop. Members and visitors buy on the public storefront at `/shop`; this is where staff work the other side of it — reservations to hand over, money to take, stock to correct. That split is why this screen needs `STORE_SELL` or `STORE_MANAGE` rather than the browse grant every member holds.
  * - The queue leads, because it is the thing with people waiting on it. A reservation holds no stock: it was written when somebody chose a basket, and nothing moves until Complete is pressed here. That is also why completing can fail — the last tub can be sold from under a reservation — and why the row stays pending when it does.
  * - Completing a member's reservation writes the payment row too, so store revenue reaches the finance page through the same ledger as memberships and charges, and grants the coins the basket promised. A guest reservation has no membership to hang either off.
  * - Primary exports: StorePage.
@@ -295,12 +295,12 @@ export default function StorePage() {
               {sellOpen ? "Close sale" : "Sell at counter"}
             </Button>
           )}
-          <Button variant="outline" onClick={() => navigateRaw("/store")}>
+          <Button variant="outline" onClick={() => navigateRaw("/dashboard/store")}>
             <Package className="h-4 w-4" />
             View shop
           </Button>
           {canManage && (
-            <Button variant="outline" onClick={() => navigate("/store/manage")}>
+            <Button variant="outline" onClick={() => navigate("/dashboard/store/manage")}>
               <Settings className="h-4 w-4" />
               Products &amp; stock
             </Button>
@@ -325,7 +325,7 @@ export default function StorePage() {
           value={formatCurrency(stock.value)}
           subtext={canManage ? "Manage products" : "At current prices"}
           icon={Boxes}
-          {...(canManage ? { onClick: () => navigate("/store/manage") } : {})}
+          {...(canManage ? { onClick: () => navigate("/dashboard/store/manage") } : {})}
         />
         <StatCard
           label="Low stock"

@@ -174,6 +174,20 @@ export const Permission = {
   SALARY_MANAGE: "salary:manage",
   /** One's own pay and payslip, and nobody else's. */
   SALARY_READ_SELF: "salary:read:self",
+
+  /**
+   * Money FitConnect collected on the gym's behalf, and asking for it back.
+   *
+   * Separate from FINANCE_* because this is the gym's relationship with the
+   * platform rather than its own books, and it carries the bank account: whoever
+   * holds `PAYOUTS_MANAGE` decides where the gym's money is sent.
+   */
+  PAYOUTS_READ: "payouts:read",
+  PAYOUTS_MANAGE: "payouts:manage",
+
+  /** The other side of the same desk: settling what gyms have asked for. */
+  PLATFORM_PAYOUTS_READ: "platform:payouts:read",
+  PLATFORM_PAYOUTS_MANAGE: "platform:payouts:manage",
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];
@@ -256,6 +270,10 @@ const ADMIN_PERMISSIONS: Permission[] = [
   Permission.FINANCE_MANAGE,
   Permission.SALARY_READ,
   Permission.SALARY_MANAGE,
+  // A gym admin, and nobody below them: this holds the bank account the gym's
+  // money is sent to.
+  Permission.PAYOUTS_READ,
+  Permission.PAYOUTS_MANAGE,
   Permission.COUPONS_CREATE,
   Permission.COUPONS_UPDATE,
   Permission.COUPONS_DELETE,
@@ -337,6 +355,9 @@ const SUPPORT_PERMISSIONS: Permission[] = [
   Permission.PLATFORM_ROLES_READ,
   Permission.PLATFORM_TENANTS_READ,
   Permission.PLATFORM_PAYMENTS_READ,
+  // Support can see the payout queue but not settle it: marking money sent is
+  // a claim about a bank transfer, and only whoever made it can make that.
+  Permission.PLATFORM_PAYOUTS_READ,
   Permission.PLATFORM_PRODUCTS_READ,
   Permission.PLATFORM_PRODUCTS_CREATE,
   Permission.PLATFORM_PRODUCTS_UPDATE,

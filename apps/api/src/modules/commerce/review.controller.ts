@@ -29,7 +29,11 @@ export const reviewController = {
       return badRequest(c, "Product ID is required");
     }
 
-    const result = await reviewService.listByProduct(productId, page, limit);
+    // Anonymous readers still get the list; a signed-in one also gets their own
+    // helpful votes marked on it, which is the only thing the token changes here.
+    const viewerId = c.get("optionalAuthUser")?.id ?? null;
+
+    const result = await reviewService.listByProduct(productId, page, limit, viewerId);
     return okPaginated(c, result.data.reviews, {
       page: result.data.page,
       limit: result.data.limit,

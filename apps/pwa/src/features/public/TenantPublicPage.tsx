@@ -217,7 +217,7 @@ export default function TenantPublicPage() {
                   the buying view from their own dashboard. */}
               <Button
                 variant="outline"
-                onClick={() => navigate("/store")}
+                onClick={() => navigate("/shop")}
               >
                 <ShoppingBag className="h-4 w-4" />
                 Visit Store

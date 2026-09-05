@@ -1,7 +1,7 @@
 /**
  * Documentation: Dummy gym-store catalogue seeder.
  *
- * - The deterministic seeder predates the gym store: it fills `Product` (the platform storefront) but never `StoreProduct` / `StoreVariant`, so a freshly seeded gym has an empty shop. This fills that gap on its own rather than growing that script, because store rows are demo dressing and should be droppable without touching members, payments, or attendance.
+ * - The deterministic seeder predates the gym store: it fills the platform half of `Product` but never a gym's, so a freshly seeded gym has an empty shop. This fills that gap on its own rather than growing that script, because store rows are demo dressing and should be droppable without touching members, payments, or attendance.
  * - Writes SQL and hands it to `wrangler d1 execute`, so the database id and environment wiring in `wrangler.toml` is reused and nothing has to be remembered.
  * - Ids are derived from the tenant and a slug of the product name, so running twice replaces the same rows instead of stacking a second catalogue. Re-running is the intended way to reset the shop.
  * - Usage: `pnpm run seed:store --workspace @fitconnect/api -- --tenant rudra-gym` (add `--remote` for production).
@@ -35,7 +35,7 @@ function resolveWranglerCli() {
 const CATALOGUE = [
   {
     name: "Whey Protein Isolate",
-    category: "SUPPLEMENT",
+    category: "Supplements",
     description: "27g protein per scoop, low lactose.",
     markdown:
       "## Whey Protein Isolate\n\nFiltered to strip most of the lactose and fat, so it mixes thin and sits light. **27g protein** and 1.2g sugar per 30g scoop.\n\n- One scoop within an hour of training\n- 60 servings in the 2kg tub\n- Third-party tested for banned substances",
@@ -49,7 +49,7 @@ const CATALOGUE = [
   },
   {
     name: "Mass Gainer",
-    category: "SUPPLEMENT",
+    category: "Supplements",
     description: "Carb-heavy blend for members who cannot hold weight.",
     markdown:
       "## Mass Gainer\n\n**Three scoops** with milk adds roughly 750 calories. For members who train hard and still cannot put weight on.\n\nMix with 300ml milk, once daily, ideally after training.",
@@ -61,7 +61,7 @@ const CATALOGUE = [
   },
   {
     name: "Creatine Monohydrate",
-    category: "SUPPLEMENT",
+    category: "Supplements",
     description: "Micronised, unflavoured. 5g a day, every day.",
     markdown:
       "## Creatine Monohydrate\n\nThe most studied supplement on this shelf. **5g daily**, timing does not matter. No loading phase needed — the difference shows in three to four weeks either way.",
@@ -73,7 +73,7 @@ const CATALOGUE = [
   },
   {
     name: "Pre-Workout",
-    category: "SUPPLEMENT",
+    category: "Supplements",
     description: "Caffeine, beta-alanine, citrulline. Not for evening sessions.",
     markdown:
       "## Pre-Workout\n\n200mg caffeine per scoop. Take 20 minutes before training.\n\n> Skip this after 6pm unless you enjoy staring at the ceiling.",
@@ -85,7 +85,7 @@ const CATALOGUE = [
   },
   {
     name: "BCAA Recovery",
-    category: "SUPPLEMENT",
+    category: "Supplements",
     description: "Sip through a long session or on rest days.",
     markdown:
       "## BCAA Recovery\n\n2:1:1 ratio with added electrolytes. One scoop in 500ml water, sipped through the session.",
@@ -97,7 +97,7 @@ const CATALOGUE = [
   },
   {
     name: "Omega-3 Fish Oil",
-    category: "SUPPLEMENT",
+    category: "Supplements",
     description: "1000mg softgels, 60 to a bottle.",
     markdown:
       "## Omega-3 Fish Oil\n\nTwo softgels a day with a meal. Molecularly distilled, so there is no aftertaste.",
@@ -109,7 +109,7 @@ const CATALOGUE = [
   },
   {
     name: "Shaker Bottle",
-    category: "ACCESSORY",
+    category: "Accessories",
     description: "700ml, leak-proof lid, steel mixing ball.",
     markdown: "## Shaker Bottle\n\n700ml with a steel mixing ball. Dishwasher safe, and the lid actually seals.",
     coinsGranted: 5,
@@ -121,7 +121,7 @@ const CATALOGUE = [
   },
   {
     name: "Lifting Gloves",
-    category: "ACCESSORY",
+    category: "Accessories",
     description: "Padded palm with an integrated wrist wrap.",
     markdown:
       "## Lifting Gloves\n\nPadded palm, half-finger, integrated wrist wrap. Sized by hand width — ask at the counter if you are unsure.",
@@ -135,7 +135,7 @@ const CATALOGUE = [
   },
   {
     name: "Lever Lifting Belt",
-    category: "ACCESSORY",
+    category: "Accessories",
     description: "10mm leather, for squats and deadlifts above bodyweight.",
     markdown:
       "## Lever Lifting Belt\n\n10mm full-grain leather with a lever buckle. Measure at the navel, not at the trouser waist — belts run one size small.",
@@ -148,7 +148,7 @@ const CATALOGUE = [
   },
   {
     name: "Wrist Straps",
-    category: "ACCESSORY",
+    category: "Accessories",
     description: "Cotton, 60cm. For when grip fails before the back does.",
     markdown: "## Wrist Straps\n\n60cm cotton with a neoprene pad. Sold in pairs.",
     coinsGranted: 5,
@@ -156,7 +156,7 @@ const CATALOGUE = [
   },
   {
     name: "Resistance Band Set",
-    category: "ACCESSORY",
+    category: "Accessories",
     description: "Five bands, 5kg to 30kg, with a door anchor.",
     markdown:
       "## Resistance Band Set\n\nFive latex loops from 5kg to 30kg, plus handles, ankle straps, and a door anchor. Fits in a kit bag.",
@@ -165,7 +165,7 @@ const CATALOGUE = [
   },
   {
     name: "Gym Towel",
-    category: "ACCESSORY",
+    category: "Accessories",
     description: "Microfibre, quick-dry. Wipe the bench down.",
     markdown: "## Gym Towel\n\n80x40cm microfibre. Dries in about an hour.",
     coinsGranted: 5,
@@ -225,21 +225,28 @@ function slug(text) {
     .replace(/^-+|-+$/g, "");
 }
 
+/**
+ * @param tenantId a gym's id, or null for the platform shop's own catalogue.
+ */
 function buildSql(tenantId) {
   const now = new Date().toISOString();
-  const idPrefix = "seedstore_" + tenantId + "_";
+  const idPrefix = "seedstore_" + (tenantId ?? "platform") + "_";
+  // `tenantId IS NULL` is the platform catalogue; SQL equality never matches
+  // null, so the delete below has to ask the right question or it clears
+  // nothing and the seed stacks a second copy.
+  const ownerClause = tenantId === null ? '"tenantId" IS NULL' : '"tenantId" = ' + q(tenantId);
 
   const statements = [
     "-- Generated by scripts/seed-store.mjs. Safe to re-run: it replaces its own rows.",
     // Variants first. Deleting the products would cascade to them anyway, but
     // being explicit keeps this readable when someone runs the file by hand.
-    'DELETE FROM "StoreVariant" WHERE "productId" IN (SELECT "id" FROM "StoreProduct" WHERE "tenantId" = ' +
-      q(tenantId) +
+    'DELETE FROM "ProductVariant" WHERE "productId" IN (SELECT "id" FROM "Product" WHERE ' +
+      ownerClause +
       ' AND "id" LIKE ' +
       q(idPrefix + "%") +
       ");",
-    'DELETE FROM "StoreProduct" WHERE "tenantId" = ' +
-      q(tenantId) +
+    'DELETE FROM "Product" WHERE ' +
+      ownerClause +
       ' AND "id" LIKE ' +
       q(idPrefix + "%") +
       ";",
@@ -249,7 +256,7 @@ function buildSql(tenantId) {
     const productId = idPrefix + slug(product.name);
 
     statements.push(
-      'INSERT INTO "StoreProduct" ("id","tenantId","name","description","markdown","category","photos","videoUrl","coinsGranted","isActive","createdAt","updatedAt") VALUES (' +
+      'INSERT INTO "Product" ("id","tenantId","name","description","markdown","category","photos","videoUrl","coinsGranted","isActive","createdAt","updatedAt") VALUES (' +
         [
           q(productId),
           q(tenantId),
@@ -271,7 +278,7 @@ function buildSql(tenantId) {
       const sku = slug(product.name).toUpperCase().slice(0, 8) + "-" + slug(variant.name).toUpperCase();
 
       statements.push(
-        'INSERT INTO "StoreVariant" ("id","productId","name","attributes","sku","price","stock","isActive","createdAt","updatedAt") VALUES (' +
+        'INSERT INTO "ProductVariant" ("id","productId","name","attributes","sku","price","stock","isActive","createdAt","updatedAt") VALUES (' +
           [
             q(productId + "_" + slug(variant.name)),
             q(productId),
@@ -299,9 +306,15 @@ const remote = args.includes("--remote");
 const tenantArgIndex = args.findIndex((arg) => arg === "--tenant" || arg === "-t");
 const tenantSlug = tenantArgIndex >= 0 ? args[tenantArgIndex + 1] : null;
 
-if (!tenantSlug) {
-  console.error("Usage: node scripts/seed-store.mjs --tenant <slug> [--remote]");
+// One catalogue table, two owners. `--platform` fills the shop on the root
+// host; `--tenant <slug>` fills that gym's. Same products either way, because
+// the point of a demo catalogue is showing the software, not the inventory.
+const platform = args.includes("--platform");
+
+if (!tenantSlug && !platform) {
+  console.error("Usage: node scripts/seed-store.mjs (--tenant <slug> | --platform) [--remote]");
   console.error("       The slug is the gym's subdomain, e.g. rudra-gym.");
+  console.error("       --platform seeds the shop at the root host instead.");
   process.exit(1);
 }
 
@@ -339,19 +352,22 @@ function d1(command, { json = true } = {}) {
   return result.stdout;
 }
 
-// Every row hangs off the tenant id, and that is not the slug — look it up
-// rather than making the caller go and find it.
-const lookup = d1(["--command", 'SELECT id FROM "Tenant" WHERE slug = ' + q(tenantSlug)]);
-const tenantId = (() => {
-  try {
-    const parsed = JSON.parse(lookup.slice(lookup.indexOf("[")));
-    return parsed?.[0]?.results?.[0]?.id ?? null;
-  } catch {
-    return null;
-  }
-})();
+// Every gym row hangs off the tenant id, and that is not the slug — look it up
+// rather than making the caller go and find it. The platform catalogue has no
+// owner to resolve.
+const tenantId = platform
+  ? null
+  : (() => {
+      const lookup = d1(["--command", 'SELECT id FROM "Tenant" WHERE slug = ' + q(tenantSlug)]);
+      try {
+        const parsed = JSON.parse(lookup.slice(lookup.indexOf("[")));
+        return parsed?.[0]?.results?.[0]?.id ?? null;
+      } catch {
+        return null;
+      }
+    })();
 
-if (!tenantId) {
+if (!platform && !tenantId) {
   console.error(
     'No gym found with slug "' + tenantSlug + '" in the ' + (remote ? "remote" : "local") + " database.",
   );
@@ -368,11 +384,9 @@ console.log(
     CATALOGUE.length +
     " products (" +
     variantCount +
-    ' variants) into "' +
-    tenantSlug +
-    '" (' +
-    tenantId +
-    "), " +
+    " variants) into " +
+    (platform ? "the platform shop" : '"' + tenantSlug + '" (' + tenantId + ")") +
+    ", " +
     (remote ? "remote" : "local") +
     "...",
 );

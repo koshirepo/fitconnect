@@ -16,8 +16,17 @@ import type { AppBindings } from "../../types/app-context";
 
 export const reviewRoutes = new Hono<AppBindings>();
 
-// Get reviews for a product (public)
-reviewRoutes.get("/products/:productId/reviews", reviewController.listByProduct);
+// Get reviews for a product (public).
+//
+// `optionalAuthenticate` rather than nothing: the list is readable signed out,
+// but a signed-in reader gets `helpfulByMe` on each row so the page can show
+// the votes they already cast. A missing or invalid token is not an error here,
+// it just means no votes to mark.
+reviewRoutes.get(
+  "/products/:productId/reviews",
+  optionalAuthenticate,
+  reviewController.listByProduct,
+);
 
 // Get rating stats for a product (public)
 reviewRoutes.get("/products/:productId/reviews/stats", reviewController.getRatingStats);

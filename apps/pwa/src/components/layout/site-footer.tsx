@@ -35,7 +35,7 @@ function tenantColumns(signedIn: boolean): Column[] {
       heading: "The gym",
       links: [
         { label: "Home", to: "/" },
-        { label: "Shop", to: "/store" },
+        { label: "Shop", to: "/shop" },
       ],
     },
     {

@@ -80,6 +80,10 @@ export const commerceApi = {
   getOrderTracking: (orderId: string) =>
     api.get<ApiResponse<OrderTracking>>(`/orders/${orderId}/tracking`),
 
+  /** Throw away a checkout nobody paid for, putting its stock back. */
+  discardUnpaidOrder: (orderId: string) =>
+    api.post<ApiResponse<{ discarded: boolean }>>(`/orders/${orderId}/discard`, {}),
+
   cancelOrder: (orderId: string, reason: string) =>
     api.post<ApiResponse<{ order: Order; refunded: boolean; refundError: string | null }>>(
       `/orders/${orderId}/cancel`,

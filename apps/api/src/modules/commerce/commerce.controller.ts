@@ -94,6 +94,21 @@ export const commerceController = {
   },
 
   /**
+   * Handle the `discard unpaid order` HTTP action for the commerce module.
+   *
+   * Called by the browser when somebody closes the payment window. Unauthenticated
+   * on purpose — a guest checkout has no session, and the order id is the only
+   * thing the caller could know. Discarding is safe to expose because it refuses
+   * anything already paid, so the worst a guessed id achieves is cancelling a
+   * checkout that nobody had paid for.
+   */
+  async discardUnpaidOrder(c: AppContext) {
+    const orderId = c.req.param("id")!;
+    const result = await commerceService.discardUnpaidOrder(orderId);
+    return ok(c, result.data);
+  },
+
+  /**
    * Handle the `get order by id` HTTP action for the commerce module.
    * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
    */

@@ -1005,7 +1005,18 @@ export const paymentRepository = {
    * abandoned checkout never extends a membership: an unpaid PENDING row
    * carries no dates for `refreshDueDate` to pick up.
    */
-  async settleGatewayPayment(paymentId: string, gatewayPaymentId: string) {
+  async settleGatewayPayment(
+    paymentId: string,
+    gatewayPaymentId: string,
+    /**
+     * What the gateway charged, in paise, when it is known.
+     *
+     * Recorded on the row rather than derived later because it is the basis of
+     * what the gym is owed, and Razorpay only reports it once. Omitted for the
+     * desk paths, which have no gateway and so no fee.
+     */
+    deductions?: { feePaise: number | null; taxPaise: number | null },
+  ) {
     const existing = await prisma.payment.findUniqueOrThrow({
       where: { id: paymentId },
       select: {
@@ -1050,6 +1061,8 @@ export const paymentRepository = {
         paidAt,
         validFrom: window.validFrom,
         validUntil: window.validUntil,
+        ...(deductions?.feePaise != null ? { gatewayFeePaise: deductions.feePaise } : {}),
+        ...(deductions?.taxPaise != null ? { gatewayTaxPaise: deductions.taxPaise } : {}),
       },
       select: {
         id: true,

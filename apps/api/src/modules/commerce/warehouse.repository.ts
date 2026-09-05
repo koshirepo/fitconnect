@@ -154,7 +154,8 @@ export const warehouseRepository = {
 
   /** Refuses to orphan products: a warehouse still stocking something stays. */
   async countProducts(warehouseId: string) {
-    return prisma.product.count({ where: { warehouseId } });
+    // Warehouses are a platform-shop concept; a gym's products never have one.
+    return prisma.product.count({ where: { warehouseId, tenantId: null } });
   },
 
   delete(warehouseId: string) {
@@ -169,7 +170,7 @@ export const warehouseRepository = {
    */
   async warehouseIdsForProducts(productIds: string[]) {
     const products = await prisma.product.findMany({
-      where: { id: { in: [...new Set(productIds)] } },
+      where: { id: { in: [...new Set(productIds)] }, tenantId: null },
       select: { id: true, warehouseId: true },
     });
 

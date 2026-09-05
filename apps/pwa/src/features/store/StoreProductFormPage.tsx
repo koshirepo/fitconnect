@@ -27,13 +27,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { PhotoListInput } from "@/components/ui/photo-list-input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { FormPageSkeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { Plus, Trash2 } from "lucide-react";
@@ -67,6 +60,9 @@ function toPayload(draft: VariantDraft): StoreVariantPayload {
   };
 }
 
+/** Offered in the category field; a gym may type anything else. */
+const CATEGORY_SUGGESTIONS = ["Supplements", "Accessories", "Apparel", "Equipment"];
+
 export default function StoreProductFormPage() {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useAppNavigate();
@@ -85,7 +81,7 @@ export default function StoreProductFormPage() {
   const [markdown, setMarkdown] = React.useState("");
   const [photos, setPhotos] = React.useState<string[]>([]);
   const [videoUrl, setVideoUrl] = React.useState("");
-  const [category, setCategory] = React.useState<"SUPPLEMENT" | "ACCESSORY">("SUPPLEMENT");
+  const [category, setCategory] = React.useState<string>(CATEGORY_SUGGESTIONS[0]);
   const [coinsGranted, setCoinsGranted] = React.useState("0");
   const [variants, setVariants] = React.useState<VariantDraft[]>([emptyVariant()]);
   const [newVariant, setNewVariant] = React.useState<VariantDraft>(emptyVariant());
@@ -102,7 +98,7 @@ export default function StoreProductFormPage() {
     setMarkdown(product.markdown ?? "");
     setPhotos(Array.isArray(product.photos) ? product.photos : []);
     setVideoUrl(product.videoUrl ?? "");
-    setCategory(product.category === "ACCESSORY" ? "ACCESSORY" : "SUPPLEMENT");
+    setCategory(product.category);
     setCoinsGranted(String(product.coinsGranted));
     setSeeded(true);
   }, [isEdit, seeded, product]);
@@ -248,20 +244,24 @@ export default function StoreProductFormPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="category">Category *</Label>
-              <Select
+              {/* Typed, not chosen from two. The list below is a suggestion, so
+                  a gym selling apparel or gift cards can name its own shelf
+                  while the common ones stay one keystroke away. What is typed
+                  is what the storefront chip says — there is no mapping step. */}
+              <Input
+                id="category"
+                list="store-category-suggestions"
                 value={category}
-                onValueChange={(value) =>
-                  setCategory((value ?? "SUPPLEMENT") as "SUPPLEMENT" | "ACCESSORY")
-                }
-              >
-                <SelectTrigger id="category" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="SUPPLEMENT">Supplement</SelectItem>
-                  <SelectItem value="ACCESSORY">Accessory</SelectItem>
-                </SelectContent>
-              </Select>
+                onChange={(event) => setCategory(event.target.value)}
+                placeholder="Supplements"
+                maxLength={40}
+                required
+              />
+              <datalist id="store-category-suggestions">
+                {CATEGORY_SUGGESTIONS.map((name) => (
+                  <option key={name} value={name} />
+                ))}
+              </datalist>
             </div>
 
             <div className="space-y-1.5">

@@ -8,7 +8,13 @@
  */
 import * as React from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
+import {
+  basketTotalQuantity,
+  readBasket,
+  setBasketQuantity,
+  type BasketEntry,
+} from "./basket";
 import {
   useAddProductComment,
   useDeleteProductComment,
@@ -32,6 +38,9 @@ import { ShareButton } from "@/components/ui/share-button";
 import { ProductOverview } from "./ProductOverview";
 
 export default function PublicStoreProductPage() {
+  // The basket itself, not a draft of one: pressing + puts it in, exactly as
+  // the platform shop does. Held here so the rows re-render as it changes.
+  const [basket, setBasket] = React.useState<BasketEntry[]>([]);
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
   const toast = useToast();
@@ -56,6 +65,9 @@ export default function PublicStoreProductPage() {
   // Only for the share text — "Shaker Bottle at Rudra Gym" says more in a
   // WhatsApp message than the product name alone.
   const [tenantName, setTenantName] = React.useState("");
+  // The basket is keyed by gym, and this page is reached without one in the
+  // session when a visitor is browsing, so it comes from the product response.
+  const [tenantId, setTenantId] = React.useState<string | null>(null);
   const [comments, setComments] = React.useState<SocialComment[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
@@ -70,6 +82,10 @@ export default function PublicStoreProductPage() {
         if (!active) return;
         setProduct(res.data.data.product);
         setTenantName(res.data.data.tenant.name);
+        setTenantId(res.data.data.tenant.id);
+        // Whatever is already in this gym's basket, so the rows open showing
+        // what the storefront would show.
+        setBasket(readBasket(res.data.data.tenant.id));
         setComments(res.data.data.comments);
       })
       .catch((caught) => {
@@ -100,7 +116,7 @@ export default function PublicStoreProductPage() {
           title="Product not found"
           description={error || "It is no longer on sale at this gym."}
           action={
-            <Button variant="outline" onClick={() => navigate("/store")}>
+            <Button variant="outline" onClick={() => navigate("/shop")}>
               <ArrowLeft className="h-4 w-4" />
               Back to store
             </Button>
@@ -187,20 +203,37 @@ export default function PublicStoreProductPage() {
         // said "Options", the product page listed them, and nothing on it
         // added anything. Guests can buy now, so the button that starts
         // that has to be here too.
-        renderVariantAction={(variant) => (
-          <Button
-            size="icon"
-            variant="outline"
-            disabled={variant.stock <= 0}
-            // The storefront owns the basket; this hands it the variant,
-            // exactly as the dashboard product page does.
-            onClick={() => navigate(`/store?add=${encodeURIComponent(variant.id)}`)}
-            aria-label={`Add ${variant.name} to basket`}
-          >
-            <Plus className="h-3.5 w-3.5" />
-          </Button>
-        )}
+        quantityFor={(variant) =>
+          basket.find((entry) => entry.variantId === variant.id)?.quantity ?? 0
+        }
+        onQuantityChange={(variant, quantity) => {
+          if (!product) return;
+          setBasket(
+            setBasketQuantity(
+              tenantId,
+              {
+                variantId: variant.id,
+                productId: product.id,
+                productName: product.name,
+                variantName: variant.name,
+                unitPrice: variant.price,
+                stock: variant.stock,
+                ...(Array.isArray(product.photos) && product.photos[0]
+                  ? { photo: product.photos[0] }
+                  : {}),
+              },
+              quantity,
+            ),
+          );
+        }}
       />
+
+      {basketTotalQuantity(basket) > 0 && (
+        <Button className="w-full" onClick={() => navigate("/shop")}>
+          <ShoppingCart className="h-4 w-4" />
+          View basket · {basketTotalQuantity(basket)}
+        </Button>
+      )}
 
       {!asMember && (
         <Card>

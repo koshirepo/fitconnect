@@ -15,6 +15,7 @@ import {
   RazorpayError,
 } from "../../lib/razorpay";
 import { gatewayService } from "../payments/gateway.service";
+import { toStorefrontProduct } from "../catalogue/catalogue.service";
 import { commerceRepository } from "./commerce.repository";
 import { shippingRepository } from "./shipping.repository";
 import { shippingService } from "./shipping.service";
@@ -58,32 +59,15 @@ function toStringList(value: unknown): string[] {
  * Execute the `map product` workflow for the commerce module.
  * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
  */
-function mapProduct(product: {
-  id: string;
-  name: string;
-  description: string | null;
-  markdown: string | null;
-  photos: unknown;
-  category: string;
-  price: number;
-  stock: number;
-  minOrderQty: number;
-  maxOrderQty: number;
-  weightGrams?: number;
-  lengthCm?: number;
-  widthCm?: number;
-  heightCm?: number;
-  warehouseId?: string | null;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}) {
-  return {
-    ...product,
-    photos: toStringList(product.photos),
-    videos: [],
-  };
-}
+/**
+ * The shop's product shape is the catalogue's product shape.
+ *
+ * This module used to keep its own `mapProduct`, which flattened photos and
+ * derived nothing; a gym's store kept another that flattened like counts. One
+ * table now feeds both, so one serializer describes it — see
+ * `catalogue.service.ts` for what `price` and `stock` are derived from.
+ */
+const mapProduct = toStorefrontProduct;
 
 /**
  * Execute the `map order` workflow for the commerce module.
@@ -217,6 +201,7 @@ export const commerceService = {
     }
 
     const product = await commerceRepository.updateProduct(productId, input);
+    if (!product) return { error: "Product not found.", status: 404 as const };
     return { data: { product: mapProduct(product) } };
   },
 
@@ -237,6 +222,9 @@ export const commerceService = {
     }
 
     const product = await commerceRepository.deleteProduct(productId);
+    // Null means the id was not in the platform catalogue — a gym's product, or
+    // nothing at all. Either way the shop admin has no business deleting it.
+    if (!product) return { error: "Product not found.", status: 404 as const };
     return { data: { product: mapProduct(product) } };
   },
 
@@ -304,20 +292,59 @@ export const commerceService = {
    * the total the database computed, never a number from the request: a body
    * that could name its own amount could buy a ₹5,000 order for a rupee.
    *
-   * A deployment with no gateway configured still takes the order and returns
-   * `checkout: null`, which is exactly what this endpoint did before payment
-   * existed — an unpaid order for someone to settle by hand.
+   * The shop is online-payment only, so an order that cannot be paid for is not
+   * an order. Two things follow. A deployment with no gateway configured is
+   * refused outright rather than taking a purchase it can never charge for. And
+   * a gateway that fails while opening the window has its half-made order rolled
+   * back, stock and all, instead of leaving a PENDING row nobody will settle.
+   *
+   * The order is still written before the payment window opens, because that is
+   * what claims the stock: without it, two people paying for the last tub at the
+   * same moment both succeed. It exists only for as long as the payment does.
    */
+  /**
+   * Throw away an order that was never paid for, and put its stock back.
+   *
+   * The shop takes money online only, so an unpaid order is not a purchase
+   * waiting to be settled — it is a checkout somebody walked away from. Holding
+   * stock for it means the next buyer is told the last tub is gone.
+   *
+   * Deliberately refuses to touch an order that has been paid. A webhook can
+   * land while the buyer is still looking at the payment window, and discarding
+   * a paid order would take the money and cancel the goods.
+   */
+  async discardUnpaidOrder(orderId: string) {
+    const existing = await commerceRepository.findOrderById(orderId);
+    if (!existing) return { data: { discarded: false } };
+
+    if (existing.paymentStatus === "COMPLETED" || existing.gatewayPaymentId) {
+      return { data: { discarded: false } };
+    }
+
+    const deleted = await commerceRepository.deleteOrder(orderId);
+    await commerceRepository.restoreStockForOrderItems(
+      deleted.items.map((item) => ({ variantId: item.variantId, quantity: item.quantity })),
+    );
+
+    return { data: { discarded: true } };
+  },
+
   async startCheckout(input: PlaceOrderInput, userId?: string) {
+    // Checked before anything is written. Placing the order first and finding
+    // out afterwards is how the shop used to end up holding stock against a
+    // purchase it had no way to take money for.
+    const credentials = gatewayService.resolvePlatformCredentials();
+    if (!credentials) {
+      return {
+        error: "Online payment is unavailable right now. Please try again shortly.",
+        status: 503 as const,
+      };
+    }
+
     const placed = await this.placeOrder(input, userId);
     if ("error" in placed) return placed;
 
     const order = placed.data.order;
-
-    const credentials = gatewayService.resolvePlatformCredentials();
-    if (!credentials) {
-      return { data: { order, checkout: null } };
-    }
 
     try {
       const gatewayOrder = await createOrder(credentials, {
@@ -343,20 +370,22 @@ export const commerceService = {
       };
     } catch (err) {
       /**
-       * The order stands, unpaid.
+       * Rolled back, not left standing.
        *
-       * Rolling it back would put the stock right but throw away a real
-       * purchase because Razorpay had a bad minute. Leaving it PENDING is the
-       * same state the shop produced for every order before it took cards, and
-       * the buyer is told to use the order id.
+       * An order the buyer cannot pay for is one the shop would hold stock
+       * against and nobody would settle. Discarding it puts the tubs back on
+       * the shelf and leaves the buyer with a cart they can try again from.
        */
       if (err instanceof RazorpayError) {
+        await this.discardUnpaidOrder(order.id);
         return {
           error:
-            "Your order was placed, but the payment window could not be opened. Use your order id to pay later.",
+            "The payment window could not be opened, so nothing was ordered. Please try again.",
           status: 502 as const,
         };
       }
+
+      await this.discardUnpaidOrder(order.id);
       throw err;
     }
   },
@@ -560,7 +589,7 @@ export const commerceService = {
     if (!cancelled) return { error: "This order is already cancelled.", status: 409 as const };
 
     await commerceRepository.restoreStockForOrderItems(
-      order.items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+      order.items.map((item) => ({ variantId: item.variantId, quantity: item.quantity })),
     );
 
     const refund = await this.refundOrder(orderId, {}, `cancel-${orderId}`);
@@ -753,7 +782,7 @@ export const commerceService = {
 
     await commerceRepository.advanceOrderStatus(order.id, "RETURNED");
     await commerceRepository.restoreStockForOrderItems(
-      order.items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+      order.items.map((item) => ({ variantId: item.variantId, quantity: item.quantity })),
     );
 
     const refund = await this.refundOrder(order.id, {}, `return-${returnRequestId}`);
@@ -878,7 +907,7 @@ export const commerceService = {
     const deletedOrder = await commerceRepository.deleteOrder(orderId);
     await commerceRepository.restoreStockForOrderItems(
       deletedOrder.items.map((item) => ({
-        productId: item.productId,
+        variantId: item.variantId,
         quantity: item.quantity,
       })),
     );

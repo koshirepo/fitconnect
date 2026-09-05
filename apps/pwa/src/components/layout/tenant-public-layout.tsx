@@ -52,7 +52,7 @@ function roleLabel(role: string) {
 
 const NAV = [
   { to: "/", label: "Home", end: true },
-  { to: "/store", label: "Store", end: false },
+  { to: "/shop", label: "Shop", end: false },
 ] as const;
 
 export function TenantPublicLayout() {

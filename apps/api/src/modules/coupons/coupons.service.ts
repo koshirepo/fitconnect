@@ -526,6 +526,28 @@ export const coinAdminService = {
       return { error: "Member not found in this gym.", status: 404 as const };
     }
 
+    /**
+     * The person giving coins has to belong to the gym they are giving them in.
+     *
+     * Platform staff can reach this endpoint — they hold every permission
+     * everywhere — but a coin is a promise the gym has to honour, and the
+     * ledger has to name somebody the gym can actually ask about it. An entry
+     * attributed to an account with no membership here is a balance that moved
+     * and nobody at the gym is answerable for.
+     */
+    if (input.actorUserId) {
+      const actor = await prisma.tenantMembership.findFirst({
+        where: { userId: input.actorUserId, tenantId: input.tenantId },
+        select: { id: true },
+      });
+      if (!actor) {
+        return {
+          error: "Only somebody who belongs to this gym can give or take coins.",
+          status: 403 as const,
+        };
+      }
+    }
+
     // Taking away more than somebody has would leave them owing coins they
     // never spent, which is a debt the gym invented.
     if (input.amount < 0) {

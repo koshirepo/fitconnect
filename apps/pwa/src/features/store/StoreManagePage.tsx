@@ -94,7 +94,7 @@ export default function StoreManagePage() {
           <h1 className="text-2xl font-bold tracking-tight">Manage store</h1>
           <p className="text-muted-foreground">What the gym sells, and how much of it is left</p>
         </div>
-        <Button onClick={() => navigate("/store/manage/new")}>
+        <Button onClick={() => navigate("/dashboard/store/manage/new")}>
           <Plus className="h-4 w-4" />
           New product
         </Button>
@@ -112,7 +112,7 @@ export default function StoreManagePage() {
           title="Nothing in the store yet"
           description="Add a supplement or a piece of kit to start selling."
           action={
-            <Button onClick={() => navigate("/store/manage/new")}>
+            <Button onClick={() => navigate("/dashboard/store/manage/new")}>
               <Plus className="h-4 w-4" />
               New product
             </Button>
@@ -128,7 +128,7 @@ export default function StoreManagePage() {
                     <CardTitle className="flex flex-wrap items-center gap-2 text-base">
                       {product.name}
                       <Badge variant="secondary" className="text-xs">
-                        {product.category === "ACCESSORY" ? "Accessory" : "Supplement"}
+                        {product.category}
                       </Badge>
                       {product.coinsGranted > 0 && (
                         <Badge variant="accent" className="text-xs">
@@ -162,7 +162,7 @@ export default function StoreManagePage() {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => navigate(`/store/manage/${product.id}/edit`)}
+                      onClick={() => navigate(`/dashboard/store/manage/${product.id}/edit`)}
                       aria-label={`Edit ${product.name}`}
                     >
                       <Edit2 className="h-3.5 w-3.5" />

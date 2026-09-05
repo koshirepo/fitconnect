@@ -12,6 +12,7 @@ import { authenticate } from "../../middleware/authenticate";
 import { idempotency } from "../../middleware/idempotency";
 import { optionalAuthenticate } from "../../middleware/optional-authenticate";
 import { requirePermissions } from "../../middleware/authorize";
+import { rateLimitSignup } from "../../middleware/abuse-guard";
 import { commerceController } from "./commerce.controller";
 import { warehouseController } from "./warehouse.controller";
 import { trackingWebhookController } from "./tracking-webhook.controller";
@@ -69,6 +70,14 @@ commerceRoutes.get("/orders/:id", commerceController.getOrderById);
  * the same footing — they act on that one order and nothing else.
  */
 commerceRoutes.get("/orders/:id/tracking", commerceController.getOrderTracking);
+// Throw away a checkout nobody paid for. Rate-limited with the other
+// unauthenticated writes: it takes an order id and no session.
+commerceRoutes.post(
+  "/orders/:id/discard",
+  rateLimitSignup,
+  commerceController.discardUnpaidOrder,
+);
+
 commerceRoutes.post("/orders/:id/cancel", commerceController.cancelOrder);
 commerceRoutes.post("/orders/:id/returns", commerceController.requestReturn);
 

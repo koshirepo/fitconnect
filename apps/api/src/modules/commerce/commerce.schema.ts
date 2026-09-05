@@ -78,6 +78,15 @@ export const updateProductSchema = productCoreSchema
 
 const orderItemSchema = z.object({
   productId: z.string(),
+  /**
+   * Which form is being bought.
+   *
+   * Optional, not absent: a product sold in one form needs no choice and the
+   * server resolves it, while a product sold in several is refused without one
+   * rather than guessed at. Also lets a cart saved before variants existed
+   * still check out.
+   */
+  variantId: z.string().optional(),
   quantity: z.number().int().min(1),
 });
 

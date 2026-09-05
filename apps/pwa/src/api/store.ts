@@ -17,7 +17,8 @@ import type {
 export type StoreProductPayload = {
   name: string;
   description?: string;
-  category: "SUPPLEMENT" | "ACCESSORY";
+  /** Display text, e.g. "Supplements". Free-form: a gym names its own. */
+  category: string;
   // Null clears the stored value, undefined leaves it alone — the update
   // endpoint tells the two apart, so the payload type has to as well.
   markdown?: string | null;

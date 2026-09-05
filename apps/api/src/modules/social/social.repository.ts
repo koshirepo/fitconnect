@@ -76,7 +76,7 @@ export const socialRepository = {
 
   /** Confirms the product is this gym's before anything is written against it. */
   findProductInTenant(tenantId: string, productId: string) {
-    return prisma.storeProduct.findFirst({
+    return prisma.product.findFirst({
       where: { id: productId, tenantId },
       select: { id: true, name: true },
     });
@@ -85,7 +85,7 @@ export const socialRepository = {
   async likeProduct(productId: string, membershipId: string) {
     // Upsert rather than create: tapping twice, or a retried request, should
     // leave one row rather than raising a unique-constraint error at a member.
-    await prisma.storeProductLike.upsert({
+    await prisma.productLike.upsert({
       where: { productId_membershipId: { productId, membershipId } },
       create: { productId, membershipId },
       update: {},
@@ -93,15 +93,15 @@ export const socialRepository = {
   },
 
   async unlikeProduct(productId: string, membershipId: string) {
-    await prisma.storeProductLike.deleteMany({ where: { productId, membershipId } });
+    await prisma.productLike.deleteMany({ where: { productId, membershipId } });
   },
 
   countProductLikes(productId: string) {
-    return prisma.storeProductLike.count({ where: { productId } });
+    return prisma.productLike.count({ where: { productId } });
   },
 
   async hasLikedProduct(productId: string, membershipId: string) {
-    const like = await prisma.storeProductLike.findUnique({
+    const like = await prisma.productLike.findUnique({
       where: { productId_membershipId: { productId, membershipId } },
       select: { id: true },
     });
@@ -118,7 +118,7 @@ export const socialRepository = {
   async findLikedProductIds(membershipId: string, productIds: string[]) {
     if (productIds.length === 0) return new Set<string>();
 
-    const likes = await prisma.storeProductLike.findMany({
+    const likes = await prisma.productLike.findMany({
       where: { membershipId, productId: { in: productIds } },
       select: { productId: true },
     });
@@ -128,21 +128,21 @@ export const socialRepository = {
 
   async listProductComments(productId: string, page: number, limit: number) {
     const [comments, total] = await Promise.all([
-      prisma.storeProductComment.findMany({
+      prisma.productComment.findMany({
         where: { productId },
         select: productCommentSelect,
         orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
       }),
-      prisma.storeProductComment.count({ where: { productId } }),
+      prisma.productComment.count({ where: { productId } }),
     ]);
 
     return { comments: comments.map(shapeProductComment), total };
   },
 
   async createProductComment(productId: string, membershipId: string, body: string) {
-    const comment = await prisma.storeProductComment.create({
+    const comment = await prisma.productComment.create({
       data: { productId, membershipId, body },
       select: productCommentSelect,
     });
@@ -151,14 +151,14 @@ export const socialRepository = {
   },
 
   findProductComment(tenantId: string, commentId: string) {
-    return prisma.storeProductComment.findFirst({
+    return prisma.productComment.findFirst({
       where: { id: commentId, product: { tenantId } },
       select: { id: true, membershipId: true, productId: true },
     });
   },
 
   async deleteProductComment(commentId: string) {
-    await prisma.storeProductComment.delete({ where: { id: commentId } });
+    await prisma.productComment.delete({ where: { id: commentId } });
   },
 
   // ─── Gyms ──────────────────────────────────────────────────────────────────

@@ -20,6 +20,7 @@ import {
   BellRing,
   CreditCard,
   Package,
+  Coins,
   Tag,
   ClipboardList,
   ShoppingBag,
@@ -172,8 +173,17 @@ const tenantNav: NavItem[] = [
     anyOf: [Permission.COUPONS_READ],
   },
   {
+    // Its own entry, not a tab under coupons: coins also come from referrals
+    // and staff gifts, and what a gym owes in coins is a different question
+    // from which discount code is working.
+    to: "/coins",
+    label: "Coins",
+    icon: Coins,
+    anyOf: [Permission.COUPONS_READ],
+  },
+  {
     // The shop itself. Public, and the only place anybody buys anything.
-    to: "/store",
+    to: "/dashboard/store",
     label: "Store",
     icon: ShoppingBag,
     anyOf: [Permission.STORE_READ],
@@ -182,7 +192,7 @@ const tenantNav: NavItem[] = [
   {
     // The other side of the counter: orders to hand over, payments to settle,
     // stock to correct. Not a shop, so it is not called one.
-    to: "/store",
+    to: "/dashboard/store",
     label: "Store admin",
     icon: ClipboardList,
     anyOf: [Permission.STORE_MANAGE, Permission.STORE_SELL],

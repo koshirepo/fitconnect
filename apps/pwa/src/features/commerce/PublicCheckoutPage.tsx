@@ -15,6 +15,7 @@ import type { PlaceOrderPayload, Product } from "@/types/api";
 import { calculateTotals, formatCurrency, validateQuantity } from "./pricing";
 import { clearCartItems, getCartItems, saveCartItems, type CartItem } from "./cart";
 import { openRazorpayCheckout } from "@/lib/razorpay-checkout";
+import { FulfilmentBadge } from "@/components/catalog/fulfilment-badge";
 import { useSeo } from "@/lib/seo";
 
 type BuyerForm = {
@@ -51,6 +52,9 @@ const IDLE_SHIPPING: ShippingState = {
 
 type CheckoutLine = {
   product: Product;
+  /** The form bought. Null on a line saved before variants existed. */
+  variantId: string | null;
+  variant: Product["variants"][number] | undefined;
   quantity: number;
 };
 
@@ -109,7 +113,11 @@ export default function PublicCheckoutPage() {
         .map((item) => {
           const product = productMap.get(item.productId);
           if (!product) return null;
-          return { product, quantity: item.quantity };
+          const sellable = (product.variants ?? []).filter((variant) => variant.isActive);
+          const variant =
+            sellable.find((candidate) => candidate.id === item.variantId) ??
+            (sellable.length === 1 ? sellable[0] : undefined);
+          return { product, variantId: item.variantId, variant, quantity: item.quantity };
         })
         .filter((line): line is CheckoutLine => Boolean(line)),
     [cart, productMap],
@@ -293,6 +301,10 @@ export default function PublicCheckoutPage() {
       buyerPincode: buyer.buyerPincode.trim(),
       items: lines.map((line) => ({
         productId: line.product.id,
+        // Named where the buyer chose one. The server refuses to guess for a
+        // product sold in several forms, which is what stops a mis-picked
+        // colour being shipped.
+        ...(line.variant ? { variantId: line.variant.id } : {}),
         quantity: line.quantity,
       })),
     };
@@ -307,12 +319,18 @@ export default function PublicCheckoutPage() {
       // leave the buyer placing the same order twice. Only storage is cleared —
       // the in-memory copy still renders the summary behind the payment window,
       // which would otherwise flip to "no items to checkout" underneath it.
+      // Kept so it can be handed back if the payment does not complete. The
+      // cart is cleared now rather than after, because a dismissed payment
+      // window must not leave the buyer able to place the same order twice.
+      const snapshot = getCartItems();
       clearCartItems();
 
-      // No gateway configured: the order stands, unpaid, and the confirmation
-      // page says so. This is what the shop did before it took cards.
+      // The API refuses to place an order it cannot take money for, so a
+      // response without a payment window is not a state the shop can be in.
       if (!checkout) {
-        navigate(`/shop/orders/${order.id}`);
+        await commerceApi.discardUnpaidOrder(order.id).catch(() => {});
+        saveCartItems(snapshot);
+        setError("Online payment is unavailable right now. Please try again shortly.");
         return;
       }
 
@@ -331,21 +349,32 @@ export default function PublicCheckoutPage() {
       });
 
       /**
-       * Dismissing or failing is not an error worth shouting about: the order
-       * is real and unpaid, and the confirmation page is where they can see it
-       * and its id. Razorpay's own webhook settles it if the money did land.
+       * Dismissed or failed means no order.
+       *
+       * The row exists only to hold stock while the payment window is open, so
+       * walking away throws it out and puts the tubs back. The cart comes back
+       * with it — somebody who closed the window by accident should find their
+       * basket where they left it, not have to build it again.
+       *
+       * `discardUnpaidOrder` refuses anything already paid, so a webhook that
+       * lands mid-dismissal keeps the order rather than losing it.
        */
-      if (result.status === "paid") {
-        try {
-          await commerceApi.verifyOrderPayment({
-            orderId: result.orderId,
-            paymentId: result.paymentId,
-            signature: result.signature,
-          });
-        } catch {
-          // The money is taken and the webhook will settle it; showing a
-          // failure here would be both alarming and wrong.
-        }
+      if (result.status !== "paid") {
+        await commerceApi.discardUnpaidOrder(order.id).catch(() => {});
+        saveCartItems(snapshot);
+        setError("Payment was not completed, so nothing was ordered. Your basket is as you left it.");
+        return;
+      }
+
+      try {
+        await commerceApi.verifyOrderPayment({
+          orderId: result.orderId,
+          paymentId: result.paymentId,
+          signature: result.signature,
+        });
+      } catch {
+        // The money is taken and the webhook will settle it; showing a failure
+        // here would be both alarming and wrong.
       }
 
       navigate(`/shop/orders/${order.id}`);
@@ -541,17 +570,29 @@ export default function PublicCheckoutPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-2">
-                {lines.map((line) => (
-                  <div key={line.product.id} className="rounded-md border p-2 text-sm">
-                    <p className="font-medium">{line.product.name}</p>
-                    <p className="text-muted-foreground">
-                      Qty {line.quantity} x {formatCurrency(line.product.price)}
-                    </p>
-                    <p className="font-medium">
-                      {formatCurrency(line.quantity * line.product.price)}
-                    </p>
-                  </div>
-                ))}
+                {lines.map((line) => {
+                  const unitPrice = line.variant?.price ?? line.product.price;
+
+                  return (
+                    <div
+                      key={line.variantId ?? line.product.id}
+                      className="space-y-1 rounded-md border p-2 text-sm"
+                    >
+                      <p className="font-medium">{line.product.name}</p>
+                      {line.variant && (
+                        <p className="text-xs text-muted-foreground">{line.variant.name}</p>
+                      )}
+                      <p className="text-muted-foreground">
+                        Qty {line.quantity} x {formatCurrency(unitPrice)}
+                      </p>
+                      <p className="font-medium">{formatCurrency(line.quantity * unitPrice)}</p>
+                      {/* Everything the platform shop sells is couriered; a gym
+                          store is collected. Said per line so a basket that ever
+                          mixes the two reads correctly without changing here. */}
+                      <FulfilmentBadge fulfilment="DELIVERY" />
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="rounded-md border p-3 text-sm space-y-1">

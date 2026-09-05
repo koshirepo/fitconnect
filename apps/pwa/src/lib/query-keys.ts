@@ -73,6 +73,17 @@ export const queryKeys = {
   social: {
     tenantComments: (tenantId: string) => ["social", tenantId, "comments"] as const,
   },
+  /**
+   * Platform shop reviews. Not gym-scoped: a product in the platform catalogue
+   * is the same product whichever gym you came from, so these keys carry no
+   * tenant id — unlike `store`, which is a gym's own catalogue.
+   */
+  reviews: {
+    root: (productId: string) => ["reviews", productId] as const,
+    list: (productId: string, page: number, limit: number) =>
+      ["reviews", productId, "list", page, limit] as const,
+    stats: (productId: string) => ["reviews", productId, "stats"] as const,
+  },
   attendance: {
     byDate: (tenantId: string, date: string) => ["attendance", tenantId, "date", date] as const,
     member: (tenantId: string, membershipId: string) =>
@@ -94,6 +105,13 @@ export const queryKeys = {
       ["coupons", tenantId, "detail", couponId] as const,
     coins: (tenantId: string, membershipId: string) =>
       ["coupons", tenantId, "coins", membershipId] as const,
+    /** Gym-wide, not per member. Under the coupon prefix so a coin adjustment
+     *  invalidates the analytics along with the balance it changed. */
+    coinOverview: (tenantId: string) => ["coupons", tenantId, "coins", "overview"] as const,
+    coinHolders: (tenantId: string) => ["coupons", tenantId, "coins", "holders"] as const,
+    coinActivity: (tenantId: string) => ["coupons", tenantId, "coins", "activity"] as const,
+    analytics: (tenantId: string) => ["coupons", tenantId, "analytics"] as const,
+    activity: (tenantId: string) => ["coupons", tenantId, "activity"] as const,
   },
   todos: {
     list: (tenantId: string) => ["todos", tenantId] as const,

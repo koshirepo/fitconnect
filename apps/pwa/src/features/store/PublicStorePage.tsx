@@ -11,12 +11,9 @@ import * as React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Coins,
-  Minus,
   Plus,
-  Search,
   ShoppingCart,
   Store,
-  Trash2,
   X,
 } from "lucide-react";
 
@@ -42,31 +39,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
-import { OptimizedImage } from "@/components/ui/optimized-image";
+import { ProductCard } from "@/components/catalog/product-card";
+import { CartLine, CartSummary } from "@/components/catalog/cart-line";
+import { FulfilmentBadge } from "@/components/catalog/fulfilment-badge";
+import { ProductGrid, StorefrontToolbar } from "@/components/catalog/storefront-toolbar";
+import { readBasket, writeBasket, type BasketEntry } from "./basket";
 import { CardsGridSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useToast } from "@/components/ui/toast";
-import { formatCurrency, cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { ShoppingBag } from "lucide-react";
 import type { StoreProduct, StoreVariant } from "@fitconnect/shared/types/models";
 
 /** One chosen variant, held with enough detail to draw the basket. */
-type BasketEntry = {
-  variantId: string;
-  productId: string;
-  productName: string;
-  variantName: string;
-  unitPrice: number;
-  stock: number;
-  quantity: number;
-  photo?: string;
-};
 
-const CATEGORIES = [
-  { value: "", label: "All" },
-  { value: "SUPPLEMENT", label: "Supplements" },
-  { value: "ACCESSORY", label: "Accessories" },
-] as const;
+/** The "All" chip, which is every catalogue's first filter. */
+const ALL_CATEGORIES = "";
 
 const SORTS = [
   { value: "popular", label: "Popularity" },
@@ -110,10 +98,40 @@ export default function PublicStorePage() {
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = React.useState("");
-  const [category, setCategory] = React.useState<string>("");
+  const [category, setCategory] = React.useState<string>(ALL_CATEGORIES);
   const [sort, setSort] = React.useState<string>("popular");
 
+  // Derived from what the gym actually sells, like the platform shop's. The
+  // list used to be a fixed pair of Supplements and Accessories, which meant a
+  // gym selling apparel had nowhere to file it and a gym selling only
+  // supplements showed an empty Accessories chip.
+  const categoryChips = React.useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const product of products) {
+      counts.set(product.category, (counts.get(product.category) ?? 0) + 1);
+    }
+
+    return [
+      { value: ALL_CATEGORIES, label: "All", count: products.length },
+      ...[...counts.entries()]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([name, count]) => ({ value: name, label: name, count })),
+    ];
+  }, [products]);
+
+  const [tenantId, setTenantId] = React.useState<string | null>(null);
   const [basket, setBasket] = React.useState<BasketEntry[]>([]);
+
+  /** Every write goes through storage, so the product page sees the same basket. */
+  const persist = React.useCallback(
+    (next: BasketEntry[] | ((prev: BasketEntry[]) => BasketEntry[])) => {
+      setBasket((prev) => {
+        const value = typeof next === "function" ? next(prev) : next;
+        return writeBasket(tenantId, value);
+      });
+    },
+    [tenantId],
+  );
   const [basketOpen, setBasketOpen] = React.useState(false);
   // The basket is where somebody types their name and phone on a phone held in
   // one hand. The viewport meta shrinks the layout so the pay button stays
@@ -148,6 +166,8 @@ export default function PublicStorePage() {
         if (!active) return;
         setProducts(res.data.data.products);
         setGymName(res.data.data.tenant.name);
+        setTenantId(res.data.data.tenant.id);
+        setBasket(readBasket(res.data.data.tenant.id));
       })
       .catch((caught) => {
         if (active) setError(getApiError(caught));
@@ -190,7 +210,7 @@ export default function PublicStorePage() {
 
   const addToBasket = React.useCallback(
     (product: StoreProduct, variant: StoreVariant) => {
-      setBasket((prev) => {
+      persist((prev) => {
         const existing = prev.find((entry) => entry.variantId === variant.id);
         if (existing) {
           // Never past what the gym has. The API refuses it anyway, and finding
@@ -231,10 +251,15 @@ export default function PublicStorePage() {
     const variantId = searchParams.get("add");
     if (!variantId || products.length === 0) return;
 
+    // The product page sends how many, not just which: its Options rows carry a
+    // stepper now, so arriving with three of something has to mean three.
+    const requested = Number.parseInt(searchParams.get("qty") ?? "1", 10);
+    const quantity = Number.isFinite(requested) && requested > 0 ? requested : 1;
+
     for (const product of products) {
       const variant = product.variants.find((candidate) => candidate.id === variantId);
       if (variant) {
-        addToBasket(product, variant);
+        for (let added = 0; added < quantity; added += 1) addToBasket(product, variant);
         break;
       }
     }
@@ -242,6 +267,7 @@ export default function PublicStorePage() {
     setSearchParams(
       (params) => {
         params.delete("add");
+        params.delete("qty");
         return params;
       },
       { replace: true },
@@ -285,7 +311,7 @@ export default function PublicStorePage() {
   }));
 
   const clearBasket = () => {
-    setBasket([]);
+    persist([]);
     setCouponCode("");
     setCoinsToSpend("");
   };
@@ -468,7 +494,7 @@ export default function PublicStorePage() {
   if (loading) {
     return (
       <div>
-        <div className="mx-auto max-w-6xl p-4 md:p-6">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <CardsGridSkeleton count={8} className="gap-3 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4" />
         </div>
       </div>
@@ -476,30 +502,24 @@ export default function PublicStorePage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/40">
+    <div className="min-h-screen bg-background">
       {/* No heading of its own: the shared frame above carries the gym's mark
           and name, and a second one under it would only repeat them. What is
           left is the shop's own furniture — search, categories, the cart. */}
 
       {/* Search and categories stay put while the grid scrolls, which is the
           whole ergonomics of browsing a catalogue. */}
-      <div className="sticky top-[57px] z-30 border-b border-border bg-background/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3 md:px-6">
-
-          <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={`Search ${gymName || "the"} store`}
-              className="h-10 w-full rounded-md border border-input bg-background pr-3 pl-9 text-sm outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50"
-            />
-          </div>
-
+      <StorefrontToolbar
+        stickyTop={57}
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder={`Search ${gymName || "the"} store`}
+        categories={categoryChips}
+        activeCategory={category}
+        onCategoryChange={setCategory}
+        cart={
           <Button
             variant={itemCount > 0 ? "default" : "outline"}
-            size="sm"
             onClick={() => setBasketOpen(true)}
             aria-label={`Basket, ${itemCount} item${itemCount === 1 ? "" : "s"}`}
           >
@@ -516,43 +536,9 @@ export default function PublicStorePage() {
               </span>
             )}
           </Button>
-        </div>
-
-        <div className="mx-auto flex max-w-6xl items-center gap-2 overflow-x-auto px-4 pb-3 md:px-6">
-          {CATEGORIES.map((entry) => {
-            const count = entry.value
-              ? products.filter((product) => product.category === entry.value).length
-              : products.length;
-
-            return (
-              <button
-                key={entry.value}
-                onClick={() => setCategory(entry.value)}
-                className={cn(
-                  "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors",
-                  category === entry.value
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-background hover:bg-muted",
-                )}
-              >
-                {entry.label}
-                {/* The count is what turns a filter into a decision: nobody
-                    wants to tap a category to discover it is empty. */}
-                <span
-                  className={cn(
-                    "rounded-full px-1.5 text-[11px]",
-                    category === entry.value
-                      ? "bg-primary-foreground/20"
-                      : "bg-muted text-muted-foreground",
-                  )}
-                >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-
-          <div className="ml-auto flex shrink-0 items-center gap-2">
+        }
+        sort={
+          <>
             <span className="hidden text-xs text-muted-foreground sm:inline">Sort by</span>
             <select
               value={sort}
@@ -565,11 +551,11 @@ export default function PublicStorePage() {
                 </option>
               ))}
             </select>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
-      <div className="mx-auto max-w-6xl space-y-4 p-4 md:p-6">
+      <div className="mx-auto max-w-7xl space-y-4 px-4 py-8 sm:px-6 lg:px-8">
         {reference && (
           <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4">
             <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
@@ -603,7 +589,7 @@ export default function PublicStorePage() {
             }
           />
         ) : (
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <ProductGrid>
             {visible.map((product) => {
               const photo = Array.isArray(product.photos) ? product.photos[0] : undefined;
               const stock = totalStock(product);
@@ -611,94 +597,48 @@ export default function PublicStorePage() {
               const buyable = product.variants.filter((v) => v.isActive && v.stock > 0);
 
               return (
-                <div
+                <ProductCard
                   key={product.id}
-                  className={cn(
-                    "group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-all",
-                    "hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg",
-                    stock === 0 && "opacity-70",
-                  )}
-                >
-                  <button
-                    onClick={() => navigate(`/store/products/${product.id}`)}
-                    className="relative block aspect-square overflow-hidden bg-muted/40"
-                    aria-label={`Open ${product.name}`}
-                  >
-                    {photo ? (
-                      <OptimizedImage
-                        src={photo}
-                        alt={product.name}
-                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center">
-                        <ShoppingBag className="h-8 w-8 text-muted-foreground" />
-                      </div>
-                    )}
-
-                    {/* Scarcity where it is true and useful, and nowhere else.
-                        A badge on every card is decoration; on the last two
-                        tubs it is information. */}
-                    {stock === 0 ? (
-                      <span className="absolute inset-x-0 bottom-0 bg-destructive/90 py-1 text-center text-[11px] font-semibold text-destructive-foreground">
-                        Out of stock
-                      </span>
-                    ) : stock <= 3 ? (
-                      <span className="absolute top-2 left-2 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-semibold text-amber-950">
-                        Only {stock} left
-                      </span>
-                    ) : null}
-
-                    {product.coinsGranted > 0 && (
-                      <span className="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-background/90 px-2 py-0.5 text-[10px] font-semibold shadow-sm backdrop-blur">
+                  name={product.name}
+                  photo={photo}
+                  stock={stock}
+                  onOpen={() => navigate(`/shop/products/${product.id}`)}
+                  emptyIcon={<ShoppingBag className="h-8 w-8" />}
+                  topRight={
+                    product.coinsGranted > 0 ? (
+                      <span className="flex items-center gap-1 rounded-full bg-background/90 px-2 py-0.5 text-[10px] font-semibold shadow-sm backdrop-blur">
                         <Coins className="h-3 w-3" />+{product.coinsGranted}
                       </span>
-                    )}
-                  </button>
-
-                  <div className="flex min-w-0 flex-1 flex-col gap-2 p-3">
-                    <button
-                      onClick={() => navigate(`/store/products/${product.id}`)}
-                      className="line-clamp-2 text-left text-sm leading-snug font-medium hover:text-primary"
-                    >
-                      {product.name}
-                    </button>
-
-                    <div className="mt-auto space-y-2">
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-lg font-bold">{formatCurrency(price)}</span>
-                        {product.variants.length > 1 && (
-                          <span className="text-xs text-muted-foreground">onwards</span>
-                        )}
-                      </div>
-
-                      {stock === 0 ? (
-                        <Button size="sm" variant="outline" className="w-full" disabled>
-                          Sold out
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          className="w-full"
-                          onClick={() => {
-                            // One live variant is unambiguous, so it goes
-                            // straight in. More than one is a choice, and the
-                            // choice is made on the product page rather than
-                            // guessed here.
-                            if (buyable.length === 1) addToBasket(product, buyable[0]!);
-                            else navigate(`/store/products/${product.id}`);
-                          }}
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                          {buyable.length === 1 ? "Add" : "Options"}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                    ) : undefined
+                  }
+                  price={price}
+                  priceSuffix={product.variants.length > 1 ? "onwards" : undefined}
+                  description={product.description}
+                  action={
+                    stock === 0 ? (
+                      <Button variant="outline" className="w-full" disabled>
+                        Sold out
+                      </Button>
+                    ) : (
+                      <Button
+                        className="w-full"
+                        onClick={() => {
+                          // One live variant is unambiguous, so it goes straight
+                          // in. More than one is a choice, and the choice is made
+                          // on the product page rather than guessed here.
+                          if (buyable.length === 1) addToBasket(product, buyable[0]!);
+                          else navigate(`/shop/products/${product.id}`);
+                        }}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        {buyable.length === 1 ? "Add" : "Options"}
+                      </Button>
+                    )
+                  }
+                />
               );
             })}
-          </div>
+          </ProductGrid>
         )}
       </div>
 
@@ -728,55 +668,18 @@ export default function PublicStorePage() {
                 </p>
               ) : (
                 basket.map((entry) => (
-                  <div
+                  <CartLine
                     key={entry.variantId}
-                    className="flex gap-3 rounded-lg border border-border p-3"
-                  >
-                    <div className="h-14 w-14 shrink-0 overflow-hidden rounded bg-muted/50">
-                      {entry.photo && (
-                        <OptimizedImage
-                          src={entry.photo}
-                          alt={entry.productName}
-                          className="h-full w-full object-cover"
-                        />
-                      )}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{entry.productName}</p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {entry.variantName}
-                      </p>
-                      <p className="mt-1 text-sm font-semibold">
-                        {formatCurrency(entry.unitPrice * entry.quantity)}
-                      </p>
-                    </div>
-
-                    <div className="flex shrink-0 items-center gap-1">
-                      <Button
-                        variant="outline"
-                        size="icon-xs"
-                        onClick={() => changeQuantity(entry.variantId, -1)}
-                        aria-label="One fewer"
-                      >
-                        {entry.quantity === 1 ? (
-                          <Trash2 className="h-3 w-3" />
-                        ) : (
-                          <Minus className="h-3 w-3" />
-                        )}
-                      </Button>
-                      <span className="w-6 text-center text-sm">{entry.quantity}</span>
-                      <Button
-                        variant="outline"
-                        size="icon-xs"
-                        disabled={entry.quantity >= entry.stock}
-                        onClick={() => changeQuantity(entry.variantId, 1)}
-                        aria-label="One more"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
+                    name={entry.productName}
+                    subtitle={entry.variantName}
+                    photo={entry.photo}
+                    price={formatCurrency(entry.unitPrice * entry.quantity)}
+                    meta={<FulfilmentBadge fulfilment="PICKUP" className="mt-1" />}
+                    quantity={entry.quantity}
+                    canIncrease={entry.quantity < entry.stock}
+                    onDecrease={() => changeQuantity(entry.variantId, -1)}
+                    onIncrease={() => changeQuantity(entry.variantId, 1)}
+                  />
                 ))
               )}
 
@@ -844,16 +747,14 @@ export default function PublicStorePage() {
 
             {basket.length > 0 && (
               <footer className="space-y-3 border-t border-border p-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span className="text-lg font-bold">{formatCurrency(subtotal)}</span>
-                </div>
-                {asMember && (
-                  <p className="text-xs text-muted-foreground">
-                    A coupon or coins come off at the next step, and only when
-                    paying online.
-                  </p>
-                )}
+                <CartSummary
+                  rows={[{ label: "Subtotal", value: formatCurrency(subtotal), strong: true }]}
+                  footnote={
+                    asMember
+                      ? "A coupon or coins come off at the next step, and only when paying online."
+                      : undefined
+                  }
+                />
                 {asMember ? (
                   <div className="space-y-2">
                     <Button className="w-full" disabled={placing} onClick={payAsMember}>

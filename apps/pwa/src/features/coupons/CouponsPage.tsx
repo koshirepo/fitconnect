@@ -12,6 +12,8 @@ import { useAppNavigate } from "@/lib/use-app-navigate";
 import { getTenantDashboardPath } from "@/lib/subdomain";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import {
+  useCouponActivity,
+  useCouponAnalytics,
   useCoupons,
   useDeleteCoupon,
   useUpdateCoupon,
@@ -32,6 +34,7 @@ import {
   Plus,
   Power,
   Tag,
+  TicketX,
   Trash2,
   Users,
 } from "lucide-react";
@@ -96,6 +99,12 @@ export default function CouponsPage() {
   const toast = useToast();
 
   const couponsQuery = useCoupons(true);
+  // What the codes have actually done. On this page rather than its own,
+  // because "which coupons exist" and "which ones work" are the same question
+  // asked twice, and answering them on separate screens meant reading a code
+  // here and its redemption count somewhere else.
+  const analyticsQuery = useCouponAnalytics();
+  const activityQuery = useCouponActivity();
 
   const coupons = React.useMemo(() => couponsQuery.data ?? [], [couponsQuery.data]);
 
@@ -165,6 +174,46 @@ export default function CouponsPage() {
           </Button>
         )}
       </div>
+
+      {analyticsQuery.data && analyticsQuery.data.totals.redemptions > 0 && (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Stat
+            icon={Tag}
+            label="Redemptions"
+            value={analyticsQuery.data.totals.redemptions.toLocaleString("en-IN")}
+          />
+          <Stat
+            icon={Percent}
+            label="Discounted"
+            value={formatCurrency(analyticsQuery.data.totals.discountAmount)}
+          />
+          <Stat
+            icon={Coins}
+            label="Coins granted"
+            value={analyticsQuery.data.totals.coinsGranted.toLocaleString("en-IN")}
+          />
+          <Stat
+            icon={CalendarClock}
+            label="Days given"
+            value={analyticsQuery.data.totals.bonusDays.toLocaleString("en-IN")}
+          />
+        </div>
+      )}
+
+      {/* The most actionable line on the page: a code nobody has used is either
+          worth retiring or worth telling members about. */}
+      {analyticsQuery.data && analyticsQuery.data.totals.unusedCount > 0 && (
+        <Card className="border-amber-500/40">
+          <CardContent className="flex flex-wrap items-center gap-2 p-4 text-sm">
+            <TicketX className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <span>
+              <strong>{analyticsQuery.data.totals.unusedCount}</strong>{" "}
+              {analyticsQuery.data.totals.unusedCount === 1 ? "code has" : "codes have"} never
+              been used.
+            </span>
+          </CardContent>
+        </Card>
+      )}
 
       {coupons.length === 0 ? (
         <EmptyState
@@ -276,6 +325,55 @@ export default function CouponsPage() {
         confirmLabel="Delete"
         onConfirm={handleDelete}
       />
+
+      {(activityQuery.data?.length ?? 0) > 0 && (
+        <Card>
+          <CardContent className="space-y-2 p-4">
+            <p className="text-sm font-semibold">Recent redemptions</p>
+            {activityQuery.data!.slice(0, 10).map((row) => (
+              <div
+                key={row.id}
+                className="flex flex-wrap items-baseline justify-between gap-2 rounded-lg border px-3 py-2 text-sm"
+              >
+                <span className="min-w-0 truncate font-medium">{row.memberName}</span>
+                <span className="font-mono text-xs text-muted-foreground">{row.code}</span>
+                <span className="text-xs text-muted-foreground">
+                  {[
+                    row.discountAmount > 0 ? `${formatCurrency(row.discountAmount)} off` : null,
+                    row.coinsGranted > 0 ? `${row.coinsGranted} coins` : null,
+                    row.bonusDays > 0 ? `${row.bonusDays} days` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
     </div>
+  );
+}
+
+/** One number from the totals strip. */
+function Stat({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value: string;
+  icon: typeof Tag;
+}) {
+  return (
+    <Card>
+      <CardContent className="space-y-1 p-4">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Icon className="h-3.5 w-3.5" />
+          {label}
+        </div>
+        <p className="text-2xl font-bold tabular-nums">{value}</p>
+      </CardContent>
+    </Card>
   );
 }

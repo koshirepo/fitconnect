@@ -45,6 +45,17 @@ export type RazorpayPayment = {
   captured: boolean;
   error_description: string | null;
   notes: Record<string, string> | null;
+  /**
+   * What Razorpay charged for this payment, and the GST on that charge, both in
+   * paise.
+   *
+   * Only present once the payment is captured — an authorized-but-uncaptured
+   * payment has not been charged for yet — so both are optional. They are what a
+   * gym payout is calculated from, which is why they are read from the payment
+   * Razorpay confirms rather than from the webhook body.
+   */
+  fee?: number | null;
+  tax?: number | null;
 };
 
 function authHeader({ keyId, keySecret }: RazorpayCredentials) {

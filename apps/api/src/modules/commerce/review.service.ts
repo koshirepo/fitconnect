@@ -13,8 +13,8 @@ export const reviewService = {
    * Execute the `list by product` workflow for the commerce module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
-  async listByProduct(productId: string, page = 1, limit = 10) {
-    const result = await reviewRepository.listByProduct(productId, page, limit);
+  async listByProduct(productId: string, page = 1, limit = 10, viewerId?: string | null) {
+    const result = await reviewRepository.listByProduct(productId, page, limit, viewerId);
     return { data: result };
   },
 

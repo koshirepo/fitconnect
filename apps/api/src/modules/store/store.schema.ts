@@ -8,8 +8,23 @@
  */
 import { z } from "zod";
 
-/** What a gym sells. Extendable, but these two cover supplements and kit. */
-export const STORE_CATEGORIES = ["SUPPLEMENT", "ACCESSORY"] as const;
+/**
+ * Display text, not an enum.
+ *
+ * A gym used to be limited to SUPPLEMENT or ACCESSORY, which every screen then
+ * translated back into a word. The platform shop next door already stored what
+ * it wanted shown, and after the two catalogues merged into one table keeping
+ * both conventions meant one column with two meanings. These are what the form
+ * offers; a gym selling apparel or gift cards can type its own.
+ */
+export const STORE_CATEGORY_SUGGESTIONS = [
+  "Supplements",
+  "Accessories",
+  "Apparel",
+  "Equipment",
+] as const;
+
+const category = z.string().trim().min(1).max(40);
 
 const attributes = z
   .record(z.string().min(1).max(40), z.string().min(1).max(60))
@@ -45,7 +60,7 @@ export const createProductSchema = z.object({
   name: z.string().trim().min(1).max(160),
   description: z.string().trim().max(2000).optional(),
   markdown: markdown.optional(),
-  category: z.enum(STORE_CATEGORIES),
+  category,
   photos: z.array(z.string().url()).max(8).default([]),
   videoUrl: videoUrl.optional(),
   /** Coins the buyer earns per unit. Zero turns the gift off. */
@@ -61,7 +76,7 @@ export const updateProductSchema = z.object({
   // Nullable so a gym can clear a body or a video it no longer wants, which an
   // optional-only field cannot express: omitting it means "leave it alone".
   markdown: markdown.nullable().optional(),
-  category: z.enum(STORE_CATEGORIES).optional(),
+  category: category.optional(),
   photos: z.array(z.string().url()).max(8).optional(),
   videoUrl: videoUrl.nullable().optional(),
   coinsGranted: z.number().int().min(0).optional(),
@@ -83,7 +98,7 @@ export const adjustStockSchema = z.object({
 });
 
 export const listProductsSchema = z.object({
-  category: z.enum(STORE_CATEGORIES).optional(),
+  category: category.optional(),
   /** Staff can see retired products; a member never should. */
   includeInactive: z.coerce.boolean().optional(),
   search: z.string().trim().max(80).optional(),
