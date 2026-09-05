@@ -57,6 +57,12 @@ export type AppBindings = {
      * development and tests run without the binding configured.
      */
     SIGNUP_RATE_LIMITER?: RateLimiter;
+    /**
+     * Throttles sign-in, token refresh and password reset. Separate from the
+     * signup limiter so the two do not share a budget, and optional for the
+     * same reason.
+     */
+    LOGIN_RATE_LIMITER?: RateLimiter;
   };
   Variables: AppVariables;
 };

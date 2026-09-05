@@ -4,7 +4,7 @@
  * - Public self-signup creates a user account and can open a Razorpay order, with no session in front of it. Left open, a script can mint members and payment orders at whatever rate it likes; both cost the gym real money to clean up.
  * - Two independent layers, because they fail differently: a per-IP rate limit caps volume from one source, and a Turnstile check asks whether there is a browser behind the request at all. A determined attacker rotating IPs still meets Turnstile; a legitimate member on a shared connection still gets through the rate limit.
  * - Both are inert until configured. That keeps local development and the first deploy working, and it is why the rate-limit binding and the Turnstile secret are optional rather than required — an unconfigured guard logs once rather than locking the gym out of its own signup page.
- * - Primary exports: rateLimitSignup, verifyTurnstile.
+ * - Primary exports: rateLimitSignup, rateLimitLogin, verifyTurnstile.
  */
 import type { Context, Next } from "hono";
 import { tooManyRequests, badRequest } from "../lib/response";
@@ -46,6 +46,36 @@ export async function rateLimitSignup(c: AppContext, next: Next) {
     return tooManyRequests(
       c,
       "Too many attempts from this connection. Please wait a minute and try again.",
+    );
+  }
+
+  return next();
+}
+
+/**
+ * Cap sign-in attempts per IP.
+ *
+ * Two problems, one limiter. The obvious one is credential stuffing against the
+ * primary login path. The less obvious one is cost: `bcryptSaltRounds: 12` is
+ * roughly a third of a second of pure CPU per attempt, so an unthrottled login
+ * lets a cheap request buy expensive Worker time — an availability and billing
+ * problem before it is ever an auth one.
+ *
+ * Keyed by address and route like the signup limiter, so a failed sign-in does
+ * not spend the budget for a token refresh.
+ */
+export async function rateLimitLogin(c: AppContext, next: Next) {
+  const limiter = c.env?.LOGIN_RATE_LIMITER;
+  if (!limiter) return next();
+
+  const { success } = await limiter.limit({
+    key: `${clientIp(c)}:${new URL(c.req.url).pathname}`,
+  });
+
+  if (!success) {
+    return tooManyRequests(
+      c,
+      "Too many sign-in attempts from this connection. Please wait a minute and try again.",
     );
   }
 

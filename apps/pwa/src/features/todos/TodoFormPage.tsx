@@ -4,6 +4,7 @@
  * - A page rather than a dialog, so a todo written from a deep link, a refresh, or the back button behaves like every other record in the app.
  * - A `todoId` in the route means edit and seeds the form from the record; without one it is a create.
  * - Visibility is admin-only. Coaches see the field disabled and locked to public, matching what the API will accept from them rather than letting them submit something it refuses.
+ * - Split into a loader and a form on purpose: see the note above `TodoForm`.
  * - Primary exports: TodoFormPage.
  */
 import * as React from "react";
@@ -36,37 +37,19 @@ import { FormPageSkeleton } from "@/components/ui/skeleton";
 import { AlertCircle, ArrowLeft } from "lucide-react";
 import type { TodoVisibility } from "@/types/api";
 
+type Todo = NonNullable<ReturnType<typeof useTodo>["data"]>["todo"];
+
 export default function TodoFormPage() {
   const navigate = useAppNavigate();
   const { todoId } = useParams<{ todoId?: string }>();
   const isEdit = Boolean(todoId);
-  const { currentTenantId } = useAuthStore();
   const { can } = usePermissions();
   // Todo deletion is the narrower grant; visibility follows the same line.
   const isAdmin = can(Permission.TODOS_DELETE);
   const allowed = isEdit ? can(Permission.TODOS_UPDATE) : can(Permission.TODOS_CREATE);
 
-  const [title, setTitle] = React.useState("");
-  const [description, setDescription] = React.useState("");
-  const [visibility, setVisibility] = React.useState<TodoVisibility>("PUBLIC");
-  const [error, setError] = React.useState("");
-  const [submitting, setSubmitting] = React.useState(false);
-
-  const createTodo = useCreateTodo();
-  const updateTodo = useUpdateTodo();
-
   const todoQuery = useTodo(allowed ? todoId : undefined);
   const todo = todoQuery.data?.todo;
-
-  // Seeded once: re-seeding on a refetch would discard edits in progress.
-  const [seeded, setSeeded] = React.useState(false);
-  React.useEffect(() => {
-    if (!isEdit || seeded || !todo) return;
-    setTitle(todo.title);
-    setDescription(todo.description ?? "");
-    setVisibility(todo.visibility);
-    setSeeded(true);
-  }, [isEdit, seeded, todo]);
 
   if (!allowed) {
     return <Navigate to="/todos" replace />;
@@ -94,36 +77,95 @@ export default function TodoFormPage() {
     );
   }
 
+  return (
+    <TodoForm
+      key={todo?.id ?? "new"}
+      todoId={todoId}
+      todo={todo}
+      isEdit={isEdit}
+      isAdmin={isAdmin}
+    />
+  );
+}
+
+/**
+ * The form itself, mounted only once its record has loaded.
+ *
+ * The `key` is what replaces the old seed-once effect. This used to be one
+ * component that started with empty fields and copied the loaded todo into
+ * state from a `useEffect`, guarded by a `seeded` flag so a background refetch
+ * could not wipe an edit in progress. That is a cascading render — empty form,
+ * then a second pass with the real values — and the flag is a hand-rolled
+ * version of what a key does for free.
+ *
+ * Keying on the record's id means React mounts a fresh form when the route
+ * points at a different todo, and leaves this one alone for any other reason,
+ * including a refetch that returns the same record.
+ */
+function TodoForm({
+  todoId,
+  todo,
+  isEdit,
+  isAdmin,
+}: {
+  todoId?: string;
+  todo?: Todo;
+  isEdit: boolean;
+  isAdmin: boolean;
+}) {
+  const navigate = useAppNavigate();
+  const { currentTenantId } = useAuthStore();
+
+  const [title, setTitle] = React.useState(todo?.title ?? "");
+  const [description, setDescription] = React.useState(todo?.description ?? "");
+  const [visibility, setVisibility] = React.useState<TodoVisibility>(
+    todo?.visibility ?? "PUBLIC",
+  );
+  const [error, setError] = React.useState("");
+  const [submitting, setSubmitting] = React.useState(false);
+
+  const createTodo = useCreateTodo();
+  const updateTodo = useUpdateTodo();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentTenantId) return;
 
     setError("");
     setSubmitting(true);
-    try {
-      if (isEdit && todoId) {
-        await updateTodo.mutateAsync({
-          todoId,
-          data: {
-            title: title.trim(),
-            description: description.trim() ? description.trim() : null,
-            ...(isAdmin ? { visibility } : {}),
-          },
-        });
-      } else {
-        await createTodo.mutateAsync({
-          title: title.trim(),
-          description: description.trim() || undefined,
-          visibility: isAdmin ? visibility : "PUBLIC",
-        });
-      }
 
+    // Which call to make is decided before the try, not inside it. React
+    // Compiler bails out of a whole function when a branch or a logical
+    // expression appears inside try/catch, so the block below holds only the
+    // await and nothing else.
+    const save =
+      isEdit && todoId
+        ? () =>
+            updateTodo.mutateAsync({
+              todoId,
+              data: {
+                title: title.trim(),
+                description: description.trim() ? description.trim() : null,
+                ...(isAdmin ? { visibility } : {}),
+              },
+            })
+        : () =>
+            createTodo.mutateAsync({
+              title: title.trim(),
+              description: description.trim() || undefined,
+              visibility: isAdmin ? visibility : "PUBLIC",
+            });
+
+    try {
+      await save();
       navigate("/todos");
     } catch (err) {
       setError(getApiError(err));
-    } finally {
-      setSubmitting(false);
     }
+    // Deliberately after the try/catch rather than in a `finally`: React
+    // Compiler bails out of any function containing one, and nothing here
+    // returns early, so this runs on both paths exactly as `finally` did.
+    setSubmitting(false);
   };
 
   return (

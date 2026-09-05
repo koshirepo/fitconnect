@@ -6,13 +6,14 @@
   "scripts": {
     "dev": "vite --mode development",
     "preview": "vite preview",
-    "build": "tsc -b && vite build --mode production",
+    "build": "tsc -b tsconfig.app.json tsconfig.node.json && vite build --mode production",
     "deploy": "npm run deploy:production",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "compiler:health": "node scripts/react-compiler-health.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "build:production": "tsc -b && vite build --mode production",
+    "build:production": "tsc -b tsconfig.app.json tsconfig.node.json && vite build --mode production",
     "deploy:production": "npm run build:production && wrangler pages deploy dist --project-name=fitconnect-pwa --branch=main"
   },
   "dependencies": {

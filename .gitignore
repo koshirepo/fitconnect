@@ -38,3 +38,11 @@ wrangler-*.err.log
 # so the copy in the tree is derived output rather than source. Committing it put
 # 58 machine-written files into every schema diff and buried the real change.
 apps/api/src/generated/
+
+# Windows reserved device names, created by a stray `> nul` redirect in a
+# script written for cmd. `nul` is not a real file: `ls` and most tools resolve
+# it to the null device and report it missing, so one committed by accident is
+# invisible to the person trying to delete it. Ignored rather than fixed each
+# time it reappears.
+nul
+NUL

@@ -77,6 +77,17 @@ namespace_id = "1001"
 limit = 5
 period = 60
 
+# Sign-in attempts per IP. Kept separate from signup, and a little looser: a gym
+# front desk shares one address, so several staff logging in within a minute is
+# ordinary traffic, while credential stuffing is not.
+[[ratelimits]]
+name = "LOGIN_RATE_LIMITER"
+namespace_id = "1002"
+
+[ratelimits.simple]
+limit = 10
+period = 60
+
 [vars]
 APP_URL = "http://localhost:5173"
 APP_ROOT_DOMAINS = "localhost"
@@ -155,6 +166,14 @@ namespace_id = "1001"
 
 [env.production.ratelimits.simple]
 limit = 5
+period = 60
+
+[[env.production.ratelimits]]
+name = "LOGIN_RATE_LIMITER"
+namespace_id = "1002"
+
+[env.production.ratelimits.simple]
+limit = 10
 period = 60
 
 [env.production.vars]

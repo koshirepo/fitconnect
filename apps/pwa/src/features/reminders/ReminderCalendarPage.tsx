@@ -66,7 +66,9 @@ export default function ReminderCalendarPage() {
   const [channel, setChannel] = React.useState<ChannelFilter>("ALL");
 
   const calendarQuery = useReminderCalendar(currentMonth);
-  const days = calendarQuery.data?.days ?? {};
+  // Memoised so the `?? {}` fallback does not mint a fresh object every
+  // render, which would re-run every hook below that depends on `days`.
+  const days = React.useMemo(() => calendarQuery.data?.days ?? {}, [calendarQuery.data]);
   const loading = calendarQuery.isPending;
   const error = calendarQuery.isError ? getApiError(calendarQuery.error) : "";
 
