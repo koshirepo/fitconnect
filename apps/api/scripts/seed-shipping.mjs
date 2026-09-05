@@ -5,7 +5,7 @@
  * - This fills that gap on its own rather than growing that script, because these rows are demo dressing and should be droppable without touching members, payments or attendance. Everything it writes carries a `seed-ship-` id, and re-running deletes those rows first, so it replaces rather than stacks.
  * - Warehouses are left unregistered on purpose, and named in plain ASCII because Delhivery matches a pickup location character for character. Dummy data must not be able to manifest a real consignment, and an app that refuses first — naming the screen that fixes it — is more use than a courier refusal nobody expected. Add a real pickup location through Commerce → Warehouses to book anything.
  * - Local only. There is no `--remote`: dummy orders, refunds and returns have no business in a database that serves real buyers.
- * - Usage: `npm run seed:shipping --workspace @fitconnect/api`
+ * - Usage: `pnpm run seed:shipping --workspace @fitconnect/api`
  */
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
@@ -617,7 +617,7 @@ function buildSql() {
 
 const wranglerCli = resolveWranglerCli();
 if (!wranglerCli) {
-  console.error("Wrangler CLI not found. Run `npm install` first.");
+  console.error("Wrangler CLI not found. Run `pnpm install` first.");
   process.exit(1);
 }
 

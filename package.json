@@ -4,25 +4,23 @@
   "private": true,
   "description": "FitConnect monorepo: gym management API, PWA, and the contracts they share.",
   "type": "module",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "packageManager": "pnpm@11.25.0",
   "engines": {
-    "node": ">=22"
+    "node": ">=22",
+    "pnpm": ">=11"
   },
   "scripts": {
-    "dev:api": "npm run dev --workspace @fitconnect/api",
-    "dev:pwa": "npm run dev --workspace @fitconnect/pwa",
-    "build": "npm run build --workspaces --if-present",
-    "build:api": "npm run build --workspace @fitconnect/api",
-    "build:pwa": "npm run build --workspace @fitconnect/pwa",
-    "typecheck": "npm run typecheck --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present",
-    "format": "npm run format --workspaces --if-present",
-    "deploy:test": "npm run deploy:test --workspaces --if-present",
-    "deploy:production": "npm run deploy:production --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present"
+    "dev:api": "pnpm --filter @fitconnect/api dev",
+    "dev:pwa": "pnpm --filter @fitconnect/pwa dev",
+    "build": "pnpm -r --if-present build",
+    "build:api": "pnpm --filter @fitconnect/api build",
+    "build:pwa": "pnpm --filter @fitconnect/pwa build",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "lint": "pnpm -r --if-present lint",
+    "format": "pnpm -r --if-present format",
+    "deploy:test": "pnpm -r --if-present deploy:test",
+    "deploy:production": "pnpm -r --if-present deploy:production",
+    "test": "pnpm -r --if-present test"
   },
   "devDependencies": {
     "typescript": "~5.9.3"

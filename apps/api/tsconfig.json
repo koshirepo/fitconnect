@@ -1,6 +1,6 @@
 // Documentation: TypeScript compiler configuration.
 // - Extends the workspace-wide Worker preset so every service in the monorepo type-checks under the same rules.
-// - The included file list intentionally covers runtime source, Prisma config, and Worker type declarations so `npm run typecheck` validates the maintained codebase end to end.
+// - The included file list intentionally covers runtime source, Prisma config, and Worker type declarations so `pnpm run typecheck` validates the maintained codebase end to end.
 {
   "extends": "@fitconnect/tsconfig/worker.json",
   "include": ["src/**/*.ts", "src/**/*.d.ts", "prisma.config.ts", "worker-configuration.d.ts"]

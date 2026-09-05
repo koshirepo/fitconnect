@@ -4,7 +4,7 @@
  * - The deterministic seeder predates the gym store: it fills `Product` (the platform storefront) but never `StoreProduct` / `StoreVariant`, so a freshly seeded gym has an empty shop. This fills that gap on its own rather than growing that script, because store rows are demo dressing and should be droppable without touching members, payments, or attendance.
  * - Writes SQL and hands it to `wrangler d1 execute`, so the database id and environment wiring in `wrangler.toml` is reused and nothing has to be remembered.
  * - Ids are derived from the tenant and a slug of the product name, so running twice replaces the same rows instead of stacking a second catalogue. Re-running is the intended way to reset the shop.
- * - Usage: `npm run seed:store --workspace @fitconnect/api -- --tenant rudra-gym` (add `--remote` for production).
+ * - Usage: `pnpm run seed:store --workspace @fitconnect/api -- --tenant rudra-gym` (add `--remote` for production).
  */
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
@@ -307,7 +307,7 @@ if (!tenantSlug) {
 
 const wranglerCli = resolveWranglerCli();
 if (!wranglerCli) {
-  console.error("Wrangler CLI not found. Run `npm install` first.");
+  console.error("Wrangler CLI not found. Run `pnpm install` first.");
   process.exit(1);
 }
 

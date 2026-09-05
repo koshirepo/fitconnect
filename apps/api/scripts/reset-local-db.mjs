@@ -38,4 +38,4 @@ if (existsSync(d1State)) {
 }
 
 run(['d1', 'migrations', 'apply', 'fit-db', '--local']);
-console.log('\nLocal database rebuilt from 0001. Run `npm run seed:local` for data.');
+console.log('\nLocal database rebuilt from 0001. Run `pnpm run seed:local` for data.');

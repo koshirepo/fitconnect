@@ -68,7 +68,7 @@ Hand-maintained source, config, schema, migration, and REST client files include
 1. Install dependencies.
 
 ```bash
-npm install
+pnpm install
 ```
 
 2. Copy `.env.example` to `.env`.
@@ -78,9 +78,9 @@ The local Worker requires `JWT_SECRET`. The example value is only for local deve
 3. Create Cloudflare resources.
 
 ```bash
-npx wrangler d1 create fit-db
-npx wrangler r2 bucket create fit-bucket
-npx wrangler r2 bucket create fit-bucket-preview
+pnpm exec wrangler d1 create fit-db
+pnpm exec wrangler r2 bucket create fit-bucket
+pnpm exec wrangler r2 bucket create fit-bucket-preview
 ```
 
 4. Update the generated identifiers and bucket names in [`wrangler.toml`](/l:/api/wrangler.toml).
@@ -88,36 +88,36 @@ npx wrangler r2 bucket create fit-bucket-preview
 5. Generate Cloudflare runtime types.
 
 ```bash
-npm run cf-typegen
+pnpm run cf-typegen
 ```
 
 6. Apply checked-in migrations to the local D1 database.
 
 ```bash
-npm run db:migrate:local
+pnpm run db:migrate:local
 ```
 
 7. Start the Worker locally.
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
-`npm install`, `npm run dev`, `npm run build`, `npm run deploy`, and `npm run typecheck` all ensure the Prisma client exists before they continue.
+`pnpm install`, `pnpm run dev`, `pnpm run build`, `pnpm run deploy`, and `pnpm run typecheck` all ensure the Prisma client exists before they continue.
 
 ## Common Commands
 
-- `npm run dev`: start the local Worker
-- `npm run typecheck`: run TypeScript without emitting output
-- `npm run build`: ask Wrangler to produce a production-style bundle in `dist`
-- `npm run deploy`: deploy the Worker through Wrangler
-- `npm run generate`: regenerate Prisma client manually
-- `npm run db:migrate:local`: apply SQL migrations to local D1
-- `npm run db:migrate:remote`: apply SQL migrations to remote D1
-- `npm run db:migration:diff -- --output prisma/migrations/0002_name.sql`: create the next migration script from Prisma schema changes
-- `npm run seed:local`: rebuild and seed the local database
-- `npm run seed:remote`: migrate and seed the configured remote database
-- `npm run seed:remote:sql`: print the generated remote seed SQL without executing it
+- `pnpm run dev`: start the local Worker
+- `pnpm run typecheck`: run TypeScript without emitting output
+- `pnpm run build`: ask Wrangler to produce a production-style bundle in `dist`
+- `pnpm run deploy`: deploy the Worker through Wrangler
+- `pnpm run generate`: regenerate Prisma client manually
+- `pnpm run db:migrate:local`: apply SQL migrations to local D1
+- `pnpm run db:migrate:remote`: apply SQL migrations to remote D1
+- `pnpm run db:migration:diff -- --output prisma/migrations/0002_name.sql`: create the next migration script from Prisma schema changes
+- `pnpm run seed:local`: rebuild and seed the local database
+- `pnpm run seed:remote`: migrate and seed the configured remote database
+- `pnpm run seed:remote:sql`: print the generated remote seed SQL without executing it
 
 ## Environment And Bindings
 
@@ -244,34 +244,34 @@ When [`prisma/schema.prisma`](/l:/api/prisma/schema.prisma) changes:
 2. Generate a new numbered SQL migration.
 
 ```bash
-npm run db:migration:diff -- --output prisma/migrations/0002_your_change.sql
+pnpm run db:migration:diff -- --output prisma/migrations/0002_your_change.sql
 ```
 
 3. Regenerate Prisma if you want an immediate client refresh.
 
 ```bash
-npm run generate
+pnpm run generate
 ```
 
 4. Apply the migration locally.
 
 ```bash
-npm run db:migrate:local
+pnpm run db:migrate:local
 ```
 
 5. Re-run type checking.
 
 ```bash
-npm run typecheck
+pnpm run typecheck
 ```
 
 6. When ready, apply the same migration remotely.
 
 ```bash
-npm run db:migrate:remote
+pnpm run db:migrate:remote
 ```
 
-If you update bindings in [`wrangler.toml`](/l:/api/wrangler.toml), rerun `npm run cf-typegen` so `worker-configuration.d.ts` stays synchronized.
+If you update bindings in [`wrangler.toml`](/l:/api/wrangler.toml), rerun `pnpm run cf-typegen` so `worker-configuration.d.ts` stays synchronized.
 
 ## Seed Data
 
@@ -280,7 +280,7 @@ If you update bindings in [`wrangler.toml`](/l:/api/wrangler.toml), rerun `npm r
 ### Local test credentials
 
 Every seeded account shares one password: **`Test@1234`**. Emails are derived from
-the seed, so they are the same on every machine that runs `npm run seed:local`.
+the seed, so they are the same on every machine that runs `pnpm run seed:local`.
 
 **Platform (app-level) accounts** — sign in at `http://localhost:5173/login`:
 
@@ -315,7 +315,7 @@ With no subdomain it behaves as the platform login and redirects to the dashboar
 Scale the generated data set with flags such as:
 
 ```bash
-npm run seed:local -- --tenants=8 --members-per-tenant=30 --products=40 --orders=180 --attendance-days=60
+pnpm run seed:local -- --tenants=8 --members-per-tenant=30 --products=40 --orders=180 --attendance-days=60
 ```
 
 Important:
@@ -336,7 +336,7 @@ The [`rest-client`](/l:/api/rest-client) folder contains request collections for
 
 Start with:
 
-1. `npm run dev`
+1. `pnpm run dev`
 2. Open the matching `.http` file in `rest-client/`
 3. Run the top login or setup request first
 4. Run the remaining requests in order
@@ -352,9 +352,9 @@ Typical deployment flow:
 1. Create remote D1 and R2 resources if they do not exist yet.
 2. Update real ids and bucket names in [`wrangler.toml`](/l:/api/wrangler.toml).
 3. Set production secrets such as `JWT_SECRET`.
-4. Apply migrations with `npm run db:migrate:remote`.
-5. Verify the bundle locally with `npm run build`.
-6. Deploy with `npm run deploy`.
+4. Apply migrations with `pnpm run db:migrate:remote`.
+5. Verify the bundle locally with `pnpm run build`.
+6. Deploy with `pnpm run deploy`.
 
 ## Documentation Notes
 

@@ -4,15 +4,15 @@
 #
 # Environments
 # ------------
-#   (top level)    local development — `npm run dev`, backed by the local miniflare D1/R2 state
-#   env.production live deployment    — `npm run deploy:production`
+#   (top level)    local development — `pnpm run dev`, backed by the local miniflare D1/R2 state
+#   env.production live deployment    — `pnpm run deploy:production`
 #
 # Wrangler does NOT inherit `vars`, `d1_databases`, `r2_buckets`, or `triggers`
 # into named environments, so the production block below repeats everything it needs.
 #
-# Secrets are NOT stored here. Set them all with `npm run secrets:production`, or
+# Secrets are NOT stored here. Set them all with `pnpm run secrets:production`, or
 # one at a time:
-#   npx wrangler secret put JWT_SECRET --env production
+#   pnpm exec wrangler secret put JWT_SECRET --env production
 # For local development put the same keys in `.dev.vars` (gitignored) — see
 # `.dev.vars.example`.
 

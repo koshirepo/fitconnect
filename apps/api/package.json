@@ -16,7 +16,7 @@
     "typecheck": "tsc --noEmit",
     "generate": "prisma generate",
     "seed:local": "node scripts/ensure-prisma-client.mjs seed-local",
-    "seed:remote": "npm run db:migrate:remote && node scripts/ensure-prisma-client.mjs seed-remote",
+    "seed:remote": "pnpm run db:migrate:remote && node scripts/ensure-prisma-client.mjs seed-remote",
     "seed:remote:sql": "node scripts/ensure-prisma-client.mjs seed-remote --no-execute",
     "seed:store": "node scripts/seed-store.mjs",
     "seed:shipping": "node scripts/seed-shipping.mjs",
@@ -33,7 +33,7 @@
     "secrets:production": "node scripts/put-secrets.mjs production"
   },
   "dependencies": {
-    "@fitconnect/shared": "*",
+    "@fitconnect/shared": "workspace:*",
     "@prisma/adapter-d1": "^7.5.0",
     "@prisma/client": "^7.5.0",
     "@simplewebauthn/server": "^13.3.3",
@@ -46,6 +46,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@fitconnect/tsconfig": "workspace:*",
     "@types/node": "^25.5.0",
     "@types/nodemailer": "^7.0.11",
     "prisma": "^7.5.0",

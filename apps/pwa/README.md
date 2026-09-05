@@ -56,12 +56,12 @@ The app is organized by feature area:
 
 ## Local Setup
 
-Run everything from the repository root with npm workspaces.
+Run everything from the repository root with pnpm workspaces.
 
 1. Install dependencies.
 
 ```bash
-npm install
+pnpm install
 ```
 
 2. Create a local env file such as `.env.local`.
@@ -74,7 +74,7 @@ Common variables:
 3. Start the development server.
 
 ```bash
-npm run dev:pwa
+pnpm run dev:pwa
 ```
 
 By default, Vite proxies `/api` and `/uploads` to `VITE_API_URL` during local development.
@@ -117,16 +117,16 @@ The app uses the current hostname to decide whether the login is app-level or te
 
 ## Common Commands
 
-Run from the repository root with npm workspaces (or from `apps/pwa` directly).
+Run from the repository root with pnpm workspaces (or from `apps/pwa` directly).
 
-- `npm run dev` (`dev:pwa` at the root): start the Vite dev server
-- `npm run build` (root `build:pwa`): run TypeScript build checks and create the production bundle
-- `npm run preview`: serve the production bundle locally
-- `npm run typecheck`: run TypeScript without emitting files
-- `npm run lint`: run ESLint
-- `npm run format`: format the workspace with Prettier
-- `npm run format:check`: verify formatting without writing changes
-- `npm run deploy` (root `deploy:production`): build and deploy `dist` to Cloudflare Pages
+- `pnpm run dev` (`dev:pwa` at the root): start the Vite dev server
+- `pnpm run build` (root `build:pwa`): run TypeScript build checks and create the production bundle
+- `pnpm run preview`: serve the production bundle locally
+- `pnpm run typecheck`: run TypeScript without emitting files
+- `pnpm run lint`: run ESLint
+- `pnpm run format`: format the workspace with Prettier
+- `pnpm run format:check`: verify formatting without writing changes
+- `pnpm run deploy` (root `deploy:production`): build and deploy `dist` to Cloudflare Pages
 
 ## PWA And Offline Notes
 
@@ -146,8 +146,8 @@ The frontend is deployed to Cloudflare Pages through Wrangler via GitHub Actions
 Manual flow:
 
 1. Set the production `VITE_API_URL` in `.env.production`.
-2. Verify the build locally with `npm run build`.
-3. Deploy with `npm run deploy` (requires a `CLOUDFLARE_API_TOKEN`).
+2. Verify the build locally with `pnpm run build`.
+3. Deploy with `pnpm run deploy` (requires a `CLOUDFLARE_API_TOKEN`).
 
 ## Documentation Notes
 

@@ -19,11 +19,15 @@ const clientPath = path.join(rootDir, "src", "generated", "prisma", "client.ts")
 /**
  * Where a workspace dependency actually landed.
  *
- * npm hoists shared dependencies to the repo root, so `apps/api/node_modules`
- * holds only what could not be hoisted. Looking in one place finds the CLIs on
- * a fresh clone and reports them missing on an ordinary hoisted install, which
- * is the more common of the two. Each candidate is walked from the app upwards,
- * so a locally installed copy still wins over the hoisted one.
+ * pnpm links a package's own declared dependencies into `apps/api/node_modules`
+ * and leaves the rest in the root virtual store, so where a CLI lands depends on
+ * which package declared it. Looking in one place finds it on some installs and
+ * reports it missing on others. Each candidate is walked from the app upwards,
+ * so a copy declared by this app still wins over one declared at the root.
+ *
+ * This mattered more under npm, whose hoisting put almost everything at the
+ * root; it is kept because the fallback costs nothing and the layout is not
+ * this script's business.
  */
 function resolveFromWorkspace(...segments) {
   const candidates = [
@@ -145,7 +149,7 @@ function ensurePrismaClient() {
   }
 
   if (!existsSync(prismaBin)) {
-    console.error("Prisma CLI not found. Run npm install first.");
+    console.error("Prisma CLI not found. Run pnpm install first.");
     process.exit(1);
   }
 
@@ -1377,7 +1381,7 @@ function resolveRemoteDatabaseName(cliValue) {
  */
 function ensureWranglerInstalled() {
   if (!existsSync(wranglerBin) || !existsSync(wranglerCliPath)) {
-    throw new Error("Wrangler CLI not found. Run `npm install` first.");
+    throw new Error("Wrangler CLI not found. Run `pnpm install` first.");
   }
 }
 

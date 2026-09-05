@@ -10,7 +10,8 @@ FitConnect/
 ├── packages/
 │   ├── shared/         @fitconnect/shared    — contracts every app depends on
 │   └── tsconfig/       @fitconnect/tsconfig  — shared TypeScript presets
-└── package.json        npm workspaces root
+├── package.json        workspace root scripts
+└── pnpm-workspace.yaml package list + allowed build scripts
 ```
 
 ## Why this shape
@@ -41,10 +42,10 @@ either one. Any open branch or PR there has to be re-landed here by hand.
 ## Getting started
 
 ```bash
-npm install
+pnpm install
 ```
 
-One install at the root wires every workspace; do not run `npm install` inside an
+One install at the root wires every workspace; do not run `pnpm install` inside an
 app directory.
 
 ### Local development
@@ -52,11 +53,11 @@ app directory.
 Run the API and the PWA in two terminals:
 
 ```bash
-npm run dev:api
+pnpm run dev:api
 ```
 
 ```bash
-npm run dev:pwa
+pnpm run dev:pwa
 ```
 
 - API: <http://localhost:8787>
@@ -74,13 +75,13 @@ cp apps/api/.dev.vars.example apps/api/.dev.vars
 Apply database migrations to the local D1 instance:
 
 ```bash
-npm run db:migrate:local --workspace @fitconnect/api
+pnpm run db:migrate:local --workspace @fitconnect/api
 ```
 
 Seed it with demo data — platform accounts, six gyms, their staff and members:
 
 ```bash
-npm run seed:local --workspace @fitconnect/api
+pnpm run seed:local --workspace @fitconnect/api
 ```
 
 Everything it creates shares the password `Test@1234`:
@@ -130,39 +131,39 @@ not duplication to clean up.
 PWA config lives in `apps/pwa/.env.development`, `.env.test`, and `.env.production`.
 Every `VITE_*` value is inlined into the client bundle and is therefore public;
 never put a secret in one.
-  npx wrangler d1 export fit-db --remote --env production --output ./fit-db-export.sql
+  pnpm exec wrangler d1 export fit-db --remote --env production --output ./fit-db-export.sql
 ### First-time setup for the test environment
 
 ```bash
-npx wrangler d1 create fit-db-test
+pnpm exec wrangler d1 create fit-db-test
 ```
 
 ```bash
-npx wrangler r2 bucket create fit-bucket-test
+pnpm exec wrangler r2 bucket create fit-bucket-test
 ```
 
 Paste the returned `database_id` into the `[[env.test.d1_databases]]` block in
 `apps/api/wrangler.toml`, then set the secrets and run migrations:
 
 ```bash
-npm run secrets:test --workspace @fitconnect/api
+pnpm run secrets:test --workspace @fitconnect/api
 ```
 
 ```bash
-npm run db:migrate:test --workspace @fitconnect/api
+pnpm run db:migrate:test --workspace @fitconnect/api
 ```
 
 ### Deploying
 
 ```bash
-npm run deploy:test --workspaces --if-present
+pnpm run deploy:test --workspaces --if-present
 ```
 
 ```bash
-npm run deploy:production --workspaces --if-present
+pnpm run deploy:production --workspaces --if-present
 ```
 
-Or one app at a time with `npm run deploy:test --workspace @fitconnect/api`.
+Or one app at a time with `pnpm run deploy:test --workspace @fitconnect/api`.
 
 ## Authorization
 
@@ -190,7 +191,7 @@ the member kept training. See [`docs/subscriptions.md`](docs/subscriptions.md).
    it rather than redefining them.
 4. Give it `dev`, `build`, `typecheck`, `deploy:test`, and `deploy:production`
    scripts — the root scripts fan out across workspaces and will pick them up.
-5. Run `npm install` at the root to link it.
+5. Run `pnpm install` at the root to link it.
 
 No root config change is needed: the `apps/*` and `packages/*` globs already cover it.
 
@@ -198,11 +199,11 @@ No root config change is needed: the `apps/*` and `packages/*` globs already cov
 
 | Command | Effect |
 |---|---|
-| `npm run dev:api` / `npm run dev:pwa` | Start one app locally |
-| `npm run typecheck` | Type-check every workspace |
-| `npm run build` | Build every workspace |
-| `npm run lint` / `npm run format` | Run each workspace's linter/formatter |
-| `npm run deploy:test` / `npm run deploy:production` | Deploy every deployable workspace |
+| `pnpm run dev:api` / `pnpm run dev:pwa` | Start one app locally |
+| `pnpm run typecheck` | Type-check every workspace |
+| `pnpm run build` | Build every workspace |
+| `pnpm run lint` / `pnpm run format` | Run each workspace's linter/formatter |
+| `pnpm run deploy:test` / `pnpm run deploy:production` | Deploy every deployable workspace |
 
 
 

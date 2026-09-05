@@ -3,7 +3,7 @@
  *
  * - Walks the Worker secrets an environment needs and shells out to `wrangler secret put` for each one, so nobody has to remember the list.
  * - Values are typed into wrangler's own prompt and never pass through this script, a file, or the shell history.
- * - Usage: `node scripts/put-secrets.mjs production` (or `npm run secrets:production`).
+ * - Usage: `node scripts/put-secrets.mjs production` (or `pnpm run secrets:production`).
  */
 import { spawnSync } from "node:child_process";
 
