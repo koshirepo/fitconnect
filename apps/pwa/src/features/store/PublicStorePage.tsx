@@ -238,7 +238,12 @@ export default function PublicStorePage() {
       });
       setBasketOpen(true);
     },
-    [],
+    // `persist` closes over tenantId, which arrives after the first render.
+    // Holding the first one froze every add at tenantId null, and writeBasket
+    // returns early without storing anything when it has no tenant — so the
+    // basket looked right on screen and was never written, which is exactly
+    // what persisting through storage exists to prevent.
+    [persist],
   );
 
   /**

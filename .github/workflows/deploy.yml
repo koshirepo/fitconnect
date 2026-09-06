@@ -41,13 +41,13 @@ jobs:
     # Run checks on every push for fast feedback, independent of deployment.
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      # Corepack reads packageManager from the root package.json, so the pnpm
+      # The action reads packageManager from the root package.json, so the pnpm
       # version CI uses is the one pinned in the repo, not whatever is newest.
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -73,13 +73,13 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      # Corepack reads packageManager from the root package.json, so the pnpm
+      # The action reads packageManager from the root package.json, so the pnpm
       # version CI uses is the one pinned in the repo, not whatever is newest.
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
