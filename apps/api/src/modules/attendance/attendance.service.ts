@@ -23,7 +23,147 @@ function toDateOnly(dateStr?: string): Date {
   return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 }
 
+/** A refusal from any check-in path, carrying the status the route should send. */
+export type CheckInFailure = { error: string; status: 400 | 403 | 404 };
+
+/** Either the thing, or why not. Every check-in entry point answers in this shape. */
+export type CheckInResult<T> = CheckInFailure | { data: T };
+
+export type CheckInTenant = {
+  id: string;
+  name: string;
+  slug: string;
+  logoUrl: string | null;
+  platformExpiresAt: Date | null;
+};
+
+/** How a member is identified to `commitCheckIn`, whichever path found them. */
+export type CheckInMembership = {
+  id: string;
+  memberId: number;
+  status: string;
+  user: { name: string; avatarUrl: string | null };
+};
+
+/** What every path reports back after recording one visit. */
+export type CheckInOutcome = {
+  attendance: {
+    id: string;
+    date: Date;
+    checkInAt: Date;
+    note: string | null;
+    membershipId: string;
+    memberId: number;
+    memberName: string;
+  };
+  member: {
+    id: string;
+    memberId: number;
+    name: string;
+    avatarUrl: string | null;
+    status: string;
+  };
+};
+
 export const attendanceService = {
+  /**
+   * The gym a visit is being recorded against, or a refusal.
+   *
+   * Accepts an id or a slug so the public QR page and the authenticated paths
+   * can share it. The platform-expiry check lives here rather than in one
+   * caller: it used to guard the QR route alone, which meant a gym past its
+   * expiry could still record attendance through self check-in, the desk
+   * scanner or the wall device — so as a commercial gate it did nothing.
+   */
+  async resolveTenantForCheckIn(
+    tenantIdOrSlug: string,
+  ): Promise<CheckInResult<CheckInTenant>> {
+    const tenant = await attendanceRepository.findTenantByLookup(tenantIdOrSlug);
+    if (!tenant) return { error: "Gym not found.", status: 404 as const };
+    if (tenant.platformExpiresAt && tenant.platformExpiresAt.getTime() < Date.now()) {
+      return { error: "Platform access is expired for this gym.", status: 403 as const };
+    }
+    return { data: tenant };
+  },
+
+  /**
+   * Write one visit. The single choke point for every way attendance is marked.
+   *
+   * Self check-in, the QR poster, a scanned ID card, a staff member marking by
+   * hand or in bulk, and the wall-mounted RFID machine all end here. They differ
+   * only in how the member was identified and in who is recorded as having
+   * marked it; everything that must hold of a recorded visit regardless of its
+   * origin belongs in this function, because five copies of that logic is how
+   * three of these paths silently drifted apart in the first place.
+   *
+   * What holds for all of them: the visit is recorded whatever the membership's
+   * status — the member is in the building, and the status travels back so the
+   * screen can say something about it — and training ends any freeze covering
+   * that day, refunding the unused days, so attending cannot quietly earn
+   * somebody free time on a paused membership.
+   */
+  async commitCheckIn(
+    tenantId: string,
+    membership: CheckInMembership,
+    date: Date,
+    markedById: string | null,
+    note?: string,
+  ): Promise<CheckInOutcome> {
+    const record = (await attendanceRepository.markAttendance(
+      tenantId,
+      membership.id,
+      date,
+      markedById,
+      note,
+    )) as any;
+
+    await freezeService.endForAttendance(tenantId, membership.id, date);
+
+    return {
+      attendance: {
+        id: record.id,
+        date: record.date,
+        checkInAt: record.checkInAt,
+        note: record.note,
+        membershipId: membership.id,
+        memberId: membership.memberId,
+        memberName: membership.user.name,
+      },
+      member: {
+        id: membership.id,
+        memberId: membership.memberId,
+        name: membership.user.name,
+        avatarUrl: membership.user.avatarUrl,
+        status: membership.status,
+      },
+    };
+  },
+
+  /**
+   * Resolve a member by id and record their visit — the form the staff-driven
+   * paths take, where the member was picked from a list rather than scanned.
+   */
+  async recordCheckInById(
+    tenantId: string,
+    membershipId: string,
+    date: Date,
+    markedById: string | null,
+    note?: string,
+  ): Promise<CheckInResult<CheckInOutcome>> {
+    const tenant = await this.resolveTenantForCheckIn(tenantId);
+    if ("error" in tenant) return tenant;
+
+    const membership = await attendanceRepository.findMembershipForCheckIn(
+      tenant.data.id,
+      membershipId,
+    );
+    if (!membership) return { error: "Member not found.", status: 404 as const };
+
+    return {
+      data: await this.commitCheckIn(tenant.data.id, membership, date, markedById, note),
+    };
+  },
+
   async listQrMembers(tenantIdOrSlug: string, search?: string) {
     const tenant = await attendanceRepository.findTenantByLookup(tenantIdOrSlug);
     if (!tenant) return { error: "Gym not found.", status: 404 as const };
@@ -46,29 +186,31 @@ export const attendanceService = {
     tenantIdOrSlug: string,
     actorUserId: string,
     input: QrAttendanceInput,
-  ) {
-    const tenant = await attendanceRepository.findTenantByLookup(tenantIdOrSlug);
-    if (!tenant) return { error: "Gym not found.", status: 404 as const };
-    if (tenant.platformExpiresAt && tenant.platformExpiresAt.getTime() < Date.now()) {
-      return { error: "Platform access is expired for this gym.", status: 403 as const };
+  ): Promise<
+    CheckInResult<CheckInOutcome & { tenant: CheckInTenant; mode: "self" }>
+  > {
+    const tenant = await this.resolveTenantForCheckIn(tenantIdOrSlug);
+    if ("error" in tenant) return tenant;
+
+    if (!input.membershipId) {
+      return { error: "Pick who is checking in.", status: 400 as const };
     }
 
-    const result = await this.markAttendance(
-      tenant.id,
-      actorUserId,
+    // The poster names the member; scanning it is the member acting on their
+    // own behalf, so nobody is recorded as having marked it for them.
+    const result = await this.recordCheckInById(
+      tenant.data.id,
+      input.membershipId,
+      toDateOnly(undefined),
       null,
-      { membershipId: input.membershipId },
-      true,
     );
+    if ("error" in result) return result;
 
-    if ("error" in result) {
-      return { error: result.error, status: result.status };
-    }
-    const attendance = result.data.attendance;
     return {
       data: {
-        attendance,
-        tenant,
+        attendance: result.data.attendance,
+        member: result.data.member,
+        tenant: tenant.data,
         mode: "self" as const,
       },
     };
@@ -81,49 +223,36 @@ export const attendanceService = {
     actorMembershipId: string | null,
     input: MarkAttendanceInput,
     isSelf: boolean,
-  ) {
+  ): Promise<CheckInResult<CheckInOutcome>> {
     const date = toDateOnly(input.date);
-    let targetMembershipId: string;
 
-    if (isSelf) {
-      // Member checking in themselves
-      const membership = await attendanceRepository.findMembershipByUserId(tenantId, actorUserId);
-      if (!membership)
-        return { error: "You are not an active member of this gym.", status: 403 as const };
-      targetMembershipId = membership.id;
-    } else {
-      // Admin/coach marking for someone else
-      if (!input.membershipId) return { error: "membershipId is required.", status: 400 as const };
-      const membership = await attendanceRepository.findMembership(tenantId, input.membershipId);
-      if (!membership) return { error: "Member not found or inactive.", status: 404 as const };
-      targetMembershipId = membership.id;
+    const tenant = await this.resolveTenantForCheckIn(tenantId);
+    if ("error" in tenant) return tenant;
+
+    // The only thing separating a self check-in from a staff mark: who is
+    // identified, and by what. Everything after this is the same act.
+    const membership = isSelf
+      ? await attendanceRepository.findMembershipForCheckInByUserId(tenant.data.id, actorUserId)
+      : input.membershipId
+        ? await attendanceRepository.findMembershipForCheckIn(tenant.data.id, input.membershipId)
+        : null;
+
+    if (!membership) {
+      if (isSelf) return { error: "You are not a member of this gym.", status: 403 as const };
+      if (!input.membershipId) {
+        return { error: "membershipId is required.", status: 400 as const };
+      }
+      return { error: "Member not found.", status: 404 as const };
     }
 
-    const record = (await attendanceRepository.markAttendance(
-      tenantId,
-      targetMembershipId,
-      date,
-      isSelf ? null : actorMembershipId,
-      input.note,
-    )) as any;
-
-    // A member who trains is not paused. Ends any freeze covering this day and
-    // returns the days they did not use, so attending cannot quietly earn them
-    // free time on a frozen membership.
-    await freezeService.endForAttendance(tenantId, targetMembershipId, date);
-
     return {
-      data: {
-        attendance: {
-          id: record.id,
-          date: record.date,
-          checkInAt: record.checkInAt,
-          note: record.note,
-          membershipId: record.member.id,
-          memberId: record.member.memberId,
-          memberName: record.member.user.name,
-        },
-      },
+      data: await this.commitCheckIn(
+        tenant.data.id,
+        membership,
+        date,
+        isSelf ? null : actorMembershipId,
+        input.note,
+      ),
     };
   },
 
@@ -144,7 +273,7 @@ export const attendanceService = {
     tenantId: string,
     actorMembershipId: string | null,
     code: string,
-  ) {
+  ): Promise<CheckInResult<CheckInOutcome>> {
     // A card url, or the bare token if somebody typed it. Anything after the
     // last slash, minus any query string a scanner may have kept.
     const token = code.trim().split(/[?#]/)[0]!.split("/").filter(Boolean).pop() ?? "";
@@ -152,53 +281,75 @@ export const attendanceService = {
       return { error: "That code could not be read.", status: 400 as const };
     }
 
+    const tenant = await this.resolveTenantForCheckIn(tenantId);
+    if ("error" in tenant) return tenant;
+
     const membership = await attendanceRepository.findMembershipByCardToken(
-      tenantId,
+      tenant.data.id,
       token,
     );
-
     if (!membership) {
-      return {
-        error: "That card does not belong to this gym.",
-        status: 404 as const,
-      };
+      return { error: "That card does not belong to this gym.", status: 404 as const };
     }
 
-    const date = toDateOnly(undefined);
-
-    // Marked even for a lapsed member: they are standing at the desk, and a
-    // gym wants the visit recorded whatever it decides about their plan. The
-    // status travels back so the screen can say something about it.
-    const attendance = await attendanceRepository.markAttendance(
-      tenantId,
-      membership.id,
-      date,
-      actorMembershipId,
-    );
-
     return {
-      data: {
-        attendance,
-        member: {
-          id: membership.id,
-          memberId: membership.memberId,
-          name: membership.user.name,
-          avatarUrl: membership.user.avatarUrl,
-          status: membership.status,
-        },
-      },
+      data: await this.commitCheckIn(
+        tenant.data.id,
+        membership,
+        toDateOnly(undefined),
+        actorMembershipId,
+      ),
     };
   },
 
-  async markAll(tenantId: string, actorMembershipId: string | null, input: MarkAllAttendanceInput) {
+  /**
+   * Mark a roomful of members at once.
+   *
+   * Goes through the same per-member path as marking one by hand, rather than
+   * writing rows directly: a member marked in bulk gets their freeze ended and
+   * their membership checked against this gym exactly as they would have if the
+   * desk had marked them individually. `allSettled` keeps one bad id from
+   * losing the rest of the room, and the ids that failed come back so the
+   * screen can say which.
+   */
+  async markAll(
+    tenantId: string,
+    actorMembershipId: string | null,
+    input: MarkAllAttendanceInput,
+  ): Promise<CheckInResult<{ marked: number; total: number; failed: string[] }>> {
+    const tenant = await this.resolveTenantForCheckIn(tenantId);
+    if ("error" in tenant) return tenant;
+
     const date = toDateOnly(input.date);
-    const results = await Promise.allSettled(
-      input.membershipIds.map((mid) =>
-        attendanceRepository.markAttendance(tenantId, mid, date, actorMembershipId),
-      ),
+
+    // One lookup for the room, then the same commit each of them would have got
+    // individually. Resolving the gym and the member per id would turn marking
+    // a class into a few hundred queries.
+    const memberships = await attendanceRepository.findMembershipsForCheckIn(
+      tenant.data.id,
+      input.membershipIds,
     );
-    const marked = results.filter((r) => r.status === "fulfilled").length;
-    return { data: { marked, total: input.membershipIds.length } };
+    const byId = new Map(memberships.map((membership) => [membership.id, membership]));
+
+    const failed: string[] = [];
+    let marked = 0;
+
+    for (const membershipId of input.membershipIds) {
+      const membership = byId.get(membershipId);
+      if (!membership) {
+        failed.push(membershipId);
+        continue;
+      }
+      try {
+        await this.commitCheckIn(tenant.data.id, membership, date, actorMembershipId);
+        marked += 1;
+      } catch {
+        // One member's row failing should not cost the rest of the room theirs.
+        failed.push(membershipId);
+      }
+    }
+
+    return { data: { marked, total: input.membershipIds.length, failed } };
   },
 
   /** Remove attendance record (admin/coach only) */

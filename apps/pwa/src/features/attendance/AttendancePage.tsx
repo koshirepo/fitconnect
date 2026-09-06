@@ -182,9 +182,16 @@ export default function AttendancePage() {
     setBulkLoading(true);
     setActionError("");
     try {
-      await markAll.mutateAsync({ membershipIds: Array.from(selected), date });
+      const result = await markAll.mutateAsync({ membershipIds: Array.from(selected), date });
       setShowBulk(false);
       setSelected(new Set());
+      // A bulk mark can succeed for the room and still miss somebody. Saying so
+      // beats a silent partial success the desk only notices in the register.
+      if (result.failed.length > 0) {
+        setActionError(
+          `Marked ${result.marked} of ${result.total}. ${result.failed.length} could not be marked.`,
+        );
+      }
     } catch (err) {
       setActionError(getApiError(err));
     } finally {

@@ -13,9 +13,13 @@ import {
 } from "@fitconnect/shared/types/permissions";
 import { badRequest, forbidden } from "../lib/response";
 import { createMiddleware } from "hono/factory";
-import { prisma } from "../lib/prisma";
 import { rolePermissionRepository } from "../modules/roles/roles.repository";
 import { cached } from "../lib/request-cache";
+import {
+  PLATFORM_EXPIRED_MESSAGE,
+  isPlatformExpired,
+  tenantPlatformExpiresAt,
+} from "../lib/platform-access";
 import type { AppBindings } from "../types/app-context";
 
 type PermissionMode = "all" | "any";
@@ -29,10 +33,6 @@ type AuthorizeOptions = {
    */
   scope?: "tenant" | "global";
 };
-
-function isTenantPlatformExpired(platformExpiresAt?: Date | null) {
-  return Boolean(platformExpiresAt) && platformExpiresAt!.getTime() < Date.now();
-}
 
 function describeMissing(permissions: readonly Permission[], mode: PermissionMode) {
   return mode === "any"
@@ -73,32 +73,39 @@ function authorize(required: readonly Permission[], options: AuthorizeOptions = 
       c.set("tenantAccess", membershipRole ? { tenantId, role: membershipRole } : null);
     }
 
+    /**
+     * Which gym's expiry this caller is subject to, if any.
+     *
+     * Membership decides this, not the route's declared scope. The gate used to
+     * fire only on `scope: "tenant"`, which left a member reaching a
+     * global-scoped route unguarded even though the PWA sends `x-tenant-id` on
+     * every request — they are acting inside that gym either way.
+     *
+     * Read separately from `tenantId` above, which stays null on global-scoped
+     * routes so their role overrides keep resolving against the platform.
+     *
+     * Platform staff hold no membership role and so are never gated: somebody
+     * has to be able to service a lapsed gym, and the renewal that clears the
+     * expiry runs through this same API.
+     */
+    const contextTenantId = c.req.param("tenantId") || c.req.header("x-tenant-id") || null;
+    const gatedTenantId =
+      contextTenantId && user.tenants?.[contextTenantId] ? contextTenantId : null;
+
     // Two reads that used to run one after the other on every single
     // tenant-scoped request. They are independent, so they go together, and
     // both are cached briefly — neither the gym's expiry date nor its role
     // overrides change between two requests a second apart.
-    const [tenantExpiry, overrides] = await Promise.all([
-      scope === "tenant" && tenantRole
-        ? cached(`tenant-expiry:${tenantId}`, async () => {
-            const tenant = await prisma.tenant.findUnique({
-              where: { id: tenantId! },
-              select: { platformExpiresAt: true },
-            });
-            return tenant?.platformExpiresAt ?? null;
-          })
-        : Promise.resolve(null),
+    const [expiresAt, overrides] = await Promise.all([
+      gatedTenantId ? tenantPlatformExpiresAt(gatedTenantId) : Promise.resolve(null),
       cached(`role-overrides:${tenantId ?? "platform"}`, () =>
         rolePermissionRepository.listApplicableOverrides(tenantId),
       ),
     ]);
 
     // Tenant members lose access when the gym's platform subscription lapses.
-    // Platform staff keep access so they can service an expired tenant.
-    if (isTenantPlatformExpired(tenantExpiry)) {
-      return forbidden(
-        c,
-        "Platform access is expired. Renew access to continue using the platform.",
-      );
+    if (isPlatformExpired(expiresAt)) {
+      return forbidden(c, PLATFORM_EXPIRED_MESSAGE);
     }
 
     const granted = resolveEffectivePermissions({
@@ -223,16 +230,10 @@ export const requireTenantRoles = (allowedRoles: TenantRole[]) => {
         return forbidden(c, "Insufficient tenant permissions.");
       }
 
-      const tenant = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { platformExpiresAt: true },
-      });
-
-      if (isTenantPlatformExpired(tenant?.platformExpiresAt)) {
-        return forbidden(
-          c,
-          "Platform access is expired. Renew access to continue using the platform.",
-        );
+      // Shares `authorize`'s cached read rather than repeating the query, so
+      // the two paths cannot drift on what "expired" means.
+      if (isPlatformExpired(await tenantPlatformExpiresAt(tenantId))) {
+        return forbidden(c, PLATFORM_EXPIRED_MESSAGE);
       }
     }
 

@@ -7,6 +7,7 @@
  * - Primary exports: the schemas, and the inferred input types.
  */
 import { z } from "zod";
+import { cleanText } from "../../lib/clean-text";
 
 /**
  * Display text, not an enum.
@@ -57,8 +58,8 @@ const videoUrl = z.string().trim().url().max(400);
 const markdown = z.string().trim().max(20000);
 
 export const createProductSchema = z.object({
-  name: z.string().trim().min(1).max(160),
-  description: z.string().trim().max(2000).optional(),
+  name: cleanText(z.string().trim().min(1).max(160)),
+  description: cleanText(z.string().trim().max(2000)).optional(),
   markdown: markdown.optional(),
   category,
   photos: z.array(z.string().url()).max(8).default([]),
@@ -71,8 +72,8 @@ export const createProductSchema = z.object({
 });
 
 export const updateProductSchema = z.object({
-  name: z.string().trim().min(1).max(160).optional(),
-  description: z.string().trim().max(2000).nullable().optional(),
+  name: cleanText(z.string().trim().min(1).max(160)).optional(),
+  description: cleanText(z.string().trim().max(2000).nullable()).optional(),
   // Nullable so a gym can clear a body or a video it no longer wants, which an
   // optional-only field cannot express: omitting it means "leave it alone".
   markdown: markdown.nullable().optional(),

@@ -6,6 +6,7 @@
  * - Primary exports: createTenantAdminSchema, createTenantSchema, updateTenantSchema, updateTenantStatusSchema, recordPlatformPaymentSchema, CreateTenantInput, UpdateTenantInput, RecordPlatformPaymentInput.
  */
 import { z } from "zod";
+import { cleanText } from "../../lib/clean-text";
 import { SLUG_REGEX } from "@fitconnect/shared/constants";
 
 const optionalNullableString = <T extends z.ZodTypeAny>(schema: T) =>
@@ -33,10 +34,12 @@ export const createTenantAdminSchema = z.object({
 });
 
 export const createTenantSchema = z.object({
-  name: z
-    .string()
-    .min(2, "Gym name must be at least 2 characters")
-    .max(120, "Gym name must be at most 120 characters"),
+  name: cleanText(
+    z
+      .string()
+      .min(2, "Gym name must be at least 2 characters")
+      .max(120, "Gym name must be at most 120 characters"),
+  ),
   slug: z
     .string()
     .min(2, "Slug must be at least 2 characters")
@@ -71,9 +74,9 @@ export const createTenantSchema = z.object({
     .max(20000, "Markdown description must be at most 20000 characters")
     .optional()
     .or(z.literal("")),
-  description: z
-    .string()
-    .max(300, "Description must be at most 300 characters")
+  description: cleanText(
+    z.string().max(300, "Description must be at most 300 characters"),
+  )
     .optional()
     .or(z.literal("")),
   admin: createTenantAdminSchema,
@@ -81,12 +84,13 @@ export const createTenantSchema = z.object({
 
 export const updateTenantSchema = z
   .object({
-    name: z
-      .string()
-      .trim()
-      .min(2, "Gym name must be at least 2 characters")
-      .max(120, "Gym name must be at most 120 characters")
-      .optional(),
+    name: cleanText(
+      z
+        .string()
+        .trim()
+        .min(2, "Gym name must be at least 2 characters")
+        .max(120, "Gym name must be at most 120 characters"),
+    ).optional(),
     phone: optionalNullableString(
       z.string().min(6, "Phone must be at least 6 characters").max(20, "Phone must be at most 20 characters"),
     ),
@@ -100,10 +104,10 @@ export const updateTenantSchema = z
       z.string().regex(/^#[0-9a-fA-F]{6}$/, "Use a six-digit hex colour, e.g. #E2571E"),
     ),
     markdown: optionalNullableString(
-      z.string().max(20000, "Markdown description must be at most 20000 characters"),
+      cleanText(z.string().max(20000, "Markdown description must be at most 20000 characters")),
     ),
     description: optionalNullableString(
-      z.string().max(300, "Description must be at most 300 characters"),
+      cleanText(z.string().max(300, "Description must be at most 300 characters")),
     ),
   })
   .strict();

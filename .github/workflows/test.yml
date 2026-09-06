@@ -1,0 +1,68 @@
+# Checks on every pushed branch.
+#
+# The deploy workflow already runs these same checks, but only where a deploy
+# might follow: `push` on main, and `pull_request`. That left the case this file
+# exists for — a branch pushed to the remote with no pull request open — running
+# nothing at all. Push a `test` branch, or any other, and it gets checked here.
+#
+# main is deliberately excluded: it is covered by the deploy workflow, which
+# gates the deploy on the same steps. Running them here too would mean two
+# identical runs racing on every merge.
+#
+# A branch that does have a pull request open is checked twice — once here for
+# the push, once by the deploy workflow for the pull request. That is the cost
+# of leaving the deploy workflow alone; consolidating the checks into this file
+# and having deploy depend on it would remove the overlap.
+#
+# No secrets are used. Nothing here deploys, publishes, or touches Cloudflare —
+# it installs, type-checks, tests and builds, so it is safe to run on any branch.
+
+name: Test
+
+on:
+  push:
+    branches-ignore: [main]
+  workflow_dispatch:
+
+concurrency:
+  # A superseded run on a feature branch is wasted work; the newest push is the
+  # only one whose result anybody is waiting for.
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Corepack reads packageManager from the root package.json, so the pnpm
+      # version CI uses is the one pinned in the repo, not whatever is newest.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # Generates the Prisma client as a workspace postinstall, which the API
+      # tests need: they import modules that import the generated client.
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check
+        run: pnpm run typecheck
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Test
+        run: pnpm test
+
+      # Catches what type-checking alone does not: a bundle that fails to
+      # resolve, and a Worker that exceeds its size limit.
+      - name: Build
+        run: pnpm run build

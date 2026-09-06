@@ -10,6 +10,7 @@
  */
 import { prisma } from "../../lib/prisma";
 import { attendanceRepository } from "./attendance.repository";
+import { attendanceService } from "./attendance.service";
 
 /**
  * Seconds between a device's command polls.
@@ -219,6 +220,21 @@ export const iclockService = {
     device: { id: string; tenantId: string; timezone: string },
     punches: Punch[],
   ) {
+    // The same gate every other check-in path passes. A gym past its platform
+    // expiry records nothing here either — but the device is still answered
+    // `OK` by the route, because a machine on a wall that is told "no" simply
+    // asks again forever.
+    const tenant = await attendanceService.resolveTenantForCheckIn(device.tenantId);
+    if ("error" in tenant) {
+      console.warn("[iclock] punches dropped, gym cannot record attendance", {
+        tenantId: device.tenantId,
+        reason: tenant.error,
+        received: punches.length,
+      });
+      await this.touch(device.id);
+      return { marked: 0, unmapped: 0, unreadable: 0, received: punches.length };
+    }
+
     let marked = 0;
     let unmapped = 0;
     let unreadable = 0;
@@ -229,18 +245,15 @@ export const iclockService = {
       (pin) => Number.isInteger(pin),
     );
 
-    const members = pins.length
-      ? await prisma.tenantMembership.findMany({
-          where: { tenantId: device.tenantId, deviceUserPin: { in: pins } },
-          select: { id: true, deviceUserPin: true },
-        })
-      : [];
-
-    const byPin = new Map(members.map((member) => [member.deviceUserPin, member.id]));
+    const members = await attendanceRepository.findMembershipsByDevicePins(
+      tenant.data.id,
+      pins,
+    );
+    const byPin = new Map(members.map((member) => [member.deviceUserPin, member]));
 
     for (const punch of punches) {
-      const membershipId = byPin.get(Number(punch.pin));
-      if (!membershipId) {
+      const membership = byPin.get(Number(punch.pin));
+      if (!membership) {
         // A card the gym has not mapped to anybody. Counted so the desk can see
         // that the machine is working and the enrolment is not.
         unmapped += 1;
@@ -255,9 +268,13 @@ export const iclockService = {
 
       // `markedById` stays null: nobody at the desk marked this, the member
       // presented a card. That is the same shape a self check-in takes.
-      await attendanceRepository.markAttendance(
-        device.tenantId,
-        membershipId,
+      //
+      // Routed through the shared check-in path rather than straight at the
+      // repository, so a punch ends a freeze exactly as every other way of
+      // recording the same visit does.
+      await attendanceService.commitCheckIn(
+        tenant.data.id,
+        membership,
         day,
         null,
         `RFID · ${device.timezone === "Asia/Kolkata" ? punch.timestamp : `${punch.timestamp} ${device.timezone}`}`,

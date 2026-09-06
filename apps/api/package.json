@@ -30,7 +30,9 @@
     "deploy:production": "wrangler deploy --env production",
     "db:migrate:production": "wrangler d1 migrations apply fit-db --remote --env production",
     "db:download": "node scripts/download-db.mjs production",
-    "secrets:production": "node scripts/put-secrets.mjs production"
+    "secrets:production": "node scripts/put-secrets.mjs production",
+    "pretest": "node scripts/ensure-prisma-client.mjs",
+    "test": "vitest run"
   },
   "dependencies": {
     "@fitconnect/shared": "workspace:*",
@@ -51,6 +53,7 @@
     "@types/nodemailer": "^7.0.11",
     "prisma": "^7.5.0",
     "typescript": "^6.0.3",
-    "wrangler": "^4.77.0"
+    "wrangler": "^4.77.0",
+    "vitest": "^4.1.11"
   }
 }

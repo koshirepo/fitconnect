@@ -8,9 +8,12 @@
  */
 import { z } from "zod";
 import { FEEDBACK_LIMITS, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "@fitconnect/shared/constants";
+import { cleanText } from "../../lib/clean-text";
 
 export const commentSchema = z.object({
-  body: z.string().trim().min(1, "A comment cannot be empty.").max(FEEDBACK_LIMITS.COMMENT_MAX_LENGTH),
+  body: cleanText(
+    z.string().trim().min(1, "A comment cannot be empty.").max(FEEDBACK_LIMITS.COMMENT_MAX_LENGTH),
+  ),
 });
 
 export const listCommentsSchema = z.object({

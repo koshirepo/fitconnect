@@ -53,14 +53,23 @@ const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "0.0.0.0"]);
 
 /** Strip protocol, path, brackets, port, and trailing dot from a host-ish string. */
 export function normalizeHostname(hostname: string): string {
-  return String(hostname ?? "")
+  const host = String(hostname ?? "")
     .trim()
     .toLowerCase()
     .replace(/^https?:\/\//, "")
-    .replace(/\/.*$/, "")
-    .replace(/^\[|\]$/g, "")
-    .split(":")[0]
-    .replace(/\.$/, "");
+    .replace(/\/.*$/, "");
+
+  // An IPv6 literal has to be taken whole, before anything goes looking for a
+  // port. Stripping the brackets first and then splitting on ":" ate the
+  // address: "[::1]" became "", and "[2001:db8::1]" became the bogus host
+  // "2001", which is not the loopback the caller asked about.
+  const bracketed = host.match(/^\[([0-9a-f:.]+)\](?::\d+)?$/);
+  if (bracketed) return bracketed[1]!;
+
+  // Unbracketed, a host:port has one colon and an IPv6 address has several.
+  if ((host.match(/:/g) ?? []).length > 1) return host;
+
+  return host.split(":")[0]!.replace(/\.$/, "");
 }
 
 export function isIpAddress(host: string): boolean {

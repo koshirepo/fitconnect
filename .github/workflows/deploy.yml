@@ -3,7 +3,12 @@
 #   branch main -> production (Worker: fitconnect-api + Pages: fitconnect-pwa)
 #
 # Production is the only deployed environment; everything else runs locally.
-# Pushing any other branch only builds and type-checks; nothing is deployed.
+#
+# Checks run on every pull request and on main. Only main deploys. The checks
+# used to be wired to `push: [main]` alone, which meant they first ran on the
+# merge commit, as step one of the deploy that was already shipping the code —
+# a branch that failed type-check was found out while it was going live, and a
+# branch with no PR was never checked at all.
 #
 # Required GitHub secrets:
 #   CLOUDFLARE_API_TOKEN  - Cloudflare API token with edit on Workers, D1, R2,
@@ -21,11 +26,15 @@ name: Deploy
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 concurrency:
   group: deploy-${{ github.ref }}
-  cancel-in-progress: true
+  # Superseding a pull request's checks is free. Superseding a run on main is
+  # not: that run may be partway through applying a migration to the production
+  # database, and killing it there leaves the schema half-changed.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   test:
@@ -81,6 +90,51 @@ jobs:
       ############################################################
       # Database
       ############################################################
+      # A restore point, taken before anything touches the schema.
+      #
+      # These migrations are one-way. `wrangler d1 migrations apply` has no down
+      # step, and SQLite changes a column or a foreign key by rebuilding the
+      # table — the original is dropped as part of the migration. A rebuild that
+      # loses rows still reports every statement as successful, so this is not a
+      # failure the deploy can notice and stop for. Migration 0042 dropped 32
+      # rows locally that way, and only a row count taken by hand caught it.
+      #
+      # Failing here is deliberate: no restore point, no migration.
+      #
+      # The dump goes to its own private bucket rather than a workflow artifact.
+      # It is every member row — names, emails, phone numbers, and the sealed
+      # bank account numbers behind payouts — and it belongs inside the same
+      # account boundary as the database it came from, not in storage every
+      # repo collaborator can download. It must never go in `fit-bucket`
+      # either: that one is served to the public at R2_PUBLIC_URL, which would
+      # publish the whole database at a fetchable URL.
+      #
+      # Backups accumulate at a few MB per deploy. Add a lifecycle rule on the
+      # bucket if that ever starts to matter.
+      - name: Back up production D1
+        working-directory: apps/api
+        run: |
+          set -euo pipefail
+          key="fit-db-$(date -u +%Y%m%dT%H%M%SZ)-${GITHUB_SHA::7}.sql"
+
+          # Tolerates "already exists", which is every deploy after the first.
+          # Here rather than in the manual setup list so the first run of this
+          # workflow does not fail on a bucket nobody knew to create.
+          pnpm exec wrangler r2 bucket create "$BACKUP_BUCKET" || true
+
+          pnpm exec wrangler d1 export fit-db \
+            --env production --remote --skip-confirmation --output "$key"
+
+          echo "Exported $(wc -c < "$key") bytes"
+
+          pnpm exec wrangler r2 object put "$BACKUP_BUCKET/$key" \
+            --file "$key" --content-type application/sql --remote
+
+          echo "::notice::Production D1 backed up to $BACKUP_BUCKET/$key"
+        env:
+          BACKUP_BUCKET: fit-db-backups
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
       # Runs before the Worker so new code never meets an old schema. Applying
       # migrations is idempotent: wrangler tracks which files a database has
       # already seen and applies only the rest, so a deploy with no new

@@ -3,6 +3,7 @@
  *
  * - Declares the routing and authorization for reactions to a store product and to a gym. Mounted under `/tenants` in the application entrypoint.
  * - Product reactions sit behind `STORE_READ`, the same gate as the storefront: if you may not see a product, you may not have an opinion on it.
+ * - Posting to a gym's own page stops when the gym's platform access lapses; reading it and taking something down do not. A gym has to be able to remove something abusive from its page after it expires, and a visitor judging whether to join still needs to see it.
  * - Gym reactions resolve tenant permissions without requiring any. A signed-in non-member has to be able to ask a gym a question — they are the person deciding whether to join — while a gym admin still arrives holding the permissions that let them moderate their own page.
  * - Liking is POST and unliking is DELETE on the same path, rather than one endpoint taking a boolean. A retried request then lands on the state the member pressed for, whichever half of it arrived twice.
  * - Relative endpoints declared in this file: POST /:tenantId/store/products/:productId/like, DELETE /:tenantId/store/products/:productId/like, GET /:tenantId/store/products/:productId/comments, POST /:tenantId/store/products/:productId/comments, DELETE /:tenantId/store/comments/:commentId, POST /:tenantId/social/like, DELETE /:tenantId/social/like, GET /:tenantId/social/comments, POST /:tenantId/social/comments, DELETE /:tenantId/social/comments/:commentId.
@@ -12,6 +13,7 @@ import { Hono } from "hono";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { authenticate } from "../../middleware/authenticate";
 import { requireTenantPermissions, resolveTenantPermissions } from "../../middleware/authorize";
+import { requireActiveTenant } from "../../middleware/require-active-tenant";
 import { productSocialController, tenantSocialController } from "./social.controller";
 import type { AppBindings } from "../../types/app-context";
 
@@ -65,6 +67,7 @@ socialRoutes.post(
   "/:tenantId/social/like",
   authenticate,
   resolveTenantPermissions,
+  requireActiveTenant,
   tenantSocialController.like,
 );
 
@@ -86,6 +89,7 @@ socialRoutes.post(
   "/:tenantId/social/comments",
   authenticate,
   resolveTenantPermissions,
+  requireActiveTenant,
   tenantSocialController.addComment,
 );
 

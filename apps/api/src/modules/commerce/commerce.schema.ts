@@ -6,6 +6,7 @@
  * - Primary exports: createProductSchema, updateProductSchema, placeOrderSchema, serviceabilityQuerySchema, shippingQuoteSchema, cancelOrderSchema, createReturnSchema, decideReturnSchema, refundOrderSchema, verifyOrderPaymentSchema, updateOrderStatusSchema, RETURN_REASONS, CreateProductInput, UpdateProductInput, PlaceOrderInput, VerifyOrderPaymentInput, UpdateOrderStatusInput, ShippingQuoteInput, CancelOrderInput, CreateReturnInput, DecideReturnInput, RefundOrderInput.
  */
 import { z } from "zod";
+import { cleanText } from "../../lib/clean-text";
 
 /**
  * Define or support the `is youtube url` validation contract for the commerce module.
@@ -27,8 +28,8 @@ const youtubeUrlSchema = z
   .refine((value) => isYoutubeUrl(value), "Only YouTube video URLs are allowed.");
 
 const productCoreSchema = z.object({
-  name: z.string().min(2).max(200),
-  description: z.string().max(4000).optional(),
+  name: cleanText(z.string().min(2).max(200)),
+  description: cleanText(z.string().max(4000)).optional(),
   markdown: z.string().max(20000).optional(),
   photos: z.array(z.string().url()).min(1).max(10),
   videos: z.array(youtubeUrlSchema).max(8).optional(),

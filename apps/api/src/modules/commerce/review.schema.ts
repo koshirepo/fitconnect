@@ -9,6 +9,7 @@
  */
 import { z } from "zod";
 import { FEEDBACK_LIMITS } from "@fitconnect/shared/constants";
+import { cleanText } from "../../lib/clean-text";
 
 export const createReviewSchema = z.object({
   rating: z
@@ -16,13 +17,13 @@ export const createReviewSchema = z.object({
     .int()
     .min(FEEDBACK_LIMITS.RATING_MIN)
     .max(FEEDBACK_LIMITS.RATING_MAX),
-  title: z.string().trim().min(1).max(FEEDBACK_LIMITS.REVIEW_TITLE_MAX_LENGTH),
-  description: z.string().trim().min(1).max(FEEDBACK_LIMITS.REVIEW_BODY_MAX_LENGTH),
+  title: cleanText(z.string().trim().min(1).max(FEEDBACK_LIMITS.REVIEW_TITLE_MAX_LENGTH)),
+  description: cleanText(z.string().trim().min(1).max(FEEDBACK_LIMITS.REVIEW_BODY_MAX_LENGTH)),
   isAnonymous: z.boolean().default(false),
 });
 
 export const createCommentSchema = z.object({
-  text: z.string().trim().min(1).max(FEEDBACK_LIMITS.COMMENT_MAX_LENGTH),
+  text: cleanText(z.string().trim().min(1).max(FEEDBACK_LIMITS.COMMENT_MAX_LENGTH)),
   isAnonymous: z.boolean().default(false),
 });
 

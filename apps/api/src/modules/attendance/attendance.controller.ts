@@ -42,10 +42,7 @@ export const attendanceController = {
     if (!parsed.ok) return parsed.response;
 
     const result = await attendanceService.markQrAttendance(tenantId, user.id, parsed.data);
-    if ("error" in result) {
-      if (result.status === 404) return notFound(c, result.error!);
-      return badRequest(c, result.error!);
-    }
+    if ("error" in result) return failWith(c, result);
 
     await auditLog({
       action: "CREATE",
@@ -101,8 +98,7 @@ export const attendanceController = {
     const parsed = await parseBody(c, markAttendanceSchema);
     if (!parsed.ok) return parsed.response;
 
-    const access = c.get("tenantAccess");
-    const actorMembershipId = access?.tenantId === tenantId ? null : null;
+    const actorMembershipId: string | null = null;
 
     const result = await attendanceService.markAttendance(
       tenantId,
@@ -111,10 +107,7 @@ export const attendanceController = {
       parsed.data,
       false,
     );
-    if ("error" in result) {
-      if (result.status === 404) return notFound(c, result.error!);
-      return badRequest(c, result.error!);
-    }
+    if ("error" in result) return failWith(c, result);
 
     await auditLog({
       action: "CREATE",
@@ -137,6 +130,7 @@ export const attendanceController = {
     if (!parsed.ok) return parsed.response;
 
     const result = await attendanceService.markAll(tenantId, null, parsed.data);
+    if ("error" in result) return failWith(c, result);
 
     await auditLog({
       action: "CREATE",

@@ -18,10 +18,27 @@ export type QrAttendanceMember = {
   avatarUrl?: string | null;
 };
 
+/**
+ * The member a check-in was recorded against.
+ *
+ * Every way of marking attendance reports this now — self check-in, the QR
+ * poster, a scanned card, a manual mark — so a screen can show who was checked
+ * in, and flag a membership that is not ACTIVE, without caring which path the
+ * check-in came through. The visit is recorded either way; the status is
+ * information for the desk, not a refusal.
+ */
+export type CheckedInMember = {
+  id: string;
+  memberId: number;
+  name: string;
+  avatarUrl: string | null;
+  status: string;
+};
+
 export const attendanceApi = {
   /** Self check-in */
   checkIn: (tenantId: string, data: MarkAttendancePayload = {}) =>
-    api.post<ApiResponse<{ attendance: AttendanceRecord }>>(
+    api.post<ApiResponse<{ attendance: AttendanceRecord; member: CheckedInMember }>>(
       `/tenants/${tenantId}/attendance`,
       data,
     ),
@@ -41,6 +58,7 @@ export const attendanceApi = {
       ApiResponse<{
         tenant: { id: string; name: string; slug: string; logoUrl?: string | null };
         attendance: AttendanceRecord;
+        member: CheckedInMember;
         mode: "self" | "selected";
       }>
     >(`/tenants/${tenantId}/attendance/qr`, membershipId ? { membershipId } : {}),
@@ -55,26 +73,20 @@ export const attendanceApi = {
     api.post<
       ApiResponse<{
         attendance: AttendanceRecord;
-        member: {
-          id: string;
-          memberId: number;
-          name: string;
-          avatarUrl: string | null;
-          status: string;
-        };
+        member: CheckedInMember;
       }>
     >(`/tenants/${tenantId}/attendance/scan`, { code }),
 
   /** Admin/coach marks attendance for a specific member */
   markForMember: (tenantId: string, data: MarkAttendancePayload) =>
-    api.post<ApiResponse<{ attendance: AttendanceRecord }>>(
+    api.post<ApiResponse<{ attendance: AttendanceRecord; member: CheckedInMember }>>(
       `/tenants/${tenantId}/attendance/mark`,
       data,
     ),
 
   /** Admin/coach marks attendance for multiple members */
   markAll: (tenantId: string, data: MarkAllAttendancePayload) =>
-    api.post<ApiResponse<{ marked: number; total: number }>>(
+    api.post<ApiResponse<{ marked: number; total: number; failed: string[] }>>(
       `/tenants/${tenantId}/attendance/mark-all`,
       data,
     ),

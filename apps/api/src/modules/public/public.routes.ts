@@ -13,6 +13,7 @@ import { signupController } from "./signup.controller";
 import { tenantSignupController } from "./tenant-signup.controller";
 import { idCardController } from "./id-card.controller";
 import { rateLimitSignup, verifyTurnstile } from "../../middleware/abuse-guard";
+import { requireActiveTenantByHost } from "../../middleware/require-active-tenant";
 
 export const publicRoutes = new Hono<AppBindings>();
 
@@ -31,7 +32,12 @@ publicRoutes.get("/store/products/:productId", publicController.getTenantStorePr
  * the request, no stock moves until a coach or an admin hands the goods over,
  * and the per-IP rate limit below caps how fast anyone can write rows.
  */
-publicRoutes.post("/store/orders", rateLimitSignup, publicController.placeGuestOrder);
+publicRoutes.post(
+  "/store/orders",
+  rateLimitSignup,
+  requireActiveTenantByHost,
+  publicController.placeGuestOrder,
+);
 publicRoutes.post("/store/orders/lookup", rateLimitSignup, publicController.lookupGuestOrder);
 /**
  * Paying for a basket now, without an account.
@@ -39,7 +45,12 @@ publicRoutes.post("/store/orders/lookup", rateLimitSignup, publicController.look
  * Prices come from the database and the settlement is only accepted against
  * a Razorpay signature, so nothing here trusts the caller with a number.
  */
-publicRoutes.post("/store/checkout", rateLimitSignup, publicController.startGuestCheckout);
+publicRoutes.post(
+  "/store/checkout",
+  rateLimitSignup,
+  requireActiveTenantByHost,
+  publicController.startGuestCheckout,
+);
 publicRoutes.post("/store/checkout/verify", publicController.verifyGuestCheckout);
 /** Likes and comments on the gym itself. Reading is open; writing needs an account. */
 publicRoutes.get("/social", publicController.getTenantSocial);
@@ -57,8 +68,14 @@ publicRoutes.get("/gyms/:slug", publicController.getTenantBySlug);
  * exactly as it did before they existed.
  */
 publicRoutes.get("/signup/options", signupController.getOptions);
-publicRoutes.post("/signup/quote", rateLimitSignup, signupController.quote);
-publicRoutes.post("/signup", rateLimitSignup, verifyTurnstile, signupController.register);
+publicRoutes.post("/signup/quote", rateLimitSignup, requireActiveTenantByHost, signupController.quote);
+publicRoutes.post(
+  "/signup",
+  rateLimitSignup,
+  verifyTurnstile,
+  requireActiveTenantByHost,
+  signupController.register,
+);
 publicRoutes.post("/signup/verify", rateLimitSignup, signupController.verify);
 
 /**

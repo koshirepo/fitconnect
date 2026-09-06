@@ -16,6 +16,21 @@ function dayRange(date: Date) {
   return { start, end };
 }
 
+/**
+ * Everything a check-in response says about the member it recorded.
+ *
+ * One shape for all five entry points, so a screen can render the outcome of a
+ * card scan and the outcome of a manual mark with the same component — status
+ * included, because that is now reported rather than enforced.
+ */
+const MEMBER_CHECK_IN_SELECT = {
+  id: true,
+  memberId: true,
+  status: true,
+  userId: true,
+  user: { select: { id: true, name: true, avatarUrl: true } },
+} as const;
+
 export const attendanceRepository = {
   findTenantByLookup(tenantIdOrSlug: string) {
     return prisma.tenant.findFirst({
@@ -186,6 +201,54 @@ export const attendanceRepository = {
         status: true,
         user: { select: { name: true, avatarUrl: true } },
       },
+    });
+  },
+
+  /**
+   * A membership in this gym, whatever state it is in.
+   *
+   * Deliberately unfiltered by status, unlike `findMembership`. Recording a
+   * visit is a statement about somebody standing in the building, not about
+   * whether their plan is paid up — so the check-in paths resolve members with
+   * this and report the status back rather than refusing. The ACTIVE-only
+   * lookups below remain for the places that gate on membership standing.
+   */
+  findMembershipForCheckIn(tenantId: string, membershipId: string) {
+    return prisma.tenantMembership.findFirst({
+      where: { id: membershipId, tenantId },
+      select: MEMBER_CHECK_IN_SELECT,
+    });
+  },
+
+  /** The same lookup for a whole list of members, in one query. */
+  findMembershipsForCheckIn(tenantId: string, membershipIds: string[]) {
+    if (!membershipIds.length) return Promise.resolve([]);
+    return prisma.tenantMembership.findMany({
+      where: { tenantId, id: { in: membershipIds } },
+      select: MEMBER_CHECK_IN_SELECT,
+    });
+  },
+
+  /** The caller's own membership, whatever state it is in. See above. */
+  findMembershipForCheckInByUserId(tenantId: string, userId: string) {
+    return prisma.tenantMembership.findFirst({
+      where: { tenantId, userId },
+      select: MEMBER_CHECK_IN_SELECT,
+    });
+  },
+
+  /**
+   * The memberships behind a batch of device PINs.
+   *
+   * One query for a whole upload: a busy morning arrives from the machine as a
+   * single batch of many rows, and resolving each punch on its own would turn
+   * that into a query storm.
+   */
+  findMembershipsByDevicePins(tenantId: string, pins: number[]) {
+    if (!pins.length) return Promise.resolve([]);
+    return prisma.tenantMembership.findMany({
+      where: { tenantId, deviceUserPin: { in: pins } },
+      select: { ...MEMBER_CHECK_IN_SELECT, deviceUserPin: true },
     });
   },
 
