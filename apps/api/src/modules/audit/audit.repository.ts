@@ -64,16 +64,27 @@ export const auditRepository = {
    * Run the `list tenant logs` persistence operation for the audit module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
-  async listTenantLogs(tenantId: string, page: number, limit: number) {
+  async listTenantLogs(
+    tenantId: string,
+    page: number,
+    limit: number,
+    filters: { entity?: string; action?: string } = {},
+  ) {
+    const where = {
+      tenantId,
+      ...(filters.entity ? { entity: filters.entity } : {}),
+      ...(filters.action ? { action: filters.action } : {}),
+    };
+
     const [logs, total] = await Promise.all([
       prisma.auditLog.findMany({
-        where: { tenantId },
+        where,
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: "desc" },
         select: tenantAuditLogSelect,
       }),
-      prisma.auditLog.count({ where: { tenantId } }),
+      prisma.auditLog.count({ where }),
     ]);
 
     return { logs, total };

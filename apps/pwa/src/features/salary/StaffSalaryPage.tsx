@@ -19,7 +19,7 @@ import {
 } from "@/api/queries/finance";
 import type { SalaryComponentKind, SalaryPaymentMethod } from "@/api/finance";
 import { getApiError } from "@/api/client";
-import { getMonthStr, formatMonthLabel, shiftMonth } from "@/lib/month";
+import { getMonthStr, withMonth } from "@/lib/month";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { getTenantDashboardPath } from "@/lib/subdomain";
 import { usePermissions } from "@/features/auth/permission-gate";
@@ -29,13 +29,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CardSkeleton } from "@/components/ui/skeleton";
+import { MonthNav } from "@/components/ui/month-nav";
 import { AvatarTile } from "@/components/ui/member-card";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
-  ChevronLeft,
-  ChevronRight,
   MessageCircle,
   Plus,
   Trash2,
@@ -87,7 +86,6 @@ export default function StaffSalaryPage() {
   const canManage = can(Permission.SALARY_MANAGE);
 
   const month = searchParams.get("month") || getMonthStr(new Date());
-  const isCurrentMonth = month >= getMonthStr(new Date());
 
   const query = useSalaryCycle(membershipId, month);
   const setCompensation = useSetCompensation();
@@ -116,7 +114,6 @@ export default function StaffSalaryPage() {
 
   const data = query.data;
   const cycle = data?.cycle ?? null;
-  const goMonth = (delta: number) => setSearchParams({ month: shiftMonth(month, delta) });
 
   const saveCompensation = async () => {
     const value = parseAmount(monthly);
@@ -216,7 +213,7 @@ export default function StaffSalaryPage() {
       <Button
         variant="outline"
         size="sm"
-        onClick={() => navigate(getTenantDashboardPath(`/salary?month=${month}`))}
+        onClick={() => navigate(getTenantDashboardPath(withMonth("/salary", month)))}
       >
         <ArrowLeft className="h-4 w-4" />
         Salary
@@ -264,22 +261,7 @@ export default function StaffSalaryPage() {
         </div>
       </div>
 
-      {/* Month nav */}
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => goMonth(-1)}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <h2 className="text-base font-semibold">{formatMonthLabel(month)}</h2>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => goMonth(1)}
-          disabled={isCurrentMonth}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
+      <MonthNav month={month} onMonthChange={(next) => setSearchParams({ month: next })} />
 
       {/* The agreed figure */}
       <Card>

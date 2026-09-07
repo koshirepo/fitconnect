@@ -15,8 +15,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { StatCard } from "@/components/ui/stat-card";
 import { StatGridSkeleton } from "@/components/ui/skeleton";
-import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
+import { cn, formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import { getTenantDashboardPath } from "@/lib/subdomain";
 import {
   Building2,
@@ -30,6 +31,7 @@ import {
   ScrollText,
   ShoppingBag,
   Users,
+  Wallet,
 } from "lucide-react";
 import type { TenantProfile } from "@/types/api";
 
@@ -146,6 +148,20 @@ export default function DashboardPage() {
     : (myPaymentsQuery.data ?? []);
   const memberCount = memberCountQuery.data?.meta.total ?? 0;
 
+  /**
+   * The counts the tiles show.
+   *
+   * Both lists are fetched five rows at a time for the panels lower down, so
+   * counting the array counted the page size: any gym past five plans or five
+   * payments read "5" on both tiles. The paginated reads carry the real total;
+   * a member's own receipts arrive as a plain array and have none, so there the
+   * length is the count.
+   */
+  const workoutPlanTotal = workoutsQuery.data?.meta.total ?? workoutPlans.length;
+  const paymentTotal = canViewAllPayments
+    ? (recentPaymentsQuery.data?.meta.total ?? recentPayments.length)
+    : recentPayments.length;
+
   const loading = showPlatformDashboard
     ? tenantsQuery.isLoading || platformLogsQuery.isLoading
     : isTenantDashboard && (profileQuery.isLoading || workoutsQuery.isLoading);
@@ -153,13 +169,13 @@ export default function DashboardPage() {
   const subscriptionStatus = getSubscriptionStatus(profile);
   const latestSubscriptionPayment = profile?.payments?.find((payment) => payment.validUntil);
 
-  // Mirrors the two stat rows below: one column on a phone, two from `sm`, four
-  // from `lg`, with the same gap — so nothing shifts when the data lands.
+  // Mirrors the stat row below: two columns on a phone, four from `lg`, with
+  // the same gap — so nothing shifts when the data lands.
   if (loading) {
     return (
-      <div className="space-y-6">
-        <StatGridSkeleton className="grid-cols-1 gap-4 sm:grid-cols-2" />
-        <StatGridSkeleton className="grid-cols-1 gap-4 sm:grid-cols-2" />
+      <div className="space-y-5 sm:space-y-6">
+        <StatGridSkeleton className="grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4" />
+        <StatGridSkeleton className="grid-cols-1 gap-4 lg:grid-cols-2" />
       </div>
     );
   }
@@ -376,143 +392,130 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <div className="text-muted-foreground">
-            Welcome back, {user?.name}!{" "}
-            {membership && (
-              <Badge variant="secondary" className="ml-1">
-                {membership.tenantName}
-              </Badge>
-            )}
-          </div>
-        </div>
+    <div className="space-y-5 sm:space-y-6">
+      <div className="min-w-0">
+        <h1 className="truncate text-xl font-bold tracking-tight sm:text-2xl">Dashboard</h1>
+        <p className="truncate text-sm text-muted-foreground">
+          Welcome back, {user?.name?.split(" ")[0] ?? "there"}
+          {membership ? ` · ${membership.tenantName}` : ""}
+        </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Two-up on a phone. These were one per row, so four tiles filled the
+          screen and everything the dashboard is actually for started below
+          the fold. */}
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
         {!canViewGymMembers && (
-          <Card className="cursor-pointer" onClick={() => navigate("/profile")}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Subscription Status</CardTitle>
-              {subscriptionStatus.state === "current" ? (
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-              ) : subscriptionStatus.state === "overdue" ? (
-                <AlertTriangle className="h-4 w-4 text-destructive" />
-              ) : (
-                <CalendarClock className="h-4 w-4 text-muted-foreground" />
-              )}
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {subscriptionStatus.state === "current"
-                  ? subscriptionStatus.days === 0
-                    ? "Today"
-                    : `${subscriptionStatus.days}d`
-                  : subscriptionStatus.state === "overdue"
-                    ? `${subscriptionStatus.days}d`
-                    : "-"}
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {subscriptionStatus.detail}
-              </p>
-            </CardContent>
-          </Card>
+          <StatCard
+            icon={
+              subscriptionStatus.state === "current"
+                ? CheckCircle2
+                : subscriptionStatus.state === "overdue"
+                  ? AlertTriangle
+                  : CalendarClock
+            }
+            label="Subscription"
+            value={
+              subscriptionStatus.state === "current"
+                ? subscriptionStatus.days === 0
+                  ? "Today"
+                  : `${subscriptionStatus.days}d`
+                : subscriptionStatus.state === "overdue"
+                  ? `${subscriptionStatus.days}d`
+                  : "—"
+            }
+            subtext={subscriptionStatus.detail}
+            color={
+              subscriptionStatus.state === "overdue"
+                ? "text-destructive"
+                : subscriptionStatus.state === "current"
+                  ? "text-emerald-600"
+                  : undefined
+            }
+            onClick={() => navigate("/profile")}
+          />
         )}
 
         {canViewGymMembers && (
-          <Card className="cursor-pointer" onClick={() => navigate(getTenantDashboardPath("/members"))}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Members</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{memberCount}</div>
-            </CardContent>
-          </Card>
+          <StatCard
+            icon={Users}
+            label="Members"
+            value={memberCount}
+            onClick={() => navigate(getTenantDashboardPath("/members"))}
+          />
         )}
 
-        <Card className="cursor-pointer" onClick={() => navigate("/workouts")}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Workout Plans</CardTitle>
-            <Dumbbell className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{workoutPlans.length}</div>
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={Dumbbell}
+          label="Workout plans"
+          // The page total, not the length of the five-row page fetched for
+          // the list below — which is what this counted before, so a gym with
+          // forty plans and a gym with five both read "5".
+          value={workoutPlanTotal}
+          onClick={() => navigate("/workouts")}
+        />
 
-        <Card className="cursor-pointer" onClick={() => navigate("/payments")}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              {canViewAllPayments ? "Recent Payments" : "My Payments"}
-            </CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{recentPayments.length}</div>
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={CreditCard}
+          label={canViewAllPayments ? "Payments" : "My payments"}
+          value={paymentTotal}
+          onClick={() => navigate("/payments")}
+        />
 
         {canViewFinance && (
-          <Card className="cursor-pointer" onClick={() => navigate("/finance")}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">This Month</CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {monthRevenue === null ? "—" : formatCurrency(monthRevenue)}
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">Collected so far</p>
-            </CardContent>
-          </Card>
+          <StatCard
+            icon={Wallet}
+            label="This month"
+            value={monthRevenue === null ? "—" : formatCurrency(monthRevenue)}
+            subtext="Collected so far"
+            color="text-emerald-600"
+            onClick={() => navigate("/finance")}
+          />
         )}
       </div>
 
       {!canViewGymMembers && profile && (
         <Card
-          className={
-            subscriptionStatus.state === "overdue"
-              ? "border-destructive/40 bg-destructive/5"
-              : subscriptionStatus.state === "current"
-                ? "border-green-500/30 bg-green-500/5"
-                : ""
-          }
+          className={cn(
+            subscriptionStatus.state === "overdue" && "ring-destructive/40 bg-destructive/5",
+            subscriptionStatus.state === "current" && "ring-emerald-500/30 bg-emerald-500/5",
+          )}
         >
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+          <CardHeader className="pb-1">
+            <CardTitle className="flex items-center gap-2 text-base">
               {subscriptionStatus.state === "current" ? (
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
+                <CheckCircle2 className="size-4 shrink-0 text-emerald-500" />
               ) : subscriptionStatus.state === "overdue" ? (
-                <AlertTriangle className="h-5 w-5 text-destructive" />
+                <AlertTriangle className="size-4 shrink-0 text-destructive" />
               ) : (
-                <CalendarClock className="h-5 w-5 text-muted-foreground" />
+                <CalendarClock className="size-4 shrink-0 text-muted-foreground" />
               )}
-              My Subscription
+              My subscription
             </CardTitle>
-            <CardDescription>{subscriptionStatus.label}</CardDescription>
+            <CardDescription className="text-xs">{subscriptionStatus.label}</CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-3">
-            <div>
-              <p className="text-xs text-muted-foreground">Plan</p>
-              <p className="text-sm font-medium">
+          {/* Two columns on a phone, three from `sm`. Each value is short
+              enough to sit beside another, and stacking them made a card that
+              said three things three screens tall. */}
+          <CardContent className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+            <div className="min-w-0">
+              <p className="text-[11px] text-muted-foreground">Plan</p>
+              <p className="truncate text-sm font-medium">
                 {latestSubscriptionPayment?.subscription?.title ?? "No plan recorded"}
               </p>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Valid Until</p>
-              <p className="text-sm font-medium">
-                {subscriptionStatus.dueDate ? formatDate(subscriptionStatus.dueDate) : "-"}
+            <div className="min-w-0">
+              <p className="text-[11px] text-muted-foreground">Valid until</p>
+              <p className="truncate text-sm font-medium">
+                {subscriptionStatus.dueDate ? formatDate(subscriptionStatus.dueDate) : "—"}
               </p>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground">
+            <div className="min-w-0">
+              <p className="text-[11px] text-muted-foreground">
                 {subscriptionStatus.state === "overdue" ? "Overdue" : "Remaining"}
               </p>
-              <p className="flex items-center gap-2 text-sm font-medium">
-                <Clock3 className="h-4 w-4 text-muted-foreground" />
+              <p className="flex items-center gap-1.5 truncate text-sm font-medium">
+                <Clock3 className="size-3.5 shrink-0 text-muted-foreground" />
                 {subscriptionStatus.detail}
               </p>
             </div>
@@ -520,80 +523,95 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle>Recent Payments</CardTitle>
-            <CardDescription>
-              {canViewAllPayments ? "Latest payments across the gym" : "Your recent payment history"}
+          <CardHeader className="pb-1">
+            <CardTitle className="text-base">Recent payments</CardTitle>
+            <CardDescription className="text-xs">
+              {canViewAllPayments ? "Latest across the gym" : "Your payment history"}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-0">
             {recentPayments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No payments yet.</p>
+              <p className="px-4 text-sm text-muted-foreground">No payments yet.</p>
             ) : (
-              <div className="space-y-3">
+              <ul className="divide-y divide-border/60">
                 {recentPayments.slice(0, 5).map((payment) => (
-                  <div
-                    key={payment.id}
-                    onClick={() => navigate(`/payments/${payment.id}`)}
-                    className="flex cursor-pointer items-center justify-between"
-                  >
-                    <div>
-                      <p className="text-sm font-medium">
-                        {payment.subscription?.title ?? "Payment"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{formatDate(payment.createdAt)}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">{formatCurrency(payment.amount)}</p>
-                      <Badge
-                        variant={
-                          payment.status === "COMPLETED"
-                            ? "success"
-                            : payment.status === "PENDING"
-                              ? "warning"
-                              : "destructive"
-                        }
-                      >
-                        {payment.status}
-                      </Badge>
-                    </div>
-                  </div>
+                  <li key={payment.id}>
+                    {/* A row on a phone is a tap target, not a div with a
+                        pointer cursor — and every text column needs `min-w-0`
+                        or a long plan title pushes the amount off screen. */}
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/payments/${payment.id}`)}
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted/60"
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium">
+                          {payment.subscription?.title ?? "Payment"}
+                        </span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {formatDate(payment.createdAt)}
+                        </span>
+                      </span>
+                      <span className="flex shrink-0 flex-col items-end gap-1">
+                        <span className="text-sm font-semibold tabular-nums">
+                          {formatCurrency(payment.amount)}
+                        </span>
+                        <Badge
+                          variant={
+                            payment.status === "COMPLETED"
+                              ? "success"
+                              : payment.status === "PENDING"
+                                ? "warning"
+                                : "destructive"
+                          }
+                        >
+                          {payment.status}
+                        </Badge>
+                      </span>
+                    </button>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>{canViewGymMembers ? "Recent Workout Plans" : "Your Workout Plans"}</CardTitle>
-            <CardDescription>Active workout programs</CardDescription>
+          <CardHeader className="pb-1">
+            <CardTitle className="text-base">
+              {canViewGymMembers ? "Recent workout plans" : "Your workout plans"}
+            </CardTitle>
+            <CardDescription className="text-xs">Active programs</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-0">
             {workoutPlans.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No workout plans yet.</p>
+              <p className="px-4 text-sm text-muted-foreground">No workout plans yet.</p>
             ) : (
-              <div className="space-y-3">
+              <ul className="divide-y divide-border/60">
                 {workoutPlans.map((plan) => (
-                  <div
-                    onClick={() => navigate(`/workouts/${plan.id}`)}
-                    key={plan.id}
-                    className="flex cursor-pointer items-center justify-between"
-                  >
-                    <div>
-                      <p className="text-sm font-medium">{plan.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        by {plan.creator?.name ?? "Unknown"}
-                      </p>
-                    </div>
-                    {plan._count && (
-                      <Badge variant="secondary">{plan._count.assignments} assigned</Badge>
-                    )}
-                  </div>
+                  <li key={plan.id}>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/workouts/${plan.id}`)}
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted/60"
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium">{plan.title}</span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          by {plan.creator?.name ?? "Unknown"}
+                        </span>
+                      </span>
+                      {plan._count && (
+                        <Badge variant="secondary" className="shrink-0">
+                          {plan._count.assignments}
+                        </Badge>
+                      )}
+                    </button>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
           </CardContent>
         </Card>
@@ -601,21 +619,27 @@ export default function DashboardPage() {
 
       {profile && (
         <Card>
-          <CardHeader>
-            <CardTitle>Your Profile</CardTitle>
+          <CardHeader className="pb-1">
+            <CardTitle className="text-base">Your profile</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-2 text-sm sm:grid-cols-3">
-              <div>
-                <span className="text-muted-foreground">Name:</span> {profile.name}
-              </div>
-              <div>
-                <span className="text-muted-foreground">Email:</span> {profile.email}
-              </div>
-              <div>
-                <span className="text-muted-foreground">Joined:</span> {formatDate(profile.joinedAt)}
-              </div>
-            </div>
+            {/* Label over value rather than "Label: value" on one line: an
+                email is long enough to wrap mid-address on a phone when it
+                has to share the row with its own label. */}
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+              {[
+                { label: "Name", value: profile.name },
+                { label: "Email", value: profile.email },
+                { label: "Joined", value: formatDate(profile.joinedAt) },
+              ].map((field) => (
+                <div key={field.label} className="min-w-0">
+                  <dt className="text-[11px] text-muted-foreground">{field.label}</dt>
+                  <dd className="truncate text-sm font-medium" title={field.value}>
+                    {field.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </CardContent>
         </Card>
       )}

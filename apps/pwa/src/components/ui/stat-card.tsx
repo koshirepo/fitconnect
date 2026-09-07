@@ -5,6 +5,9 @@
  *   counts, and a line of context under it.
  * - `color` styles the value alone, so a screen can mark money green or an
  *   at-risk count red without restyling the rest of the tile.
+ * - Sized to sit two-up on a phone. Every figure here is short — a count or an
+ *   amount — so the tile scales its type down rather than its column count,
+ *   which is what let four of these fill a phone screen before any content.
  *
  * Primary exports: StatCard.
  */
@@ -66,15 +69,21 @@ export function StatCard({
         className,
       )}
     >
-      <CardContent className="pt-5 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-muted p-2.5">
-            <Icon className="h-5 w-5 text-muted-foreground" />
+      <CardContent>
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="shrink-0 rounded-lg bg-muted p-2 sm:p-2.5">
+            <Icon className="size-4 text-muted-foreground sm:size-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs leading-tight text-balance text-muted-foreground">{label}</p>
-            <p className={`text-xl font-bold ${color}`}>{value}</p>
-            {subtext && <p className="text-xs text-muted-foreground">{subtext}</p>}
+            <p className="truncate text-[11px] leading-tight text-muted-foreground sm:text-xs sm:text-balance">
+              {label}
+            </p>
+            <p className={cn("truncate text-lg font-bold tabular-nums sm:text-xl", color)}>
+              {value}
+            </p>
+            {subtext && (
+              <p className="truncate text-[10px] text-muted-foreground sm:text-xs">{subtext}</p>
+            )}
           </div>
         </div>
       </CardContent>

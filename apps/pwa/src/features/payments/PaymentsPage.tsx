@@ -5,7 +5,6 @@ import { Permission } from "@fitconnect/shared/types/permissions";
 import { useSearchParams } from "react-router-dom";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
-import { paymentsApi } from "@/api/payments";
 import { getApiError } from "@/api/client";
 import { useAllPayments, useMyPayments, useUpdatePaymentStatus } from "@/api/queries/payments";
 import { useToast } from "@/components/ui/toast";
@@ -17,6 +16,13 @@ import { SwipePane } from "@/components/ui/swipe-pane";
 import { Spinner } from "@/components/ui/spinner";
 import { useWindowedList } from "@/lib/use-windowed-list";
 import { EmptyState } from "@/components/ui/empty-state";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { downloadCsv } from "@/lib/csv";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import {
@@ -47,6 +53,15 @@ type PendingPaymentMutationBody = {
 
 type DisplayPayment = Payment & { _pending?: boolean };
 
+/**
+ * Filter value for a payment nobody is recorded as having collected.
+ *
+ * Worth its own option rather than being lumped in with "all": these are the
+ * gateway and online payments that arrived without anybody at the desk, and
+ * telling them apart from cash somebody took is the point of the filter.
+ */
+const UNATTRIBUTED = "__none__";
+
 /** Client-side status tabs, mirroring the member list. */
 const STATUS_TABS = [
   { value: "", label: "All", icon: Wallet, iconClass: "text-blue-600" },
@@ -69,7 +84,6 @@ export default function PaymentsPage() {
   const canViewAllPayments = can(Permission.PAYMENTS_READ);
   const canRecordPayment = can(Permission.PAYMENTS_CREATE);
 
-  const [exporting, setExporting] = React.useState(false);
   const toast = useToast();
 
   const [confirmAction, setConfirmAction] = React.useState<{
@@ -80,6 +94,7 @@ export default function PaymentsPage() {
 
   const statusFilter = searchParams.get("status") ?? "";
   const searchTerm = searchParams.get("search") ?? "";
+  const collectedByFilter = searchParams.get("collectedBy") ?? "";
 
   // Local box, URL 300ms behind it. Every keystroke used to re-filter the whole
   // ledger and push a history entry, so backspacing walked back through the
@@ -100,6 +115,16 @@ export default function PaymentsPage() {
       const next = new URLSearchParams(prev);
       if (value) next.set("status", value);
       else next.delete("status");
+      next.delete("page");
+      return next;
+    });
+  };
+
+  const setCollectedByFilter = (value: string) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (value) next.set("collectedBy", value);
+      else next.delete("collectedBy");
       next.delete("page");
       return next;
     });
@@ -193,13 +218,32 @@ export default function PaymentsPage() {
   );
 
   // Merge offline-queued rows in, apply the search, and sort latest first — all
+  const collectors = React.useMemo(() => {
+    const byId = new Map<string, string>();
+    for (const payment of payments) {
+      if (payment.collectedBy) byId.set(payment.collectedBy.id, payment.collectedBy.name);
+    }
+    return [...byId.entries()]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [payments]);
+
   // in the browser, over the full ledger. The status tabs filter this list
   // rather than the raw one, so the tab counts always match what a click shows.
   const searchedPayments: DisplayPayment[] = React.useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
 
-    return [...pendingPaymentItems, ...payments]
+    const rows: DisplayPayment[] = [...pendingPaymentItems, ...payments];
+
+    return rows
       .filter((p) => {
+        // A payment queued offline has no collector on its placeholder row and
+        // is exempt, so it does not disappear mid-sync.
+        if (collectedByFilter && !p._pending) {
+          const collectorId = p.collectedBy?.id ?? UNATTRIBUTED;
+          if (collectorId !== collectedByFilter) return false;
+        }
+
         if (!term) return true;
 
         const haystack = [
@@ -218,7 +262,7 @@ export default function PaymentsPage() {
         return haystack.includes(term);
       })
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [pendingPaymentItems, payments, searchTerm]);
+  }, [collectedByFilter, pendingPaymentItems, payments, searchTerm]);
 
   const allPayments: DisplayPayment[] = React.useMemo(
     () =>
@@ -238,7 +282,7 @@ export default function PaymentsPage() {
     total,
   } = useWindowedList(allPayments, {
     pageSize: 25,
-    resetKey: `${statusFilter}|${searchTerm}`,
+    resetKey: `${statusFilter}|${searchTerm}|${collectedByFilter}`,
   });
 
   /** Row count behind each tab, so a tab shows what clicking it will reveal. */
@@ -269,56 +313,69 @@ export default function PaymentsPage() {
     }
   };
 
-  const handleExportPayments = async () => {
-    if (!currentTenantId || !isAdmin) return;
+  /**
+   * Export exactly the rows on screen.
+   *
+   * The ledger is already filtered and already in memory, so the file always
+   * matches what the person looking at it can see. This used to re-fetch the
+   * whole ledger a page at a time into a local array that shadowed the filtered
+   * one, which meant every download ignored the status tab, the search box and
+   * the collector filter and handed back the entire ledger regardless.
+   */
+  const handleExportPayments = () => {
+    if (!isAdmin) return;
 
-    setExporting(true);
-    try {
-      let exportPage = 1;
-      let totalExportPages = 1;
-      const allPayments: Payment[] = [];
-
-      do {
-        const res = await paymentsApi.list(currentTenantId, exportPage, 100);
-        allPayments.push(...res.data.data.payments);
-        totalExportPages = res.data.meta.totalPages;
-        exportPage += 1;
-      } while (exportPage <= totalExportPages);
-
-      const rows = allPayments.map((payment) => ({
+    const rows = allPayments
+      // Offline rows have no server id yet; exporting a placeholder would put a
+      // payment in the file that does not exist anywhere else.
+      .filter((payment) => !payment._pending)
+      .map((payment) => ({
         PaymentId: payment.id,
         MemberName: payment.member?.name ?? "",
         MemberEmail: payment.member?.email ?? "",
         Subscription: payment.subscription?.title ?? payment.description ?? "",
         Amount: payment.amount,
         Status: payment.status,
+        CollectedBy: payment.collectedBy?.name ?? "",
         CreatedAt: payment.createdAt,
         PaidAt: payment.paidAt ?? "",
         ValidFrom: payment.validFrom ?? "",
         ValidUntil: payment.validUntil ?? "",
       }));
 
-      downloadCsv(
-        `payments-${new Date().toISOString().slice(0, 10)}.csv`,
-        [
-          "PaymentId",
-          "MemberName",
-          "MemberEmail",
-          "Subscription",
-          "Amount",
-          "Status",
-          "CreatedAt",
-          "PaidAt",
-          "ValidFrom",
-          "ValidUntil",
-        ],
-        rows,
-      );
-    } catch {
-      // silent
-    } finally {
-      setExporting(false);
-    }
+    if (rows.length === 0) return;
+
+    // Name the file after the filters, so two exports taken minutes apart are
+    // still tellable apart in a downloads folder.
+    const parts = [
+      "payments",
+      statusFilter ? statusFilter.toLowerCase() : "",
+      collectedByFilter === UNATTRIBUTED
+        ? "unattributed"
+        : collectedByFilter
+          ? collectors.find((collector) => collector.id === collectedByFilter)?.name
+          : "",
+      searchTerm.trim() ? "search" : "",
+      new Date().toISOString().slice(0, 10),
+    ].filter(Boolean);
+
+    downloadCsv(
+      `${parts.join("-").replace(/s+/g, "-").toLowerCase()}.csv`,
+      [
+        "PaymentId",
+        "MemberName",
+        "MemberEmail",
+        "Subscription",
+        "Amount",
+        "Status",
+        "CollectedBy",
+        "CreatedAt",
+        "PaidAt",
+        "ValidFrom",
+        "ValidUntil",
+      ],
+      rows,
+    );
   };
 
   return (
@@ -332,7 +389,7 @@ export default function PaymentsPage() {
         </div>
         <div className="flex items-center gap-2">
           {isAdmin && (
-            <Button variant="outline" onClick={handleExportPayments} disabled={exporting}>
+            <Button variant="outline" onClick={handleExportPayments}>
               <Download className="h-4 w-4" />
             </Button>
           )}
@@ -365,6 +422,26 @@ export default function PaymentsPage() {
               </button>
             )}
           </div>
+
+          {collectors.length > 0 && (
+            <Select
+              value={collectedByFilter}
+              onValueChange={(value) => setCollectedByFilter(value ?? "")}
+            >
+              <SelectTrigger className="h-10 w-full sm:w-56">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Collected by anyone</SelectItem>
+                {collectors.map((collector) => (
+                  <SelectItem key={collector.id} value={collector.id}>
+                    {collector.name}
+                  </SelectItem>
+                ))}
+                <SelectItem value={UNATTRIBUTED}>Not recorded</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
         </div>
       )}
 
@@ -432,7 +509,7 @@ export default function PaymentsPage() {
           icon={CreditCard}
           title="No payments found"
           description={
-            statusFilter || searchTerm
+            statusFilter || searchTerm || collectedByFilter
               ? "No payments match this filter."
               : canViewAllPayments
                 ? "Record the first payment."

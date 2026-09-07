@@ -12,9 +12,13 @@ export const auditApi = {
       },
     }),
 
-  tenantLogs: (tenantId: string, page = 1, limit = 50) =>
-    api.get<PaginatedResponse<{ logs: AuditLog[] }>>(
-      `/audit/tenant/${tenantId}`,
-      { params: { page, limit } },
-    ),
+  tenantLogs: (tenantId: string, page = 1, limit = 50, entity?: string, action?: string) =>
+    api.get<PaginatedResponse<{ logs: AuditLog[] }>>(`/audit/tenant/${tenantId}`, {
+      params: {
+        page,
+        limit,
+        ...(entity ? { entity } : {}),
+        ...(action ? { action } : {}),
+      },
+    }),
 };

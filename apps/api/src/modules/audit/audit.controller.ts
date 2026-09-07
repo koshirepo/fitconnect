@@ -34,8 +34,13 @@ export const auditController = {
   async listTenantLogs(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
     const { page, limit } = parsePagination(c);
+    const entity = c.req.query("entity");
+    const action = c.req.query("action");
 
-    const { data, total } = await auditService.listTenantLogs(tenantId, page, limit);
+    const { data, total } = await auditService.listTenantLogs(tenantId, page, limit, {
+      entity,
+      action,
+    });
     return okPaginated(c, data, { page, limit, total });
   },
 };

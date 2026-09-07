@@ -5,10 +5,19 @@ import { useSearchParams } from "react-router-dom";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
 import { useAllMembers, useRemoveMember } from "@/api/queries/members";
-import { useBadges, useTenantSettings } from "@/api/queries/catalog";
+import { useBadges, useShifts, useTenantSettings } from "@/api/queries/catalog";
+import { formatShiftLabel } from "@/lib/shifts";
 import { useTenantRoleMatrix } from "@/api/queries/roles";
 import { useLogReminder } from "@/api/queries/reminders";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { MemberCard, PersonChip } from "@/components/ui/member-card";
@@ -44,6 +53,7 @@ import {
   Ban,
   CheckCircle2,
   IndianRupee,
+  SlidersHorizontal,
 } from "lucide-react";
 import type { TenantMember } from "@/types/api";
 import { usePendingMutations } from "@/lib/use-pending-mutations";
@@ -61,6 +71,9 @@ type PendingMemberMutationBody = {
 };
 
 type DisplayMember = TenantMember & { _pending?: boolean };
+
+/** Filter value meaning "no shift assigned", which is itself worth filtering to. */
+const UNASSIGNED_SHIFT = "__none__";
 
 // ─── Status & role config ──────────────────────────────────────────────────────
 
@@ -130,6 +143,8 @@ export default function MembersPage() {
   const statusFilter = searchParams.get("status") ?? "";
   const badgeFilter = searchParams.get("badge") ?? "";
   const genderFilter = searchParams.get("gender") ?? "";
+  const shiftFilter = searchParams.get("shift") ?? "";
+  const [filterSheetOpen, setFilterSheetOpen] = React.useState(false);
   const search = searchParams.get("search") ?? "";
 
   // The box is driven locally and the URL catches up 300ms after typing stops.
@@ -181,6 +196,9 @@ export default function MembersPage() {
 
   // Three independent reads; react-query runs them in parallel and dedupes them
   // against whatever other screens have already requested.
+  const shiftsQuery = useShifts(true);
+  const shifts = React.useMemo(() => shiftsQuery.data ?? [], [shiftsQuery.data]);
+
   const membersQuery = useAllMembers();
   const badgesQuery = useBadges();
   const settingsQuery = useTenantSettings();
@@ -297,13 +315,20 @@ export default function MembersPage() {
           if (!(member.badgeIds ?? []).includes(badgeFilter)) return false;
         }
 
+        // Same exemption as badges: a member queued offline carries no shift on
+        // their placeholder row, and should not vanish mid-sync because of it.
+        if (shiftFilter && !member._pending) {
+          const memberShiftId = member.shift?.id ?? UNASSIGNED_SHIFT;
+          if (memberShiftId !== shiftFilter) return false;
+        }
+
         if (!trimmedSearch) return true;
 
         const searchableText = `${member.name} ${member.email} ${member.phone ?? ""} ${member.memberId ?? ""}`.toLowerCase();
         return searchableText.includes(trimmedSearch);
       })
       .sort((a, b) => new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime());
-  }, [badgeFilter, genderFilter, members, pendingMemberItems, roleFilter, search]);
+  }, [badgeFilter, genderFilter, members, pendingMemberItems, roleFilter, search, shiftFilter]);
 
   /** How many rows each tab holds, for the numbers beside the tab labels. */
   const statusCounts = React.useMemo(() => {
@@ -335,7 +360,7 @@ export default function MembersPage() {
     total,
   } = useWindowedList(filteredAllMembers, {
     pageSize: 25,
-    resetKey: `${statusFilter}|${roleFilter}|${badgeFilter}|${genderFilter}|${search}`,
+    resetKey: `${statusFilter}|${roleFilter}|${badgeFilter}|${genderFilter}|${shiftFilter}|${search}`,
   });
 
   // Swiping moves along the same tab strip the taps use, so the two can never
@@ -353,14 +378,26 @@ export default function MembersPage() {
     [statusTabIndex, updateParams],
   );
 
+  const activeFilterCount = [
+    roleFilter !== "MEMBER",
+    Boolean(badgeFilter),
+    Boolean(genderFilter),
+    Boolean(shiftFilter),
+  ].filter(Boolean).length;
+
   const hasActiveFilters = Boolean(
-    statusFilter || badgeFilter || genderFilter || search.trim() || roleFilter !== "MEMBER",
+    statusFilter ||
+      badgeFilter ||
+      genderFilter ||
+      shiftFilter ||
+      search.trim() ||
+      roleFilter !== "MEMBER",
   );
 
   const clearFilters = () => {
     window.clearTimeout(searchTimer.current);
     setSearchInput("");
-    updateParams({ status: "", badge: "", gender: "", search: "", role: "MEMBER" });
+    updateParams({ status: "", badge: "", gender: "", shift: "", search: "", role: "MEMBER" });
   };
 
   const recordWhatsApp = (
@@ -492,6 +529,11 @@ export default function MembersPage() {
       statusFilter ? statusFilter.toLowerCase() : "",
       genderFilter ? genderFilter.toLowerCase() : "",
       badgeFilter ? badges.find((b) => b.id === badgeFilter)?.name : "",
+      shiftFilter === UNASSIGNED_SHIFT
+        ? "no-shift"
+        : shiftFilter
+          ? shifts.find((shift) => shift.id === shiftFilter)?.name
+          : "",
       search.trim() ? "search" : "",
       new Date().toISOString().slice(0, 10),
     ].filter(Boolean);
@@ -574,76 +616,197 @@ export default function MembersPage() {
 
       {/* Filters */}
       <div className="space-y-3">
-        <div className="relative min-w-0">
-          <Search className="pointer-events-none absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search by name, phone, email, or admission no..."
-            value={searchInput}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="h-12 w-full rounded-lg border border-input bg-background pr-10 pl-12 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50"
-          />
-          {searchInput && (
-            <button
-              onClick={clearSearch}
-              className="absolute top-1/2 right-4 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
+        <div className="flex items-center gap-2">
+          <div className="relative min-w-0 flex-1">
+            <Search className="pointer-events-none absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search by name, phone, email, or admission no..."
+              value={searchInput}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="h-12 w-full rounded-lg border border-input bg-background pr-10 pl-12 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50"
+            />
+            {searchInput && (
+              <button
+                onClick={clearSearch}
+                className="absolute top-1/2 right-4 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
 
-        {/* One row at every width. Equal columns rather than auto-width so the
-            three stay aligned as their selected labels change length. */}
-        <div className="grid w-full grid-cols-3 gap-2 sm:gap-3">
-          <Select value={roleFilter} onValueChange={(value) => updateParams({ role: value ?? "" })}>
-            <SelectTrigger className="h-12 w-full rounded-lg">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">All Roles</SelectItem>
-              {assignableRoles.map((role) => (
-                <SelectItem key={role.role} value={role.role}>
-                  {role.label}
-                  {role.isSystem && role.role === "COACH" ? "s" : ""}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {badges.length > 0 && (
-            <Select value={badgeFilter} onValueChange={(value) => updateParams({ badge: value ?? "" })}>
-              <SelectTrigger className="h-12 w-full rounded-lg">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Badges</SelectItem>
-                {badges.map((b) => (
-                  <SelectItem key={b.id} value={b.id}>
-                    {b.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          <Select
-            value={genderFilter}
-            onValueChange={(value) => updateParams({ gender: value ?? "" })}
+          {/* Phones only: the four selects live behind this. */}
+          <Button
+            variant="outline"
+            className="relative h-12 w-12 shrink-0 rounded-lg p-0 sm:hidden"
+            onClick={() => setFilterSheetOpen(true)}
+            aria-label={
+              activeFilterCount > 0
+                ? `Filters (${activeFilterCount} applied)`
+                : "Filters"
+            }
           >
-            <SelectTrigger className="h-12 w-full rounded-lg">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">All Genders</SelectItem>
-              {GENDER_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <SlidersHorizontal className="h-5 w-5" />
+            {activeFilterCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-semibold text-primary-foreground">
+                {activeFilterCount}
+              </span>
+            )}
+          </Button>
         </div>
+
+        {/*
+          One definition of each control, rendered by both layouts below.
+          Writing the four selects out twice — once inline, once in the sheet —
+          is how the two quietly stop agreeing about what a filter does.
+        */}
+        {(() => {
+          const fields = [
+            {
+              id: "role",
+              label: "Role",
+              control: (
+                <Select
+                  value={roleFilter}
+                  onValueChange={(value) => updateParams({ role: value ?? "" })}
+                >
+                  <SelectTrigger className="h-12 w-full rounded-lg">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Roles</SelectItem>
+                    {assignableRoles.map((role) => (
+                      <SelectItem key={role.role} value={role.role}>
+                        {role.label}
+                        {role.isSystem && role.role === "COACH" ? "s" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ),
+            },
+            ...(badges.length > 0
+              ? [
+                  {
+                    id: "badge",
+                    label: "Badge",
+                    control: (
+                      <Select
+                        value={badgeFilter}
+                        onValueChange={(value) => updateParams({ badge: value ?? "" })}
+                      >
+                        <SelectTrigger className="h-12 w-full rounded-lg">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">All Badges</SelectItem>
+                          {badges.map((b) => (
+                            <SelectItem key={b.id} value={b.id}>
+                              {b.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ),
+                  },
+                ]
+              : []),
+            {
+              id: "gender",
+              label: "Gender",
+              control: (
+                <Select
+                  value={genderFilter}
+                  onValueChange={(value) => updateParams({ gender: value ?? "" })}
+                >
+                  <SelectTrigger className="h-12 w-full rounded-lg">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Genders</SelectItem>
+                    {GENDER_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ),
+            },
+            ...(shifts.length > 0
+              ? [
+                  {
+                    id: "shift",
+                    label: "Shift",
+                    control: (
+                      <Select
+                        value={shiftFilter}
+                        onValueChange={(value) => updateParams({ shift: value ?? "" })}
+                      >
+                        <SelectTrigger className="h-12 w-full rounded-lg">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">All Shifts</SelectItem>
+                          {shifts.map((shift) => (
+                            <SelectItem key={shift.id} value={shift.id}>
+                              {formatShiftLabel(shift)}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value={UNASSIGNED_SHIFT}>No shift</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ),
+                  },
+                ]
+              : []),
+          ];
+
+          return (
+            <>
+              {/* Wider screens keep them inline, one column each so they stay
+                  aligned as their selected labels change length. */}
+              <div
+                className="hidden w-full gap-3 sm:grid"
+                style={{ gridTemplateColumns: `repeat(${fields.length}, minmax(0, 1fr))` }}
+              >
+                {fields.map((field) => (
+                  <React.Fragment key={field.id}>{field.control}</React.Fragment>
+                ))}
+              </div>
+
+              <Dialog open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
+                <DialogContent className="max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle>Filters</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    {fields.map((field) => (
+                      <div key={field.id} className="space-y-2">
+                        <Label>{field.label}</Label>
+                        {field.control}
+                      </div>
+                    ))}
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          clearFilters();
+                          setFilterSheetOpen(false);
+                        }}
+                        disabled={!hasActiveFilters}
+                      >
+                        Clear all
+                      </Button>
+                      <Button onClick={() => setFilterSheetOpen(false)}>Done</Button>
+                    </DialogFooter>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </>
+          );
+        })()}
       </div>
 
       {refreshing && (

@@ -90,7 +90,7 @@ const SIZES = {
   },
   /** List cards and page headers. */
   md: {
-    row: "min-h-20 sm:min-h-32",
+    row: "h-24 sm:h-32",
     tile: "min-w-16 sm:min-w-24",
     fallback: "text-xl sm:text-3xl",
     roleBadge: "size-5 sm:size-6",

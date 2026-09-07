@@ -147,7 +147,7 @@ export function useAuditLogsInfinite(
     async (page) => {
       const response = isPlatform
         ? await auditApi.platformLogs(page, limit, filters.entity, filters.action)
-        : await auditApi.tenantLogs(tenantId!, page, limit);
+        : await auditApi.tenantLogs(tenantId!, page, limit, filters.entity, filters.action);
       const { data, meta } = unwrapPaginated(response);
       return { data: data.logs, meta };
     },

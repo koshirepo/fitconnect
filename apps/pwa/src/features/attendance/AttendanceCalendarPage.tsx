@@ -1,4 +1,4 @@
-import { getMonthStr, parseMonth, formatMonthLabel } from "@/lib/month";
+import { getMonthStr, parseMonth } from "@/lib/month";
 import * as React from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAppNavigate } from "@/lib/use-app-navigate";
@@ -7,7 +7,8 @@ import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CardSkeleton } from "@/components/ui/skeleton";
-import { ChevronLeft, ChevronRight, CalendarDays, Users, List, X } from "lucide-react";
+import { MonthNav } from "@/components/ui/month-nav";
+import { CalendarDays, Users, List, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getTenantDashboardPath } from "@/lib/subdomain";
 import AvatarCard from "@/components/ui/avatarCard";
@@ -49,13 +50,7 @@ export default function AttendanceCalendarPage() {
     setSelectedDate(null);
   }, [currentMonth]);
 
-  const goMonth = (delta: number) => {
-    const d = parseMonth(currentMonth);
-    d.setMonth(d.getMonth() + delta);
-    setSearchParams({ month: getMonthStr(d) });
-  };
 
-  const isCurrentMonth = currentMonth === getMonthStr(today);
 
   // Build calendar grid
   const monthDate = parseMonth(currentMonth);
@@ -100,35 +95,22 @@ export default function AttendanceCalendarPage() {
         <Card>
           <CardContent className="p-4 sm:p-5">
             {/* Month nav + stats — single row */}
-            <div className="flex items-center justify-between mb-4">
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => goMonth(-1)}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <div className="text-center">
-                <h2 className="text-base font-semibold leading-tight">
-                  {formatMonthLabel(currentMonth)}
-                </h2>
-                <div className="flex items-center justify-center gap-3 mt-1">
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Users className="h-3 w-3" />
-                    {totalVisits} visit{totalVisits !== 1 ? "s" : ""}
-                  </span>
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <CalendarDays className="h-3 w-3" />
-                    {activeDays} day{activeDays !== 1 ? "s" : ""}
-                  </span>
-                </div>
+            <MonthNav
+              month={currentMonth}
+              onMonthChange={(next) => setSearchParams({ month: next })}
+              className="mb-4"
+            >
+              <div className="mt-1 flex items-center justify-center gap-3">
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Users className="h-3 w-3" />
+                  {totalVisits} visit{totalVisits !== 1 ? "s" : ""}
+                </span>
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <CalendarDays className="h-3 w-3" />
+                  {activeDays} day{activeDays !== 1 ? "s" : ""}
+                </span>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => goMonth(1)}
-                disabled={isCurrentMonth}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+            </MonthNav>
 
             {/* Weekday headers */}
             <div className="grid grid-cols-7 gap-1 mb-1">

@@ -1,8 +1,16 @@
+import * as React from "react";
 import { tenantsApi } from "@/api/tenants";
 import { paymentsApi } from "@/api/payments";
+import { useUIStore } from "@/stores/ui";
 import { useMemberReport } from "@/api/queries/members";
 import { usePaymentAnalytics } from "@/api/queries/payments";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton, StatGridSkeleton } from "@/components/ui/skeleton";
@@ -60,8 +68,46 @@ function formatCompact(amount: number) {
   return formatCurrency(amount).replace("₹", "₹ ");
 }
 
+/**
+ * What each period actually covers, spelled out.
+ *
+ * The four windows on this page — today, this week, this month, all time — were
+ * labelled with those words alone and sat next to a chart headed "Last 30
+ * Days", so four different spans of time read as interchangeable. Naming the
+ * dates is the whole fix: "This Month" and "March 2026" are the same period,
+ * but only one of them can be checked against a bank statement.
+ *
+ * The server derives these from its own clock, so these labels describe that
+ * intent rather than being passed to it.
+ */
+function periodLabels(now = new Date()) {
+  const day = now.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+
+  // Monday-first, matching how the API buckets the week.
+  const weekStart = new Date(now);
+  weekStart.setDate(weekStart.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1));
+
+  return {
+    today: { short: "Today", full: `Today · ${day}` },
+    week: {
+      short: "This week",
+      full: `This week · from ${weekStart.toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+      })}`,
+    },
+    month: {
+      short: now.toLocaleDateString("en-IN", { month: "long" }),
+      full: now.toLocaleDateString("en-IN", { month: "long", year: "numeric" }),
+    },
+    allTime: { short: "All time", full: "All time" },
+  };
+}
+
 export default function FinanceReportsPage() {
   const navigate = useNavigate();
+  const { isMobile } = useUIStore();
+  const periods = React.useMemo(() => periodLabels(), []);
   const { can } = usePermissions();
   const canReadBooks = can(Permission.FINANCE_READ);
   const canReadSalary = can(Permission.SALARY_READ);
@@ -133,17 +179,17 @@ export default function FinanceReportsPage() {
   const periodComparisonData = analytics
     ? [
         {
-          period: "Today",
+          period: periods.today.short,
           Revenue: analytics.today.totalRevenue,
           Payments: analytics.today.totalCount,
         },
         {
-          period: "This Week",
+          period: periods.week.short,
           Revenue: analytics.week.totalRevenue,
           Payments: analytics.week.totalCount,
         },
         {
-          period: "This Month",
+          period: periods.month.short,
           Revenue: analytics.month.totalRevenue,
           Payments: analytics.month.totalCount,
         },
@@ -153,22 +199,22 @@ export default function FinanceReportsPage() {
   const memberActivityData = analytics
     ? [
         {
-          period: "Today",
+          period: periods.today.short,
           Joined: analytics.members.joined.today,
           Deactivated: analytics.members.deactivated.today,
         },
         {
-          period: "This Week",
+          period: periods.week.short,
           Joined: analytics.members.joined.week,
           Deactivated: analytics.members.deactivated.week,
         },
         {
-          period: "This Month",
+          period: periods.month.short,
           Joined: analytics.members.joined.month,
           Deactivated: analytics.members.deactivated.month,
         },
         {
-          period: "All Time",
+          period: periods.allTime.short,
           Joined: analytics.members.joined.allTime,
           Deactivated: analytics.members.deactivated.allTime,
         },
@@ -234,7 +280,7 @@ export default function FinanceReportsPage() {
             Your gym's performance, members, and finances.
           </p>
         </div>
-        <div className="flex shrink-0 flex-wrap gap-2">
+        <div className="flex shrink-0 flex-nowrap items-center gap-2">
           {/* This page reports what came in. The books — what went out, and what
               is left after it — are one click away rather than a sidebar entry
               of their own, since nobody looks at one without the other. */}
@@ -243,9 +289,11 @@ export default function FinanceReportsPage() {
               variant="outline"
               size="sm"
               onClick={() => navigate(getTenantDashboardPath("/expenses"))}
+              aria-label="Income and expenses"
+              title="Income and expenses"
             >
-              <Wallet className="mr-2 h-4 w-4" />
-              Income &amp; expenses
+              <Wallet className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Income &amp; expenses</span>
             </Button>
           )}
           {canReadSalary && (
@@ -253,9 +301,11 @@ export default function FinanceReportsPage() {
               variant="outline"
               size="sm"
               onClick={() => navigate(getTenantDashboardPath("/salary"))}
+              aria-label="Staff salary"
+              title="Staff salary"
             >
-              <BadgeIndianRupee className="mr-2 h-4 w-4" />
-              Staff salary
+              <BadgeIndianRupee className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Staff salary</span>
             </Button>
           )}
           <Button
@@ -265,9 +315,11 @@ export default function FinanceReportsPage() {
             }}
             disabled={loading}
             size="sm"
+            aria-label={loading ? "Refreshing analytics" : "Refresh analytics"}
+            title="Refresh"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-            {loading ? "Refreshing…" : "Refresh"}
+            <RefreshCw className={`h-4 w-4 sm:mr-2 ${loading ? "animate-spin" : ""}`} />
+            <span className="hidden sm:inline">{loading ? "Refreshing…" : "Refresh"}</span>
           </Button>
         </div>
       </div>
@@ -290,21 +342,21 @@ export default function FinanceReportsPage() {
             />
             <StatCard
               icon={IndianRupee}
-              label="All-Time Revenue"
+              label="Revenue · all time"
               value={formatCompact(analytics.allTime.totalRevenue)}
               subtext={`${analytics.allTime.totalCount} payments`}
               color="text-green-600"
             />
             <StatCard
               icon={TrendingUp}
-              label="Revenue This Month"
+              label={`Revenue · ${periods.month.full}`}
               value={formatCompact(analytics.month.totalRevenue)}
               subtext={`${analytics.month.completed} completed`}
               color="text-green-600"
             />
             <StatCard
               icon={Activity}
-              label="Revenue Today"
+              label={`Revenue · ${periods.today.full}`}
               value={formatCompact(analytics.today.totalRevenue)}
               subtext={`${analytics.today.totalCount} payments`}
               color="text-blue-600"
@@ -318,7 +370,8 @@ export default function FinanceReportsPage() {
                 be a month where dues fell and admissions covered the gap. */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Revenue Mix</CardTitle>
+                <CardTitle className="text-base">Revenue mix</CardTitle>
+                <CardDescription className="text-xs">{periods.month.full}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {mixRows.every((r) => r.revenue === 0) ? (
@@ -356,7 +409,8 @@ export default function FinanceReportsPage() {
                 giveaways, so this is the only place the gap is visible. */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Discounts &amp; Coins</CardTitle>
+                <CardTitle className="text-base">Discounts &amp; coins</CardTitle>
+                <CardDescription className="text-xs">{periods.month.full}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div className="flex items-baseline justify-between gap-2">
@@ -397,7 +451,8 @@ export default function FinanceReportsPage() {
                 owner how much of the month is sitting in a drawer. */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">How It Was Collected</CardTitle>
+                <CardTitle className="text-base">How it was collected</CardTitle>
+                <CardDescription className="text-xs">{periods.month.full}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {collectedTotal === 0 ? (
@@ -471,12 +526,18 @@ export default function FinanceReportsPage() {
             {/* Revenue Trend Area Chart (2/3 width) */}
             <Card className="lg:col-span-2">
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Revenue Trend (Last 30 Days)</CardTitle>
+                <CardTitle className="text-base">Revenue trend</CardTitle>
+                <CardDescription className="text-xs">
+                  Daily, over the last 30 days
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {revenueChartData && revenueChartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={280}>
-                    <AreaChart data={revenueChartData}>
+                  <ResponsiveContainer width="100%" height={isMobile ? 220 : 280}>
+                    <AreaChart
+                      data={revenueChartData}
+                      margin={{ top: 4, right: 4, bottom: 0, left: isMobile ? -18 : 0 }}
+                    >
                       <defs>
                         <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor={COLORS.green} stopOpacity={0.3} />
@@ -484,14 +545,25 @@ export default function FinanceReportsPage() {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      {/* Thirty date labels do not fit across a phone — they
+                          overprint into a grey smear. Every fifth is legible
+                          and still says which end of the month you are on. */}
                       <XAxis
                         dataKey="name"
-                        tick={{ fontSize: 11 }}
+                        tick={{ fontSize: isMobile ? 9 : 11 }}
+                        interval={isMobile ? 4 : "preserveStartEnd"}
                         className="text-muted-foreground"
                       />
                       <YAxis
-                        tick={{ fontSize: 11 }}
-                        tickFormatter={(v) => `₹${Number(v).toLocaleString("en-IN")}`}
+                        tick={{ fontSize: isMobile ? 9 : 11 }}
+                        width={isMobile ? 44 : 72}
+                        // Full rupee figures need ~80px of gutter, which is a
+                        // fifth of a phone screen. Thousands do the same job.
+                        tickFormatter={(v) =>
+                          isMobile
+                            ? `₹${Math.round(Number(v) / 1000)}k`
+                            : `₹${Number(v).toLocaleString("en-IN")}`
+                        }
                         className="text-muted-foreground"
                       />
                       <Tooltip content={<ChartTooltip />} />
@@ -555,16 +627,27 @@ export default function FinanceReportsPage() {
             {/* Revenue by Period Bar Chart */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Revenue by Period</CardTitle>
+                <CardTitle className="text-base">Revenue by period</CardTitle>
+                <CardDescription className="text-xs">
+                  {periods.today.full} · {periods.week.full} · {periods.month.full}
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={periodComparisonData}>
+                <ResponsiveContainer width="100%" height={isMobile ? 200 : 250}>
+                  <BarChart
+                    data={periodComparisonData}
+                    margin={{ top: 4, right: 4, bottom: 0, left: isMobile ? -18 : 0 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="period" tick={{ fontSize: 12 }} />
+                    <XAxis dataKey="period" tick={{ fontSize: isMobile ? 10 : 12 }} />
                     <YAxis
-                      tick={{ fontSize: 11 }}
-                      tickFormatter={(v) => `₹${Number(v).toLocaleString("en-IN")}`}
+                      tick={{ fontSize: isMobile ? 9 : 11 }}
+                      width={isMobile ? 44 : 72}
+                      tickFormatter={(v) =>
+                        isMobile
+                          ? `₹${Math.round(Number(v) / 1000)}k`
+                          : `₹${Number(v).toLocaleString("en-IN")}`
+                      }
                     />
                     <Tooltip content={<ChartTooltip />} />
                     <Bar dataKey="Revenue" fill={COLORS.green} radius={[4, 4, 0, 0]} />
@@ -576,19 +659,23 @@ export default function FinanceReportsPage() {
             {/* Payment Status Pie + Details */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Payment Status (This Month)</CardTitle>
+                <CardTitle className="text-base">Payment status</CardTitle>
+                <CardDescription className="text-xs">{periods.month.full}</CardDescription>
               </CardHeader>
               <CardContent>
+                {/* Side by side, the pie was given half a phone's width — about
+                    170px including its padding — and the legend the rest.
+                    Stacked below `sm`, both get the full column. */}
                 {paymentStatusData.length > 0 ? (
-                  <div className="flex items-center gap-4">
-                    <ResponsiveContainer width="50%" height={220}>
+                  <div className="flex flex-col items-center gap-4 sm:flex-row">
+                    <ResponsiveContainer width={isMobile ? "100%" : "50%"} height={isMobile ? 180 : 220}>
                       <PieChart>
                         <Pie
                           data={paymentStatusData}
                           cx="50%"
                           cy="50%"
-                          innerRadius={40}
-                          outerRadius={70}
+                          innerRadius={isMobile ? 34 : 40}
+                          outerRadius={isMobile ? 58 : 70}
                           paddingAngle={3}
                           dataKey="value"
                         >
@@ -599,20 +686,20 @@ export default function FinanceReportsPage() {
                         <Tooltip />
                       </PieChart>
                     </ResponsiveContainer>
-                    <div className="space-y-3 flex-1">
+                    <div className="w-full flex-1 space-y-3">
                       {paymentStatusData.map((s) => (
                         <div key={s.name} className="flex items-center gap-2.5">
                           <div
-                            className="h-3 w-3 rounded-full shrink-0"
+                            className="h-3 w-3 shrink-0 rounded-full"
                             style={{ backgroundColor: s.color }}
                           />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium">{s.name}</p>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium">{s.name}</p>
                             <p className="text-xs text-muted-foreground">{s.value} payments</p>
                           </div>
                         </div>
                       ))}
-                      <div className="pt-2 border-t">
+                      <div className="border-t pt-2">
                         <p className="text-sm font-semibold">
                           Total: {formatCurrency(analytics.month.totalRevenue)}
                         </p>
@@ -620,8 +707,8 @@ export default function FinanceReportsPage() {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-12">
-                    No payments this month
+                  <p className="py-12 text-center text-sm text-muted-foreground">
+                    No payments in {periods.month.full}
                   </p>
                 )}
               </CardContent>
@@ -631,7 +718,8 @@ export default function FinanceReportsPage() {
           {/* ═══════════════ ROW 4: MEMBER ACTIVITY BAR CHART ═══════════════ */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Member Activity (Joined vs Deactivated)</CardTitle>
+              <CardTitle className="text-base">Member activity</CardTitle>
+              <CardDescription className="text-xs">Joined vs deactivated</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={260}>
@@ -657,7 +745,7 @@ export default function FinanceReportsPage() {
             {/* Payment Analytics Breakdown */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Payment Breakdown</CardTitle>
+                <CardTitle className="text-base">Payment breakdown</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
@@ -674,10 +762,10 @@ export default function FinanceReportsPage() {
                     <tbody>
                       {(
                         [
-                          { label: "Today", d: analytics.today },
-                          { label: "This Week", d: analytics.week },
-                          { label: "This Month", d: analytics.month },
-                          { label: "All Time", d: analytics.allTime },
+                          { label: periods.today.short, d: analytics.today },
+                          { label: periods.week.short, d: analytics.week },
+                          { label: periods.month.short, d: analytics.month },
+                          { label: periods.allTime.short, d: analytics.allTime },
                         ] as const
                       ).map(({ label, d }) => (
                         <tr key={label} className="border-b last:border-0">
@@ -799,18 +887,19 @@ export default function FinanceReportsPage() {
                     </p>
                     <div className="space-y-1.5">
                       {report.overdue.suspended.map((m) => (
-                        <div
+                        <button
                           key={m.id}
-                          className="flex items-center justify-between text-sm text-red-700 dark:text-red-300 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900 rounded px-2 py-1.5 -mx-2 transition-colors"
+                          type="button"
+                          className="-mx-2 flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left text-sm text-red-700 transition-colors hover:bg-red-100 dark:text-red-300 dark:hover:bg-red-900"
                           onClick={() => navigate(`/members/${m.id}`)}
                         >
-                          <span className="font-medium">
+                          <span className="min-w-0 truncate font-medium">
                             #{m.memberId} — {m.name}
                           </span>
-                          <Badge variant="destructive" className="text-xs">
+                          <Badge variant="destructive" className="shrink-0 text-xs">
                             Suspended
                           </Badge>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -824,7 +913,7 @@ export default function FinanceReportsPage() {
       {!report && !loading && !error && (
         <div className="text-center py-16">
           <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">Click Refresh to load analytics.</p>
+          <p className="text-muted-foreground">No analytics to show yet.</p>
         </div>
       )}
     </div>

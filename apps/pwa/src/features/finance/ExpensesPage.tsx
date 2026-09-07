@@ -4,10 +4,13 @@
  * - What came in, what went out, and what is left — then the two lists that make up the outgoing side: costs that recur every month, and everything else.
  * - Salary is shown as a share of the expense total rather than added to it. Every salary payment already wrote an expense row, so presenting them as separate figures to be summed would double the gym's apparent spending.
  * - Recurring costs are templates until somebody posts them. The page says plainly what is still unposted rather than quietly including it, because "rent is due and unpaid" and "rent is paid" are different facts and the total must not blur them.
+ * - The salary line is a link, on the month being read. It names a figure this page deliberately will not break down, and the page that does was previously reachable only by knowing it existed.
+ * - Laid out for a phone: the summary pairs off two-up with net across the bottom, and a recurring row keeps its amount beside its name while Pause and Delete shrink to icons. Five controls on one line fit a desktop and nothing else.
  * - Primary exports: ExpensesPage.
  */
 import * as React from "react";
 import { useSearchParams } from "react-router-dom";
+import { useAppNavigate } from "@/lib/use-app-navigate";
 import {
   useCreateExpense,
   useCreateRecurringExpense,
@@ -21,8 +24,10 @@ import {
 } from "@/api/queries/finance";
 import type { ExpenseCategory } from "@/api/finance";
 import { getApiError } from "@/api/client";
-import { getMonthStr, formatMonthLabel, shiftMonth } from "@/lib/month";
+import { getMonthStr, formatMonthLabel, withMonth } from "@/lib/month";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { getTenantDashboardPath } from "@/lib/subdomain";
+import { downloadCsv } from "@/lib/csv";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { Button } from "@/components/ui/button";
@@ -32,13 +37,17 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { CardSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { MonthNav } from "@/components/ui/month-nav";
 import { useToast } from "@/components/ui/toast";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
 import {
-  ChevronLeft,
+  BadgeIndianRupee,
   ChevronRight,
+  Download,
   IndianRupee,
+  Pause,
+  Play,
   Plus,
   Receipt,
   Repeat,
@@ -80,12 +89,13 @@ function parseAmount(value: string) {
 
 export default function ExpensesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useAppNavigate();
   const toast = useToast();
   const { can } = usePermissions();
   const canManage = can(Permission.FINANCE_MANAGE);
+  const canReadSalary = can(Permission.SALARY_READ);
 
   const month = searchParams.get("month") || getMonthStr(new Date());
-  const isCurrentMonth = month >= getMonthStr(new Date());
 
   const summaryQuery = useFinanceSummary(month);
   const expensesQuery = useExpenses(month);
@@ -121,7 +131,33 @@ export default function ExpensesPage() {
   const expenses = expensesQuery.data?.expenses ?? [];
   const recurring = recurringQuery.data?.recurring ?? [];
 
-  const goMonth = (delta: number) => setSearchParams({ month: shiftMonth(month, delta) });
+  /** The month a payroll link should land on — this one, not today's. */
+  const salaryPath = getTenantDashboardPath(withMonth("/salary", month));
+
+  /**
+   * This month's spending, as a file.
+   *
+   * The books are the thing an accountant asks for, and this page had no way
+   * to hand them over. Rows are what the month actually holds, so a salary line
+   * exports as a salary line rather than being quietly folded away.
+   */
+  const handleExport = () => {
+    if (expenses.length === 0) return;
+
+    downloadCsv(
+      `expenses-${month}.csv`,
+      ["Date", "Label", "Category", "Amount", "RecordedBy", "FromRecurring", "SalaryPayment"],
+      expenses.map((row) => ({
+        Date: row.incurredOn,
+        Label: row.label,
+        Category: CATEGORY_LABELS[row.category],
+        Amount: row.amount,
+        RecordedBy: row.recordedByName ?? "",
+        FromRecurring: row.recurringLabel ?? "",
+        SalaryPayment: row.salaryPaymentId ? "Yes" : "",
+      })),
+    );
+  };
 
   const resetExpenseForm = () => {
     setLabel("");
@@ -184,15 +220,27 @@ export default function ExpensesPage() {
   const error = summaryQuery.isError ? getApiError(summaryQuery.error) : "";
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          <Wallet className="h-6 w-6" />
-          Income &amp; expenses
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          What the gym took in, what it spent, and what is left.
-        </p>
+    <div className="space-y-5 sm:space-y-6">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight sm:text-2xl">
+            <Wallet className="size-5 shrink-0 sm:size-6" />
+            Income &amp; expenses
+          </h1>
+          <p className="mt-0.5 truncate text-sm text-muted-foreground">
+            What came in, what went out, what is left.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          className="shrink-0"
+          onClick={handleExport}
+          disabled={expenses.length === 0}
+          aria-label={`Download ${formatMonthLabel(month)} expenses as CSV`}
+          title={`Download ${formatMonthLabel(month)} expenses as CSV`}
+        >
+          <Download className="h-4 w-4" />
+        </Button>
       </div>
 
       {error && (
@@ -201,39 +249,26 @@ export default function ExpensesPage() {
         </p>
       )}
 
-      {/* Month nav */}
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => goMonth(-1)}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <h2 className="text-base font-semibold">{formatMonthLabel(month)}</h2>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => goMonth(1)}
-          disabled={isCurrentMonth}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
+      <MonthNav month={month} onMonthChange={(next) => setSearchParams({ month: next })} />
 
       {loading ? (
         <CardSkeleton />
       ) : (
         <>
-          {/* The three numbers the page exists for */}
-          <div className="grid gap-3 sm:grid-cols-3">
+          {/* The three numbers the page exists for. Income and expenses pair
+              off on a phone; net takes the full width under them, because it
+              is the answer and the other two are its working. */}
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3">
             <Card>
-              <CardContent className="p-4">
-                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
+              <CardContent>
+                <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground sm:text-xs">
+                  <TrendingUp className="size-3.5 shrink-0 text-emerald-600" />
                   Income
                 </p>
-                <p className="mt-1 text-xl font-bold tabular-nums text-emerald-600">
+                <p className="mt-1 truncate text-lg font-bold tabular-nums text-emerald-600 sm:text-xl">
                   {formatCurrency(summary?.income.total ?? 0)}
                 </p>
-                <p className="mt-1 text-[11px] text-muted-foreground">
+                <p className="mt-1 text-[10px] text-muted-foreground sm:text-[11px]">
                   {summary?.income.memberPaymentCount ?? 0} member payments
                   {(summary?.income.guestStoreCount ?? 0) > 0
                     ? ` · ${summary?.income.guestStoreCount} counter sales`
@@ -243,37 +278,50 @@ export default function ExpensesPage() {
             </Card>
 
             <Card>
-              <CardContent className="p-4">
-                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <TrendingDown className="h-3.5 w-3.5 text-red-600" />
+              <CardContent>
+                <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground sm:text-xs">
+                  <TrendingDown className="size-3.5 shrink-0 text-red-600" />
                   Expenses
                 </p>
-                <p className="mt-1 text-xl font-bold tabular-nums text-red-600">
+                <p className="mt-1 truncate text-lg font-bold tabular-nums text-red-600 sm:text-xl">
                   {formatCurrency(summary?.expenses.total ?? 0)}
                 </p>
-                <p className="mt-1 text-[11px] text-muted-foreground">
-                  {/* Part of the figure above, not on top of it. */}
-                  includes {formatCurrency(summary?.expenses.salaryPaid ?? 0)} salary
-                </p>
+                {/* Part of the figure above, not on top of it — and now a way
+                    through to the page that explains it, on the same month.
+                    The line stated a number the reader could not go and check. */}
+                {canReadSalary ? (
+                  <button
+                    type="button"
+                    onClick={() => navigate(salaryPath)}
+                    className="mt-1 flex items-center gap-0.5 text-left text-[10px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline sm:text-[11px]"
+                  >
+                    includes {formatCurrency(summary?.expenses.salaryPaid ?? 0)} salary
+                    <ChevronRight className="size-3 shrink-0" />
+                  </button>
+                ) : (
+                  <p className="mt-1 text-[10px] text-muted-foreground sm:text-[11px]">
+                    includes {formatCurrency(summary?.expenses.salaryPaid ?? 0)} salary
+                  </p>
+                )}
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="p-4">
-                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <IndianRupee className="h-3.5 w-3.5" />
+            <Card className="col-span-2 sm:col-span-1">
+              <CardContent>
+                <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground sm:text-xs">
+                  <IndianRupee className="size-3.5 shrink-0" />
                   Net
                 </p>
                 <p
                   className={cn(
-                    "mt-1 text-xl font-bold tabular-nums",
+                    "mt-1 truncate text-lg font-bold tabular-nums sm:text-xl",
                     (summary?.net ?? 0) >= 0 ? "text-emerald-600" : "text-red-600",
                   )}
                 >
                   {formatCurrency(summary?.net ?? 0)}
                 </p>
                 {(summary?.unpostedTotal ?? 0) > 0 && (
-                  <p className="mt-1 text-[11px] text-amber-600">
+                  <p className="mt-1 text-[10px] text-amber-600 sm:text-[11px]">
                     {formatCurrency(summary?.unpostedTotal ?? 0)} of fixed costs not yet posted
                   </p>
                 )}
@@ -322,7 +370,7 @@ export default function ExpensesPage() {
                       <Label htmlFor="r-category">Category</Label>
                       <select
                         id="r-category"
-                        className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+                        className="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm"
                         value={rCategory}
                         onChange={(e) => setRCategory(e.target.value as ExpenseCategory)}
                       >
@@ -361,62 +409,79 @@ export default function ExpensesPage() {
                 </p>
               ) : (
                 <ul className="divide-y divide-border/60">
+                  {/* Four controls used to share one row with the label and the
+                      amount, which does not fit a phone. The amount now sits
+                      with the name, and Pause and Delete are icons — the row
+                      reads left to right as: what, how much, what to do. */}
                   {recurring.map((row) => (
-                    <li key={row.id} className="flex items-center gap-3 py-2.5">
+                    <li key={row.id} className="flex items-center gap-2 py-2.5 sm:gap-3">
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">
-                          {row.label}
-                          {!row.isActive && (
-                            <span className="ml-2 text-[11px] text-muted-foreground">paused</span>
-                          )}
-                        </p>
-                        <p className="mt-0.5 text-[11px] text-muted-foreground">
-                          {formatCurrency(row.amount)} · {CATEGORY_LABELS[row.category]} · due{" "}
-                          {formatDate(row.dueOn)}
+                        <div className="flex items-baseline justify-between gap-2">
+                          <p className="truncate text-sm font-medium">
+                            {row.label}
+                            {!row.isActive && (
+                              <span className="ml-1.5 text-[11px] text-muted-foreground">
+                                paused
+                              </span>
+                            )}
+                          </p>
+                          <span className="shrink-0 text-sm font-semibold tabular-nums">
+                            {formatCurrency(row.amount)}
+                          </span>
+                        </div>
+                        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                          {CATEGORY_LABELS[row.category]} · due {formatDate(row.dueOn)}
                         </p>
                       </div>
 
-                      {row.postedExpenseId ? (
-                        <Badge variant="secondary" className="shrink-0">
-                          Posted
-                        </Badge>
-                      ) : canManage && row.isActive ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="shrink-0"
-                          onClick={() => post(row.id, row.label)}
-                          disabled={postRecurring.isPending}
-                        >
-                          Post
-                        </Button>
-                      ) : null}
+                      <div className="flex shrink-0 items-center gap-0.5">
+                        {row.postedExpenseId ? (
+                          <Badge variant="secondary">Posted</Badge>
+                        ) : canManage && row.isActive ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => post(row.id, row.label)}
+                            disabled={postRecurring.isPending}
+                          >
+                            Post
+                          </Button>
+                        ) : null}
 
-                      {canManage && (
-                        <div className="flex shrink-0 gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 px-2 text-xs"
-                            onClick={() =>
-                              updateRecurring.mutateAsync({
-                                recurringId: row.id,
-                                data: { isActive: !row.isActive },
-                              })
-                            }
-                          >
-                            {row.isActive ? "Pause" : "Resume"}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 w-7 p-0 text-destructive"
-                            onClick={() => setRemovingRecurring({ id: row.id, label: row.label })}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      )}
+                        {canManage && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="size-9 p-0"
+                              aria-label={row.isActive ? `Pause ${row.label}` : `Resume ${row.label}`}
+                              title={row.isActive ? "Pause" : "Resume"}
+                              onClick={() =>
+                                updateRecurring.mutateAsync({
+                                  recurringId: row.id,
+                                  data: { isActive: !row.isActive },
+                                })
+                              }
+                            >
+                              {row.isActive ? (
+                                <Pause className="size-3.5" />
+                              ) : (
+                                <Play className="size-3.5" />
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="size-9 p-0 text-destructive"
+                              aria-label={`Remove ${row.label}`}
+                              title="Remove"
+                              onClick={() => setRemovingRecurring({ id: row.id, label: row.label })}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -427,10 +492,10 @@ export default function ExpensesPage() {
           {/* Everything else */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Receipt className="h-4 w-4" />
-                Spent this month
-                <span className="text-xs font-normal text-muted-foreground">
+              <CardTitle className="flex min-w-0 items-center gap-2 text-base">
+                <Receipt className="size-4 shrink-0" />
+                <span className="truncate">Spent this month</span>
+                <span className="shrink-0 text-xs font-normal tabular-nums text-muted-foreground">
                   {formatCurrency(expensesQuery.data?.total ?? 0)}
                 </span>
               </CardTitle>
@@ -468,7 +533,7 @@ export default function ExpensesPage() {
                       <Label htmlFor="e-category">Category</Label>
                       <select
                         id="e-category"
-                        className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+                        className="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm"
                         value={category}
                         onChange={(e) => setCategory(e.target.value as ExpenseCategory)}
                       >
@@ -500,7 +565,7 @@ export default function ExpensesPage() {
               ) : (
                 <ul className="divide-y divide-border/60">
                   {expenses.map((row) => (
-                    <li key={row.id} className="flex items-center gap-3 py-2.5">
+                    <li key={row.id} className="flex items-center gap-2 py-2.5 sm:gap-3">
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{row.label}</p>
                         <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
@@ -508,19 +573,37 @@ export default function ExpensesPage() {
                           {row.recordedByName ? ` · by ${row.recordedByName}` : ""}
                         </p>
                       </div>
-                      <span className="shrink-0 text-sm font-medium tabular-nums">
+                      <span className="shrink-0 text-sm font-semibold tabular-nums">
                         {formatCurrency(row.amount)}
                       </span>
-                      {canManage && !row.salaryPaymentId && (
+                      {/* A salary row is written by the payslip and cannot be
+                          unpicked from here, so it gets a way through to the
+                          page that owns it instead of a delete it must refuse. */}
+                      {row.salaryPaymentId ? (
+                        canReadSalary && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="size-9 shrink-0 p-0"
+                            aria-label={`Open payroll for ${formatMonthLabel(month)}`}
+                            title="Recorded on a payslip"
+                            onClick={() => navigate(salaryPath)}
+                          >
+                            <BadgeIndianRupee className="size-3.5 text-muted-foreground" />
+                          </Button>
+                        )
+                      ) : canManage ? (
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-7 w-7 shrink-0 p-0 text-destructive"
+                          className="size-9 shrink-0 p-0 text-destructive"
+                          aria-label={`Remove ${row.label}`}
+                          title="Remove"
                           onClick={() => setRemovingExpense({ id: row.id, label: row.label })}
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Trash2 className="size-3.5" />
                         </Button>
-                      )}
+                      ) : null}
                     </li>
                   ))}
                 </ul>

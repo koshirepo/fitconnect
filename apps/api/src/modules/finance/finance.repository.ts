@@ -7,6 +7,7 @@
  * - Primary exports: financeRepository, monthRange.
  */
 import { prisma } from "../../lib/prisma";
+import { monthRange } from "../../lib/month";
 import { PaymentStatus } from "@fitconnect/shared/types/enums";
 import type {
   CreateExpenseInput,
@@ -21,14 +22,14 @@ const recordedBySelect = {
   user: { select: { name: true, avatarUrl: true } },
 } as const;
 
-/** The half-open [from, to) bounds of a "YYYY-MM" month. */
-export function monthRange(month: string) {
-  const [year, mon] = month.split("-").map(Number);
-  return {
-    from: new Date(Date.UTC(year, mon - 1, 1)),
-    to: new Date(Date.UTC(year, mon, 1)),
-  };
-}
+/**
+ * Re-exported so the finance module's own callers keep one import.
+ *
+ * The definition moved to `lib/month` when the payment analytics started
+ * reporting on a chosen month too: two modules answering "what happened in
+ * October" have to agree on where October starts.
+ */
+export { monthRange };
 
 export const financeRepository = {
   listExpenses(tenantId: string, month: string) {

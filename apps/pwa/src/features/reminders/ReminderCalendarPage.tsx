@@ -6,7 +6,7 @@
  * - The channel filter is the question people actually arrive with — "did we message them, or did the app?" — so it sits above the grid and recolours the day cells rather than hiding them.
  * - Primary exports: ReminderCalendarPage.
  */
-import { getMonthStr, parseMonth, formatMonthLabel } from "@/lib/month";
+import { getMonthStr, parseMonth } from "@/lib/month";
 import * as React from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAppNavigate } from "@/lib/use-app-navigate";
@@ -16,16 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CardSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import {
-  Bell,
-  BellOff,
-  CalendarDays,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  MessageCircle,
-  X,
-} from "lucide-react";
+import { MonthNav } from "@/components/ui/month-nav";
+import { Bell, BellOff, CalendarDays, CheckCircle2, MessageCircle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getTenantDashboardPath } from "@/lib/subdomain";
 import { AvatarTile, PersonChip } from "@/components/ui/member-card";
@@ -77,13 +69,7 @@ export default function ReminderCalendarPage() {
     setSelectedDate(null);
   }, [currentMonth]);
 
-  const goMonth = (delta: number) => {
-    const d = parseMonth(currentMonth);
-    d.setMonth(d.getMonth() + delta);
-    setSearchParams({ month: getMonthStr(d) });
-  };
 
-  const isCurrentMonth = currentMonth === getMonthStr(today);
 
   /** The count a day cell shows, under the channel currently filtered to. */
   const countFor = React.useCallback(
@@ -145,35 +131,22 @@ export default function ReminderCalendarPage() {
         <Card>
           <CardContent className="p-4 sm:p-5">
             {/* Month nav + what the month came to */}
-            <div className="mb-4 flex items-center justify-between">
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => goMonth(-1)}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <div className="text-center">
-                <h2 className="text-base font-semibold leading-tight">
-                  {formatMonthLabel(currentMonth)}
-                </h2>
-                <div className="mt-1 flex items-center justify-center gap-3">
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Bell className="h-3 w-3" />
-                    {monthTotal} sent
-                  </span>
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <CalendarDays className="h-3 w-3" />
-                    {activeDays} day{activeDays !== 1 ? "s" : ""}
-                  </span>
-                </div>
+            <MonthNav
+              month={currentMonth}
+              onMonthChange={(next) => setSearchParams({ month: next })}
+              className="mb-4"
+            >
+              <div className="mt-1 flex items-center justify-center gap-3">
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Bell className="h-3 w-3" />
+                  {monthTotal} sent
+                </span>
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <CalendarDays className="h-3 w-3" />
+                  {activeDays} day{activeDays !== 1 ? "s" : ""}
+                </span>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => goMonth(1)}
-                disabled={isCurrentMonth}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+            </MonthNav>
 
             {/* Channel filter */}
             <div className="mx-auto mb-4 grid max-w-xs grid-cols-3 gap-1 rounded-lg bg-muted p-1">

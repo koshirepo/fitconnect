@@ -29,8 +29,13 @@ export const auditService = {
    * Execute the `list tenant logs` workflow for the audit module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
-  async listTenantLogs(tenantId: string, page: number, limit: number) {
-    const { logs, total } = await auditRepository.listTenantLogs(tenantId, page, limit);
+  async listTenantLogs(
+    tenantId: string,
+    page: number,
+    limit: number,
+    filters: { entity?: string; action?: string } = {},
+  ) {
+    const { logs, total } = await auditRepository.listTenantLogs(tenantId, page, limit, filters);
     return { data: { logs }, total };
   },
 };
