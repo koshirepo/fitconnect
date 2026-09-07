@@ -115,10 +115,15 @@ export function usePayment(paymentId: string | undefined) {
   );
 }
 
-export function usePaymentAnalytics(options: { enabled?: boolean } = {}) {
+/**
+ * `month` ("YYYY-MM") selects which month the month-scoped figures cover;
+ * omitted, the API answers for the current one. It is part of the cache key, so
+ * paging back and forth reuses months already fetched.
+ */
+export function usePaymentAnalytics(month?: string, options: { enabled?: boolean } = {}) {
   return useTenantQuery(
-    (tenantId) => queryKeys.payments.analytics(tenantId),
-    async (tenantId) => unwrap(await paymentsApi.analytics(tenantId)),
+    (tenantId) => queryKeys.payments.analytics(tenantId, month ?? null),
+    async (tenantId) => unwrap(await paymentsApi.analytics(tenantId, month)),
     options,
   );
 }

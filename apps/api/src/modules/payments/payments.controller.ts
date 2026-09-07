@@ -29,6 +29,7 @@ import {
   updateSubscriptionSchema,
 } from "./payments.schema";
 import { can } from "../../lib/permissions";
+import { monthSchema } from "../finance/finance.schema";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import type { AppBindings } from "../../types/app-context";
 
@@ -356,7 +357,14 @@ export const paymentController = {
    */
   async getAnalytics(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
-    const result = await paymentService.getAnalytics(tenantId);
+
+    // A malformed month is ignored rather than rejected: this is a reporting
+    // screen, and a mangled query string should land it on the current month
+    // rather than showing the reader an error where a page should be.
+    const requested = c.req.query("month");
+    const month = monthSchema.safeParse(requested).success ? requested : undefined;
+
+    const result = await paymentService.getAnalytics(tenantId, month);
     return ok(c, result.data);
   },
 };

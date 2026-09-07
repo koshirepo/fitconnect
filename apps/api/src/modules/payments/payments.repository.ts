@@ -6,6 +6,7 @@
  * - Primary exports: paymentRepository.
  */
 import { prisma } from "../../lib/prisma";
+import { monthRange } from "../../lib/month";
 import type { PaymentStatus } from "@fitconnect/shared/types/enums";
 
 /**
@@ -1130,20 +1131,28 @@ export const paymentRepository = {
   /**
    * Run the `get payment analytics` persistence operation for the payments module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   *
+   * `month` is the "YYYY-MM" the month-scoped figures report on. It used to be
+   * whatever month the server happened to be in, which is why the analytics
+   * screen could not be asked about October: the only period it could describe
+   * was the one it was standing in.
+   *
+   * `today` and `week` stay relative to now whatever month is asked for — they
+   * are facts about this moment, not about the month — and the screen only
+   * shows them while the month being read is the current one.
    */
-  async getPaymentAnalytics(tenantId: string) {
+  async getPaymentAnalytics(tenantId: string, month: string) {
     const now = new Date();
 
-    // Start of today, this week (Monday), this month
+    // Start of today and of this week (Monday), both still relative to now.
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1; // Monday = 0
     const startOfWeek = new Date(startOfDay);
     startOfWeek.setDate(startOfWeek.getDate() - dayOfWeek);
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // Last 30 days daily breakdown
-    const thirtyDaysAgo = new Date(startOfDay);
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+    // The chosen month, on the same half-open bounds the books use.
+    const { from: startOfMonth, to: endOfMonth } = monthRange(month);
+    const monthWindow = { gte: startOfMonth, lt: endOfMonth };
 
     const [
       daily,
@@ -1184,7 +1193,7 @@ export const paymentRepository = {
       // This month's stats
       prisma.payment.groupBy({
         by: ["status"],
-        where: { tenantId, createdAt: { gte: startOfMonth } },
+        where: { tenantId, createdAt: monthWindow },
         _sum: { amount: true },
         _count: true,
       }),
@@ -1195,7 +1204,11 @@ export const paymentRepository = {
         _sum: { amount: true },
         _count: true,
       }),
-      // Last 30 days - per-day breakdown
+      // Per-day breakdown across the chosen month.
+      //
+      // This was a rolling last-30-days window, which is a different span from
+      // every other figure on the screen — the trend chart and the month tile
+      // beside it described overlapping but unequal periods. Now they agree.
       prisma.$queryRaw<{ day: string; revenue: number | bigint; count: number | bigint }[]>`
         SELECT
           substr("createdAt", 1, 10) AS day,
@@ -1203,14 +1216,15 @@ export const paymentRepository = {
           COUNT(*) AS count
         FROM "Payment"
         WHERE "tenantId" = ${tenantId}
-          AND "createdAt" >= ${thirtyDaysAgo}
+          AND "createdAt" >= ${startOfMonth}
+          AND "createdAt" < ${endOfMonth}
         GROUP BY day
         ORDER BY day ASC
       `,
       // Members joined
       prisma.tenantMembership.count({ where: { tenantId, joinedAt: { gte: startOfDay } } }),
       prisma.tenantMembership.count({ where: { tenantId, joinedAt: { gte: startOfWeek } } }),
-      prisma.tenantMembership.count({ where: { tenantId, joinedAt: { gte: startOfMonth } } }),
+      prisma.tenantMembership.count({ where: { tenantId, joinedAt: monthWindow } }),
       prisma.tenantMembership.count({ where: { tenantId } }),
       // Members deactivated (SUSPENDED or DELETED, by updatedAt)
       prisma.tenantMembership.count({
@@ -1231,7 +1245,7 @@ export const paymentRepository = {
         where: {
           tenantId,
           status: { in: ["SUSPENDED", "DELETED"] },
-          updatedAt: { gte: startOfMonth },
+          updatedAt: monthWindow,
         },
       }),
       prisma.tenantMembership.count({
@@ -1240,7 +1254,7 @@ export const paymentRepository = {
       // What was given away this month: coupons off the list price, and coins
       // spent against it. `amount` is already net of both.
       prisma.payment.aggregate({
-        where: { tenantId, status: "COMPLETED", createdAt: { gte: startOfMonth } },
+        where: { tenantId, status: "COMPLETED", createdAt: monthWindow },
         _sum: { amount: true, listAmount: true, discountAmount: true, coinsRedeemed: true },
       }),
       prisma.payment.aggregate({
@@ -1250,7 +1264,7 @@ export const paymentRepository = {
       // How the money arrived. `gateway` is null for cash and other manual entries.
       prisma.payment.groupBy({
         by: ["gateway"],
-        where: { tenantId, status: "COMPLETED", createdAt: { gte: startOfMonth } },
+        where: { tenantId, status: "COMPLETED", createdAt: monthWindow },
         _sum: { amount: true },
         _count: true,
       }),
@@ -1272,6 +1286,7 @@ export const paymentRepository = {
         WHERE "tenantId" = ${tenantId}
           AND "status" = 'COMPLETED'
           AND "createdAt" >= ${startOfMonth}
+          AND "createdAt" < ${endOfMonth}
         GROUP BY kind
       `,
       // Completed store orders with no membership: the walk-ins and visitors
@@ -1297,13 +1312,16 @@ export const paymentRepository = {
      * finance page can say where the money came from instead of quietly
      * inflating a number whose provenance nobody can check.
      */
-    const guestRevenue = (from: Date) =>
-      guestSales
-        .filter((sale) => sale.createdAt >= from)
-        .reduce((sum, sale) => sum + sale.totalAmount, 0);
+    // `to` bounds the month bucket. Today and this week run to now and need no
+    // upper edge; a chosen month does, or every past month would also collect
+    // every sale made since.
+    const guestIn = (from: Date, to?: Date) =>
+      guestSales.filter((sale) => sale.createdAt >= from && (!to || sale.createdAt < to));
 
-    const guestCount = (from: Date) =>
-      guestSales.filter((sale) => sale.createdAt >= from).length;
+    const guestRevenue = (from: Date, to?: Date) =>
+      guestIn(from, to).reduce((sum, sale) => sum + sale.totalAmount, 0);
+
+    const guestCount = (from: Date, to?: Date) => guestIn(from, to).length;
 
     const mapStats = (rows: typeof daily) => {
       let totalRevenue = 0;
@@ -1331,10 +1349,10 @@ export const paymentRepository = {
     );
 
     /** Payment-ledger figures with the guest sales of the same window added. */
-    const withGuests = (rows: typeof daily, from: Date | null) => {
+    const withGuests = (rows: typeof daily, from: Date | null, to?: Date) => {
       const stats = mapStats(rows);
-      const revenue = from === null ? allGuestRevenue : guestRevenue(from);
-      const count = from === null ? guestSales.length : guestCount(from);
+      const revenue = from === null ? allGuestRevenue : guestRevenue(from, to);
+      const count = from === null ? guestSales.length : guestCount(from, to);
 
       return {
         ...stats,
@@ -1348,9 +1366,11 @@ export const paymentRepository = {
     };
 
     return {
+      /** The month these figures describe, echoed so the caller can be sure. */
+      monthKey: month,
       today: withGuests(daily, startOfDay),
       week: withGuests(weekly, startOfWeek),
-      month: withGuests(monthly, startOfMonth),
+      month: withGuests(monthly, startOfMonth, endOfMonth),
       allTime: withGuests(allTime, null),
       dailyBreakdown: dailyBreakdown.map(
         (d: { day: string; revenue: number | bigint; count: number | bigint }) => ({

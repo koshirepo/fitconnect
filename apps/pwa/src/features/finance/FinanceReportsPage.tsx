@@ -18,6 +18,8 @@ import { StatCard } from "@/components/ui/stat-card";
 import { ChartTooltip } from "@/components/ui/chart-tooltip";
 import { formatCurrency } from "@/lib/utils";
 import { getApiError } from "@/api/client";
+import { getMonthStr, formatMonthLabel, parseMonth, withMonth } from "@/lib/month";
+import { MonthNav } from "@/components/ui/month-nav";
 import { getTenantDashboardPath } from "@/lib/subdomain";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
@@ -32,10 +34,11 @@ import {
   Ban,
   Activity,
   CreditCard,
+  ShoppingBag,
   Wallet,
   BadgeIndianRupee,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   BarChart,
   Bar,
@@ -71,16 +74,18 @@ function formatCompact(amount: number) {
 /**
  * What each period actually covers, spelled out.
  *
- * The four windows on this page — today, this week, this month, all time — were
- * labelled with those words alone and sat next to a chart headed "Last 30
- * Days", so four different spans of time read as interchangeable. Naming the
+ * The four windows on this page — today, this week, the chosen month, all time
+ * — were labelled with those words alone and sat next to a chart headed "Last
+ * 30 Days", so four different spans of time read as interchangeable. Naming the
  * dates is the whole fix: "This Month" and "March 2026" are the same period,
  * but only one of them can be checked against a bank statement.
  *
- * The server derives these from its own clock, so these labels describe that
- * intent rather than being passed to it.
+ * Today and this week come from the server's clock and are only shown while the
+ * month being read is the current one — "revenue today" is not a fact about
+ * last October, and putting it beside October's figures invited exactly that
+ * reading.
  */
-function periodLabels(now = new Date()) {
+function periodLabels(month: string, now = new Date()) {
   const day = now.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 
   // Monday-first, matching how the API buckets the week.
@@ -97,8 +102,8 @@ function periodLabels(now = new Date()) {
       })}`,
     },
     month: {
-      short: now.toLocaleDateString("en-IN", { month: "long" }),
-      full: now.toLocaleDateString("en-IN", { month: "long", year: "numeric" }),
+      short: parseMonth(month).toLocaleDateString("en-IN", { month: "long" }),
+      full: formatMonthLabel(month),
     },
     allTime: { short: "All time", full: "All time" },
   };
@@ -106,14 +111,18 @@ function periodLabels(now = new Date()) {
 
 export default function FinanceReportsPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { isMobile } = useUIStore();
-  const periods = React.useMemo(() => periodLabels(), []);
   const { can } = usePermissions();
   const canReadBooks = can(Permission.FINANCE_READ);
   const canReadSalary = can(Permission.SALARY_READ);
 
+  const month = searchParams.get("month") || getMonthStr(new Date());
+  const isCurrentMonth = month >= getMonthStr(new Date());
+  const periods = React.useMemo(() => periodLabels(month), [month]);
+
   const reportQuery = useMemberReport();
-  const analyticsQuery = usePaymentAnalytics();
+  const analyticsQuery = usePaymentAnalytics(month);
 
   // Both payloads are trusted for their shape all over this page, so anything
   // that arrives without its sections is treated as absent. An offline-queued
@@ -176,38 +185,52 @@ export default function FinanceReportsPage() {
       ].filter((d) => d.value > 0)
     : [];
 
-  const periodComparisonData = analytics
-    ? [
-        {
-          period: periods.today.short,
-          Revenue: analytics.today.totalRevenue,
-          Payments: analytics.today.totalCount,
-        },
-        {
-          period: periods.week.short,
-          Revenue: analytics.week.totalRevenue,
-          Payments: analytics.week.totalCount,
-        },
-        {
-          period: periods.month.short,
-          Revenue: analytics.month.totalRevenue,
-          Payments: analytics.month.totalCount,
-        },
-      ]
-    : [];
+  /**
+   * Today and this week only belong beside a month that contains them.
+   *
+   * The server still reports both whatever month is asked for — they are facts
+   * about now, not about the month — but showing "revenue today" in a column
+   * headed October invites reading it as October's. On a past month the
+   * comparison collapses to the month itself, and the card is hidden rather
+   * than drawn as a single bar.
+   */
+  const periodComparisonData =
+    analytics && isCurrentMonth
+      ? [
+          {
+            period: periods.today.short,
+            Revenue: analytics.today.totalRevenue,
+            Payments: analytics.today.totalCount,
+          },
+          {
+            period: periods.week.short,
+            Revenue: analytics.week.totalRevenue,
+            Payments: analytics.week.totalCount,
+          },
+          {
+            period: periods.month.short,
+            Revenue: analytics.month.totalRevenue,
+            Payments: analytics.month.totalCount,
+          },
+        ]
+      : [];
 
   const memberActivityData = analytics
     ? [
-        {
-          period: periods.today.short,
-          Joined: analytics.members.joined.today,
-          Deactivated: analytics.members.deactivated.today,
-        },
-        {
-          period: periods.week.short,
-          Joined: analytics.members.joined.week,
-          Deactivated: analytics.members.deactivated.week,
-        },
+        ...(isCurrentMonth
+          ? [
+              {
+                period: periods.today.short,
+                Joined: analytics.members.joined.today,
+                Deactivated: analytics.members.deactivated.today,
+              },
+              {
+                period: periods.week.short,
+                Joined: analytics.members.joined.week,
+                Deactivated: analytics.members.deactivated.week,
+              },
+            ]
+          : []),
         {
           period: periods.month.short,
           Joined: analytics.members.joined.month,
@@ -288,7 +311,9 @@ export default function FinanceReportsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(getTenantDashboardPath("/expenses"))}
+              // Carries the month, so arriving at the books from October's
+              // analytics opens October rather than resetting to today.
+              onClick={() => navigate(getTenantDashboardPath(withMonth("/expenses", month)))}
               aria-label="Income and expenses"
               title="Income and expenses"
             >
@@ -300,7 +325,7 @@ export default function FinanceReportsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(getTenantDashboardPath("/salary"))}
+              onClick={() => navigate(getTenantDashboardPath(withMonth("/salary", month)))}
               aria-label="Staff salary"
               title="Staff salary"
             >
@@ -330,6 +355,12 @@ export default function FinanceReportsPage() {
         </div>
       )}
 
+      {/* The month everything below reports on. This page could not be pointed
+          at one at all — it described whichever month the server was standing
+          in, so "how did October look" was answerable on the books and on
+          payroll but not here. */}
+      <MonthNav month={month} onMonthChange={(next) => setSearchParams({ month: next })} />
+
       {report && analytics && (
         <>
           {/* ═══════════════ KPI STAT CARDS ═══════════════ */}
@@ -354,13 +385,26 @@ export default function FinanceReportsPage() {
               subtext={`${analytics.month.completed} completed`}
               color="text-green-600"
             />
-            <StatCard
-              icon={Activity}
-              label={`Revenue · ${periods.today.full}`}
-              value={formatCompact(analytics.today.totalRevenue)}
-              subtext={`${analytics.today.totalCount} payments`}
-              color="text-blue-600"
-            />
+            {/* "Revenue today" is not a fact about last October, so on a past
+                month the fourth tile reports something that month can answer:
+                what came over the counter from people with no account. */}
+            {isCurrentMonth ? (
+              <StatCard
+                icon={Activity}
+                label={`Revenue · ${periods.today.full}`}
+                value={formatCompact(analytics.today.totalRevenue)}
+                subtext={`${analytics.today.totalCount} payments`}
+                color="text-blue-600"
+              />
+            ) : (
+              <StatCard
+                icon={ShoppingBag}
+                label={`Counter sales · ${periods.month.full}`}
+                value={formatCompact(analytics.month.guestRevenue)}
+                subtext={`${analytics.month.guestCount} guest sales`}
+                color="text-blue-600"
+              />
+            )}
           </div>
 
           {/* ═══════════════ THIS MONTH IN DETAIL ═══════════════ */}
@@ -527,8 +571,10 @@ export default function FinanceReportsPage() {
             <Card className="lg:col-span-2">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base">Revenue trend</CardTitle>
+                {/* Was a rolling last-30-days window sitting beside month
+                    figures — two different spans presented as one story. */}
                 <CardDescription className="text-xs">
-                  Daily, over the last 30 days
+                  Day by day · {periods.month.full}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -624,8 +670,9 @@ export default function FinanceReportsPage() {
 
           {/* ═══════════════ ROW 3: PERIOD COMPARISON + PAYMENT STATUS ═══════════════ */}
           <div className="grid gap-4 lg:grid-cols-2">
-            {/* Revenue by Period Bar Chart */}
-            <Card>
+            {/* Revenue by Period Bar Chart. Hidden on a past month, where the
+                only comparable bar left is the month itself. */}
+            <Card className={periodComparisonData.length === 0 ? "hidden" : undefined}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base">Revenue by period</CardTitle>
                 <CardDescription className="text-xs">

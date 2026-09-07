@@ -14,6 +14,9 @@ import { referralRewardService } from "../members/referral-rewards.service";
 import { reminderService } from "../reminders/reminders.service";
 import { provisioningService } from "../attendance/provisioning.service";
 import { paymentRepository } from "./payments.repository";
+// The books own the definition of a month's income; see `getAnalytics`.
+import { financeRepository } from "../finance/finance.repository";
+import { currentMonth } from "../../lib/month";
 import { flattenNestedMember } from "../../lib/flatten";
 import type {
   CreatePaymentInput,
@@ -885,9 +888,49 @@ export const paymentService = {
   /**
    * Execute the `get analytics` workflow for the payments module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
+   *
+   * The month's revenue comes from the books, not from this module.
+   *
+   * Two places used to answer "what did the gym take this month" and they did
+   * not agree. `financeRepository.incomeTotals` windows completed payments on
+   * `paidAt` and picks up counter sales as orders with no payment behind them;
+   * this module windowed on `createdAt` and picked up orders with no *member*
+   * behind them. A payment raised on 30 September and settled on 2 October
+   * therefore landed in September on the analytics screen and in October in the
+   * books, and nothing on either screen said which was right.
+   *
+   * The books win: they are asked about a named month rather than about "now",
+   * and `paidAt` is when the money actually arrived, which is the question an
+   * owner is asking. Calling that function — rather than reimplementing its
+   * rule here — is what keeps the two screens equal from now on, including the
+   * next time the rule changes.
+   *
+   * The payment *counts* stay as this module derives them. A count of rows
+   * raised in a month and a sum of money received in it are different
+   * questions, and the screen labels them as such.
    */
-  async getAnalytics(tenantId: string) {
-    const analytics = await paymentRepository.getPaymentAnalytics(tenantId);
-    return { data: { analytics } };
+  async getAnalytics(tenantId: string, month?: string) {
+    const resolvedMonth = month ?? currentMonth();
+
+    const [analytics, income] = await Promise.all([
+      paymentRepository.getPaymentAnalytics(tenantId, resolvedMonth),
+      financeRepository.incomeTotals(tenantId, resolvedMonth),
+    ]);
+
+    const monthIncome = income.payments + income.guestStoreSales;
+
+    return {
+      data: {
+        analytics: {
+          ...analytics,
+          month: {
+            ...analytics.month,
+            totalRevenue: monthIncome,
+            guestRevenue: income.guestStoreSales,
+            guestCount: income.guestStoreCount,
+          },
+        },
+      },
+    };
   },
 };

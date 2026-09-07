@@ -140,16 +140,26 @@ export const paymentsApi = {
       data,
     ),
 
-  analytics: (tenantId: string) =>
+  /**
+   * `month` is the "YYYY-MM" the month-scoped figures report on, defaulting to
+   * the current one. Its revenue is the same figure the books show for that
+   * month — the API derives both from one function — so the two screens cannot
+   * drift apart again.
+   */
+  analytics: (tenantId: string, month?: string) =>
     api.get<
       ApiResponse<{
         analytics: {
+          /** The month the `month` bucket below describes. */
+          monthKey: string;
           today: {
             totalRevenue: number;
             totalCount: number;
             completed: number;
             pending: number;
             failed: number;
+            guestRevenue: number;
+            guestCount: number;
           };
           week: {
             totalRevenue: number;
@@ -157,6 +167,8 @@ export const paymentsApi = {
             completed: number;
             pending: number;
             failed: number;
+            guestRevenue: number;
+            guestCount: number;
           };
           month: {
             totalRevenue: number;
@@ -164,6 +176,8 @@ export const paymentsApi = {
             completed: number;
             pending: number;
             failed: number;
+            guestRevenue: number;
+            guestCount: number;
           };
           allTime: {
             totalRevenue: number;
@@ -171,6 +185,8 @@ export const paymentsApi = {
             completed: number;
             pending: number;
             failed: number;
+            guestRevenue: number;
+            guestCount: number;
           };
           dailyBreakdown: { day: string; revenue: number; count: number }[];
           members: {
@@ -199,7 +215,9 @@ export const paymentsApi = {
           };
         };
       }>
-    >(`/tenants/${tenantId}/payments/analytics`),
+    >(`/tenants/${tenantId}/payments/analytics`, {
+      params: month ? { month } : undefined,
+    }),
 
   /**
    * Take money against dues a member already owes.

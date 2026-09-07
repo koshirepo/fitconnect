@@ -133,7 +133,7 @@ export default function DashboardPage() {
   // The finance tile sat empty beside three that showed a figure, which
   // reads as a card that failed to load rather than one with nothing to
   // say. This is the number a gym owner opens the dashboard for.
-  const analyticsQuery = usePaymentAnalytics({ enabled: canViewFinance });
+  const analyticsQuery = usePaymentAnalytics(undefined, { enabled: canViewFinance });
   const monthRevenue = analyticsQuery.data?.analytics?.month?.totalRevenue ?? null;
 
   const memberCountQuery = useMembers(
