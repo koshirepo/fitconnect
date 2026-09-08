@@ -105,19 +105,35 @@ async function enforceOverdueMembershipsForTenant(
 /**
  * Execute the `build tenant report data` workflow for scheduled and on-demand reports.
  * Keep report aggregation in one place so HTTP-triggered and cron-triggered flows stay consistent.
+ *
+ * Reads. Does not enforce.
+ *
+ * This used to call `enforceOverdueMembershipsForTenant`, which suspends
+ * memberships, revokes door access and sends suspension emails and pushes. The
+ * analytics screen calls this on mount with `staleTime: 0`, so opening or
+ * refreshing that page deactivated members and messaged them — a write, and an
+ * irreversible one from the member's side, hiding behind a report. Enforcement
+ * now belongs to the nightly cron alone, which is the only caller that should
+ * be deciding somebody's membership is over.
+ *
+ * `suspended` is passed in by that cron, so the report it emails still names
+ * the members its own run just swept. On the on-demand path it is empty and
+ * `awaitingSuspension` carries the answer instead: who is past the grace period
+ * and will be suspended by the next run.
  */
 async function buildTenantReportData(
   tenantId: string,
   options: {
     gymName?: string;
     overdueDays?: number;
-    scheduleBackgroundTask?: BackgroundTaskScheduler;
+    /** Members the caller's own enforcement run just suspended. */
+    suspended?: { id: string; memberId: number; name: string }[];
   } = {},
 ) {
   const {
     gymName: providedGymName,
     overdueDays: providedOverdueDays,
-    scheduleBackgroundTask,
+    suspended = [],
   } = options;
 
   const [memberStats, financeStats, settings, tenant] = await Promise.all([
@@ -141,13 +157,15 @@ async function buildTenantReportData(
     providedOverdueDays ?? settings?.overdueDays ?? DEFAULT_OVERDUE_DAYS;
   const gymName = providedGymName ?? tenant?.name ?? "Fit Connect";
 
-  const { overdueMembers, suspended } =
-    await enforceOverdueMembershipsForTenant(
-      tenantId,
-      gymName,
-      overdueDays,
-      scheduleBackgroundTask,
-    );
+  // The same predicate enforcement uses, read without the write. It matches
+  // only ACTIVE memberships, so after a sweep it is empty — which is why the
+  // cron passes its own result in rather than reading again.
+  const overdueMembers = await memberRepository.getOverdueMembers(tenantId, overdueDays);
+  const awaitingSuspension = overdueMembers.map((member) => ({
+    id: member.id,
+    memberId: member.memberId,
+    name: member.user.name,
+  }));
 
   return {
     gymName,
@@ -156,8 +174,11 @@ async function buildTenantReportData(
       finances: financeStats,
       overdue: {
         allowedDays: overdueDays,
-        found: overdueMembers.length,
+        found: awaitingSuspension.length,
+        /** Suspended by the run this report accompanies; empty on demand. */
         suspended,
+        /** Past the grace period, still active — what the next run will take. */
+        awaitingSuspension,
       },
     },
   };
@@ -209,12 +230,14 @@ export const reportService = {
     adminUserId: string,
     scheduleBackgroundTask?: BackgroundTaskScheduler,
   ) {
+    // Read-only: this is what the analytics screen calls on every load. It
+    // used to suspend members and message them as a side effect of that.
     const [adminUser, { gymName, reportData }] = await Promise.all([
       prisma.user.findUnique({
         where: { id: adminUserId },
         select: { email: true, name: true },
       }),
-      buildTenantReportData(tenantId, { scheduleBackgroundTask }),
+      buildTenantReportData(tenantId),
     ]);
 
     // Send report email to admin in the background.
@@ -269,10 +292,23 @@ export const reportService = {
           name: user.name,
         }));
 
+      const overdueDays = tenant.settings?.overdueDays ?? DEFAULT_OVERDUE_DAYS;
+
+      // Enforce, then report on what enforcement did. This is the only path
+      // that suspends anybody: the sweep, the door-access revocation and the
+      // suspension notice all belong to the nightly run, not to whoever last
+      // opened the analytics page.
+      const { suspended } = await enforceOverdueMembershipsForTenant(
+        tenant.id,
+        tenant.name,
+        overdueDays,
+        scheduleBackgroundTask,
+      );
+
       const { gymName, reportData } = await buildTenantReportData(tenant.id, {
         gymName: tenant.name,
-        overdueDays: tenant.settings?.overdueDays ?? DEFAULT_OVERDUE_DAYS,
-        scheduleBackgroundTask,
+        overdueDays,
+        suspended,
       });
 
       await dispatchReportEmails(
@@ -288,51 +324,6 @@ export const reportService = {
         gymName,
         targetedAdmins: recipients.length,
         suspendedCount: reportData.overdue.suspended.length,
-      });
-    }
-
-    return { data: summary };
-  },
-
-  /**
-   * Execute the `run scheduled overdue enforcement` workflow for the members module.
-   * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
-   */
-  async runScheduledOverdueEnforcement(
-    scheduleBackgroundTask?: BackgroundTaskScheduler,
-  ) {
-    const tenants =
-      await tenantRepository.listActiveTenantsForOverdueEnforcement();
-    const summary: {
-      processedTenants: number;
-      suspendedMembers: number;
-      tenants: {
-        tenantId: string;
-        gymName: string;
-        overdueDays: number;
-        suspendedCount: number;
-      }[];
-    } = {
-      processedTenants: tenants.length,
-      suspendedMembers: 0,
-      tenants: [],
-    };
-
-    for (const tenant of tenants) {
-      const overdueDays = tenant.settings?.overdueDays ?? DEFAULT_OVERDUE_DAYS;
-      const result = await enforceOverdueMembershipsForTenant(
-        tenant.id,
-        tenant.name,
-        overdueDays,
-        scheduleBackgroundTask,
-      );
-
-      summary.suspendedMembers += result.suspended.length;
-      summary.tenants.push({
-        tenantId: tenant.id,
-        gymName: tenant.name,
-        overdueDays,
-        suspendedCount: result.suspended.length,
       });
     }
 

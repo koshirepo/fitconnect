@@ -33,6 +33,8 @@ import {
   UserCheck,
   Ban,
   Activity,
+  CalendarClock,
+  Clock3,
   CreditCard,
   ShoppingBag,
   Wallet,
@@ -364,12 +366,35 @@ export default function FinanceReportsPage() {
       {report && analytics && (
         <>
           {/* ═══════════════ KPI STAT CARDS ═══════════════ */}
-          <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+          {/* Six tiles: two per row on a phone, three from `lg` — so both
+              layouts fill their last row rather than leaving two stranded. */}
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-3">
             <StatCard
               icon={Users}
               label="Total Members"
               value={report.members.total}
               subtext={`${report.members.active} active`}
+            />
+            {/* Who owes money, and whose term has run out. Both are counts of
+                people — the two numbers a desk acts on — and neither was on
+                this page, which reported payment rows instead. */}
+            <StatCard
+              icon={Clock3}
+              label="Payment pending"
+              value={report.members.withPendingPayment}
+              subtext={
+                report.members.withPendingPayment === 1 ? "member owes" : "members owe"
+              }
+              color="text-amber-600"
+              onClick={() => navigate(getTenantDashboardPath("/payments?status=PENDING"))}
+            />
+            <StatCard
+              icon={CalendarClock}
+              label="Membership due"
+              value={report.members.pastDue}
+              subtext={`past due · ${report.overdue.allowedDays}-day grace`}
+              color="text-red-600"
+              onClick={() => navigate(getTenantDashboardPath("/members?status=DUE"))}
             />
             <StatCard
               icon={IndianRupee}
@@ -885,20 +910,53 @@ export default function FinanceReportsPage() {
                           {analytics.members.deactivated.allTime}
                         </td>
                       </tr>
-                      <tr>
-                        <td className="py-2.5 flex items-center gap-2">
-                          <UserCheck className="h-3.5 w-3.5 text-green-500" />
+                      <tr className="border-b">
+                        <td className="flex items-center gap-2 py-2.5">
+                          <UserCheck className="h-3.5 w-3.5 shrink-0 text-green-500" />
                           <span className="font-medium">Currently Active</span>
                         </td>
                         <td
                           colSpan={4}
-                          className="text-right py-2.5 font-bold text-2xl text-green-600"
+                          className="py-2.5 text-right text-2xl font-bold text-green-600"
                         >
                           {report.members.active}
                         </td>
                       </tr>
+
+                      {/* People, not payment rows. The pending figure elsewhere
+                          on this page counts unpaid entries, and a member with
+                          three of them is still one person to chase. */}
+                      <tr className="border-b">
+                        <td className="flex items-center gap-2 py-2.5">
+                          <Clock3 className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                          <span className="font-medium">Payment pending</span>
+                        </td>
+                        <td
+                          colSpan={4}
+                          className="py-2.5 text-right text-2xl font-bold text-amber-600"
+                        >
+                          {report.members.withPendingPayment}
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td className="flex items-center gap-2 py-2.5">
+                          <CalendarClock className="h-3.5 w-3.5 shrink-0 text-red-500" />
+                          <span className="font-medium">Membership due</span>
+                        </td>
+                        <td
+                          colSpan={4}
+                          className="py-2.5 text-right text-2xl font-bold text-red-600"
+                        >
+                          {report.members.pastDue}
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Pending counts members with at least one unpaid payment. Due counts active
+                    members whose term has run out.
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -917,38 +975,44 @@ export default function FinanceReportsPage() {
               </div>
             </CardHeader>
             <CardContent>
-              {report.overdue.suspended.length === 0 ? (
+              {/* These are members the nightly sweep will suspend, not ones it
+                  already has. Opening this page used to *perform* the
+                  suspension and then report it, so the list read as history
+                  when it was actually the page's own side effect. */}
+              {report.overdue.awaitingSuspension.length === 0 ? (
                 <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950">
-                  <UserCheck className="h-5 w-5 text-green-600" />
+                  <UserCheck className="h-5 w-5 shrink-0 text-green-600" />
                   <p className="text-sm text-green-800 dark:text-green-200">
-                    All members are within the grace period. No suspensions needed.
+                    Everyone is within the {report.overdue.allowedDays}-day grace period. Nothing to
+                    suspend.
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-950">
-                    <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-3">
-                      {report.overdue.suspended.length} member
-                      {report.overdue.suspended.length !== 1 ? "s" : ""} suspended for exceeding the{" "}
-                      {report.overdue.allowedDays}-day grace period
-                    </p>
-                    <div className="space-y-1.5">
-                      {report.overdue.suspended.map((m) => (
-                        <button
-                          key={m.id}
-                          type="button"
-                          className="-mx-2 flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left text-sm text-red-700 transition-colors hover:bg-red-100 dark:text-red-300 dark:hover:bg-red-900"
-                          onClick={() => navigate(`/members/${m.id}`)}
-                        >
-                          <span className="min-w-0 truncate font-medium">
-                            #{m.memberId} — {m.name}
-                          </span>
-                          <Badge variant="destructive" className="shrink-0 text-xs">
-                            Suspended
-                          </Badge>
-                        </button>
-                      ))}
-                    </div>
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950">
+                  <p className="mb-3 text-sm font-medium text-amber-800 dark:text-amber-200">
+                    {report.overdue.awaitingSuspension.length} member
+                    {report.overdue.awaitingSuspension.length !== 1 ? "s" : ""} past the{" "}
+                    {report.overdue.allowedDays}-day grace period. Tonight's run will deactivate{" "}
+                    {report.overdue.awaitingSuspension.length !== 1 ? "them" : "them"} and send a
+                    notice — take a payment before then to keep{" "}
+                    {report.overdue.awaitingSuspension.length !== 1 ? "them" : "them"} active.
+                  </p>
+                  <div className="space-y-1.5">
+                    {report.overdue.awaitingSuspension.map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        className="-mx-2 flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left text-sm text-amber-800 transition-colors hover:bg-amber-100 dark:text-amber-200 dark:hover:bg-amber-900"
+                        onClick={() => navigate(`/members/${m.id}`)}
+                      >
+                        <span className="min-w-0 truncate font-medium">
+                          #{m.memberId} — {m.name}
+                        </span>
+                        <Badge variant="warning" className="shrink-0 text-xs">
+                          Due to lapse
+                        </Badge>
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}

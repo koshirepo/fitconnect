@@ -103,6 +103,7 @@ export default {
           console.info("[scheduled-coin-expiry]", expiry.data);
         }
 
+        // Suspends everyone past their gym's grace period, then reports on it.
         const result = await reportService.runScheduledTenantReports((promise) =>
           ctx.waitUntil(promise),
         );
@@ -114,16 +115,13 @@ export default {
         return;
       }
 
-      const result = await reportService.runScheduledOverdueEnforcement((promise) =>
-        ctx.waitUntil(promise),
-      );
-
-      console.info("[scheduled-overdue-enforcement]", {
-        cron: controller.cron,
-        ...result.data,
-      });
+      // Every configured cron is handled above, so this is a schedule nobody
+      // wrote a branch for. It used to fall through to overdue enforcement,
+      // which meant adding any third cron would silently start suspending
+      // members on it. An unrecognised schedule now does nothing and says so.
+      console.warn("[scheduled-unknown-cron]", { cron: controller.cron });
     } catch (e: any) {
-      console.error("[scheduled-overdue-enforcement-error]", e?.message, e?.stack);
+      console.error("[scheduled-error]", { cron: controller.cron }, e?.message, e?.stack);
       throw e;
     }
   },

@@ -99,6 +99,17 @@ export const pushService = {
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
   async sendToUser(userId: string, payload: PushPayload) {
+    // Reports that it reached nobody rather than throwing, which is what
+    // `sendToTenantAdmins` below already did.
+    //
+    // This called `ensureVapid()` straight out, and that throws when the
+    // private key is missing. Every caller swallows exceptions — the reminder
+    // cron, the salary notifier, the admission flow — so a deployment with no
+    // `VAPID_PRIVATE_KEY` set silently dropped every member-facing
+    // notification while admin ones degraded cleanly and visibly. The two
+    // paths now fail the same way.
+    if (!isConfigured()) return { data: { sent: 0, total: 0 } };
+
     ensureVapid();
     const subs = await pushRepository.findByUserId(userId);
     return { data: await deliver(subs, payload) };

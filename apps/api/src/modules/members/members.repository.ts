@@ -622,7 +622,40 @@ export const memberRepository = {
         }),
       ]);
 
-    return { total, active, suspended, joinedToday, joinedWeek, joinedMonth };
+    // How many *people* owe something, as distinct from how many payment rows
+    // are outstanding. A member with three unpaid entries is one person to
+    // chase, and "12 pending payments" does not say whether that is twelve
+    // members or two.
+    const [withPendingPayment, pastDue] = await Promise.all([
+      prisma.tenantMembership.count({
+        where: {
+          tenantId,
+          status: { not: "DELETED" },
+          payments: { some: { status: "PENDING" } },
+        },
+      }),
+      // Term already run out and not yet renewed. Suspended memberships are
+      // excluded: they have stopped being someone to chase and started being
+      // someone to win back, which is a different number.
+      prisma.tenantMembership.count({
+        where: {
+          tenantId,
+          status: "ACTIVE",
+          dueDate: { not: null, lt: startOfToday },
+        },
+      }),
+    ]);
+
+    return {
+      total,
+      active,
+      suspended,
+      joinedToday,
+      joinedWeek,
+      joinedMonth,
+      withPendingPayment,
+      pastDue,
+    };
   },
 
   /**

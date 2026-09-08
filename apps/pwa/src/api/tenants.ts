@@ -130,6 +130,10 @@ export const tenantsApi = {
           joinedToday: number;
           joinedWeek: number;
           joinedMonth: number;
+          /** People with at least one unpaid payment — not a count of rows. */
+          withPendingPayment: number;
+          /** Active members whose term has run out and not been renewed. */
+          pastDue: number;
         };
         finances: {
           revenueMonth: number;
@@ -142,7 +146,15 @@ export const tenantsApi = {
         overdue: {
           allowedDays: number;
           found: number;
+          /**
+           * Suspended by the nightly run this report accompanies.
+           *
+           * Always empty on this endpoint: reading a report no longer suspends
+           * anybody, so nothing has just been swept when an admin asks for one.
+           */
           suspended: { id: string; memberId: number; name: string }[];
+          /** Past the grace period and still active — the next run takes these. */
+          awaitingSuspension: { id: string; memberId: number; name: string }[];
         };
       }>
     >(`/tenants/${tenantId}/members/report`),

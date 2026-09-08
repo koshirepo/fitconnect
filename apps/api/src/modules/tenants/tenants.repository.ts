@@ -309,25 +309,6 @@ export const tenantRepository = {
   },
 
   /**
-   * Run the `list active tenants for overdue enforcement` persistence operation for the tenants module.
-   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
-   */
-  listActiveTenantsForOverdueEnforcement() {
-    return prisma.tenant.findMany({
-      where: { status: "ACTIVE" },
-      select: {
-        id: true,
-        name: true,
-        settings: {
-          select: {
-            overdueDays: true,
-          },
-        },
-      },
-    });
-  },
-
-  /**
    * Run the `list active tenants for scheduled reports` persistence operation for the tenants module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
