@@ -155,6 +155,13 @@ export interface TenantMember {
   role: string;
   status: AccountStatus;
   joinedAt: string;
+  /**
+   * When this membership row last changed. On a suspended or deleted member it
+   * stands in for the date they left — the same proxy the analytics screen
+   * counts deactivations by — which is what lets the roster show exactly the
+   * people behind a "deactivated this month" figure.
+   */
+  updatedAt?: string;
   isDue?: boolean;
   dueDate?: string | null;
   /** The number the attendance machines report for this member. */
@@ -1396,7 +1403,16 @@ export interface FreezeStatus {
   remainingDays: number;
   allowedFreezes: number;
   usedFreezes: number;
+  /** Running right now — the member is paused today. */
   currentFreeze: MembershipFreeze | null;
+  /**
+   * Booked but not yet started. Cancelling it returns every day to the budget.
+   *
+   * Separate from `currentFreeze` because a member with a break booked for next
+   * month is still training today, and reporting them as frozen contradicted
+   * the guard that decides whether they may buy a new term.
+   */
+  scheduledFreeze?: MembershipFreeze | null;
   history: MembershipFreeze[];
   termEndsOn?: string | null;
 }

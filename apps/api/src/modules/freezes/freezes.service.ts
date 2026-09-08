@@ -85,6 +85,7 @@ export const freezeService = {
           allowedFreezes: 0,
           usedFreezes: 0,
           currentFreeze: null,
+          scheduledFreeze: null,
           history: [],
         },
       };
@@ -110,11 +111,25 @@ export const freezeService = {
     const allowedFreezes = payment.subscription.freezeCount;
     const now = today();
 
-    // Running or scheduled: not yet ended, and today has not passed its end.
-    const currentFreeze =
+    /**
+     * Running now, and separately one that is only booked.
+     *
+     * These were one value, found without checking that the freeze had
+     * actually started — so a break booked for next month reported the member
+     * as frozen today. `isFrozen` (F9) always applied the start check, so the
+     * two disagreed about what "frozen" meant: the screen said paused while
+     * the sell-a-new-term guard said not.
+     */
+    const activeFreeze =
       freezes.find(
-        (freeze) => !freeze.endedOn && toDay(freeze.plannedEndsOn) >= now,
+        (freeze) =>
+          !freeze.endedOn &&
+          toDay(freeze.startsOn) <= now &&
+          toDay(freeze.plannedEndsOn) >= now,
       ) ?? null;
+
+    const scheduledFreeze =
+      freezes.find((freeze) => !freeze.endedOn && toDay(freeze.startsOn) > now) ?? null;
 
     return {
       data: {
@@ -129,7 +144,10 @@ export const freezeService = {
         remainingDays: Math.max(0, allowanceDays - usedDays),
         allowedFreezes,
         usedFreezes: freezes.length,
-        currentFreeze,
+        /** Running right now — the member is paused today. */
+        currentFreeze: activeFreeze,
+        /** Booked, not yet started. Cancelling it returns every day. */
+        scheduledFreeze,
         history: freezes,
         termEndsOn: payment.validUntil,
       },

@@ -59,7 +59,20 @@ export function FreezeCard({
   if (statusQuery.isLoading || !status) return null;
 
   // A plan with no freeze budget has nothing to say here.
-  if (!status.canFreeze && !status.currentFreeze) return null;
+  if (!status.canFreeze && !status.currentFreeze && !status.scheduledFreeze) return null;
+
+  /**
+   * Frozen today, or only booked to be.
+   *
+   * The card used to treat both as "Frozen", because the API reported a freeze
+   * booked for next month as the current one. A member who has arranged a break
+   * for December is training now, and telling them they are paused — while the
+   * rest of the app correctly lets them buy a new term — is the app
+   * contradicting itself.
+   */
+  const running = status.currentFreeze;
+  const booked = running ? null : (status.scheduledFreeze ?? null);
+  const pending = running ?? booked;
 
   const requestedDays = Number(days) || 0;
   const overBudget = requestedDays > status.remainingDays;
@@ -91,19 +104,26 @@ export function FreezeCard({
   };
 
   const handleEnd = async () => {
-    if (!status.currentFreeze) return;
+    if (!pending) return;
 
     try {
-      const result = await endFreeze.mutateAsync({
-        freezeId: status.currentFreeze.id,
-      });
+      const result = await endFreeze.mutateAsync({ freezeId: pending.id });
+      // Cancelling a freeze that never started returns every booked day, so
+      // the wording has to survive both cases.
       toast.success(
         result.daysReturned > 0
-          ? `Unfrozen. ${result.daysReturned} unused day${result.daysReturned === 1 ? "" : "s"} went back to their allowance.`
-          : "Unfrozen.",
+          ? `${booked ? "Cancelled" : "Unfrozen"}. ${result.daysReturned} unused day${
+              result.daysReturned === 1 ? "" : "s"
+            } went back to their allowance.`
+          : booked
+            ? "Freeze cancelled."
+            : "Unfrozen.",
       );
     } catch (caught) {
-      toast.error({ message: "Could not unfreeze.", description: getApiError(caught) });
+      toast.error({
+        message: booked ? "Could not cancel the freeze." : "Could not unfreeze.",
+        description: getApiError(caught),
+      });
     }
   };
 
@@ -113,26 +133,28 @@ export function FreezeCard({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Snowflake className="h-5 w-5" />
-            {status.currentFreeze ? "Frozen" : "Freeze membership"}
+            {running ? "Frozen" : booked ? "Freeze booked" : "Freeze membership"}
           </CardTitle>
           <CardDescription>
-            {status.currentFreeze
-              ? `Paused until ${formatDate(status.currentFreeze.plannedEndsOn)}. The days are added to the end of the term.`
-              : `${status.remainingDays} of ${status.allowanceDays} days left on this term.`}
+            {running
+              ? `Paused until ${formatDate(running.plannedEndsOn)}. The days are added to the end of the term.`
+              : booked
+                ? `Starts ${formatDate(booked.startsOn)}. Still training until then.`
+                : `${status.remainingDays} of ${status.allowanceDays} days left on this term.`}
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-3">
-          {status.currentFreeze ? (
+          {pending ? (
             <>
               <div className="rounded-lg border p-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Started</span>
-                  <span>{formatDate(status.currentFreeze.startsOn)}</span>
+                  <span className="text-muted-foreground">{running ? "Started" : "Starts"}</span>
+                  <span>{formatDate(pending.startsOn)}</span>
                 </div>
                 <div className="mt-1 flex justify-between">
                   <span className="text-muted-foreground">Booked until</span>
-                  <span>{formatDate(status.currentFreeze.plannedEndsOn)}</span>
+                  <span>{formatDate(pending.plannedEndsOn)}</span>
                 </div>
                 {status.termEndsOn && (
                   <div className="mt-1 flex justify-between border-t pt-1 font-medium">
@@ -144,10 +166,12 @@ export function FreezeCard({
 
               <Button variant="outline" className="w-full" onClick={handleEnd}>
                 <Play className="mr-2 h-4 w-4" />
-                Unfreeze now
+                {running ? "Unfreeze now" : "Cancel this freeze"}
               </Button>
               <p className="text-xs text-muted-foreground">
-                Any days not used go back to the allowance.
+                {running
+                  ? "Any days not used go back to the allowance."
+                  : "Cancelling returns all booked days to the allowance."}
               </p>
             </>
           ) : (
