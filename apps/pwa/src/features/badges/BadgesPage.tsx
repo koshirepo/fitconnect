@@ -12,13 +12,14 @@ import {
 import { useAllMembers, useMyProfile } from "@/api/queries/members";
 import { flattenPages } from "@/api/queries/shared";
 import { getApiError } from "@/api/client";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge as BadgeUI } from "@/components/ui/badge";
 import AvatarCard from "@/components/ui/avatarCard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import MemberSelector from "@/components/ui/memberSelector";
 import {
   Dialog,
@@ -34,6 +35,68 @@ import { Plus, Award, Trash2, UserPlus, Edit, Users } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useInfiniteScroll } from "@/lib/use-infinite-scroll";
 import type { Badge, TenantMember } from "@/types/api";
+
+/**
+ * Black or white, whichever can actually be read on this fill.
+ *
+ * Badge colours are chosen by gym staff from a free colour picker, so a pale
+ * yellow is as likely as a deep blue. The medallion used to print white on all
+ * of them, which made the light ones illegible.
+ */
+function readableOn(hex: string) {
+  const value = hex.replace("#", "").trim();
+  const full =
+    value.length === 3
+      ? value
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : value;
+
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  if ([r, g, b].some((n) => Number.isNaN(n))) return "#ffffff";
+
+  // Rec. 709 luma. 0.6 is roughly where white text stops carrying on a fill.
+  return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 > 0.6 ? "#111827" : "#ffffff";
+}
+
+/**
+ * The badge as a coloured medallion.
+ *
+ * `icon` is free text — the form calls it a "short identifier" — so it may be a
+ * word or an emoji. `charAt(0)` splits a surrogate pair and renders half a
+ * character, which is why this spreads to whole code points instead, and keeps
+ * a short icon intact rather than reducing an emoji to its first half.
+ */
+function BadgeMedal({
+  color,
+  icon,
+  name,
+}: {
+  color: string;
+  icon?: string | null;
+  name: string;
+}) {
+  const points = [...(icon?.trim() ?? "")];
+  const glyph =
+    points.length === 0
+      ? name.trim().charAt(0).toUpperCase()
+      : points.length <= 2
+        ? points.join("")
+        : points[0].toUpperCase();
+
+  return (
+    <div
+      aria-hidden
+      className="flex size-11 shrink-0 items-center justify-center rounded-full text-base font-bold ring-1 ring-foreground/10"
+      style={{ backgroundColor: color, color: readableOn(color) }}
+    >
+      {glyph}
+    </div>
+  );
+}
 
 export default function BadgesPage() {
   const navigate = useAppNavigate();
@@ -69,6 +132,11 @@ export default function BadgesPage() {
   const badges = React.useMemo(
     () => flattenPages<Badge>(badgesQuery.data?.pages),
     [badgesQuery.data],
+  );
+  /** How many awards these badges account for, across the pages loaded. */
+  const totalAwarded = React.useMemo(
+    () => badges.reduce((sum, badge) => sum + (badge._count?.assignments ?? 0), 0),
+    [badges],
   );
   const loading = badgesQuery.isPending;
   const loadingMore = badgesQuery.isFetchingNextPage;
@@ -181,19 +249,36 @@ export default function BadgesPage() {
   // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Badges</h1>
-          <p className="text-muted-foreground">
-            {isAdmin ? "Create and manage badges for your members" : "View available badges"}
+    <div className="space-y-5 sm:space-y-6">
+      {/* Header — the shape every other screen wears: title and subtitle take
+          the width, actions stay a fixed block on the right. */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight sm:text-2xl">
+            <Award className="size-5 shrink-0 sm:size-6" />
+            Badges
+          </h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            {isAdmin ? "Recognition you can hand out to members." : "What this gym awards."}
+            {badges.length > 0 && (
+              <>
+                {" "}
+                <span className="whitespace-nowrap tabular-nums">
+                  {badges.length} badge{badges.length === 1 ? "" : "s"}
+                  {/* Only once every page is in: a running total across a
+                      half-loaded list would understate the programme. */}
+                  {isAdmin && !hasMore && totalAwarded > 0
+                    ? ` · ${totalAwarded} awarded`
+                    : ""}
+                </span>
+              </>
+            )}
           </p>
         </div>
         {isAdmin && (
-          <Button onClick={() => navigate("/badges/create")}>
+          <Button className="shrink-0" onClick={() => navigate("/badges/create")}>
             <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">New Badge</span>
+            <span className="hidden sm:inline">New badge</span>
           </Button>
         )}
       </div>
@@ -221,108 +306,106 @@ export default function BadgesPage() {
         />
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {badges.map((badge) => (
-              <Card key={badge.id} className={!badge.isActive ? "opacity-60" : ""}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="flex h-10 w-10 items-center justify-center rounded-full text-white text-lg font-bold"
-                        style={{ backgroundColor: badge.color }}
-                      >
-                        {badge.icon
-                          ? badge.icon.charAt(0).toUpperCase()
-                          : badge.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <CardTitle className="text-base">{badge.name}</CardTitle>
-                        {!badge.isActive && (
-                          <BadgeUI variant="warning" className="mt-0.5">
-                            Inactive
-                          </BadgeUI>
-                        )}
-                        {/* Shown to staff only. A member has no assign button
-                            to be puzzled by, so the label would just be noise
-                            on their own achievements. */}
+              <Card key={badge.id} className={cn("flex flex-col", !badge.isActive && "opacity-60")}>
+                <CardContent className="flex flex-1 items-start gap-3">
+                  <BadgeMedal color={badge.color} icon={badge.icon} name={badge.name} />
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="min-w-0 flex-1 text-sm font-semibold">{badge.name}</p>
+
+                      {/* An admin wants to know how many people hold this. A
+                          member wants to know whether *they* do. */}
+                      {isAdmin
+                        ? badge._count && (
+                            <span
+                              className="flex shrink-0 items-center gap-1 text-[11px] tabular-nums text-muted-foreground"
+                              title={`${badge._count.assignments} member${
+                                badge._count.assignments === 1 ? "" : "s"
+                              } hold this badge`}
+                            >
+                              <Users className="h-3 w-3" />
+                              {badge._count.assignments}
+                            </span>
+                          )
+                        : myBadgeIds.has(badge.id) && (
+                            <BadgeUI variant="success" className="shrink-0">
+                              Earned
+                            </BadgeUI>
+                          )}
+                    </div>
+
+                    {badge.description && (
+                      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                        {badge.description}
+                      </p>
+                    )}
+
+                    {/* Only rendered when one of them applies, so an ordinary
+                        active badge carries no empty row under its name. */}
+                    {(!badge.isActive || (badge.restricted && canAssignBadges)) && (
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        {!badge.isActive && <BadgeUI variant="warning">Inactive</BadgeUI>}
                         {badge.restricted && canAssignBadges && (
-                          <BadgeUI variant="secondary" className="mt-0.5">
-                            Admins only
-                          </BadgeUI>
+                          <BadgeUI variant="secondary">Admins only</BadgeUI>
                         )}
                       </div>
-                    </div>
-                    {/* An admin wants to know how many people hold this. A
-                        member wants to know whether *they* do — and a bare
-                        "assigned" on their own screen said they did, whatever
-                        the number beside it. */}
-                    {isAdmin
-                      ? badge._count && (
-                          <BadgeUI variant="secondary">
-                            {badge._count.assignments}
-                            {badge._count.assignments === 1 ? " member" : " members"}
-                          </BadgeUI>
-                        )
-                      : myBadgeIds.has(badge.id) && (
-                          <BadgeUI variant="success">Earned</BadgeUI>
-                        )}
+                    )}
                   </div>
-                </CardHeader>
-                <CardContent>
-                  {badge.description && (
-                    <p className="text-sm text-muted-foreground mb-3">{badge.description}</p>
-                  )}
-
-                  {/* Color preview */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <div
-                      className="h-4 w-4 rounded-full border"
-                      style={{ backgroundColor: badge.color }}
-                    />
-                    <span className="text-xs text-muted-foreground">{badge.color}</span>
-                  </div>
-
-                  {/* Actions */}
-                  {(isAdmin || canAssignBadges) && (
-                    <div className="flex gap-2 flex-wrap">
-                      {can(Permission.BADGES_UPDATE) && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigate(`/badges/${badge.id}/edit`)}
-                        >
-                          <Edit className="h-3 w-3" />
-                          Edit
-                        </Button>
-                      )}
-                      {canAssignBadge(badge) && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openAssign(badge.id, badge.name)}
-                        >
-                          <UserPlus className="h-3 w-3" />
-                          Assign
-                        </Button>
-                      )}
-                      {can(Permission.BADGES_ASSIGNMENTS_READ) && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openViewAssignments(badge.id, badge.name)}
-                        >
-                          <Users className="h-3 w-3" />
-                          View
-                        </Button>
-                      )}
-                      {can(Permission.BADGES_DELETE) && (
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(badge.id)}>
-                          <Trash2 className="h-3 w-3 text-destructive" />
-                        </Button>
-                      )}
-                    </div>
-                  )}
                 </CardContent>
+
+                {/* Labels from sm up, glyphs on a phone: four labelled buttons
+                    wrapped onto three lines at 375px and buried the badge. */}
+                {(isAdmin || canAssignBadges) && (
+                  <CardFooter className="gap-1">
+                    {can(Permission.BADGES_UPDATE) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/badges/${badge.id}/edit`)}
+                        aria-label={`Edit ${badge.name}`}
+                      >
+                        <Edit className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Edit</span>
+                      </Button>
+                    )}
+                    {canAssignBadge(badge) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openAssign(badge.id, badge.name)}
+                        aria-label={`Award ${badge.name} to a member`}
+                      >
+                        <UserPlus className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Award</span>
+                      </Button>
+                    )}
+                    {can(Permission.BADGES_ASSIGNMENTS_READ) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openViewAssignments(badge.id, badge.name)}
+                        aria-label={`See who holds ${badge.name}`}
+                      >
+                        <Users className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Holders</span>
+                      </Button>
+                    )}
+                    {can(Permission.BADGES_DELETE) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="ml-auto text-destructive"
+                        onClick={() => handleDelete(badge.id)}
+                        aria-label={`Delete ${badge.name}`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </CardFooter>
+                )}
               </Card>
             ))}
           </div>
