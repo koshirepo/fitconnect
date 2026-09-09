@@ -29,6 +29,15 @@ export const Permission = {
   MEMBERS_PASSWORD_RESET: "members:password:reset",
   MEMBERS_REPORT_GENERATE: "members:report:generate",
   MEMBERS_REFERRALS_READ: "members:referrals:read",
+  /**
+   * See a member's phone number in full.
+   *
+   * Without it the number is still there — a call, a WhatsApp message and a
+   * saved edit all use the real digits — but every screen shows it masked as
+   * `71XXXX9658`. Floor staff need to be able to reach a member, not to be able
+   * to copy the gym's contact list out of the building.
+   */
+  MEMBERS_PHONE_READ: "members:phone:read",
 
   // Own membership profile
   PROFILE_READ_SELF: "profile:read:self",
@@ -159,6 +168,14 @@ export const Permission = {
   PLATFORM_ORDERS_READ: "platform:orders:read",
   PLATFORM_ORDERS_UPDATE: "platform:orders:update",
   PLATFORM_ORDERS_DELETE: "platform:orders:delete",
+  /**
+   * Edit the platform-wide occupation list every gym's admission form offers.
+   *
+   * Reading it needs no permission — every member form has to draw the picker —
+   * so only the writes are gated, and only the platform holds them: one gym
+   * renaming "Student" would rename it for all of them.
+   */
+  PLATFORM_OCCUPATIONS_MANAGE: "platform:occupations:manage",
   PLATFORM_ROLES_READ: "platform:roles:read",
   PLATFORM_ROLES_UPDATE: "platform:roles:update",
 
@@ -280,6 +297,7 @@ const ADMIN_PERMISSIONS: Permission[] = [
   Permission.STORE_MANAGE,
   Permission.TENANT_UPDATE,
   Permission.MEMBERS_DELETE,
+  Permission.MEMBERS_PHONE_READ,
   Permission.MEMBERS_ROLE_UPDATE,
   Permission.MEMBERS_STATUS_UPDATE,
   Permission.MEMBERS_PASSWORD_RESET,
@@ -554,6 +572,7 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [Permission.MEMBERS_PASSWORD_RESET]: "Reset member passwords",
   [Permission.MEMBERS_REPORT_GENERATE]: "Generate member reports",
   [Permission.MEMBERS_REFERRALS_READ]: "View referrals",
+  [Permission.MEMBERS_PHONE_READ]: "See member phone numbers unmasked",
   [Permission.PROFILE_READ_SELF]: "View own profile",
   [Permission.PROFILE_UPDATE_SELF]: "Edit own profile",
   [Permission.ATTENDANCE_READ]: "View gym attendance",
@@ -629,6 +648,7 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [Permission.PLATFORM_ORDERS_READ]: "View platform orders",
   [Permission.PLATFORM_ORDERS_UPDATE]: "Update platform orders",
   [Permission.PLATFORM_ORDERS_DELETE]: "Delete platform orders",
+  [Permission.PLATFORM_OCCUPATIONS_MANAGE]: "Manage the occupation list",
   [Permission.PLATFORM_ROLES_READ]: "View platform roles and permissions",
   [Permission.PLATFORM_ROLES_UPDATE]: "Edit platform role permissions",
 };

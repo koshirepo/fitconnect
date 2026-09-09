@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Search, X } from "lucide-react";
 import type { TenantMember } from "@/types/api";
 import AvatarCard from "@/components/ui/avatarCard";
+import { usePhoneDisplay } from "@/lib/use-phone-display";
 import * as React from "react";
 
 interface MemberSelectorProps {
@@ -30,6 +31,9 @@ export default function MemberSelector({
   title = "Select Member",
   description = "Choose a member from the gym roster.",
 }: MemberSelectorProps) {
+  // Masked for staff who may not read a member's number; the search below
+  // still matches on the real digits, so a number read off a card finds them.
+  const { format: formatPhone } = usePhoneDisplay();
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
 
@@ -65,7 +69,7 @@ export default function MemberSelector({
             wrapName
           >
             <div className="text-xs text-muted-foreground">
-              {selectedMember.phone && <p>{selectedMember.phone}</p>}
+              {selectedMember.phone && <p>{formatPhone(selectedMember.phone, selectedMember.userId)}</p>}
             </div>
           </AvatarCard>
         ) : (
@@ -124,7 +128,7 @@ export default function MemberSelector({
                         wrapName
                       >
                         <div className="text-xs text-muted-foreground space-y-1">
-                          {m.phone && <p>{m.phone}</p>}
+                          {m.phone && <p>{formatPhone(m.phone, m.userId)}</p>}
                         </div>
                       </AvatarCard>
                     </div>

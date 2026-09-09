@@ -34,6 +34,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useWindowedList } from "@/lib/use-windowed-list";
 import { downloadCsv } from "@/lib/csv";
 import { formatDate, formatCurrency, cn } from "@/lib/utils";
+import { describeWindow, withinDays } from "@/lib/day-window";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import {
   getTenantWhatsAppTemplateBody,
@@ -57,6 +58,7 @@ import {
 } from "lucide-react";
 import type { TenantMember } from "@/types/api";
 import { usePendingMutations } from "@/lib/use-pending-mutations";
+import { usePhoneDisplay } from "@/lib/use-phone-display";
 import { getTenantDashboardPath } from "@/lib/subdomain";
 import { GENDER_OPTIONS } from "@/lib/gender";
 import { getApiError } from "@/api/client";
@@ -74,6 +76,19 @@ type DisplayMember = TenantMember & { _pending?: boolean };
 
 /** Filter value meaning "no shift assigned", which is itself worth filtering to. */
 const UNASSIGNED_SHIFT = "__none__";
+
+/**
+ * Role filter value meaning "every role".
+ *
+ * An absent `role` puts the roster on MEMBER, which is the list nine visits in
+ * ten want. "All roles" therefore needs a value of its own — clearing the param
+ * only puts MEMBER back — and the analytics screen links with it, since the
+ * head-counts there include coaches and admins.
+ */
+const ALL_ROLES = "ALL";
+
+/** Statuses that mean "no longer training here", under any of their names. */
+const INACTIVE_STATUSES = new Set(["SUSPENDED", "INACTIVE", "DELETED"]);
 
 // ─── Status & role config ──────────────────────────────────────────────────────
 
@@ -118,6 +133,9 @@ export default function MembersPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { currentTenantId, currentMembership } = useAuthStore();
   const { can } = usePermissions();
+  // Staff without `members:phone:read` see the number masked. The WhatsApp and
+  // call actions below still use `member.phone`, so they keep working.
+  const { format: formatPhone } = usePhoneDisplay();
   const gymName = currentMembership()?.tenantName ?? "the gym";
   // Gates the admin-only member operations (status, role, delete, reports).
   const isAdmin = can(Permission.MEMBERS_STATUS_UPDATE);
@@ -139,11 +157,21 @@ export default function MembersPage() {
   const [pendingRemoveId, setPendingRemoveId] = React.useState<string | null>(null);
 
   // Read filters from URL
-  const roleFilter = searchParams.get("role") ?? "MEMBER";
+  const roleParam = searchParams.get("role") ?? "MEMBER";
+  const roleFilter = roleParam === ALL_ROLES ? "" : roleParam;
   const statusFilter = searchParams.get("status") ?? "";
   const badgeFilter = searchParams.get("badge") ?? "";
   const genderFilter = searchParams.get("gender") ?? "";
   const shiftFilter = searchParams.get("shift") ?? "";
+  // Two half-open day windows, both arriving from the analytics screen: when a
+  // member joined, and when a deactivated one was last touched — which is the
+  // nearest thing to a leaving date either screen has.
+  const joinedFrom = searchParams.get("joinedFrom") ?? "";
+  const joinedTo = searchParams.get("joinedTo") ?? "";
+  const deactivatedFrom = searchParams.get("deactivatedFrom") ?? "";
+  const deactivatedTo = searchParams.get("deactivatedTo") ?? "";
+  const hasJoinedWindow = Boolean(joinedFrom || joinedTo);
+  const hasDeactivatedWindow = Boolean(deactivatedFrom || deactivatedTo);
   const [filterSheetOpen, setFilterSheetOpen] = React.useState(false);
   const search = searchParams.get("search") ?? "";
 
@@ -308,6 +336,21 @@ export default function MembersPage() {
         if (roleFilter && member.role !== roleFilter) return false;
         if (genderFilter && member.gender !== genderFilter) return false;
 
+        // A window on when they joined, e.g. the people behind "new members
+        // this month" on the analytics screen.
+        if (hasJoinedWindow && !withinDays(member.joinedAt, joinedFrom, joinedTo)) {
+          return false;
+        }
+
+        // And on when they stopped. Only a membership that is actually
+        // inactive can have left, so the status is part of the window rather
+        // than something to set separately — a deactivation date on an active
+        // member would just be the day their row was last edited.
+        if (hasDeactivatedWindow) {
+          if (!INACTIVE_STATUSES.has(String(member.status).toUpperCase())) return false;
+          if (!withinDays(member.updatedAt, deactivatedFrom, deactivatedTo)) return false;
+        }
+
         // A member queued offline has no badges yet and no row to read them
         // from, so they are exempt from the badge filter rather than vanishing
         // mid-sync. Every other filter still applies to them.
@@ -328,7 +371,21 @@ export default function MembersPage() {
         return searchableText.includes(trimmedSearch);
       })
       .sort((a, b) => new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime());
-  }, [badgeFilter, genderFilter, members, pendingMemberItems, roleFilter, search, shiftFilter]);
+  }, [
+    badgeFilter,
+    deactivatedFrom,
+    deactivatedTo,
+    genderFilter,
+    hasDeactivatedWindow,
+    hasJoinedWindow,
+    joinedFrom,
+    joinedTo,
+    members,
+    pendingMemberItems,
+    roleFilter,
+    search,
+    shiftFilter,
+  ]);
 
   /** How many rows each tab holds, for the numbers beside the tab labels. */
   const statusCounts = React.useMemo(() => {
@@ -360,7 +417,7 @@ export default function MembersPage() {
     total,
   } = useWindowedList(filteredAllMembers, {
     pageSize: 25,
-    resetKey: `${statusFilter}|${roleFilter}|${badgeFilter}|${genderFilter}|${shiftFilter}|${search}`,
+    resetKey: `${statusFilter}|${roleFilter}|${badgeFilter}|${genderFilter}|${shiftFilter}|${search}|${joinedFrom}|${joinedTo}|${deactivatedFrom}|${deactivatedTo}`,
   });
 
   // Swiping moves along the same tab strip the taps use, so the two can never
@@ -379,10 +436,12 @@ export default function MembersPage() {
   );
 
   const activeFilterCount = [
-    roleFilter !== "MEMBER",
+    roleParam !== "MEMBER",
     Boolean(badgeFilter),
     Boolean(genderFilter),
     Boolean(shiftFilter),
+    hasJoinedWindow,
+    hasDeactivatedWindow,
   ].filter(Boolean).length;
 
   const hasActiveFilters = Boolean(
@@ -391,13 +450,46 @@ export default function MembersPage() {
       genderFilter ||
       shiftFilter ||
       search.trim() ||
-      roleFilter !== "MEMBER",
+      hasJoinedWindow ||
+      hasDeactivatedWindow ||
+      roleParam !== "MEMBER",
   );
+
+  /** The dates alone, so the rest of the filters survive dropping a window. */
+  const clearDateWindows = React.useCallback(
+    () =>
+      updateParams({
+        joinedFrom: "",
+        joinedTo: "",
+        deactivatedFrom: "",
+        deactivatedTo: "",
+      }),
+    [updateParams],
+  );
+
+  /** What each window is showing, for the line that says so above the list. */
+  const windowLabels = [
+    hasJoinedWindow ? describeWindow("Joined", joinedFrom, joinedTo) : "",
+    hasDeactivatedWindow
+      ? describeWindow("Deactivated", deactivatedFrom, deactivatedTo)
+      : "",
+  ].filter(Boolean);
 
   const clearFilters = () => {
     window.clearTimeout(searchTimer.current);
     setSearchInput("");
-    updateParams({ status: "", badge: "", gender: "", shift: "", search: "", role: "MEMBER" });
+    updateParams({
+      status: "",
+      badge: "",
+      gender: "",
+      shift: "",
+      search: "",
+      role: "MEMBER",
+      joinedFrom: "",
+      joinedTo: "",
+      deactivatedFrom: "",
+      deactivatedTo: "",
+    });
   };
 
   const recordWhatsApp = (
@@ -512,8 +604,10 @@ export default function MembersPage() {
         UserId: member.userId,
         Name: member.name,
         Email: member.email,
-        Phone: member.phone ?? "",
+        Phone: formatPhone(member.phone, member.userId) ?? "",
         Gender: member.gender ?? "",
+        DateOfBirth: member.dateOfBirth ? member.dateOfBirth.slice(0, 10) : "",
+        Occupation: member.occupation?.name ?? "",
         Role: member.role,
         Status: member.status,
         JoinedAt: member.joinedAt,
@@ -668,14 +762,17 @@ export default function MembersPage() {
               label: "Role",
               control: (
                 <Select
-                  value={roleFilter}
-                  onValueChange={(value) => updateParams({ role: value ?? "" })}
+                  value={roleParam}
+                  onValueChange={(value) => updateParams({ role: value || "MEMBER" })}
                 >
                   <SelectTrigger className="h-12 w-full rounded-lg">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Roles</SelectItem>
+                    {/* A value of its own, because clearing the param is how
+                        the roster says "members" — so an empty one here left
+                        the option selectable and inert. */}
+                    <SelectItem value={ALL_ROLES}>All Roles</SelectItem>
                     {assignableRoles.map((role) => (
                       <SelectItem key={role.role} value={role.role}>
                         {role.label}
@@ -807,6 +904,31 @@ export default function MembersPage() {
             </>
           );
         })()}
+
+        {/* A date window came in on the URL — from a figure on the analytics
+            screen, which links here with the exact period it was counting.
+            Nothing on this page can express one, so without a line saying so
+            the roster would just look mysteriously short. */}
+        {windowLabels.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            {windowLabels.map((label) => (
+              <span
+                key={label}
+                className="inline-flex items-center rounded-full border bg-muted/50 px-3 py-1 text-xs font-medium"
+              >
+                {label}
+              </span>
+            ))}
+            <button
+              type="button"
+              onClick={clearDateWindows}
+              className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3 w-3" />
+              Clear dates
+            </button>
+          </div>
+        )}
       </div>
 
       {refreshing && (
@@ -887,7 +1009,7 @@ export default function MembersPage() {
                     </PersonChip>
                   ) : null
                 }
-                subtitle={m.phone}
+                subtitle={formatPhone(m.phone, m.userId)}
                 actions={renderMemberActions(m)}
                 className={cn(m._pending && "border-dashed opacity-70")}
               />

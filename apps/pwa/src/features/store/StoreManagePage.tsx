@@ -22,9 +22,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { CardsGridSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Menu, MenuContent, MenuItem, MenuSeparator, MenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/toast";
 import { formatCurrency } from "@/lib/utils";
-import { Coins, Edit2, Package, Plus, Trash2 } from "lucide-react";
+import { Archive, Coins, Edit2, Minus, MoreHorizontal, Package, Plus, Trash2 } from "lucide-react";
 
 export default function StoreManagePage() {
   const navigate = useAppNavigate();
@@ -47,14 +48,13 @@ export default function StoreManagePage() {
   const [stockDrafts, setStockDrafts] = React.useState<Record<string, string>>({});
   const [error, setError] = React.useState("");
 
-  const handleStock = async (variantId: string, variantName: string) => {
-    const raw = stockDrafts[variantId];
-    const delta = Number(raw);
-    if (!raw || !Number.isInteger(delta) || delta === 0) {
-      setError("Enter how many arrived, or a negative number for a correction.");
-      return;
-    }
-
+  /**
+   * Send one stock movement.
+   *
+   * Always a delta, never a total — see the note in the file header about two
+   * people counting the same shelf.
+   */
+  const applyStock = async (variantId: string, variantName: string, delta: number) => {
     setError("");
     try {
       await adjustStock.mutateAsync({ variantId, delta });
@@ -65,6 +65,17 @@ export default function StoreManagePage() {
     } catch (caught) {
       setError(getApiError(caught));
     }
+  };
+
+  const handleStock = (variantId: string, variantName: string) => {
+    const raw = stockDrafts[variantId];
+    const delta = Number(raw);
+    if (!raw || !Number.isInteger(delta) || delta === 0) {
+      setError("Enter how many arrived, or a negative number for a correction.");
+      return;
+    }
+
+    return applyStock(variantId, variantName, delta);
   };
 
   const handleDeleteConfirmed = async () => {
@@ -146,39 +157,48 @@ export default function StoreManagePage() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        updateProduct.mutateAsync({
-                          productId: product.id,
-                          payload: { isActive: !product.isActive },
-                        })
-                      }
+                  {/* One menu rather than three buttons per product. With a
+                      dozen products the old row repeated Retire/edit/delete
+                      down the page, and the two destructive ones sat at the
+                      same weight as the everyday edit. */}
+                  <Menu>
+                    <MenuTrigger
+                      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border hover:bg-muted"
+                      aria-label={`Actions for ${product.name}`}
                     >
-                      {product.isActive ? "Retire" : "Restore"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => navigate(`/dashboard/store/manage/${product.id}/edit`)}
-                      aria-label={`Edit ${product.name}`}
-                    >
-                      <Edit2 className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => {
-                        setPendingDelete({ id: product.id, name: product.name });
-                        setConfirmOpen(true);
-                      }}
-                      aria-label={`Delete ${product.name}`}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
+                      <MoreHorizontal className="h-4 w-4" />
+                    </MenuTrigger>
+                    <MenuContent align="end" side="bottom">
+                      <MenuItem
+                        onClick={() => navigate(`/dashboard/store/manage/${product.id}/edit`)}
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
+                        Edit
+                      </MenuItem>
+                      <MenuItem
+                        onClick={() =>
+                          updateProduct.mutateAsync({
+                            productId: product.id,
+                            payload: { isActive: !product.isActive },
+                          })
+                        }
+                      >
+                        <Archive className="h-3.5 w-3.5" />
+                        {product.isActive ? "Retire" : "Restore"}
+                      </MenuItem>
+                      <MenuSeparator />
+                      <MenuItem
+                        className="text-destructive"
+                        onClick={() => {
+                          setPendingDelete({ id: product.id, name: product.name });
+                          setConfirmOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Delete
+                      </MenuItem>
+                    </MenuContent>
+                  </Menu>
                 </div>
               </CardHeader>
 
@@ -203,25 +223,57 @@ export default function StoreManagePage() {
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    {/* Still a delta, for the reason in the file header — but
+                        the two commonest ones are "sold one" and "took one in",
+                        so those are a button each rather than typing a number
+                        and reaching for Apply. The field stays for a delivery
+                        of thirty, and commits on Enter; Apply only appears once
+                        something is typed, instead of sitting on every row of
+                        every product forever. */}
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <Button
+                        variant="outline"
+                        size="icon-xs"
+                        disabled={variant.stock === 0}
+                        onClick={() => applyStock(variant.id, variant.name, -1)}
+                        aria-label={`One fewer ${variant.name}`}
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon-xs"
+                        onClick={() => applyStock(variant.id, variant.name, 1)}
+                        aria-label={`One more ${variant.name}`}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
                       <Input
                         type="number"
                         step={1}
-                        className="h-9 w-24"
-                        placeholder="+ / −"
+                        className="h-9 w-20"
+                        placeholder="± n"
                         value={stockDrafts[variant.id] ?? ""}
                         onChange={(e) =>
                           setStockDrafts((prev) => ({ ...prev, [variant.id]: e.target.value }))
                         }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleStock(variant.id, variant.name);
+                          }
+                        }}
                         aria-label={`Stock change for ${variant.name}`}
                       />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleStock(variant.id, variant.name)}
-                      >
-                        Apply
-                      </Button>
+                      {(stockDrafts[variant.id] ?? "").trim() !== "" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleStock(variant.id, variant.name)}
+                        >
+                          Apply
+                        </Button>
+                      )}
                     </div>
                   </div>
                 ))}

@@ -8,7 +8,7 @@ import { useAppNavigate } from "@/lib/use-app-navigate";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
-import AvatarCard from "@/components/ui/avatarCard";
+import { AvatarTile } from "@/components/ui/member-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -25,7 +25,9 @@ import { PasskeysCard } from "./PasskeysCard";
 import { FreezeCard } from "@/components/ui/freeze-card";
 import { useCoinBalance } from "@/api/queries/coupons";
 import { useToast } from "@/components/ui/toast";
-import { Camera, CreditCard } from "lucide-react";
+import { Bell, Cake, Calendar, Camera, Coins, CreditCard, Mail, Pencil, Phone } from "lucide-react";
+import { ageFromDateOfBirth } from "@/lib/occupation";
+import { OccupationGlyph } from "@/components/ui/occupation-glyph";
 import { formatDate, formatCurrency } from "@/lib/utils";
 
 export default function ProfilePage() {
@@ -134,297 +136,376 @@ export default function ProfilePage() {
     );
   }
 
+  const platformRole =
+    user?.platformRole && user.platformRole !== "USER" ? user.platformRole : null;
+
+  const profileAge = ageFromDateOfBirth(profile.dateOfBirth);
+
+  const openPhotoDialog = () => {
+    setPhotoDialogOpen(true);
+    setPhotoFile(null);
+    setPhotoPreview(profile.avatarUrl ?? null);
+    setPhotoError("");
+  };
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">My Profile</h1>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Profile Summary */}
-        <Card className="lg:col-span-1">
-          <CardContent className="flex flex-col items-center pt-6">
-            {/* Avatar with change photo overlay */}
-            <button
-              type="button"
-              className="group relative cursor-pointer rounded-full"
-              onClick={() => {
-                setPhotoDialogOpen(true);
-                setPhotoFile(null);
-                setPhotoPreview(profile.avatarUrl ?? null);
-                setPhotoError("");
+      {/* ── Identity ──────────────────────────────────────────────────────
+          This page used to open with the avatar inside a card, sitting in a
+          three-column grid beside five more cards of exactly the same weight —
+          so nothing on the screen claimed to matter more than the notification
+          toggle, and the person's own name carried no more emphasis than a
+          heading inside a box. The header band is the one a member's detail
+          page already uses. It is the same object, seen from the other side. */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 items-start gap-4">
+          {/* Only the photo opens the photo dialog. The whole identity card
+              used to be one button, so clicking your own name or your email
+              asked you to change your picture. */}
+          <button
+            type="button"
+            onClick={openPhotoDialog}
+            title="Change profile photo"
+            aria-label="Change profile photo"
+            className="group relative shrink-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            <AvatarTile
+              person={{
+                name: profile.name,
+                avatarUrl: profile.avatarUrl,
+                gender: profile.gender,
+                role: profile.role,
+                status: profile.status,
               }}
-              title="Change profile photo"
-            >
-              <AvatarCard
-                name={profile.name}
-                avatarUrl={profile.avatarUrl}
-                gender={profile.gender}
-                variant="xl"
-                vertical
-                role={profile.role}
-                dueDate={profile.dueDate}
-                isActive={profile.status === "ACTIVE"}
-              >
-                <p className="text-sm text-muted-foreground">{profile.email}</p>
-                {profile.phone && <p className="text-sm text-muted-foreground">{profile.phone}</p>}
-              </AvatarCard>
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 flex h-20 w-20 items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-                <Camera className="h-6 w-6 text-white" />
-              </div>
-            </button>
+              size="md"
+              // A standalone square, not a row tile: `stacked` swaps the list
+              // row's single right-edge accent for a full rounded border, which
+              // is what a header avatar with no row around it needs.
+              stacked
+              zoomable={false}
+              className="h-20 w-20 sm:h-24 sm:w-24"
+            />
+            <span className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-xl bg-black/55 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+              <Camera className="h-5 w-5 text-white" />
+            </span>
+          </button>
 
-            <div className="mt-2 flex gap-2">
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">
+              {profile.name}
+            </h1>
+
+            {/* One meta row, wrapping. These facts used to be printed twice —
+                once here and once as a key/value table further down titled
+                "Edit Profile" — so a changed phone number had two places on
+                one screen to disagree with itself. */}
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-muted-foreground">
+              <span className="flex w-full min-w-0 items-center gap-1 sm:w-auto">
+                <Mail className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{profile.email}</span>
+              </span>
+              {profile.phone && (
+                <span className="flex items-center gap-1 whitespace-nowrap">
+                  <Phone className="h-3.5 w-3.5 shrink-0" />
+                  {profile.phone}
+                </span>
+              )}
+              {profile.dateOfBirth && (
+                <span className="flex items-center gap-1 whitespace-nowrap">
+                  <Cake className="h-3.5 w-3.5 shrink-0" />
+                  {formatDate(profile.dateOfBirth)}
+                  {profileAge !== null && ` · ${profileAge}`}
+                </span>
+              )}
+              {profile.occupation && (
+                <span className="flex items-center gap-1 whitespace-nowrap">
+                  <OccupationGlyph icon={profile.occupation.icon} className="h-3.5 w-3.5 shrink-0" />
+                  {profile.occupation.name}
+                </span>
+              )}
+              <span className="flex items-center gap-1 whitespace-nowrap">
+                <Calendar className="h-3.5 w-3.5 shrink-0" />
+                Member since {formatDate(profile.joinedAt)}
+              </span>
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <Badge variant="secondary">{profile.role}</Badge>
               <Badge variant={profile.status === "ACTIVE" ? "success" : "destructive"}>
                 {profile.status}
               </Badge>
-            </div>
-            <div className="mt-4 text-sm text-muted-foreground">
-              Member since {formatDate(profile.joinedAt)}
-            </div>
-            {user?.platformRole && user.platformRole !== "USER" && (
-              <Badge variant="outline" className="mt-2 text-blue-400 border-blue-400/30">
-                {user.platformRole}
-              </Badge>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Shown at zero as well. Hiding the card until somebody already has
-            coins meant the only people told the scheme exists were the ones
-            who had already worked it out. */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Your Coins</CardTitle>
-            <CardDescription>
-              {coinBalance > 0 ? "Spend them on your next renewal" : "How they work"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{coinBalance}</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {coinBalance > 0
-                ? `Worth ${formatCurrency(coinBalance)} off a subscription, or off anything in the store.`
-                : "One coin is one rupee off a renewal. Bring a friend in, use one of the gym's offers, or buy something in the store that earns them."}
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-3"
-              onClick={() => navigate("/subscriptions")}
-            >
-              {coinBalance > 0 ? "Spend them on a plan" : "See the plans"}
-            </Button>
-          </CardContent>
-        </Card>
-
-        {profile.id && <FreezeCard membershipId={profile.id} />}
-
-        {/* Membership card */}
-        {profile.idCardUrl && (
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle>Membership Card</CardTitle>
-              <CardDescription>Always shows your current details</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <a
-                href={profile.idCardUrl}
-                className="block"
-              >
-                <Button variant="outline" className="w-full">
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  View &amp; download
-                </Button>
-              </a>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Notifications */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Notifications</CardTitle>
-            <CardDescription>Alerts on this device</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <PushToggle description="Admins are notified when a member joins and when a payment comes in." />
-          </CardContent>
-        </Card>
-
-        {/* Renders nothing where the browser cannot do it, so it sits in the
-            flow rather than behind a condition here. */}
-        <div className="lg:col-span-2">
-          <PasskeysCard />
-        </div>
-
-        {/* Photo Upload Dialog */}
-        <Dialog open={photoDialogOpen} onOpenChange={setPhotoDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Change Profile Photo</DialogTitle>
-              <DialogDescription>
-                Take a new photo, upload one, or remove the current photo.
-              </DialogDescription>
-            </DialogHeader>
-            <PhotoCapture
-              value={photoPreview}
-              onChange={(file, preview) => {
-                setPhotoFile(file);
-                setPhotoPreview(preview);
-                setPhotoError("");
-              }}
-              requireFace
-            />
-            {photoError && <p className="text-sm text-destructive">{photoError}</p>}
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
-                variant="outline"
-                onClick={() => setPhotoDialogOpen(false)}
-                disabled={uploadingPhoto}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handlePhotoSave} disabled={!photoChanged || uploadingPhoto}>
-                {uploadingPhoto ? "Uploading…" : "Save Photo"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Edit Form */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Edit Profile</CardTitle>
-                <CardDescription>Update your name or change your password</CardDescription>
-              </div>
-              {!editing && (
-                <Button variant="outline" onClick={() => setEditing(true)}>
-                  Edit
-                </Button>
+              {platformRole && (
+                <Badge variant="outline" className="border-blue-400/30 text-blue-400">
+                  {platformRole}
+                </Badge>
               )}
             </div>
-          </CardHeader>
-          <CardContent>
-            {editing ? (
-              <form onSubmit={handleUpdate} className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Name</Label>
-                  <Input
-                    value={fName}
-                    onChange={(e) => setFName(e.target.value)}
-                    required
-                    minLength={2}
-                  />
-                </div>
-                <div className="border-t pt-4 space-y-2">
-                  <p className="text-sm font-medium">Change Password</p>
-                  <div className="space-y-2">
-                    <Label>Current Password</Label>
-                    <PasswordInput
-                      value={fCurrentPwd}
-                      onChange={(e) => setFCurrentPwd(e.target.value)}
-                      placeholder="Leave blank to keep current"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>New Password</Label>
-                    <PasswordInput
-                      value={fNewPwd}
-                      onChange={(e) => setFNewPwd(e.target.value)}
-                      placeholder="Min 8 characters"
-                      minLength={8}
-                    />
-                  </div>
-                </div>
+          </div>
+        </div>
 
-                {formError && <p className="text-sm text-destructive-foreground">{formError}</p>}
-
-                <div className="flex gap-2">
-                  <Button type="submit" disabled={submitting}>
-                    {submitting ? "Saving..." : "Save Changes"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setEditing(false);
-                      setFName(profile.name);
-                      setFormError("");
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            ) : (
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Name</span>
-                  <span>{profile.name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Email</span>
-                  <span>{profile.email}</span>
-                </div>
-                {profile.phone && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Phone</span>
-                    <span>{profile.phone}</span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Role</span>
-                  <span>{profile.role}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Joined</span>
-                  <span>{formatDate(profile.joinedAt)}</span>
-                </div>
-                {formSuccess && <p className="text-sm text-emerald-500">{formSuccess}</p>}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* This was a whole grid cell holding one button under two lines of
+            explanation, about two thirds of it empty. It is a link, and it
+            reads as one. */}
+        {profile.idCardUrl && (
+          <a href={profile.idCardUrl} className="shrink-0">
+            <Button variant="outline" size="sm">
+              <CreditCard className="mr-2 h-4 w-4" />
+              Membership card
+            </Button>
+          </a>
+        )}
       </div>
 
-      {/* Recent Payments */}
-      {profile.payments && profile.payments.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Payments</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {profile.payments.map((p) => (
-                <div key={p.id} className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium">{p.subscription?.title ?? "Payment"}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {p.paidAt ? formatDate(p.paidAt) : "Pending"}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium">{formatCurrency(p.amount)}</p>
-                    <Badge
-                      variant={
-                        p.status === "COMPLETED"
-                          ? "success"
-                          : p.status === "PENDING"
-                            ? "warning"
-                            : "destructive"
-                      }
-                    >
-                      {p.status}
-                    </Badge>
-                  </div>
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* ── What you can change ─────────────────────────────────────────
+            Titled for what it is. The old "Edit Profile" card showed a
+            read-only table of five rows until you pressed Edit, and three of
+            those five were already in the header directly above it. */}
+        <div className="space-y-6 lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <CardTitle>Account</CardTitle>
+                  <CardDescription>Your name and the password you sign in with</CardDescription>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                {!editing && (
+                  <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+                    <Pencil className="mr-2 h-3.5 w-3.5" />
+                    Edit
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {editing ? (
+                <form onSubmit={handleUpdate} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="profile-name">Name</Label>
+                    <Input
+                      id="profile-name"
+                      value={fName}
+                      onChange={(e) => setFName(e.target.value)}
+                      required
+                      minLength={2}
+                    />
+                  </div>
+
+                  <div className="space-y-3 border-t pt-4">
+                    <div>
+                      <p className="text-sm font-medium">Change password</p>
+                      <p className="text-xs text-muted-foreground">
+                        Leave both boxes empty to keep the password you have.
+                      </p>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="profile-current-pwd">Current password</Label>
+                        <PasswordInput
+                          id="profile-current-pwd"
+                          value={fCurrentPwd}
+                          onChange={(e) => setFCurrentPwd(e.target.value)}
+                          placeholder="Current password"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="profile-new-pwd">New password</Label>
+                        <PasswordInput
+                          id="profile-new-pwd"
+                          value={fNewPwd}
+                          onChange={(e) => setFNewPwd(e.target.value)}
+                          placeholder="Min 8 characters"
+                          minLength={8}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {formError && <p className="text-sm text-destructive">{formError}</p>}
+
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={submitting}>
+                      {submitting ? "Saving…" : "Save changes"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setEditing(false);
+                        setFName(profile.name);
+                        setFCurrentPwd("");
+                        setFNewPwd("");
+                        setFormError("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <dl className="divide-y text-sm">
+                  <div className="flex items-center justify-between gap-4 py-2.5 first:pt-0">
+                    <dt className="text-muted-foreground">Name</dt>
+                    <dd className="truncate font-medium">{profile.name}</dd>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 py-2.5">
+                    <dt className="text-muted-foreground">Email</dt>
+                    <dd className="truncate">{profile.email}</dd>
+                  </div>
+                  {profile.phone && (
+                    <div className="flex items-center justify-between gap-4 py-2.5">
+                      <dt className="text-muted-foreground">Phone</dt>
+                      <dd>{profile.phone}</dd>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between gap-4 py-2.5">
+                    <dt className="text-muted-foreground">Password</dt>
+                    <dd className="tracking-widest text-muted-foreground">••••••••</dd>
+                  </div>
+                  {formSuccess && <p className="pt-3 text-sm text-emerald-500">{formSuccess}</p>}
+                </dl>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Renders nothing where the browser cannot do it, so it sits in the
+              flow rather than behind a condition here. */}
+          <PasskeysCard />
+
+          {profile.payments && profile.payments.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent payments</CardTitle>
+                <CardDescription>What you have paid this gym</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="divide-y">
+                  {profile.payments.map((p) => (
+                    <div
+                      key={p.id}
+                      className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">
+                          {p.subscription?.title ?? "Payment"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {p.paidAt ? formatDate(p.paidAt) : "Pending"}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-3">
+                        <span className="text-sm font-semibold tabular-nums">
+                          {formatCurrency(p.amount)}
+                        </span>
+                        <Badge
+                          variant={
+                            p.status === "COMPLETED"
+                              ? "success"
+                              : p.status === "PENDING"
+                                ? "warning"
+                                : "destructive"
+                          }
+                        >
+                          {p.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* ── The gym's side of the account ───────────────────────────────
+            Everything in this column is something the gym gives you, or
+            something this one device remembers — not something you type. */}
+        <div className="space-y-6">
+          {/* Shown at zero as well. Hiding the card until somebody already had
+              coins meant the only people told the scheme exists were the ones
+              who had already worked it out. */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Coins className="h-4 w-4 text-amber-500" />
+                Your coins
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-bold tabular-nums">{coinBalance}</span>
+                {coinBalance > 0 && (
+                  <span className="text-sm text-muted-foreground">
+                    = {formatCurrency(coinBalance)} off
+                  </span>
+                )}
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {coinBalance > 0
+                  ? "Spend them on your next renewal, or on anything in the store."
+                  : "One coin is one rupee off a renewal. Bring a friend in, use one of the gym's offers, or buy something in the store that earns them."}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3 w-full"
+                onClick={() => navigate("/subscriptions")}
+              >
+                {coinBalance > 0 ? "Spend them on a plan" : "See the plans"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {profile.id && <FreezeCard membershipId={profile.id} />}
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-4 w-4" />
+                Notifications
+              </CardTitle>
+              <CardDescription>Alerts on this device</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PushToggle description="Admins are notified when a member joins and when a payment comes in." />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Photo upload dialog */}
+      <Dialog open={photoDialogOpen} onOpenChange={setPhotoDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change profile photo</DialogTitle>
+            <DialogDescription>
+              Take a new photo, upload one, or remove the current photo.
+            </DialogDescription>
+          </DialogHeader>
+          <PhotoCapture
+            value={photoPreview}
+            onChange={(file, preview) => {
+              setPhotoFile(file);
+              setPhotoPreview(preview);
+              setPhotoError("");
+            }}
+            requireFace
+          />
+          {photoError && <p className="text-sm text-destructive">{photoError}</p>}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setPhotoDialogOpen(false)}
+              disabled={uploadingPhoto}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handlePhotoSave} disabled={!photoChanged || uploadingPhoto}>
+              {uploadingPhoto ? "Uploading…" : "Save photo"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

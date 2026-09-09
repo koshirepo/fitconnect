@@ -75,6 +75,23 @@ export const signupRepository = {
     });
   },
 
+  /** The occupations the join form offers, in the order it should show them. */
+  listOfferedOccupations() {
+    return prisma.occupation.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      select: { id: true, name: true, icon: true },
+    });
+  },
+
+  /** An occupation that is still being offered, or nothing. */
+  findOfferedOccupation(occupationId: string) {
+    return prisma.occupation.findFirst({
+      where: { id: occupationId, isActive: true },
+      select: { id: true },
+    });
+  },
+
   findActiveShift(tenantId: string, shiftId: string) {
     return prisma.shift.findFirst({
       where: { id: shiftId, tenantId, isActive: true },

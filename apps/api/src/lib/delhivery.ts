@@ -273,11 +273,24 @@ function readManifestResult(body: ManifestResponse): DelhiveryShipmentResult {
     : (pkg?.remarks ?? null);
 
   if (!pkg?.waybill) {
-    throw new DelhiveryError(
-      "Delhivery did not accept the shipment.",
-      422,
-      remark || body?.rmk || body?.error || undefined,
-    );
+    const detail = remark || body?.rmk || body?.error || undefined;
+
+    /**
+     * Delhivery's own wording for an unknown pickup location is
+     * "ClientWarehouse matching query does not exist" — accurate, and useless
+     * to whoever pressed the button. It means one thing every time: the name on
+     * the manifest is not a name Delhivery holds, usually because it rewrote it
+     * on registration or somebody typed it into the panel a second time.
+     */
+    if (detail && /clientwarehouse matching query does not exist/i.test(detail)) {
+      throw new DelhiveryError(
+        "Delhivery does not recognise this warehouse's pickup location name. Open Commerce → Warehouses and register it again — the name has to match the one in Delhivery's panel exactly.",
+        422,
+        detail,
+      );
+    }
+
+    throw new DelhiveryError("Delhivery did not accept the shipment.", 422, detail);
   }
 
   return {
@@ -538,21 +551,32 @@ function warehousePayload(warehouse: DelhiveryWarehouse) {
 export async function registerWarehouse(
   config: DelhiveryConfig,
   warehouse: DelhiveryWarehouse,
-): Promise<void> {
-  const body = await request<{ success?: boolean; error?: string[] | string; data?: unknown }>(
-    `${config.baseUrl}/api/backend/clientwarehouse/create/`,
-    config.token,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(warehousePayload(warehouse)),
-    },
-  );
+): Promise<{ name: string }> {
+  const body = await request<{
+    success?: boolean;
+    error?: string[] | string;
+    data?: { name?: string };
+  }>(`${config.baseUrl}/api/backend/clientwarehouse/create/`, config.token, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(warehousePayload(warehouse)),
+  });
 
   if (body?.success === false) {
     const detail = Array.isArray(body.error) ? body.error.join("; ") : body.error;
     throw new DelhiveryError("Delhivery would not register that warehouse.", 422, detail);
   }
+
+  /**
+   * Delhivery names the warehouse back, and its answer wins.
+   *
+   * It silently rewrites what it will not store — an em dash is dropped, and
+   * the space beside it is left behind. Keeping the name we sent means every
+   * later manifest quotes a pickup location Delhivery has no record of, and the
+   * only symptom is "ClientWarehouse matching query does not exist" at dispatch,
+   * long after anyone would connect it to the name.
+   */
+  return { name: body?.data?.name ?? warehouse.name };
 }
 
 /**
@@ -565,21 +589,30 @@ export async function registerWarehouse(
 export async function updateWarehouse(
   config: DelhiveryConfig,
   warehouse: DelhiveryWarehouse,
-): Promise<void> {
-  const body = await request<{ success?: boolean; error?: string[] | string }>(
-    `${config.baseUrl}/api/backend/clientwarehouse/edit/`,
-    config.token,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(warehousePayload(warehouse)),
-    },
-  );
+): Promise<{ name: string }> {
+  const body = await request<{
+    success?: boolean;
+    error?: string[] | string;
+    message?: string;
+    data?: { name?: string };
+  }>(`${config.baseUrl}/api/backend/clientwarehouse/edit/`, config.token, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(warehousePayload(warehouse)),
+  });
 
   if (body?.success === false) {
     const detail = Array.isArray(body.error) ? body.error.join("; ") : body.error;
-    throw new DelhiveryError("Delhivery would not update that warehouse.", 422, detail);
+    // The edit endpoint puts its reason in `message`, not `error`, and answers
+    // "warehouse does not exists" for a name it cannot match.
+    throw new DelhiveryError(
+      "Delhivery would not update that warehouse.",
+      422,
+      detail || body?.message,
+    );
   }
+
+  return { name: body?.data?.name ?? warehouse.name };
 }
 
 /**

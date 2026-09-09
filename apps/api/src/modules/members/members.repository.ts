@@ -61,6 +61,13 @@ function overdueWhere(tenantId: string, overdueDays: number) {
   } satisfies Prisma.TenantMembershipWhereInput;
 }
 
+/** Enough of an occupation to name and draw it on a member record. */
+const occupationSummarySelect = {
+  id: true,
+  name: true,
+  icon: true,
+} as const;
+
 const shiftSelect = {
   id: true,
   tenantId: true,
@@ -170,6 +177,8 @@ export const memberRepository = {
     platformRole: PlatformRole;
     avatarUrl?: string;
     gender?: string;
+    dateOfBirth?: Date;
+    occupationId?: string;
   }) {
     return prisma.user.create({
       data,
@@ -372,6 +381,12 @@ export const memberRepository = {
           status: true,
           dueDate: true,
           joinedAt: true,
+          // When this membership last changed. For a suspended or deleted one
+          // that is the closest thing to a leaving date the schema holds, and
+          // it is what the analytics screen already counts as one — so the
+          // roster can answer "who was deactivated in March" with the same
+          // people that screen counted.
+          updatedAt: true,
           shift: { select: shiftSelect },
           // Ids only. The roster filters by badge in the browser, and an id is
           // all that takes — names and colours belong to the badge list the
@@ -384,6 +399,9 @@ export const memberRepository = {
               email: true,
               phone: true,
               gender: true,
+              dateOfBirth: true,
+              occupationId: true,
+              occupation: { select: occupationSummarySelect },
               avatarUrl: true,
             },
           },
@@ -422,6 +440,9 @@ export const memberRepository = {
             email: true,
             phone: true,
             gender: true,
+            dateOfBirth: true,
+            occupationId: true,
+            occupation: { select: occupationSummarySelect },
             avatarUrl: true,
             createdAt: true,
           },
@@ -469,6 +490,9 @@ export const memberRepository = {
         email: true,
         phone: true,
         gender: true,
+        dateOfBirth: true,
+        occupationId: true,
+        occupation: { select: occupationSummarySelect },
         avatarUrl: true,
         updatedAt: true,
       },
@@ -786,6 +810,9 @@ export const memberRepository = {
             email: true,
             phone: true,
             gender: true,
+            dateOfBirth: true,
+            occupationId: true,
+            occupation: { select: occupationSummarySelect },
             avatarUrl: true,
             createdAt: true,
           },

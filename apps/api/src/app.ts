@@ -35,6 +35,7 @@ import { shiftRoutes } from "./modules/shifts/shifts.routes";
 import { todoRoutes } from "./modules/todos/todos.routes";
 import { platformRoleRoutes, tenantRoleRoutes } from "./modules/roles/roles.routes";
 import { financeRoutes } from "./modules/finance/finance.routes";
+import { occupationRoutes } from "./modules/occupations/occupations.routes";
 
 const app = new Hono();
 
@@ -175,6 +176,8 @@ app.route("/tenants", todoRoutes);
 app.route("/tenants", tenantRoleRoutes);
 app.route("/tenants", financeRoutes);
 app.route("/platform", platformRoleRoutes);
+// Platform-wide, not per gym: every member form reads the same occupation list.
+app.route("/occupations", occupationRoutes);
 app.route("/audit", auditRoutes);
 app.route("/public", publicRoutes);
 app.route("/", commerceRoutes);
@@ -244,6 +247,27 @@ app.onError((err, c) => {
   }
 
   console.error("[unhandled]", err);
+
+  /**
+   * In development, say what threw.
+   *
+   * The generic 500 is right for production, but it is also what makes a local
+   * failure a guessing game: the cause is printed to a terminal the person
+   * debugging may not be looking at, while the browser — where they *are*
+   * looking — shows five words. Gated on a localhost `APP_URL` so a deployed
+   * Worker never returns an error class, a message, or a stack to a caller.
+   */
+  const isLocal = ((c.env as { APP_URL?: string } | undefined)?.APP_URL ?? "").includes(
+    "localhost",
+  );
+  if (isLocal) {
+    return internalError(c, {
+      error: err.constructor?.name ?? "Error",
+      message: err.message,
+      stack: err.stack?.split("\n").slice(0, 8).join("\n"),
+    });
+  }
+
   return internalError(c);
 });
 

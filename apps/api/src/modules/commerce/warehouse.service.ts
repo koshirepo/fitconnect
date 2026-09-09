@@ -15,6 +15,7 @@ import {
   type DelhiveryWarehouse,
 } from "../../lib/delhivery";
 import { shippingService } from "./shipping.service";
+import { WAREHOUSE_NAME_PATTERN } from "./commerce.schema";
 import { warehouseRepository } from "./warehouse.repository";
 
 type WarehouseRow = {
@@ -207,15 +208,41 @@ export const warehouseService = {
       return { warehouse: saved, error: saved.registerError };
     }
 
+    // Checked here as well as in the schema: seeded and imported rows reach this
+    // without passing through Zod, and a name Delhivery rewrites is worse than
+    // one it refuses — the refusal is visible, the rewrite is not.
+    if (!WAREHOUSE_NAME_PATTERN.test(warehouse.name)) {
+      const saved = await warehouseRepository.markRegistered(
+        warehouse.id,
+        `"${warehouse.name}" contains characters Delhivery will not store — use letters, numbers, spaces and - _ . & only. Rename it and register again.`,
+      );
+      return { warehouse: saved, error: saved.registerError };
+    }
+
     try {
       const payload = toDelhivery(warehouse);
-      if (mode === "create") {
-        await registerWarehouse(delhivery, payload);
-      } else {
-        await updateWarehouse(delhivery, payload);
-      }
-      const saved = await warehouseRepository.markRegistered(warehouse.id, null);
-      return { warehouse: saved, error: null };
+      const result =
+        mode === "create"
+          ? await registerWarehouse(delhivery, payload)
+          : await updateWarehouse(delhivery, payload);
+
+      /**
+       * Delhivery's spelling wins, because Delhivery is what a manifest is
+       * matched against.
+       *
+       * It rewrites names it will not store — an em dash is dropped and the
+       * space beside it left behind — and answers with what it actually kept.
+       * Holding on to the name we sent leaves every dispatch quoting a pickup
+       * location that does not exist, and the error arrives days later with
+       * nothing pointing back to the name.
+       */
+      const saved =
+        result.name && result.name !== warehouse.name
+          ? await warehouseRepository.rename(warehouse.id, result.name)
+          : warehouse;
+
+      const registered = await warehouseRepository.markRegistered(saved.id, null);
+      return { warehouse: registered, error: null };
     } catch (err) {
       if (err instanceof DelhiveryError) {
         const detail = `${err.message}${err.detail ? ` ${err.detail}` : ""}`;

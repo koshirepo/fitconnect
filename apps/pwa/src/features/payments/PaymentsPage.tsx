@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { downloadCsv } from "@/lib/csv";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import { describeWindow, withinDays } from "@/lib/day-window";
 import {
   Plus,
   CreditCard,
@@ -95,6 +96,12 @@ export default function PaymentsPage() {
   const statusFilter = searchParams.get("status") ?? "";
   const searchTerm = searchParams.get("search") ?? "";
   const collectedByFilter = searchParams.get("collectedBy") ?? "";
+  // A half-open day window on when the payment was recorded, arriving from a
+  // figure on the analytics screen. This page has no control that sets one —
+  // it is how a period there points at the rows it was adding up.
+  const recordedFrom = searchParams.get("from") ?? "";
+  const recordedTo = searchParams.get("to") ?? "";
+  const hasWindow = Boolean(recordedFrom || recordedTo);
 
   // Local box, URL 300ms behind it. Every keystroke used to re-filter the whole
   // ledger and push a history entry, so backspacing walked back through the
@@ -115,6 +122,17 @@ export default function PaymentsPage() {
       const next = new URLSearchParams(prev);
       if (value) next.set("status", value);
       else next.delete("status");
+      next.delete("page");
+      return next;
+    });
+  };
+
+  /** Drop the dates, keep the tab and the search. */
+  const clearWindow = () => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("from");
+      next.delete("to");
       next.delete("page");
       return next;
     });
@@ -244,6 +262,11 @@ export default function PaymentsPage() {
           if (collectorId !== collectedByFilter) return false;
         }
 
+        // Recorded, not paid: the analytics screen buckets a payment by when
+        // the row was created, and a window that read a different date would
+        // list a different set of rows than the total that was clicked.
+        if (hasWindow && !withinDays(p.createdAt, recordedFrom, recordedTo)) return false;
+
         if (!term) return true;
 
         const haystack = [
@@ -262,7 +285,15 @@ export default function PaymentsPage() {
         return haystack.includes(term);
       })
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [collectedByFilter, pendingPaymentItems, payments, searchTerm]);
+  }, [
+    collectedByFilter,
+    hasWindow,
+    pendingPaymentItems,
+    payments,
+    recordedFrom,
+    recordedTo,
+    searchTerm,
+  ]);
 
   const allPayments: DisplayPayment[] = React.useMemo(
     () =>
@@ -282,7 +313,7 @@ export default function PaymentsPage() {
     total,
   } = useWindowedList(allPayments, {
     pageSize: 25,
-    resetKey: `${statusFilter}|${searchTerm}|${collectedByFilter}`,
+    resetKey: `${statusFilter}|${searchTerm}|${collectedByFilter}|${recordedFrom}|${recordedTo}`,
   });
 
   /** Row count behind each tab, so a tab shows what clicking it will reveal. */
@@ -445,6 +476,25 @@ export default function PaymentsPage() {
         </div>
       )}
 
+      {/* A window came in on the URL, from a total on the analytics screen.
+          Nothing on this page can express one, so without a line saying so the
+          ledger would just look short. */}
+      {hasWindow && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center rounded-full border bg-muted/50 px-3 py-1 text-xs font-medium">
+            {describeWindow("Recorded", recordedFrom, recordedTo)}
+          </span>
+          <button
+            type="button"
+            onClick={clearWindow}
+            className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-3 w-3" />
+            Clear dates
+          </button>
+        </div>
+      )}
+
       {/* Status Filter Tabs */}
       {canViewAllPayments && (
         <div className="overflow-x-auto overflow-y-hidden border-b border-border [&::-webkit-scrollbar]:hidden">
@@ -509,7 +559,7 @@ export default function PaymentsPage() {
           icon={CreditCard}
           title="No payments found"
           description={
-            statusFilter || searchTerm || collectedByFilter
+            statusFilter || searchTerm || collectedByFilter || hasWindow
               ? "No payments match this filter."
               : canViewAllPayments
                 ? "Record the first payment."

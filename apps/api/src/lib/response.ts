@@ -94,9 +94,16 @@ export const tooManyRequests = (c: Context, message: string) =>
 export const validationError = (c: Context, details: unknown) =>
   error(c, 422, "VALIDATION_ERROR", "Request validation failed.", details);
 
-/** 500 Internal Server Error */
-export const internalError = (c: Context) =>
-  error(c, 500, "INTERNAL_ERROR", "Internal server error.");
+/**
+ * 500 Internal Server Error
+ *
+ * `details` is for development only. A 500 in production says nothing about
+ * what threw — an error message can carry a table name, a constraint, or a
+ * fragment of a query — so the caller decides whether to attach it, and
+ * `app.onError` only does so off a localhost `APP_URL`.
+ */
+export const internalError = (c: Context, details?: unknown) =>
+  error(c, 500, "INTERNAL_ERROR", "Internal server error.", details);
 
 /**
  * Map a service failure onto the matching HTTP response.

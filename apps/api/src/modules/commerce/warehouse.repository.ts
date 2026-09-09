@@ -141,6 +141,21 @@ export const warehouseRepository = {
     });
   },
 
+  /**
+   * Adopt the name Delhivery actually stored.
+   *
+   * The only place a warehouse is renamed, and it exists because the courier
+   * normalises names on its side: the join between the two systems has to
+   * follow whatever it kept, not what we asked for.
+   */
+  rename(warehouseId: string, name: string) {
+    return prisma.warehouse.update({
+      where: { id: warehouseId },
+      data: { name },
+      select: warehouseSelect,
+    });
+  },
+
   markRegistered(warehouseId: string, error: string | null) {
     return prisma.warehouse.update({
       where: { id: warehouseId },

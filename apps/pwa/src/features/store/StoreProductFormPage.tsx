@@ -282,9 +282,14 @@ export default function StoreProductFormPage() {
         </CardContent>
       </Card>
 
+      {/* Photos, video and the long description were three cards deep in a
+          five-card form, split by medium rather than by task. They are one
+          job — everything a member reads on the product page — so they are one
+          card, and the form is shorter by two headings that said nothing the
+          fields below them did not. */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Photos and video</CardTitle>
+          <CardTitle className="text-base">What the member sees</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-1.5">
@@ -307,22 +312,18 @@ export default function StoreProductFormPage() {
               Shorts link all work.
             </p>
           </div>
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Full description</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <MarkdownEditor
-            id="markdown"
-            value={markdown}
-            onChange={setMarkdown}
-            minHeight={220}
-            hint="Shown on the product page. Ingredients, dosage, what the kit is made of."
-            placeholder="Ingredients, dosage, what it is made of — written in Markdown."
-          />
+          <div className="space-y-1.5">
+            <Label htmlFor="markdown">Full description</Label>
+            <MarkdownEditor
+              id="markdown"
+              value={markdown}
+              onChange={setMarkdown}
+              minHeight={220}
+              hint="Shown on the product page. Ingredients, dosage, what the kit is made of."
+              placeholder="Ingredients, dosage, what it is made of — written in Markdown."
+            />
+          </div>
         </CardContent>
       </Card>
 
@@ -331,7 +332,7 @@ export default function StoreProductFormPage() {
       {!isEdit && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">What it is sold as</CardTitle>
+            <CardTitle className="text-base">Variants</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {variants.map((variant, index) => (

@@ -11,6 +11,22 @@ import {
   MAX_PASSWORD_LENGTH,
 } from "@fitconnect/shared/constants";
 
+/**
+ * A birthday: a real date, in the past, inside a human lifetime.
+ *
+ * The upper bound is today rather than "eighteen years ago" — gyms do enrol
+ * children on a parent's membership — and the lower bound only rules out the
+ * typo that would otherwise show a member as three hundred years old.
+ */
+const dateOfBirthField = z.coerce
+  .date()
+  .refine((value) => value.getTime() <= Date.now(), {
+    message: "Date of birth cannot be in the future.",
+  })
+  .refine((value) => value.getUTCFullYear() >= 1900, {
+    message: "That date of birth looks wrong.",
+  });
+
 export const addMemberSchema = z.object({
   name: z.string().min(2).max(120),
   email: z.string().optional(),
@@ -18,6 +34,10 @@ export const addMemberSchema = z.object({
   /** Built-in (MEMBER/COACH/ADMIN) or a custom role key created by the gym. */
   role: z.string().min(2).max(60).default("MEMBER"),
   gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
+  /** Required on a new member — the admission form asks for it. */
+  dateOfBirth: dateOfBirthField,
+  /** A row id from the platform-wide occupation list, checked by the service. */
+  occupationId: z.string().min(1).optional(),
   avatarUrl: z.string().optional(),
   subscriptionId: z.string().optional(),
   chargeIds: z.array(z.string()).optional(),
@@ -43,6 +63,8 @@ export const updateMyProfileSchema = z
     name: z.string().min(2).max(120).optional(),
     phone: z.string().min(10).max(15).nullable().optional(),
     gender: z.enum(["MALE", "FEMALE", "OTHER"]).nullable().optional(),
+    dateOfBirth: dateOfBirthField.nullable().optional(),
+    occupationId: z.string().min(1).nullable().optional(),
     avatarUrl: z.string().url().nullable().optional(),
     currentPassword: z.string().min(1).optional(),
     newPassword: z
@@ -66,6 +88,8 @@ export const updateMemberSchema = z.object({
   name: z.string().min(2).max(120).optional(),
   phone: z.string().min(10).max(15).nullable().optional(),
   gender: z.enum(["MALE", "FEMALE", "OTHER"]).nullable().optional(),
+  dateOfBirth: dateOfBirthField.nullable().optional(),
+  occupationId: z.string().min(1).nullable().optional(),
   avatarUrl: z.string().url().nullable().optional(),
   newPassword: z
     .string()

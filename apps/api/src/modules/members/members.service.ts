@@ -53,6 +53,25 @@ async function isTenantRoleValid(tenantId: string, role: string) {
   );
 }
 
+/**
+ * The occupation exists and is still offered.
+ *
+ * Checked here rather than left to the foreign key so an unknown id comes back
+ * as a plain message instead of a database error, and so a retired occupation
+ * cannot be attached to somebody new — it stays on the members who already
+ * hold it, which is the whole point of retiring rather than deleting it.
+ */
+async function checkOccupationIsOffered(occupationId: string) {
+  const occupation = await prisma.occupation.findFirst({
+    where: { id: occupationId, isActive: true },
+    select: { id: true },
+  });
+
+  return occupation
+    ? null
+    : { error: "That occupation is not on the list.", status: 400 as const };
+}
+
 function flattenReferralMember<
   T extends {
     user: { id: string; [key: string]: unknown };
@@ -179,6 +198,12 @@ export const memberService = {
     });
     if (contactClash) return contactClash;
 
+    const occupationId = input.occupationId ?? null;
+    if (occupationId) {
+      const unknownOccupation = await checkOccupationIsOffered(occupationId);
+      if (unknownOccupation) return unknownOccupation;
+    }
+
     let user;
     if(input.email){
       user = await memberRepository.findUserByEmail(input.email);
@@ -192,6 +217,8 @@ export const memberService = {
         platformRole: PlatformRole.USER,
         ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
         ...(input.gender ? { gender: input.gender } : {}),
+        dateOfBirth: input.dateOfBirth,
+        ...(occupationId ? { occupationId } : {}),
       });
     }
 
@@ -793,6 +820,11 @@ Your membership card: ${idCardUrl}`
       }
     }
 
+    if (input.occupationId) {
+      const unknownOccupation = await checkOccupationIsOffered(input.occupationId);
+      if (unknownOccupation) return unknownOccupation;
+    }
+
     // Build the User update payload
     const userUpdate: Record<string, unknown> = {};
     const nextAvatarUrl =
@@ -801,6 +833,8 @@ Your membership card: ${idCardUrl}`
     if (input.phone !== undefined) userUpdate.phone = input.phone;
     if (input.avatarUrl !== undefined) userUpdate.avatarUrl = nextAvatarUrl;
     if (input.gender !== undefined) userUpdate.gender = input.gender;
+    if (input.dateOfBirth !== undefined) userUpdate.dateOfBirth = input.dateOfBirth;
+    if (input.occupationId !== undefined) userUpdate.occupationId = input.occupationId;
     if (input.newPassword) {
       userUpdate.passwordHash = await hashPassword(input.newPassword);
     }
@@ -858,6 +892,11 @@ Your membership card: ${idCardUrl}`
       if (contactClash) return contactClash;
     }
 
+    if (input.occupationId) {
+      const unknownOccupation = await checkOccupationIsOffered(input.occupationId);
+      if (unknownOccupation) return unknownOccupation;
+    }
+
     const userUpdate: Record<string, unknown> = {};
     const nextAvatarUrl =
       input.avatarUrl !== undefined ? normalizeOptionalText(input.avatarUrl) : undefined;
@@ -865,6 +904,8 @@ Your membership card: ${idCardUrl}`
     if (input.phone !== undefined) userUpdate.phone = input.phone;
     if (input.avatarUrl !== undefined) userUpdate.avatarUrl = nextAvatarUrl;
     if (input.gender !== undefined) userUpdate.gender = input.gender;
+    if (input.dateOfBirth !== undefined) userUpdate.dateOfBirth = input.dateOfBirth;
+    if (input.occupationId !== undefined) userUpdate.occupationId = input.occupationId;
     if (input.newPassword) {
       userUpdate.passwordHash = await hashPassword(input.newPassword);
     }

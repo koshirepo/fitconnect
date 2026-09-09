@@ -194,6 +194,8 @@ export default function AddMemberPage() {
         email: memberData.email,
         phone: memberData.phone,
         gender: memberData.gender,
+        dateOfBirth: memberData.dateOfBirth,
+        ...(memberData.occupationId ? { occupationId: memberData.occupationId } : {}),
         role: memberData.role,
         ...(selectedSubscriptionId
           ? { subscriptionId: selectedSubscriptionId }

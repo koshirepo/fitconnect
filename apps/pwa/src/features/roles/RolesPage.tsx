@@ -19,8 +19,11 @@ import {
   useUpdatePlatformRole,
   useUpdateTenantRole,
 } from "@/api/queries/roles";
-import type { RoleMatrixEntry } from "@/api/roles";
-import type { PermissionScope } from "@fitconnect/shared/types/permissions";
+import type { RoleMatrixEntry, RolePermissionCatalogGroup } from "@/api/roles";
+import {
+  TENANT_MANAGEABLE_PERMISSIONS,
+  type PermissionScope,
+} from "@fitconnect/shared/types/permissions";
 import {
   Card,
   CardContent,
@@ -43,6 +46,31 @@ type Props = {
 
 function roleKey(role: RoleMatrixEntry) {
   return `${role.scope}:${role.role}`;
+}
+
+const TENANT_MANAGEABLE = new Set<string>(TENANT_MANAGEABLE_PERMISSIONS);
+
+/**
+ * The catalog the API returns covers every permission in the system. A gym role
+ * can only ever hold tenant-scoped ones — the API rejects a `platform:` grant on
+ * one — so those are dropped here rather than drawn as a disabled group nobody
+ * on either screen can act on. Platform roles keep the whole catalog: SUPPORT is
+ * a platform role whose substance is tenant-scoped read access.
+ */
+function catalogForRole(
+  catalog: RolePermissionCatalogGroup[],
+  role: RoleMatrixEntry | undefined,
+) {
+  if (!role || role.scope !== "TENANT") return catalog;
+
+  return catalog
+    .map((group) => ({
+      ...group,
+      permissions: group.permissions.filter((permission) =>
+        TENANT_MANAGEABLE.has(permission.key),
+      ),
+    }))
+    .filter((group) => group.permissions.length > 0);
 }
 
 export default function RolesPage({ scope }: Props) {
@@ -75,6 +103,13 @@ export default function RolesPage({ scope }: Props) {
   const activeRole = React.useMemo(
     () => roles.find((role) => roleKey(role) === activeKey) ?? roles[0],
     [roles, activeKey],
+  );
+
+  // Scoped to the active role, so the counts below and the checklist agree on
+  // what this role can actually be granted.
+  const catalog = React.useMemo(
+    () => catalogForRole(matrix?.catalog ?? [], activeRole),
+    [matrix, activeRole],
   );
 
   // Reset the working selection whenever the server matrix or the active role
@@ -344,7 +379,7 @@ export default function RolesPage({ scope }: Props) {
               <CardTitle className="text-base">{activeRole?.label ?? "Select a role"}</CardTitle>
               <CardDescription>
                 {activeRole
-                  ? `${selected.size} of ${matrix?.catalog.reduce((total, group) => total + group.permissions.length, 0) ?? 0} permissions granted`
+                  ? `${selected.size} of ${catalog.reduce((total, group) => total + group.permissions.length, 0)} permissions granted`
                   : "Pick a role to review its permissions."}
               </CardDescription>
             </div>
@@ -402,7 +437,7 @@ export default function RolesPage({ scope }: Props) {
             {activeRole && matrix ? (
               <RolePermissionEditor
                 role={activeRole}
-                catalog={matrix.catalog}
+                catalog={catalog}
                 selected={selected}
                 onToggle={toggle}
                 onToggleGroup={toggleGroup}

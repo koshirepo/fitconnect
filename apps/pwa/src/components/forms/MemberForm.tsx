@@ -12,8 +12,11 @@ import { useTenantRoleMatrix } from "@/api/queries/roles";
 import { useAuthStore } from "@/stores/auth";
 import { formatShiftLabel } from "@/lib/shifts";
 import { AlertCircle, CircleSlash, Clock } from "lucide-react";
-import type { Gender, Shift, TenantMember } from "@/types/api";
+import type { Gender, OccupationSummary, Shift, TenantMember } from "@/types/api";
 import { DEFAULT_GENDER, GENDER_OPTIONS } from "@/lib/gender";
+import { useOccupations } from "@/api/queries/occupations";
+import { DEFAULT_OCCUPATION_NAME } from "@/lib/occupation";
+import { OccupationSelect } from "@/components/ui/occupation-select";
 
 /**
  * One selectable chip. Chips are used wherever the choices are few and worth
@@ -56,6 +59,10 @@ export interface MemberFormData {
   email: string;
   phone: string;
   gender: Gender;
+  /** "1998-04-23", as the date input holds it. Required. */
+  dateOfBirth: string;
+  /** A row id from the platform-wide occupation list, or "" for none. */
+  occupationId: string;
   /** Built-in (MEMBER/COACH/ADMIN) or a custom role key. */
   role: string;
   shiftId: string;
@@ -78,6 +85,20 @@ interface MemberFormProps {
    * from the desk now and fill the photo in later.
    */
   requirePhoto?: boolean;
+  /**
+   * Show the phone as read-only, for staff who may not see a member's number.
+   * `initialData.phone` is expected to already be masked; the field is disabled
+   * so the masked text can never be saved over the real number.
+   */
+  phoneReadOnly?: boolean;
+  /**
+   * The occupation list, for callers that already hold it.
+   *
+   * The public join form is the reason this exists: a visitor has no session,
+   * so `/occupations` would refuse them, and their list arrives with the rest
+   * of the signup options instead. Left unset, the form fetches it itself.
+   */
+  occupationOptions?: OccupationSummary[];
   onSubmit: (data: MemberFormData) => Promise<void> | void;
   onCancel: () => void;
   submitLabel?: string;
@@ -92,6 +113,8 @@ export default function MemberForm({
   referralOptions,
   loadingShifts = false,
   requirePhoto = false,
+  phoneReadOnly = false,
+  occupationOptions,
   onSubmit,
   onCancel,
   submitLabel,
@@ -119,6 +142,12 @@ export default function MemberForm({
   const [email, setEmail] = React.useState(initialData.email ?? "");
   const [phone, setPhone] = React.useState(initialData.phone ?? "");
   const [gender, setGender] = React.useState<Gender>(initialData.gender ?? DEFAULT_GENDER);
+  const [dateOfBirth, setDateOfBirth] = React.useState(initialData.dateOfBirth ?? "");
+  // Null means "not chosen yet", which is what lets a new member fall back to
+  // the default below; "" is somebody having deliberately cleared the field.
+  const [occupationId, setOccupationId] = React.useState<string | null>(
+    initialData.occupationId ?? null,
+  );
   const [role, setRole] = React.useState<string>(initialData.role ?? "MEMBER");
   const [shiftId, setShiftId] = React.useState(initialData.shiftId ?? "");
   const [referredByMembershipId, setReferredByMembershipId] = React.useState(
@@ -130,6 +159,26 @@ export default function MemberForm({
   );
   const [internalError, setInternalError] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  // The platform's occupation list, and the chip a new member starts on.
+  const occupationsQuery = useOccupations({ enabled: occupationOptions === undefined });
+  const occupations = occupationOptions ?? occupationsQuery.data ?? [];
+
+  /**
+   * A new member starts as a student, which is what most of them are.
+   *
+   * Derived rather than written into state on arrival: the field holds a row
+   * id, the list arrives after the first render, and an effect that filled the
+   * state in would then have to be careful not to undo somebody clearing it.
+   */
+  const defaultOccupationId =
+    mode === "create"
+      ? (occupations.find((option) => option.name === DEFAULT_OCCUPATION_NAME)?.id ?? "")
+      : "";
+  const selectedOccupationId = occupationId ?? defaultOccupationId;
+
+  /** Nobody was born tomorrow. */
+  const today = new Date().toISOString().slice(0, 10);
 
   const selectedReferrer =
     referralOptions?.find((member) => member.id === referredByMembershipId) ?? null;
@@ -152,6 +201,8 @@ export default function MemberForm({
         email,
         phone,
         gender,
+        dateOfBirth,
+        occupationId: selectedOccupationId,
         role,
         shiftId,
         referredByMembershipId,
@@ -233,11 +284,16 @@ export default function MemberForm({
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           placeholder="9876543210"
-          required
-          minLength={10}
+          required={!phoneReadOnly}
+          minLength={phoneReadOnly ? undefined : 10}
           maxLength={15}
-          disabled={isSubmitting || submitting}
+          disabled={phoneReadOnly || isSubmitting || submitting}
         />
+        {phoneReadOnly && (
+          <p className="text-xs text-muted-foreground">
+            Hidden on your role. Everything else about this member still saves.
+          </p>
+        )}
       </div>
 
       {/* Gender — chips that behave as one radio group. */}
@@ -256,6 +312,39 @@ export default function MemberForm({
           ))}
         </div>
       </div>
+
+      {/* Date of birth. Required — a record without one is a member the gym
+          has to chase later — and capped at today, because nobody joins a gym
+          before they are born. */}
+      <div className="space-y-2">
+        <Label htmlFor="date-of-birth">Date of Birth</Label>
+        <Input
+          id="date-of-birth"
+          type="date"
+          value={dateOfBirth}
+          onChange={(e) => setDateOfBirth(e.target.value)}
+          required
+          max={today}
+          disabled={isSubmitting || submitting}
+        />
+      </div>
+
+{/* Occupation — a searchable list rather than chips, because the platform
+          list is open-ended and a gym with twenty of them would push the rest
+          of the admission form off the screen. Hidden entirely while the list
+          is loading or empty, rather than showing a heading over nothing. */}
+      {occupations.length > 0 && (
+        <div className="space-y-2">
+          <Label htmlFor="occupation">Occupation</Label>
+          <OccupationSelect
+            id="occupation"
+            options={occupations}
+            value={selectedOccupationId}
+            onChange={setOccupationId}
+            disabled={isSubmitting || submitting}
+          />
+        </div>
+      )}
 
       {mode === "create" && referralOptions !== undefined && (
         <div className="space-y-2">

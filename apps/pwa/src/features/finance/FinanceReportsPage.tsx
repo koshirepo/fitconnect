@@ -16,7 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton, StatGridSkeleton } from "@/components/ui/skeleton";
 import { StatCard } from "@/components/ui/stat-card";
 import { ChartTooltip } from "@/components/ui/chart-tooltip";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
+import { dayKey } from "@/lib/day-window";
 import { getApiError } from "@/api/client";
 import { getMonthStr, formatMonthLabel, parseMonth, withMonth } from "@/lib/month";
 import { MonthNav } from "@/components/ui/month-nav";
@@ -74,6 +75,64 @@ function formatCompact(amount: number) {
 }
 
 /**
+ * The same four windows, as the half-open day bounds the other screens filter by.
+ *
+ * A figure here has to land on exactly the people it counted, so these follow
+ * the rules the analytics query itself uses: today and this week are relative
+ * to now whatever month is being read, and the month is the one this page is
+ * pointed at. All time carries no bounds at all.
+ */
+function periodWindows(month: string, now = new Date()) {
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfWeek = new Date(startOfDay);
+  startOfWeek.setDate(startOfWeek.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1));
+  const startOfMonth = parseMonth(month);
+  const endOfMonth = new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 1);
+
+  return {
+    today: { from: dayKey(startOfDay), to: "" },
+    week: { from: dayKey(startOfWeek), to: "" },
+    month: { from: dayKey(startOfMonth), to: dayKey(endOfMonth) },
+    allTime: { from: "", to: "" },
+  };
+}
+
+/**
+ * A figure that is also the way to the rows behind it.
+ *
+ * Every number in these tables answers "how many", and the next question is
+ * always "which ones" — which until now meant leaving for the roster and
+ * rebuilding the filter by hand, from memory, and usually getting a different
+ * number back.
+ */
+function StatLink({
+  value,
+  label,
+  onClick,
+  className,
+}: {
+  value: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      className={cn(
+        "-mx-1 rounded px-1 underline decoration-dotted underline-offset-4 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+        className,
+      )}
+    >
+      {value}
+    </button>
+  );
+}
+
+/**
  * What each period actually covers, spelled out.
  *
  * The four windows on this page — today, this week, the chosen month, all time
@@ -122,6 +181,57 @@ export default function FinanceReportsPage() {
   const month = searchParams.get("month") || getMonthStr(new Date());
   const isCurrentMonth = month >= getMonthStr(new Date());
   const periods = React.useMemo(() => periodLabels(month), [month]);
+  const windows = React.useMemo(() => periodWindows(month), [month]);
+
+  // The four columns the member table reports over, each carrying the window
+  // the roster needs to show the same people. Written once because two rows
+  // read it, and a period that meant one thing in one row and something else
+  // in the other is exactly what this shape rules out.
+  const memberPeriods = [
+    { key: "today", label: periods.today.short },
+    { key: "week", label: periods.week.short },
+    { key: "month", label: periods.month.full },
+    { key: "allTime", label: periods.allTime.short },
+  ] as const;
+
+  /**
+   * Open the roster showing the people behind a figure on this page.
+   *
+   * Every count here spans all roles — a coach is on the gym's books like
+   * anyone else — so the link says so rather than landing on the roster's
+   * default view of members alone, which would show fewer people than the
+   * number that was clicked.
+   */
+  const goToMembers = React.useCallback(
+    (params: Record<string, string>) => {
+      const query = new URLSearchParams({ role: "ALL" });
+      for (const [key, value] of Object.entries(params)) {
+        if (value) query.set(key, value);
+      }
+      navigate(getTenantDashboardPath(`/members?${query.toString()}`));
+    },
+    [navigate],
+  );
+
+  /**
+   * Open the ledger on the rows behind a total here, over the same window.
+   *
+   * The counterpart to `goToMembers`: a figure that counts payment rows leads
+   * to the ledger, one that counts people leads to the roster. Two figures on
+   * this page are both called "pending" and mean different things, which is
+   * exactly why each has to land somewhere different.
+   */
+  const goToPayments = React.useCallback(
+    (params: Record<string, string>) => {
+      const query = new URLSearchParams();
+      for (const [key, value] of Object.entries(params)) {
+        if (value) query.set(key, value);
+      }
+      const search = query.toString();
+      navigate(getTenantDashboardPath(search ? `/payments?${search}` : "/payments"));
+    },
+    [navigate],
+  );
 
   const reportQuery = useMemberReport();
   const analyticsQuery = usePaymentAnalytics(month);
@@ -374,6 +484,7 @@ export default function FinanceReportsPage() {
               label="Total Members"
               value={report.members.total}
               subtext={`${report.members.active} active`}
+              onClick={() => goToMembers({})}
             />
             {/* Who owes money, and whose term has run out. Both are counts of
                 people — the two numbers a desk acts on — and neither was on
@@ -386,7 +497,11 @@ export default function FinanceReportsPage() {
                 report.members.withPendingPayment === 1 ? "member owes" : "members owe"
               }
               color="text-amber-600"
-              onClick={() => navigate(getTenantDashboardPath("/payments?status=PENDING"))}
+              // The roster, not the ledger: this counts people who owe, and
+              // the ledger would answer with a different number — the unpaid
+              // rows, of which one member can hold several. Those have their
+              // own link, in the payment breakdown below.
+              onClick={() => goToMembers({ status: "PENDING" })}
             />
             <StatCard
               icon={CalendarClock}
@@ -394,7 +509,7 @@ export default function FinanceReportsPage() {
               value={report.members.pastDue}
               subtext={`past due · ${report.overdue.allowedDays}-day grace`}
               color="text-red-600"
-              onClick={() => navigate(getTenantDashboardPath("/members?status=DUE"))}
+              onClick={() => goToMembers({ status: "DUE" })}
             />
             <StatCard
               icon={IndianRupee}
@@ -402,6 +517,7 @@ export default function FinanceReportsPage() {
               value={formatCompact(analytics.allTime.totalRevenue)}
               subtext={`${analytics.allTime.totalCount} payments`}
               color="text-green-600"
+              onClick={() => goToPayments({ status: "COMPLETED" })}
             />
             <StatCard
               icon={TrendingUp}
@@ -409,6 +525,13 @@ export default function FinanceReportsPage() {
               value={formatCompact(analytics.month.totalRevenue)}
               subtext={`${analytics.month.completed} completed`}
               color="text-green-600"
+              onClick={() =>
+                goToPayments({
+                  status: "COMPLETED",
+                  from: windows.month.from,
+                  to: windows.month.to,
+                })
+              }
             />
             {/* "Revenue today" is not a fact about last October, so on a past
                 month the fourth tile reports something that month can answer:
@@ -420,6 +543,9 @@ export default function FinanceReportsPage() {
                 value={formatCompact(analytics.today.totalRevenue)}
                 subtext={`${analytics.today.totalCount} payments`}
                 color="text-blue-600"
+                onClick={() =>
+                  goToPayments({ status: "COMPLETED", from: windows.today.from })
+                }
               />
             ) : (
               <StatCard
@@ -832,24 +958,67 @@ export default function FinanceReportsPage() {
                       </tr>
                     </thead>
                     <tbody>
+                      {/* Each figure opens the ledger on the rows it added up,
+                          over the same period — "which payments made up March"
+                          is the question this table always raises next. */}
                       {(
                         [
-                          { label: periods.today.short, d: analytics.today },
-                          { label: periods.week.short, d: analytics.week },
-                          { label: periods.month.short, d: analytics.month },
-                          { label: periods.allTime.short, d: analytics.allTime },
+                          { key: "today", label: periods.today.short },
+                          { key: "week", label: periods.week.short },
+                          { key: "month", label: periods.month.short },
+                          { key: "allTime", label: periods.allTime.short },
                         ] as const
-                      ).map(({ label, d }) => (
-                        <tr key={label} className="border-b last:border-0">
-                          <td className="py-2.5 font-medium">{label}</td>
-                          <td className="text-right py-2.5 font-bold text-green-600">
-                            {formatCurrency(d.totalRevenue)}
-                          </td>
-                          <td className="text-right py-2.5 text-green-600">{d.completed}</td>
-                          <td className="text-right py-2.5 text-yellow-600">{d.pending}</td>
-                          <td className="text-right py-2.5 text-red-600">{d.failed}</td>
-                        </tr>
-                      ))}
+                      ).map(({ key, label }) => {
+                        const d = analytics[key];
+                        const range = { from: windows[key].from, to: windows[key].to };
+                        return (
+                          <tr key={key} className="border-b last:border-0">
+                            <td className="py-2.5 font-medium">{label}</td>
+                            {/* Revenue is the sum of the completed rows, so it
+                                lands on the same list the count beside it
+                                does. */}
+                            <td className="text-right py-2.5">
+                              <StatLink
+                                value={formatCurrency(d.totalRevenue)}
+                                label={`Revenue · ${label}`}
+                                onClick={() => goToPayments({ status: "COMPLETED", ...range })}
+                                className="font-bold text-green-600"
+                              />
+                            </td>
+                            {(
+                              [
+                                {
+                                  status: "COMPLETED",
+                                  name: "Completed",
+                                  count: d.completed,
+                                  tone: "text-green-600",
+                                },
+                                {
+                                  status: "PENDING",
+                                  name: "Pending",
+                                  count: d.pending,
+                                  tone: "text-yellow-600",
+                                },
+                                {
+                                  status: "FAILED",
+                                  name: "Failed",
+                                  count: d.failed,
+                                  tone: "text-red-600",
+                                },
+                              ] as const
+                            ).map(({ status, name, count, tone }) => (
+                              <td key={status} className="text-right py-2.5">
+                                <StatLink
+                                  value={count}
+                                  label={`${name} · ${label}`}
+                                  onClick={() => goToPayments({ status, ...range })}
+                                  className={tone}
+                                />
+                              </td>
+                            ))}
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -874,52 +1043,67 @@ export default function FinanceReportsPage() {
                       </tr>
                     </thead>
                     <tbody>
+                      {/* Every figure below opens the roster on the people it
+                          counted, carrying the same window it was counting
+                          them over — the question after "how many joined in
+                          March" is always "who". */}
                       <tr className="border-b">
                         <td className="py-2.5 flex items-center gap-2">
                           <UserPlus className="h-3.5 w-3.5 text-green-500" />
                           <span className="font-medium">New Members</span>
                         </td>
-                        <td className="text-right py-2.5 font-bold text-green-600">
-                          {analytics.members.joined.today}
-                        </td>
-                        <td className="text-right py-2.5 font-bold text-green-600">
-                          {analytics.members.joined.week}
-                        </td>
-                        <td className="text-right py-2.5 font-bold text-green-600">
-                          {analytics.members.joined.month}
-                        </td>
-                        <td className="text-right py-2.5 font-bold">
-                          {analytics.members.joined.allTime}
-                        </td>
+                        {memberPeriods.map(({ key, label }) => (
+                          <td key={key} className="text-right py-2.5">
+                            <StatLink
+                              value={analytics.members.joined[key]}
+                              label={`New members · ${label}`}
+                              onClick={() =>
+                                goToMembers({
+                                  joinedFrom: windows[key].from,
+                                  joinedTo: windows[key].to,
+                                })
+                              }
+                              className={cn(
+                                "font-bold",
+                                key !== "allTime" && "text-green-600",
+                              )}
+                            />
+                          </td>
+                        ))}
                       </tr>
                       <tr className="border-b">
                         <td className="py-2.5 flex items-center gap-2">
                           <Ban className="h-3.5 w-3.5 text-red-500" />
                           <span className="font-medium">Deactivated</span>
                         </td>
-                        <td className="text-right py-2.5 font-bold text-red-600">
-                          {analytics.members.deactivated.today}
-                        </td>
-                        <td className="text-right py-2.5 font-bold text-red-600">
-                          {analytics.members.deactivated.week}
-                        </td>
-                        <td className="text-right py-2.5 font-bold text-red-600">
-                          {analytics.members.deactivated.month}
-                        </td>
-                        <td className="text-right py-2.5 font-bold">
-                          {analytics.members.deactivated.allTime}
-                        </td>
+                        {memberPeriods.map(({ key, label }) => (
+                          <td key={key} className="text-right py-2.5">
+                            <StatLink
+                              value={analytics.members.deactivated[key]}
+                              label={`Deactivated · ${label}`}
+                              onClick={() =>
+                                goToMembers({
+                                  deactivatedFrom: windows[key].from,
+                                  deactivatedTo: windows[key].to,
+                                })
+                              }
+                              className={cn("font-bold", key !== "allTime" && "text-red-600")}
+                            />
+                          </td>
+                        ))}
                       </tr>
                       <tr className="border-b">
                         <td className="flex items-center gap-2 py-2.5">
                           <UserCheck className="h-3.5 w-3.5 shrink-0 text-green-500" />
                           <span className="font-medium">Currently Active</span>
                         </td>
-                        <td
-                          colSpan={4}
-                          className="py-2.5 text-right text-2xl font-bold text-green-600"
-                        >
-                          {report.members.active}
+                        <td colSpan={4} className="py-2.5 text-right">
+                          <StatLink
+                            value={report.members.active}
+                            label="Currently active members"
+                            onClick={() => goToMembers({ status: "ACTIVE" })}
+                            className="text-2xl font-bold text-green-600"
+                          />
                         </td>
                       </tr>
 
@@ -931,11 +1115,13 @@ export default function FinanceReportsPage() {
                           <Clock3 className="h-3.5 w-3.5 shrink-0 text-amber-500" />
                           <span className="font-medium">Payment pending</span>
                         </td>
-                        <td
-                          colSpan={4}
-                          className="py-2.5 text-right text-2xl font-bold text-amber-600"
-                        >
-                          {report.members.withPendingPayment}
+                        <td colSpan={4} className="py-2.5 text-right">
+                          <StatLink
+                            value={report.members.withPendingPayment}
+                            label="Members with a payment pending"
+                            onClick={() => goToMembers({ status: "PENDING" })}
+                            className="text-2xl font-bold text-amber-600"
+                          />
                         </td>
                       </tr>
 
@@ -944,11 +1130,13 @@ export default function FinanceReportsPage() {
                           <CalendarClock className="h-3.5 w-3.5 shrink-0 text-red-500" />
                           <span className="font-medium">Membership due</span>
                         </td>
-                        <td
-                          colSpan={4}
-                          className="py-2.5 text-right text-2xl font-bold text-red-600"
-                        >
-                          {report.members.pastDue}
+                        <td colSpan={4} className="py-2.5 text-right">
+                          <StatLink
+                            value={report.members.pastDue}
+                            label="Members whose membership is due"
+                            onClick={() => goToMembers({ status: "DUE" })}
+                            className="text-2xl font-bold text-red-600"
+                          />
                         </td>
                       </tr>
                     </tbody>

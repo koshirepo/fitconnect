@@ -36,6 +36,12 @@ export const queryKeys = {
     list: (tenantId: string, includeInactive: boolean) =>
       ["subscriptions", tenantId, includeInactive] as const,
   },
+  /** Platform-wide, so no tenant id: one list, the same in every gym. */
+  occupations: {
+    list: (includeInactive: boolean, withCounts: boolean) =>
+      ["occupations", includeInactive, withCounts] as const,
+    all: () => ["occupations"] as const,
+  },
   shifts: {
     list: (tenantId: string, includeInactive: boolean) =>
       ["shifts", tenantId, includeInactive] as const,

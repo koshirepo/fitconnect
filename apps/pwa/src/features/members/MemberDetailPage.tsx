@@ -37,6 +37,9 @@ import { SwipePane } from "@/components/ui/swipe-pane";
 import { useToast } from "@/components/ui/toast";
 import { formatShiftLabel, formatShiftWindow } from "@/lib/shifts";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import { usePhoneDisplay } from "@/lib/use-phone-display";
+import { ageFromDateOfBirth, toDateInputValue } from "@/lib/occupation";
+import { OccupationGlyph } from "@/components/ui/occupation-glyph";
 import { useLogReminder, useMemberReminders } from "@/api/queries/reminders";
 import { getTenantDashboardPath } from "@/lib/subdomain";
 import { AssetImage } from "@/components/ui/asset-image";
@@ -89,6 +92,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CalendarDays,
+  Cake,
   Trash2,
 } from "lucide-react";
 import type { Badge, MemberDetail, Shift, TenantMember } from "@/types/api";
@@ -129,8 +133,11 @@ export default function MemberDetailPage() {
   const { membershipId } = useParams<{ membershipId: string }>();
   const navigate = useAppNavigate();
   const location = useLocation();
-  const { currentTenantId, currentMembership } = useAuthStore();
+  const { currentTenantId, currentMembership, user: authUser } = useAuthStore();
   const { can } = usePermissions();
+  // Staff without `members:phone:read` read the number masked. The call and
+  // WhatsApp links below still carry the real digits.
+  const { canReadPhone, format: formatPhone } = usePhoneDisplay();
   const queryClient = useQueryClient();
   const gymName = currentMembership()?.tenantName ?? "the gym";
   const canManageBadges = can(Permission.BADGES_ASSIGN);
@@ -164,6 +171,10 @@ export default function MemberDetailPage() {
   const loading = memberQuery.isLoading;
   const error = actionError || (memberQuery.isError ? getApiError(memberQuery.error) : "");
   const isMemberProfile = member?.role === "MEMBER";
+  // The phone field is only editable by someone who can read it — a masked
+  // field has nothing meaningful to type over.
+  const canEditPhone =
+    canReadPhone || (Boolean(member?.userId) && member?.userId === authUser?.id);
   // Read only by someone allowed to; for a coach the endpoint is a 403.
   const roleMatrix = useTenantRoleMatrix(
     can(Permission.ROLES_READ) ? currentTenantId : null,
@@ -295,14 +306,26 @@ export default function MemberDetailPage() {
     try {
       const roleChanged = data.role !== member.role;
       const nameChanged = data.name !== member.name;
-      const phoneChanged = data.phone !== (member.phone ?? "");
+      // A masked field is never an edit, however the form comes back.
+      const phoneChanged = canEditPhone && data.phone !== (member.phone ?? "");
+      const dobChanged = data.dateOfBirth !== toDateInputValue(member.dateOfBirth);
+      const occupationChanged = data.occupationId !== (member.occupationId ?? "");
       const genderChanged = data.gender !== (member.gender ?? null);
       const nextShiftId = data.shiftId || null;
       const currentShiftId = member.shift?.id ?? null;
       const shiftChanged = nextShiftId !== currentShiftId;
       const avatarChanged = Boolean(data.photoFile) || data.photoPreview !== member.avatarUrl;
 
-      if (!roleChanged && !nameChanged && !phoneChanged && !genderChanged && !shiftChanged && !avatarChanged) {
+      if (
+        !roleChanged &&
+        !nameChanged &&
+        !phoneChanged &&
+        !dobChanged &&
+        !occupationChanged &&
+        !genderChanged &&
+        !shiftChanged &&
+        !avatarChanged
+      ) {
         navigate(getTenantDashboardPath(`/members/${membershipId}`), { replace: true });
         return;
       }
@@ -319,12 +342,23 @@ export default function MemberDetailPage() {
         await updateMemberRole.mutateAsync({ membershipId, role: data.role });
       }
 
-      if (nameChanged || phoneChanged || genderChanged || shiftChanged || avatarUrl !== undefined) {
+      if (
+        nameChanged ||
+        phoneChanged ||
+        dobChanged ||
+        occupationChanged ||
+        genderChanged ||
+        shiftChanged ||
+        avatarUrl !== undefined
+      ) {
         await updateMember.mutateAsync({
           membershipId,
           data: {
             ...(nameChanged ? { name: data.name } : {}),
             ...(phoneChanged ? { phone: data.phone } : {}),
+            ...(dobChanged ? { dateOfBirth: data.dateOfBirth } : {}),
+            // "" is the member clearing it, which the API takes as null.
+            ...(occupationChanged ? { occupationId: data.occupationId || null } : {}),
             ...(genderChanged ? { gender: data.gender } : {}),
             ...(shiftChanged ? { shiftId: nextShiftId } : {}),
             ...(avatarUrl !== undefined ? { avatarUrl } : {}),
@@ -491,7 +525,11 @@ export default function MemberDetailPage() {
               initialData={{
                 name: member.name,
                 email: member.email,
-                phone: member.phone ?? "",
+                // Masked for staff who may not read it, and read-only there, so
+                // the placeholder text can never be saved over the real number.
+                phone: formatPhone(member.phone, member.userId) ?? "",
+                dateOfBirth: toDateInputValue(member.dateOfBirth),
+                occupationId: member.occupationId ?? "",
                 // Left unset for records from before the field existed, so the
                 // form falls back to its own default rather than to null.
                 ...(member.gender ? { gender: member.gender } : {}),
@@ -499,6 +537,7 @@ export default function MemberDetailPage() {
                 shiftId: member.shift?.id ?? "",
                 photoPreview: member.avatarUrl,
               }}
+              phoneReadOnly={!canEditPhone}
               shiftOptions={shiftOptions}
               loadingShifts={loadingShifts}
               onSubmit={handleEditSubmit}
@@ -513,6 +552,7 @@ export default function MemberDetailPage() {
 
   // ─── Shared meta + badges (used in both mobile and desktop layouts) ──────────
   const memberGender = genderMeta(member.gender);
+  const memberAge = ageFromDateOfBirth(member.dateOfBirth);
 
   const memberMeta = (
     <>
@@ -526,13 +566,26 @@ export default function MemberDetailPage() {
         {member.phone && (
           <span className="flex items-center gap-1 whitespace-nowrap">
             <Phone className="h-3.5 w-3.5 shrink-0" />
-            {member.phone}
+            {formatPhone(member.phone, member.userId)}
           </span>
         )}
         {memberGender && (
           <span className="flex items-center gap-1 whitespace-nowrap">
             <memberGender.icon className="h-3.5 w-3.5 shrink-0" />
             {memberGender.label}
+          </span>
+        )}
+        {member.dateOfBirth && (
+          <span className="flex items-center gap-1 whitespace-nowrap">
+            <Cake className="h-3.5 w-3.5 shrink-0" />
+            {formatDate(member.dateOfBirth)}
+            {memberAge !== null && ` · ${memberAge}`}
+          </span>
+        )}
+        {member.occupation && (
+          <span className="flex items-center gap-1 whitespace-nowrap">
+            <OccupationGlyph icon={member.occupation.icon} className="h-3.5 w-3.5 shrink-0" />
+            {member.occupation.name}
           </span>
         )}
         <span className="flex items-center gap-1 whitespace-nowrap">

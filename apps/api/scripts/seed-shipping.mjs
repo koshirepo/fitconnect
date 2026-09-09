@@ -170,6 +170,11 @@ const PRODUCTS = [
 
 const GST_RATE = 18;
 
+/** The one variant each seeded product carries. */
+function variantIdFor(productId) {
+  return `${productId}-v1`;
+}
+
 /** An order line, priced the way the API prices one. */
 function line(productId, quantity) {
   const product = PRODUCTS.find((entry) => entry.id === productId);
@@ -447,6 +452,7 @@ function buildSql() {
     `DELETE FROM "ReturnRequest" WHERE id LIKE '${PREFIX}%';`,
     `DELETE FROM "Shipment" WHERE id LIKE '${PREFIX}%';`,
     `DELETE FROM "OrderItem" WHERE id LIKE '${PREFIX}%';`,
+    `DELETE FROM "ProductVariant" WHERE id LIKE '${PREFIX}%';`,
     `DELETE FROM "Order" WHERE id LIKE '${PREFIX}%';`,
     `UPDATE "Product" SET "warehouseId" = NULL WHERE "warehouseId" LIKE '${PREFIX}%';`,
     `DELETE FROM "Product" WHERE id LIKE '${PREFIX}%';`,
@@ -483,15 +489,16 @@ function buildSql() {
 
   for (const product of PRODUCTS) {
     statements.push(
-      `INSERT INTO "Product" (id, name, description, markdown, photos, category, price, stock, "minOrderQty", "maxOrderQty", "weightGrams", "lengthCm", "widthCm", "heightCm", "warehouseId", "isActive", "createdAt", "updatedAt") VALUES (${[
+      `INSERT INTO "Product" (id, "tenantId", name, description, markdown, photos, category, "coinsGranted", "minOrderQty", "maxOrderQty", "weightGrams", "lengthCm", "widthCm", "heightCm", "warehouseId", "isReturnable", "isReplaceable", "isActive", "createdAt", "updatedAt") VALUES (${[
         q(product.id),
+        // NULL tenant: these belong to the platform storefront, not a gym.
+        "NULL",
         q(product.name),
         q(product.description),
         "NULL",
         q(JSON.stringify([PHOTO])),
         q(product.category),
-        product.price,
-        product.stock,
+        0,
         product.minOrderQty,
         product.maxOrderQty,
         product.weightGrams,
@@ -499,6 +506,25 @@ function buildSql() {
         product.widthCm,
         product.heightCm,
         q(product.warehouseId),
+        product.isReturnable === false ? 0 : 1,
+        product.isReplaceable ? 1 : 0,
+        1,
+        q(iso(daysAgo(30))),
+        q(iso(now)),
+      ].join(", ")});`,
+    );
+
+    // Price and stock live on the variant now. One "Standard" variant each is
+    // enough here: this seeder is about fulfilment states, not merchandising.
+    statements.push(
+      `INSERT INTO "ProductVariant" (id, "productId", name, attributes, sku, price, stock, "isActive", "createdAt", "updatedAt") VALUES (${[
+        q(variantIdFor(product.id)),
+        q(product.id),
+        q("Standard"),
+        q("{}"),
+        "NULL",
+        product.price,
+        product.stock,
         1,
         q(iso(daysAgo(30))),
         q(iso(now)),
@@ -552,11 +578,13 @@ function buildSql() {
 
     order.items.forEach((item, index) => {
       statements.push(
-        `INSERT INTO "OrderItem" (id, "orderId", "productId", "productName", quantity, "unitPrice", "lineTotal", "createdAt") VALUES (${[
+        `INSERT INTO "OrderItem" (id, "orderId", "productId", "productName", "variantId", "variantName", quantity, "unitPrice", "lineTotal", "createdAt") VALUES (${[
           q(`${order.id}-item-${index + 1}`),
           q(order.id),
           q(item.productId),
           q(item.productName),
+          q(variantIdFor(item.productId)),
+          q("Standard"),
           item.quantity,
           item.unitPrice,
           item.lineTotal,

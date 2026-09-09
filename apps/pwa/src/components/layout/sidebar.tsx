@@ -28,6 +28,7 @@ import {
   RotateCcw,
   Warehouse,
   ScrollText,
+  Briefcase,
   Award,
   ListTodo,
   Settings,
@@ -123,6 +124,12 @@ const platformNav: NavItem[] = [
     label: "Roles & Permissions",
     icon: ShieldCheck,
     anyOf: [Permission.PLATFORM_ROLES_READ],
+  },
+  {
+    to: "/platform-occupations",
+    label: "Occupations",
+    icon: Briefcase,
+    anyOf: [Permission.PLATFORM_OCCUPATIONS_MANAGE],
   },
   {
     to: "/platform-audit",

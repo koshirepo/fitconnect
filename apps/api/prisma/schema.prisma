@@ -34,6 +34,13 @@ model User {
   avatarUrl    String?
   /// "MALE", "FEMALE", or "OTHER". Null for accounts created before it was asked for.
   gender       String?
+  /// Date of birth, stored at UTC midnight — a birthday has no time of day.
+  dateOfBirth  DateTime?
+  /// What this person does for a living, from the platform-wide Occupation
+  /// list. Null both for accounts from before it was asked for and for anyone
+  /// whose occupation row was deleted.
+  occupationId String?
+  occupation   Occupation? @relation(fields: [occupationId], references: [id], onDelete: SetNull)
   platformRole String   @default("USER")
   status       String   @default("ACTIVE")
   createdAt    DateTime @default(now())
@@ -56,6 +63,34 @@ model User {
   tenantComments           TenantComment[]
 
   @@index([email])
+  @@index([occupationId])
+}
+
+/// What a member does for a living: one platform-wide list, drawn on every
+/// member record.
+///
+/// A table rather than a hardcoded set, so the list can be corrected or grown
+/// without a release; platform-wide rather than per gym, because the answer to
+/// "how many students train with us" should mean the same thing in every gym.
+/// Nothing here is a tenant's own data, so there is no tenantId.
+model Occupation {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  /// Icon key from the curated set the PWA draws, e.g. "graduation-cap".
+  /// Null, or anything the PWA does not know, falls back to a briefcase.
+  icon      String?
+  /// Retired occupations stay on the members who hold them; they just stop
+  /// being offered on the form. Deleting is reserved for a row added by
+  /// mistake, and only while nobody holds it.
+  isActive  Boolean  @default(true)
+  /// Ascending order in pickers; ties break on name.
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users User[]
+
+  @@index([isActive, sortOrder])
 }
 
 /// One passkey, registered on one device.

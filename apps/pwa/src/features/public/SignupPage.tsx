@@ -213,6 +213,8 @@ export default function SignupPage() {
         ...(memberData.email ? { email: memberData.email } : {}),
         phone: memberData.phone,
         gender: memberData.gender,
+        dateOfBirth: memberData.dateOfBirth,
+        ...(memberData.occupationId ? { occupationId: memberData.occupationId } : {}),
         avatarDataUrl: await readFileAsDataUrl(memberData.photoFile),
         subscriptionId: selectedPlan.id,
         ...(selectedChargeIds.length > 0 ? { chargeIds: selectedChargeIds } : {}),
@@ -431,6 +433,7 @@ export default function SignupPage() {
               initialData={memberData ?? undefined}
               error={error}
               shiftOptions={options.shifts}
+              occupationOptions={options.occupations}
               requirePhoto
               onSubmit={handleDetailsSubmit}
               onCancel={() => navigate("/")}

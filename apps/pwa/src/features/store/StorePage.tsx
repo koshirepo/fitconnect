@@ -51,6 +51,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { StatCard } from "@/components/ui/stat-card";
 import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
+import { usePhoneDisplay } from "@/lib/use-phone-display";
 import { formatCurrency, formatDate, cn } from "@/lib/utils";
 import type { StoreOrderRow } from "@/api/store";
 
@@ -90,6 +91,7 @@ export default function StorePage() {
   // to go out unrewritten.
   const navigateRaw = useNavigate();
   const { can } = usePermissions();
+  const { format: formatPhone } = usePhoneDisplay();
   const canSell = can(Permission.STORE_SELL);
   const canManage = can(Permission.STORE_MANAGE);
 
@@ -288,9 +290,16 @@ export default function StorePage() {
             Hand over reservations, take the money, and keep stock honest.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        {/* On a phone these used to wrap two-then-one, leaving a stray button on
+            its own line. The primary action takes the full width and the two
+            secondaries split the row beneath it; from `sm` up they sit inline
+            as before. */}
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
           {canSell && (
-            <Button onClick={() => setSellOpen((open) => !open)}>
+            <Button
+              className="col-span-2 sm:col-span-1"
+              onClick={() => setSellOpen((open) => !open)}
+            >
               <ShoppingCart className="h-4 w-4" />
               {sellOpen ? "Close sale" : "Sell at counter"}
             </Button>
@@ -418,10 +427,15 @@ export default function StorePage() {
                   {lines.map((line) => (
                     <div
                       key={line.variantId}
-                      className="flex items-center justify-between gap-3 rounded-lg border border-border p-2"
+                      /* Stacked on a phone. Side by side, the stepper and the
+                         price are fixed-width and the name is what gives, so a
+                         375px screen showed "BCAA Recove…" — the flavour and
+                         size, which is the part that says which tub is being
+                         rung up, were the first thing cut. */
+                      className="flex flex-col gap-2 rounded-lg border border-border p-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
                     >
-                      <span className="min-w-0 truncate text-sm">{line.label}</span>
-                      <div className="flex shrink-0 items-center gap-2">
+                      <span className="min-w-0 text-sm sm:truncate">{line.label}</span>
+                      <div className="flex shrink-0 items-center justify-end gap-2">
                         <Button
                           variant="outline"
                           size="icon-xs"
@@ -444,7 +458,7 @@ export default function StorePage() {
                         >
                           <Plus className="h-3 w-3" />
                         </Button>
-                        <span className="w-20 text-right text-sm font-medium">
+                        <span className="ml-auto w-20 text-right text-sm font-medium tabular-nums sm:ml-0">
                           {formatCurrency(line.unitPrice * line.quantity)}
                         </span>
                       </div>
@@ -483,14 +497,18 @@ export default function StorePage() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
+            {/* The one action on this card that takes money. On a phone it gets
+                the full width rather than sharing a wrapped row with Clear,
+                which put a destructive-ish button and the pay button at the
+                same size under a thumb. */}
+            <div className="flex flex-col gap-3 border-t border-border pt-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">
                   Before any coupon or coins
                 </p>
-                <p className="text-lg font-bold">{formatCurrency(counterTotal)}</p>
+                <p className="text-lg font-bold tabular-nums">{formatCurrency(counterTotal)}</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col-reverse gap-2 sm:flex-row">
                 <Button variant="ghost" onClick={resetSale} disabled={selling}>
                   Clear
                 </Button>
@@ -597,8 +615,12 @@ export default function StorePage() {
             return (
               <Card key={order.id}>
                 <CardHeader className="pb-2">
-                  <CardTitle className="flex flex-wrap items-center justify-between gap-2 text-base">
-                    <span className="flex flex-wrap items-center gap-2">
+                  {/* The amount sits opposite the name from `sm` up. On a phone
+                      the two never fit, and letting them wrap dropped the total
+                      onto its own line at body size — so it is stated first
+                      instead, which is what the person at the counter reads. */}
+                  <CardTitle className="flex flex-col gap-1 text-base sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-2">
+                    <span className="order-2 flex flex-wrap items-center gap-2 sm:order-1">
                       {buyer.name}
                       <Badge variant="secondary" className="text-[10px]">
                         {buyer.badge}
@@ -608,7 +630,7 @@ export default function StorePage() {
                         {order.id.slice(-6).toUpperCase()}
                       </span>
                     </span>
-                    <span className="text-lg font-bold">
+                    <span className="order-1 text-lg font-bold tabular-nums sm:order-2">
                       {formatCurrency(order.totalAmount)}
                     </span>
                   </CardTitle>
@@ -623,7 +645,9 @@ export default function StorePage() {
                         className="inline-flex items-center gap-1 hover:text-foreground"
                       >
                         <Phone className="h-3 w-3" />
-                        {buyer.phone}
+                        {/* Masked for staff who may not read numbers; the
+                            `tel:` link above still dials the real one. */}
+                        {formatPhone(buyer.phone)}
                       </a>
                     )}
                     {order.coinsEarned > 0 && (
@@ -658,7 +682,7 @@ export default function StorePage() {
                   )}
 
                   {order.status === "PENDING" && canSell && (
-                    <div className="flex flex-wrap gap-2 pt-1">
+                    <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:flex-wrap">
                       <Button
                         size="sm"
                         onClick={() => setConfirm({ order, action: "complete" })}

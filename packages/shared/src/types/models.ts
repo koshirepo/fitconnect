@@ -26,6 +26,10 @@ export interface User {
   name: string;
   email: string;
   gender?: Gender | null;
+  /** ISO date (YYYY-MM-DD) at UTC midnight. Null on accounts from before it was asked for. */
+  dateOfBirth?: string | null;
+  occupationId?: string | null;
+  occupation?: OccupationSummary | null;
   phone?: string | null;
   avatarUrl?: string | null;
   platformRole: PlatformRole;
@@ -140,6 +144,43 @@ export interface PublicGymSummary {
   _count: { memberships: number };
 }
 
+/**
+ * One entry in the platform-wide list of what members do for a living.
+ *
+ * A table rather than a fixed set of strings so the list can grow without a
+ * release, and so "how many students train here" stays answerable: every
+ * member points at a row instead of holding their own spelling of it.
+ */
+export interface Occupation {
+  id: string;
+  name: string;
+  /** Icon key from the curated set the PWA draws; null falls back to a briefcase. */
+  icon?: string | null;
+  isActive: boolean;
+  /** Ascending order in pickers; ties break on name. */
+  sortOrder: number;
+  createdAt?: string;
+  updatedAt?: string;
+  /** How many accounts hold it. Only sent on the manage listing. */
+  memberCount?: number;
+}
+
+/** What a member record carries: enough to name and draw it, nothing more. */
+export interface OccupationSummary {
+  id: string;
+  name: string;
+  icon?: string | null;
+}
+
+export interface CreateOccupationPayload {
+  name: string;
+  icon?: string | null;
+  isActive?: boolean;
+  sortOrder?: number;
+}
+
+export type UpdateOccupationPayload = Partial<CreateOccupationPayload>;
+
 // ─── Members ──────────────────────────────────────────────────────────────────
 
 export interface TenantMember {
@@ -149,6 +190,10 @@ export interface TenantMember {
   name: string;
   email: string;
   gender?: Gender | null;
+  /** ISO date (YYYY-MM-DD) at UTC midnight. Null on accounts from before it was asked for. */
+  dateOfBirth?: string | null;
+  occupationId?: string | null;
+  occupation?: OccupationSummary | null;
   phone?: string | null;
   avatarUrl?: string | null;
   /** Built-in (MEMBER/COACH/ADMIN) or a custom role key. */
@@ -207,6 +252,10 @@ export interface TenantProfile {
   name: string;
   email: string;
   gender?: Gender | null;
+  /** ISO date (YYYY-MM-DD) at UTC midnight. Null on accounts from before it was asked for. */
+  dateOfBirth?: string | null;
+  occupationId?: string | null;
+  occupation?: OccupationSummary | null;
   phone?: string | null;
   avatarUrl?: string | null;
   userCreatedAt: string;
@@ -225,6 +274,9 @@ export interface AddMemberPayload {
   email: string;
   phone: string;
   gender?: Gender;
+  /** Required on a new member: an ISO date, "1998-04-23". */
+  dateOfBirth: string;
+  occupationId?: string;
   /** Built-in (MEMBER/COACH/ADMIN) or a custom role key. */
   role?: string;
   avatarUrl?: string;
@@ -243,6 +295,8 @@ export interface UpdateProfilePayload {
   name?: string;
   phone?: string | null;
   gender?: Gender | null;
+  dateOfBirth?: string | null;
+  occupationId?: string | null;
   avatarUrl?: string | null;
   currentPassword?: string;
   newPassword?: string;
@@ -252,6 +306,8 @@ export interface UpdateMemberPayload {
   name?: string;
   phone?: string | null;
   gender?: Gender | null;
+  dateOfBirth?: string | null;
+  occupationId?: string | null;
   avatarUrl?: string | null;
   newPassword?: string;
   shiftId?: string | null;
@@ -266,6 +322,10 @@ export interface MemberDetail {
   name: string;
   email: string;
   gender?: Gender | null;
+  /** ISO date (YYYY-MM-DD) at UTC midnight. Null on accounts from before it was asked for. */
+  dateOfBirth?: string | null;
+  occupationId?: string | null;
+  occupation?: OccupationSummary | null;
   phone?: string | null;
   avatarUrl?: string | null;
   userCreatedAt: string;
@@ -516,6 +576,11 @@ export interface SignupOptions {
   }[];
   charges: { id: string; name: string; amount: number; isMandatory: boolean }[];
   shifts: Shift[];
+  /**
+   * The platform's occupation list, sent from here because a visitor has no
+   * session to read `/occupations` with.
+   */
+  occupations: OccupationSummary[];
   /** False when the gym takes no cards yet — the signup then ends at the desk. */
   onlinePaymentsEnabled: boolean;
 }
@@ -525,6 +590,10 @@ export interface SelfSignupPayload {
   email?: string;
   phone: string;
   gender: Gender;
+  /** Required, as at the desk: an ISO date, "1998-04-23". */
+  dateOfBirth: string;
+  /** A row id from the occupation list `SignupOptions` carried. */
+  occupationId?: string;
   /** Required. Base64 data URL — there is no session to upload a file with. */
   avatarDataUrl: string;
   subscriptionId: string;

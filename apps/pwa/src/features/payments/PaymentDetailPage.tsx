@@ -24,6 +24,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DetailPageSkeleton } from "@/components/ui/skeleton";
 import { SwipePane } from "@/components/ui/swipe-pane";
+import { usePhoneDisplay } from "@/lib/use-phone-display";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import {
   Calendar,
@@ -101,6 +102,7 @@ export default function PaymentDetailPage() {
   const navigate = useAppNavigate();
   const { currentTenantId, user } = useAuthStore();
   const { can } = usePermissions();
+  const { format: formatPhone } = usePhoneDisplay();
   const isAdmin = can(Permission.PAYMENTS_UPDATE);
   // Settling a pending payment is desk work a coach does; editing, refunding,
   // and deleting stay with the people who keep the books.
@@ -522,7 +524,12 @@ export default function PaymentDetailPage() {
                   }
                 >
                   <p className="text-xs text-muted-foreground">
-                    {[payment.member.email, payment.member.phone].filter(Boolean).join(" · ")}
+                    {[
+                      payment.member.email,
+                      formatPhone(payment.member.phone, payment.member.userId),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </p>
                 </AvatarCard>
               </div>

@@ -39,6 +39,7 @@ import PaymentsPage from "@/features/payments/PaymentsPage";
 const PaymentDetailPage = React.lazy(() => import("@/features/payments/PaymentDetailPage"));
 const RecordPaymentPage = React.lazy(() => import("@/features/payments/RecordPaymentPage"));
 const BadgesPage = React.lazy(() => import("@/features/badges/BadgesPage"));
+const OccupationsPage = React.lazy(() => import("@/features/occupations/OccupationsPage"));
 const BadgeFormPage = React.lazy(() => import("@/features/badges/BadgeFormPage"));
 const AttendancePage = React.lazy(() => import("@/features/attendance/AttendancePage"));
 const AttendanceCalendarPage = React.lazy(() => import("@/features/attendance/AttendanceCalendarPage"));
@@ -823,6 +824,15 @@ export default function App() {
                         path="/platform-roles/:roleKey/edit"
                         element={<RoleFormPage scope="platform" />}
                       />
+                    </Route>
+                    {/* The occupation list is platform data, so it lives
+                        here rather than in a gym's own settings. */}
+                    <Route
+                      element={
+                        <RequirePermission anyOf={[Permission.PLATFORM_OCCUPATIONS_MANAGE]} />
+                      }
+                    >
+                      <Route path="/platform-occupations" element={<OccupationsPage />} />
                     </Route>
                     <Route
                       element={<RequirePermission anyOf={[Permission.AUDIT_PLATFORM_READ]} />}

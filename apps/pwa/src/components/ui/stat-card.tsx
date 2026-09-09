@@ -75,7 +75,12 @@ export function StatCard({
             <Icon className="size-4 text-muted-foreground sm:size-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[11px] leading-tight text-muted-foreground sm:text-xs sm:text-balance">
+            {/* Two lines rather than one, because these labels are phrases, not
+                words: "Waiting to hand over" truncated to "Waiting to hand…" on
+                a 375px screen loses the only part that says what the number is
+                for. The value and subtext below stay on one line — those are
+                short by construction. */}
+            <p className="line-clamp-2 text-[11px] leading-tight text-muted-foreground sm:text-xs sm:text-balance">
               {label}
             </p>
             <p className={cn("truncate text-lg font-bold tabular-nums sm:text-xl", color)}>

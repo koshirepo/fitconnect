@@ -29,6 +29,20 @@ export const selfSignupSchema = z.object({
   phone: z.string().min(10).max(15),
   gender: z.enum(["MALE", "FEMALE", "OTHER"]),
   /**
+   * Required, the same as on the admin form: a membership without a date of
+   * birth is a record the gym has to chase the person for later.
+   */
+  dateOfBirth: z.coerce
+    .date()
+    .refine((value) => value.getTime() <= Date.now(), {
+      message: "Date of birth cannot be in the future.",
+    })
+    .refine((value) => value.getUTCFullYear() >= 1900, {
+      message: "That date of birth looks wrong.",
+    }),
+  /** A row id from the platform-wide occupation list. Optional, as at the desk. */
+  occupationId: z.string().min(1).optional(),
+  /**
    * Required, unlike the admin flow: a self-signup exists to be paid for, and a
    * membership with nothing to pay has no moment at which it becomes active.
    */

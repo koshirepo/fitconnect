@@ -51,10 +51,13 @@ export const signupService = {
     const tenant = await resolveTenant(host);
     if (!tenant) return { error: "Gym not found.", status: 404 as const };
 
-    const [plans, charges, shifts, credentials] = await Promise.all([
+    const [plans, charges, shifts, occupations, credentials] = await Promise.all([
       signupRepository.listSelectablePlans(tenant.id),
       signupRepository.listActiveCharges(tenant.id),
       signupRepository.listActiveShifts(tenant.id),
+      // Platform-wide rather than this gym's, and sent from here because the
+      // visitor has no session to read `/occupations` with.
+      signupRepository.listOfferedOccupations(),
       gatewayService.resolveCredentials(tenant.id),
     ]);
 
@@ -64,6 +67,7 @@ export const signupService = {
         plans,
         charges,
         shifts,
+        occupations,
         /**
          * False means the form still accepts a signup — it just ends at the
          * front desk rather than at a card screen.
@@ -171,6 +175,12 @@ export const signupService = {
       return { error: "Shift not found.", status: 404 as const };
     }
 
+    // Not offered by `getOptions` either, so an unknown id is a hand-made
+    // request rather than something a visitor could have picked.
+    if (input.occupationId && !(await signupRepository.findOfferedOccupation(input.occupationId))) {
+      return { error: "That occupation is not on the list.", status: 400 as const };
+    }
+
     const charges = await signupRepository.findChargesForSignup(
       tenant.id,
       input.chargeIds ?? [],
@@ -203,6 +213,8 @@ export const signupService = {
       await memberRepository.updateUser(user.id, {
         avatarUrl: input.avatarUrl,
         gender: input.gender,
+        dateOfBirth: input.dateOfBirth,
+        ...(input.occupationId ? { occupationId: input.occupationId } : {}),
       });
     } else {
       user = await memberRepository.createUser({
@@ -214,6 +226,8 @@ export const signupService = {
         platformRole: PlatformRole.USER,
         avatarUrl: input.avatarUrl,
         gender: input.gender,
+        dateOfBirth: input.dateOfBirth,
+        ...(input.occupationId ? { occupationId: input.occupationId } : {}),
       });
     }
 

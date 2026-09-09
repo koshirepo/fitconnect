@@ -207,14 +207,24 @@ const warehouseCoreSchema = z.object({
   isDefault: z.boolean().optional(),
 });
 
+/**
+ * What Delhivery will store a warehouse name as, unchanged.
+ *
+ * Anything else it rewrites without saying so — an em dash is dropped and the
+ * space beside it left behind — and the name we then quote on a manifest
+ * matches nothing. Exported so the service can apply the same rule to rows that
+ * never passed through this schema.
+ */
+export const WAREHOUSE_NAME_PATTERN = /^[A-Za-z0-9 _.\-&]+$/;
+
 export const createWarehouseSchema = warehouseCoreSchema.extend({
   name: z
     .string()
     .min(3, "Give the warehouse a name.")
     .max(80)
     .regex(
-      /^[A-Za-z0-9 _.\-&]+$/,
-      "Use letters, numbers, spaces and - _ . & only — Delhivery rejects anything else.",
+      WAREHOUSE_NAME_PATTERN,
+      "Use letters, numbers, spaces and - _ . & only — Delhivery silently rewrites anything else.",
     ),
   /**
    * This pickup location is already on Delhivery's books.
