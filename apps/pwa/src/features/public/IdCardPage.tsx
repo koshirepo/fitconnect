@@ -4,7 +4,8 @@
  * - Opens from the link sent by email or WhatsApp, on the gym's own subdomain, with no sign-in. The token in the URL is the credential.
  * - Re-fetched on every visit and never cached. A member who changed their photo, renewed, or lapsed sees that here immediately — the link is permanent, its contents are not.
  * - The card is authored as an SVG with the photo, the logo, and the QR all inlined. That is what makes the PNG download work with no library: an SVG whose every asset is embedded can be drawn to a canvas and exported, where one referencing an external image would taint the canvas and fail.
- * - The QR opens this same page, which is the member's details as anyone holding the card may see them: name, number, standing, since when, which shift. It is not a check-in code — members are checked in at the gym's own machine — so scanning it identifies somebody rather than recording anything.
+ * - The QR opens this member's record in the gym's dashboard — `/dashboard/members/:membershipId` on the gym's own host — so a phone at the desk goes from a card in somebody's hand to their full record. It is not a check-in code: members are checked in at the gym's machine, and scanning records nothing.
+ * - Whoever scans it still has to be signed in with `members:read:detail`; a stranger who finds a dropped card gets a login screen, not a member's history.
  * - Colour is derived from the gym's own, not picked per element: one brand hex becomes a gradient, a deep shade, and two tints by rotating hue and lightness, so a card is colourful in the gym's colours rather than in this file's. A gym that has chosen nothing gets the app's orange rather than grey.
  * - Primary exports: IdCardPage.
  */
@@ -167,7 +168,11 @@ function channels(hex: string) {
 
 function toHex(r: number, g: number, b: number) {
   return `#${[r, g, b]
-    .map((c) => Math.max(0, Math.min(255, Math.round(c))).toString(16).padStart(2, "0"))
+    .map((c) =>
+      Math.max(0, Math.min(255, Math.round(c)))
+        .toString(16)
+        .padStart(2, "0"),
+    )
     .join("")}`;
 }
 
@@ -199,11 +204,16 @@ function hslToHex({ h, s, l }: Hsl) {
   const m = l - c / 2;
 
   const [r, g, b] =
-    h < 60 ? [c, x, 0]
-      : h < 120 ? [x, c, 0]
-        : h < 180 ? [0, c, x]
-          : h < 240 ? [0, x, c]
-            : h < 300 ? [x, 0, c]
+    h < 60
+      ? [c, x, 0]
+      : h < 120
+        ? [x, c, 0]
+        : h < 180
+          ? [0, c, x]
+          : h < 240
+            ? [0, x, c]
+            : h < 300
+              ? [x, 0, c]
               : [c, 0, x];
 
   return toHex((r + m) * 255, (g + m) * 255, (b + m) * 255);
@@ -232,7 +242,11 @@ function palette(brandHex: string) {
     /** Warmer and lighter — the far end of the header gradient. */
     lift: hslToHex({ h: (base.h + 22) % 360, s: clamp01(s * 1.02), l: clamp01(base.l + 0.14) }),
     /** Deeper and cooler — grounds the footer and the band under the header. */
-    deep: hslToHex({ h: (base.h - 14 + 360) % 360, s: clamp01(s * 1.05), l: clamp01(base.l - 0.13) }),
+    deep: hslToHex({
+      h: (base.h - 14 + 360) % 360,
+      s: clamp01(s * 1.05),
+      l: clamp01(base.l - 0.13),
+    }),
     /** Barely-there wash for the panels, so the body is not plain white. */
     tint: hslToHex({ h: base.h, s: clamp01(s * 0.55), l: 0.965 }),
     /** A visible tint for the detail strip's own hairlines. */
@@ -319,7 +333,7 @@ function buildCardSvg(
   card: MemberIdCard,
   photo: string | null,
   logo: string | null,
-  /** What the QR encodes: this card's own address, which opens the member's details. */
+  /** What the QR encodes: the member's record in the gym's dashboard. */
   qrData: string,
   /**
    * The saved copy leaves out the expiry.
@@ -391,9 +405,7 @@ function buildCardSvg(
   // than drawn at a fixed height.
   const rows: DetailRow[] = [
     { label: "MEMBER SINCE", value: formatDate(member.joinedAt) },
-    ...(includeValidUntil
-      ? [{ label: "VALID UNTIL", value: formatDate(member.validUntil) }]
-      : []),
+    ...(includeValidUntil ? [{ label: "VALID UNTIL", value: formatDate(member.validUntil) }] : []),
     { label: "SHIFT", value: fit(shiftLine, 24) },
   ];
 
@@ -528,8 +540,8 @@ function buildCardSvg(
     </g>
 
     <text x="${QR.x + QR.size + 44}" y="${stubMid - 18}" font-family="${FONT}" font-size="22" font-weight="700" fill="${INK}">Scan for member details</text>
-    <text x="${QR.x + QR.size + 44}" y="${stubMid + 12}" font-family="${FONT}" font-size="15" fill="${SUBTLE}">Opens this card, live.</text>
-    <text x="${QR.x + QR.size + 44}" y="${stubMid + 36}" font-family="${FONT}" font-size="15" fill="${SUBTLE}">Check in at the gym's machine.</text>
+    <text x="${QR.x + QR.size + 44}" y="${stubMid + 12}" font-family="${FONT}" font-size="15" fill="${SUBTLE}">Opens this member's record.</text>
+    <text x="${QR.x + QR.size + 44}" y="${stubMid + 36}" font-family="${FONT}" font-size="15" fill="${SUBTLE}">Staff sign-in required.</text>
 
     <!-- The gym, in full -->
     <rect y="${FOOTER_Y}" width="${CARD_WIDTH}" height="${FOOTER_H}" fill="url(#footerFill)" />
@@ -546,6 +558,18 @@ function buildCardSvg(
     <text x="320" y="${FOOTER_Y + 104}" text-anchor="middle" font-family="${FONT}" font-size="12" font-weight="600" letter-spacing="2.4" fill="${onDeep}" opacity="0.7">POWERED BY FITCONNECT</text>
   </g>
 </svg>`;
+}
+
+/**
+ * Where a scan of this card lands: the member's record in the gym's dashboard.
+ *
+ * Built from the host the card is open on, which is the gym's own subdomain —
+ * so a card read at Rudra Gym resolves to `rudra-gym.fitconnect.co.in` and not
+ * to whatever host the person scanning it last visited. The dashboard lives
+ * under `/dashboard` on a gym subdomain, which is where these cards are served.
+ */
+function memberRecordUrl(card: MemberIdCard) {
+  return `${window.location.origin}/dashboard/members/${card.member.id}`;
 }
 
 export default function IdCardPage() {
@@ -592,7 +616,7 @@ export default function IdCardPage() {
       ]);
 
       setAssets({ photo, logo });
-      setSvg(buildCardSvg(data, photo, logo, window.location.href));
+      setSvg(buildCardSvg(data, photo, logo, memberRecordUrl(data)));
     } catch (caught) {
       setError(getApiError(caught));
     } finally {
@@ -612,7 +636,7 @@ export default function IdCardPage() {
       // Built again rather than reusing what is on screen: a PNG in a photo
       // roll keeps whatever was true the day it was saved, so it carries no
       // expiry date to go quietly stale.
-      const exportSvg = buildCardSvg(card, assets.photo, assets.logo, window.location.href, {
+      const exportSvg = buildCardSvg(card, assets.photo, assets.logo, memberRecordUrl(card), {
         includeValidUntil: false,
       });
 
@@ -634,9 +658,7 @@ export default function IdCardPage() {
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(url);
 
-      const png = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/png"),
-      );
+      const png = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
       if (!png) throw new Error("Could not render the card");
 
       const link = document.createElement("a");
@@ -692,9 +714,8 @@ export default function IdCardPage() {
       </div>
 
       <p className="text-center text-xs text-muted-foreground">
-        This card always shows your current membership details, and the code on
-        it is how the desk checks you in. Keep the link — it stays the same when
-        you renew.
+        This card always shows your current membership details, and the code on it is how the desk
+        checks you in. Keep the link — it stays the same when you renew.
       </p>
     </div>
   );

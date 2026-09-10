@@ -12,12 +12,7 @@ import { ArrowLeft } from "lucide-react";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
 import { useCurrentTenantId } from "@/api/queries/shared";
-import {
-  basketTotalQuantity,
-  readBasket,
-  setBasketQuantity,
-  type BasketEntry,
-} from "./basket";
+import { basketTotalQuantity, readBasket, setBasketQuantity, type BasketEntry } from "./basket";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useStoreProduct } from "@/api/queries/store";
@@ -105,7 +100,7 @@ export default function StoreProductDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <ProductOverview
         product={productQuery.data}
         action={
@@ -152,9 +147,7 @@ export default function StoreProductDetailPage() {
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">
-            Comments{feed ? ` (${feed.comments.length})` : ""}
-          </CardTitle>
+          <CardTitle>Comments{feed ? ` (${feed.comments.length})` : ""}</CardTitle>
         </CardHeader>
         <CardContent>
           <CommentThread

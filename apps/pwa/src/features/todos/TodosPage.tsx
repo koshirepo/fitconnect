@@ -1,4 +1,5 @@
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { Navigate } from "react-router-dom";
@@ -133,20 +134,19 @@ export default function TodosPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Todos</h1>
-          <p className="text-muted-foreground">
-            Admins can manage all todos. Coaches can create and manage public todos and view
-            protected ones.
-          </p>
-        </div>
-        <Button onClick={() => navigate("/todos/new")}>
-          <Plus className="h-4 w-4" />
-          New Todo
-        </Button>
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader
+        title="Todos"
+        description="Admins can manage all todos. Coaches can create and manage public todos and view protected ones."
+        actions={
+          <>
+            <Button onClick={() => navigate("/todos/new")}>
+              <Plus className="h-4 w-4" />
+              New Todo
+            </Button>
+          </>
+        }
+      />
 
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px]">
         <div className="relative">

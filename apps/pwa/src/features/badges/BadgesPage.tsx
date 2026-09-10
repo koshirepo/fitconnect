@@ -1,4 +1,5 @@
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useAppNavigate } from "@/lib/use-app-navigate";
@@ -70,15 +71,7 @@ function readableOn(hex: string) {
  * character, which is why this spreads to whole code points instead, and keeps
  * a short icon intact rather than reducing an emoji to its first half.
  */
-function BadgeMedal({
-  color,
-  icon,
-  name,
-}: {
-  color: string;
-  icon?: string | null;
-  name: string;
-}) {
+function BadgeMedal({ color, icon, name }: { color: string; icon?: string | null; name: string }) {
   const points = [...(icon?.trim() ?? "")];
   const glyph =
     points.length === 0
@@ -125,10 +118,7 @@ export default function BadgesPage() {
   // Which of these are actually this member's. Only asked for when it will
   // be used: an admin is looking at the gym's badges, not their own.
   const myProfile = useMyProfile({ enabled: !isAdmin });
-  const myBadgeIds = React.useMemo(
-    () => new Set(myProfile.data?.badgeIds ?? []),
-    [myProfile.data],
-  );
+  const myBadgeIds = React.useMemo(() => new Set(myProfile.data?.badgeIds ?? []), [myProfile.data]);
   const badges = React.useMemo(
     () => flattenPages<Badge>(badgesQuery.data?.pages),
     [badgesQuery.data],
@@ -252,13 +242,11 @@ export default function BadgesPage() {
     <div className="space-y-5 sm:space-y-6">
       {/* Header — the shape every other screen wears: title and subtitle take
           the width, actions stay a fixed block on the right. */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight sm:text-2xl">
-            <Award className="size-5 shrink-0 sm:size-6" />
-            Badges
-          </h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
+      <PageHeader
+        icon={Award}
+        title="Badges"
+        description={
+          <>
             {isAdmin ? "Recognition you can hand out to members." : "What this gym awards."}
             {badges.length > 0 && (
               <>
@@ -267,21 +255,23 @@ export default function BadgesPage() {
                   {badges.length} badge{badges.length === 1 ? "" : "s"}
                   {/* Only once every page is in: a running total across a
                       half-loaded list would understate the programme. */}
-                  {isAdmin && !hasMore && totalAwarded > 0
-                    ? ` · ${totalAwarded} awarded`
-                    : ""}
+                  {isAdmin && !hasMore && totalAwarded > 0 ? ` · ${totalAwarded} awarded` : ""}
                 </span>
               </>
             )}
-          </p>
-        </div>
-        {isAdmin && (
-          <Button className="shrink-0" onClick={() => navigate("/badges/create")}>
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">New badge</span>
-          </Button>
-        )}
-      </div>
+          </>
+        }
+        actions={
+          <>
+            {isAdmin && (
+              <Button className="shrink-0" onClick={() => navigate("/badges/create")}>
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">New badge</span>
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {/* Badge Grid */}
       {loading ? (

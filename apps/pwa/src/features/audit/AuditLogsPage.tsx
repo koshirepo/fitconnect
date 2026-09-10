@@ -8,6 +8,7 @@
  * - Primary exports: AuditLogsPage.
  */
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useSearchParams } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { useAuditLogsInfinite } from "@/api/queries/platform";
@@ -348,26 +349,26 @@ export default function AuditLogsPage({ scope = "tenant" }: Props) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight">
-            {effectiveScope === "platform" ? "Platform audit" : "Audit log"}
-          </h1>
-          <p className="text-sm text-muted-foreground">Who changed what, newest first.</p>
-        </div>
-        <Button
-          variant="outline"
-          className="shrink-0"
-          onClick={handleExport}
-          disabled={visibleLogs.length === 0}
-          aria-label={`Download these ${visibleLogs.length} entries as CSV`}
-          title={`Download these ${visibleLogs.length} entries as CSV`}
-        >
-          <Download className="h-4 w-4" />
-        </Button>
-      </div>
+      <PageHeader
+        title={effectiveScope === "platform" ? "Platform audit" : "Audit log"}
+        description="Who changed what, newest first."
+        actions={
+          <>
+            <Button
+              variant="outline"
+              className="shrink-0"
+              onClick={handleExport}
+              disabled={visibleLogs.length === 0}
+              aria-label={`Download these ${visibleLogs.length} entries as CSV`}
+              title={`Download these ${visibleLogs.length} entries as CSV`}
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+          </>
+        }
+      />
 
       {/* Filters. One row on a desktop, stacked on a phone — and no card around
           them, which is chrome this page does not need. */}

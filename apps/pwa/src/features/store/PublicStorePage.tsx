@@ -9,13 +9,7 @@
  */
 import * as React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import {
-  Coins,
-  Plus,
-  ShoppingCart,
-  Store,
-  X,
-} from "lucide-react";
+import { Coins, Plus, ShoppingCart, Store, X } from "lucide-react";
 
 import { publicApi } from "@/api/public";
 import {
@@ -90,9 +84,7 @@ export default function PublicStorePage() {
   // same cache the login screen and the install prompt use, so a member who has
   // been here before sees the branding on the first frame rather than after a
   // round trip.
-  const [brand, setBrand] = React.useState<TenantBranding | null>(() =>
-    readCachedTenantBranding(),
-  );
+  const [brand, setBrand] = React.useState<TenantBranding | null>(() => readCachedTenantBranding());
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
 
@@ -154,8 +146,7 @@ export default function PublicStorePage() {
   // afterwards is the only thing telling somebody whether they still owe money.
   const [paid, setPaid] = React.useState(false);
 
-  const guestDetailsValid =
-    buyerName.trim().length >= 2 && buyerPhone.trim().length >= 10;
+  const guestDetailsValid = buyerName.trim().length >= 2 && buyerPhone.trim().length >= 10;
 
   React.useEffect(() => {
     let active = true;
@@ -500,7 +491,10 @@ export default function PublicStorePage() {
     return (
       <div>
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <CardsGridSkeleton count={8} className="gap-3 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4" />
+          <CardsGridSkeleton
+            count={8}
+            className="gap-3 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4"
+          />
         </div>
       </div>
     );
@@ -564,8 +558,7 @@ export default function PublicStorePage() {
         {reference && (
           <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4">
             <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-              {paid ? "Paid" : "Reserved"} — quote {reference} at{" "}
-              {storeTitle || "the counter"}
+              {paid ? "Paid" : "Reserved"} — quote {reference} at {storeTitle || "the counter"}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
               {paid
@@ -584,9 +577,7 @@ export default function PublicStorePage() {
         ) : visible.length === 0 ? (
           <EmptyState
             icon={ShoppingBag}
-            title={
-              products.length === 0 ? "Nothing in the store yet" : "Nothing matches that"
-            }
+            title={products.length === 0 ? "Nothing in the store yet" : "Nothing matches that"}
             description={
               products.length === 0
                 ? "This gym has not added anything to sell."
@@ -647,7 +638,6 @@ export default function PublicStorePage() {
         )}
       </div>
 
-
       {/* ── Basket ─────────────────────────────────────────────────────────── */}
       {basketOpen && (
         <div className="fixed inset-0 z-50 flex justify-end">
@@ -668,9 +658,7 @@ export default function PublicStorePage() {
 
             <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
               {basket.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  Nothing here yet.
-                </p>
+                <p className="py-8 text-center text-sm text-muted-foreground">Nothing here yet.</p>
               ) : (
                 basket.map((entry) => (
                   <CartLine
@@ -717,8 +705,8 @@ export default function PublicStorePage() {
                 <div className="space-y-3 rounded-lg border border-dashed border-border p-3">
                   {!keyboard.open && (
                     <p className="text-xs text-muted-foreground">
-                      Everything is collected from the gym. Pay now or at the counter —
-                      either way we need a name and number to hand it to.
+                      Everything is collected from the gym. Pay now or at the counter — either way
+                      we need a name and number to hand it to.
                     </p>
                   )}
                   <div className="space-y-1.5">
@@ -776,8 +764,8 @@ export default function PublicStorePage() {
                     </Button>
                     {!keyboard.open && (
                       <p className="text-center text-xs text-muted-foreground">
-                        Paying at the store holds nothing back for you until a coach
-                        hands it over, so anything low on stock is safer bought now.
+                        Paying at the store holds nothing back for you until a coach hands it over,
+                        so anything low on stock is safer bought now.
                       </p>
                     )}
                   </div>

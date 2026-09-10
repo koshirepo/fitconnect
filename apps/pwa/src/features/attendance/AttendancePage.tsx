@@ -1,4 +1,5 @@
 import { getMonthStr, parseMonth, formatMonthLabel } from "@/lib/month";
+import { PageHeader } from "@/components/ui/page-header";
 import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
@@ -224,7 +225,6 @@ export default function AttendancePage() {
     setDate(
       `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
     );
-
   };
 
   const toggleSelect = (id: string) => {
@@ -266,7 +266,7 @@ export default function AttendancePage() {
   }, [currentTenantId]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* Header */}
       {offlineDevices.length > 0 && (
         <button
@@ -289,52 +289,50 @@ export default function AttendancePage() {
         </button>
       )}
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <CalendarCheck className="h-6 w-6" />
-            Attendance
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {isStaff ? "Track daily gym attendance" : "Check in for today"}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {isStaff && (
-            <Button variant="outline" onClick={() => navigate("/attendance/calendar")}>
-              <CalendarDays className="h-4 w-4 mr-2" />
-              Calendar
-            </Button>
-          )}
-          {canManageDevices && (
-            <Button variant="outline" onClick={() => navigate("/attendance/devices")}>
-              <Radio className="h-4 w-4 mr-2" />
-              Machines
-            </Button>
-          )}
-          {isToday && (
-            <Button onClick={handleSelfCheckIn} disabled={checkingIn || checkedIn}>
-              {checkedIn ? (
-                <>
-                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
-                  Checked In
-                </>
-              ) : (
-                <>
-                  <UserCheck className="h-4 w-4 mr-2" />
-                  {checkingIn ? "Checking in..." : "Check In"}
-                </>
+      <PageHeader
+        icon={CalendarCheck}
+        title="Attendance"
+        description={isStaff ? "Track daily gym attendance" : "Check in for today"}
+        actions={
+          <>
+            <div className="flex flex-wrap gap-2">
+              {isStaff && (
+                <Button variant="outline" onClick={() => navigate("/attendance/calendar")}>
+                  <CalendarDays className="h-4 w-4 mr-2" />
+                  Calendar
+                </Button>
               )}
-            </Button>
-          )}
-          {isStaff && (
-            <Button variant="outline" onClick={() => setShowBulk(!showBulk)}>
-              <Users className="h-4 w-4 mr-2" />
-              Mark All
-            </Button>
-          )}
-        </div>
-      </div>
+              {canManageDevices && (
+                <Button variant="outline" onClick={() => navigate("/attendance/devices")}>
+                  <Radio className="h-4 w-4 mr-2" />
+                  Machines
+                </Button>
+              )}
+              {isToday && (
+                <Button onClick={handleSelfCheckIn} disabled={checkingIn || checkedIn}>
+                  {checkedIn ? (
+                    <>
+                      <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
+                      Checked In
+                    </>
+                  ) : (
+                    <>
+                      <UserCheck className="h-4 w-4 mr-2" />
+                      {checkingIn ? "Checking in..." : "Check In"}
+                    </>
+                  )}
+                </Button>
+              )}
+              {isStaff && (
+                <Button variant="outline" onClick={() => setShowBulk(!showBulk)}>
+                  <Users className="h-4 w-4 mr-2" />
+                  Mark All
+                </Button>
+              )}
+            </div>
+          </>
+        }
+      />
 
       {/* Date Picker */}
       {isStaff && (
@@ -364,7 +362,7 @@ export default function AttendancePage() {
       {isStaff && qrUrl && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle className="flex items-center gap-2">
               <QrCodeIcon className="h-5 w-5" />
               Attendance QR
             </CardTitle>
@@ -398,7 +396,7 @@ export default function AttendancePage() {
       {showBulk && isStaff && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Mark Attendance for Members</CardTitle>
+            <CardTitle>Mark Attendance for Members</CardTitle>
             <CardDescription>
               Select members who are present{" "}
               {isToday ? "today" : `on ${formatDate(date + "T00:00:00.000Z")}`}. Already marked
@@ -488,8 +486,10 @@ export default function AttendancePage() {
         <>
           {loading ? (
             <div className="space-y-3">
-              {[0,1,2,3].map((i) => (
-                <div key={i} className="rounded-lg ring-1 ring-foreground/10"><SkeletonRow className="p-3" /></div>
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="rounded-lg ring-1 ring-foreground/10">
+                  <SkeletonRow className="p-3" />
+                </div>
               ))}
             </div>
           ) : records.length === 0 ? (
@@ -516,7 +516,8 @@ export default function AttendancePage() {
                         type="button"
                         className="flex min-w-0 flex-1 items-start gap-3 text-left transition-opacity hover:opacity-80"
                         onClick={() =>
-                          r.membershipId && navigate(getTenantDashboardPath(`/members/${r.membershipId}#attendance`))
+                          r.membershipId &&
+                          navigate(getTenantDashboardPath(`/members/${r.membershipId}#attendance`))
                         }
                       >
                         <AvatarTile
@@ -607,7 +608,7 @@ export default function AttendancePage() {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2">
                   <CalendarDays className="h-5 w-5" />
                   Attendance Calendar
                 </CardTitle>
@@ -656,9 +657,7 @@ export default function AttendancePage() {
                         key={d}
                         className={cn(
                           "flex min-h-11 flex-col items-center justify-center rounded-md p-1 text-sm",
-                          present
-                            ? "bg-green-500 text-white font-medium"
-                            : "text-muted-foreground",
+                          present ? "bg-green-500 text-white font-medium" : "text-muted-foreground",
                           isTodayCell && "ring-2 ring-primary",
                         )}
                         title={present ? "Present" : "No attendance"}
@@ -689,8 +688,10 @@ export default function AttendancePage() {
 
           {loading ? (
             <div className="space-y-3">
-              {[0,1,2,3].map((i) => (
-                <div key={i} className="rounded-lg ring-1 ring-foreground/10"><SkeletonRow className="p-3" /></div>
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="rounded-lg ring-1 ring-foreground/10">
+                  <SkeletonRow className="p-3" />
+                </div>
               ))}
             </div>
           ) : records.length === 0 ? (

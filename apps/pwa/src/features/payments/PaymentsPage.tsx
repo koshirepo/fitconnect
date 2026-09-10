@@ -1,4 +1,5 @@
 import type { PaymentStatus } from "@/types/api";
+import { PageHeader } from "@/components/ui/page-header";
 import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
@@ -325,15 +326,10 @@ export default function PaymentsPage() {
     return counts;
   }, [searchedPayments]);
 
-  const handleStatusUpdate = async (
-    paymentId: string,
-    status: PaymentStatus,
-  ) => {
+  const handleStatusUpdate = async (paymentId: string, status: PaymentStatus) => {
     try {
       await updatePaymentStatus.mutateAsync({ paymentId, status });
-      toast.success(
-        status === "COMPLETED" ? "Payment approved." : "Payment marked failed.",
-      );
+      toast.success(status === "COMPLETED" ? "Payment approved." : "Payment marked failed.");
     } catch (caught) {
       // This used to be swallowed, so an approval that failed looked exactly
       // like one that worked.
@@ -410,27 +406,27 @@ export default function PaymentsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Payments</h1>
-          <p className="text-muted-foreground">
-            {canViewAllPayments ? "Track all tenant payments" : "Your payment history"}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {isAdmin && (
-            <Button variant="outline" onClick={handleExportPayments}>
-              <Download className="h-4 w-4" />
-            </Button>
-          )}
-          {canRecordPayment && (
-            <Button onClick={() => navigate("/payments/record")}>
-              <Plus className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader
+        title="Payments"
+        description={canViewAllPayments ? "Track all tenant payments" : "Your payment history"}
+        actions={
+          <>
+            <div className="flex items-center gap-2">
+              {isAdmin && (
+                <Button variant="outline" onClick={handleExportPayments}>
+                  <Download className="h-4 w-4" />
+                </Button>
+              )}
+              {canRecordPayment && (
+                <Button onClick={() => navigate("/payments/record")}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </>
+        }
+      />
 
       {/* Filters - admin and coaches */}
       {canViewAllPayments && (
@@ -530,10 +526,7 @@ export default function PaymentsPage() {
       )}
 
       {refreshing && (
-        <p
-          role="status"
-          className="flex items-center gap-2 text-xs text-muted-foreground"
-        >
+        <p role="status" className="flex items-center gap-2 text-xs text-muted-foreground">
           {/* The live region is this line, not the icon: the spinner carries a
               "Loading" label of its own that would be announced twice. */}
           <Spinner aria-hidden className="size-3" />
@@ -548,141 +541,144 @@ export default function PaymentsPage() {
         onNext={() => goToTab(1)}
         onPrevious={() => goToTab(-1)}
       >
-      {loading ? (
-        <div className="space-y-3">
-          {[0,1,2,3,4].map((i) => (
-            <div key={i} className="rounded-lg ring-1 ring-foreground/10"><SkeletonRow className="p-3" /></div>
-          ))}
-        </div>
-      ) : allPayments.length === 0 ? (
-        <EmptyState
-          icon={CreditCard}
-          title="No payments found"
-          description={
-            statusFilter || searchTerm || collectedByFilter || hasWindow
-              ? "No payments match this filter."
-              : canViewAllPayments
-                ? "Record the first payment."
-                : "No payment history yet."
-          }
-        />
-      ) : (
-        <div className="space-y-4">
+        {loading ? (
           <div className="space-y-3">
-            {visiblePayments.map((p) => (
-              <MemberCard
-                key={p.id}
-                size="md"
-                // A member viewing their own history has no other person to
-                // name, so the plan title stands in as the identity line.
-                person={
-                  canViewAllPayments && p.member
-                    ? p.member
-                    : { name: p.subscription?.title ?? p.description ?? "Payment" }
-                }
-                onClick={p._pending ? undefined : () => navigate(`/payments/${p.id}`)}
-                // This page is about the payment, not the membership, so the
-                // payment's status takes the chip slot the member list gives to
-                // Active/Until. The tile's coloured edge still reads membership.
-                showStatusChips={false}
-                chips={
-                  <>
-                    <PaymentStatusChip status={p.status} />
-                    {p._pending && (
-                      <PersonChip
-                        icon={Clock}
-                        className="bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                      >
-                        Pending sync
-                      </PersonChip>
-                    )}
-                  </>
-                }
-                subtitle={
-                  <>
-                    {/* The plan already names a self-view row, so it only
-                        repeats itself here; staff rows lead with it. */}
-                    {canViewAllPayments && p.member && (
-                      <>
-                        {p.subscription?.title ?? p.description ?? "—"}
-                        {p.collectedBy && (
-                          <span className="font-medium text-foreground/70">
-                            {" · "}
-                            {p.collectedBy.userId === user?.id ? "You" : p.collectedBy.name}
-                          </span>
-                        )}
-                        {" · "}
-                      </>
-                    )}
-                    <span className="text-muted-foreground">
-                      {formatDate(p.validUntil ?? p.createdAt)}
-                    </span>
-                  </>
-                }
-                actions={
-                  <>
-                    <p className="text-base font-semibold sm:text-lg">{formatCurrency(p.amount)}</p>
-                    {canSettle && !p._pending && p.status === "PENDING" && (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setConfirmAction({
-                              paymentId: p.id,
-                              status: "COMPLETED",
-                              amount: p.amount,
-                            });
-                          }}
-                          title="Approve payment"
-                        >
-                          <CheckCircle2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setConfirmAction({
-                              paymentId: p.id,
-                              status: "FAILED",
-                              amount: p.amount,
-                            });
-                          }}
-                          title="Reject payment"
-                        >
-                          <XCircle className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </>
-                    )}
-                  </>
-                }
-                className={cn(p._pending && "border-dashed opacity-70")}
-              />
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div key={i} className="rounded-lg ring-1 ring-foreground/10">
+                <SkeletonRow className="p-3" />
+              </div>
             ))}
           </div>
+        ) : allPayments.length === 0 ? (
+          <EmptyState
+            icon={CreditCard}
+            title="No payments found"
+            description={
+              statusFilter || searchTerm || collectedByFilter || hasWindow
+                ? "No payments match this filter."
+                : canViewAllPayments
+                  ? "Record the first payment."
+                  : "No payment history yet."
+            }
+          />
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-3">
+              {visiblePayments.map((p) => (
+                <MemberCard
+                  key={p.id}
+                  size="md"
+                  // A member viewing their own history has no other person to
+                  // name, so the plan title stands in as the identity line.
+                  person={
+                    canViewAllPayments && p.member
+                      ? p.member
+                      : { name: p.subscription?.title ?? p.description ?? "Payment" }
+                  }
+                  onClick={p._pending ? undefined : () => navigate(`/payments/${p.id}`)}
+                  // This page is about the payment, not the membership, so the
+                  // payment's status takes the chip slot the member list gives to
+                  // Active/Until. The tile's coloured edge still reads membership.
+                  showStatusChips={false}
+                  chips={
+                    <>
+                      <PaymentStatusChip status={p.status} />
+                      {p._pending && (
+                        <PersonChip
+                          icon={Clock}
+                          className="bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                        >
+                          Pending sync
+                        </PersonChip>
+                      )}
+                    </>
+                  }
+                  subtitle={
+                    <>
+                      {/* The plan already names a self-view row, so it only
+                        repeats itself here; staff rows lead with it. */}
+                      {canViewAllPayments && p.member && (
+                        <>
+                          {p.subscription?.title ?? p.description ?? "—"}
+                          {p.collectedBy && (
+                            <span className="font-medium text-foreground/70">
+                              {" · "}
+                              {p.collectedBy.userId === user?.id ? "You" : p.collectedBy.name}
+                            </span>
+                          )}
+                          {" · "}
+                        </>
+                      )}
+                      <span className="text-muted-foreground">
+                        {formatDate(p.validUntil ?? p.createdAt)}
+                      </span>
+                    </>
+                  }
+                  actions={
+                    <>
+                      <p className="text-base font-semibold sm:text-lg">
+                        {formatCurrency(p.amount)}
+                      </p>
+                      {canSettle && !p._pending && p.status === "PENDING" && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setConfirmAction({
+                                paymentId: p.id,
+                                status: "COMPLETED",
+                                amount: p.amount,
+                              });
+                            }}
+                            title="Approve payment"
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setConfirmAction({
+                                paymentId: p.id,
+                                status: "FAILED",
+                                amount: p.amount,
+                              });
+                            }}
+                            title="Reject payment"
+                          >
+                            <XCircle className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </>
+                      )}
+                    </>
+                  }
+                  className={cn(p._pending && "border-dashed opacity-70")}
+                />
+              ))}
+            </div>
 
-
-          {hasMore ? (
-            <div ref={sentinelRef} className="flex justify-center pt-2">
-              {/* The observer normally reveals the next screenful before this is
+            {hasMore ? (
+              <div ref={sentinelRef} className="flex justify-center pt-2">
+                {/* The observer normally reveals the next screenful before this is
                   reached. The button is what saves a reader whose browser has no
                   IntersectionObserver, or whose list sits in a container that
                   never triggers one. */}
-              <Button variant="ghost" size="sm" onClick={loadMore}>
-                Load more
-              </Button>
-            </div>
-          ) : (
-            shown > 0 && (
-              <p className="pt-2 text-center text-xs text-muted-foreground">
-                Showing all {total} payments
-              </p>
-            )
-          )}
-        </div>
-      )}
+                <Button variant="ghost" size="sm" onClick={loadMore}>
+                  Load more
+                </Button>
+              </div>
+            ) : (
+              shown > 0 && (
+                <p className="pt-2 text-center text-xs text-muted-foreground">
+                  Showing all {total} payments
+                </p>
+              )
+            )}
+          </div>
+        )}
       </SwipePane>
 
       <ConfirmDialog

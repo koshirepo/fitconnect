@@ -7,6 +7,7 @@
  * - Primary exports: ReminderCalendarPage.
  */
 import { getMonthStr, parseMonth } from "@/lib/month";
+import { PageHeader } from "@/components/ui/page-header";
 import * as React from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAppNavigate } from "@/lib/use-app-navigate";
@@ -69,8 +70,6 @@ export default function ReminderCalendarPage() {
     setSelectedDate(null);
   }, [currentMonth]);
 
-
-
   /** The count a day cell shows, under the channel currently filtered to. */
   const countFor = React.useCallback(
     (dateStr: string) => {
@@ -109,15 +108,11 @@ export default function ReminderCalendarPage() {
   }, [channel, days, selectedDate]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Reminders sent</h1>
-          <p className="text-sm text-muted-foreground">
-            Every nudge, notice, and payment chase — by the day it went out.
-          </p>
-        </div>
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader
+        title="Reminders sent"
+        description="Every nudge, notice, and payment chase — by the day it went out."
+      />
 
       {error && (
         <p className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -195,7 +190,9 @@ export default function ReminderCalendarPage() {
                     onClick={() => count > 0 && setSelectedDate(isSelected ? null : dateStr)}
                     className={cn(
                       "relative flex min-h-11 flex-col items-center justify-center rounded-lg text-sm transition-all",
-                      count > 0 ? "cursor-pointer hover:scale-105 active:scale-95" : "cursor-default",
+                      count > 0
+                        ? "cursor-pointer hover:scale-105 active:scale-95"
+                        : "cursor-default",
                       isToday && !isSelected && "ring-2 ring-primary",
                       isSelected && "scale-105 shadow-sm ring-2 ring-primary",
                     )}

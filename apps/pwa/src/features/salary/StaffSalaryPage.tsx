@@ -33,12 +33,7 @@ import { MonthNav } from "@/components/ui/month-nav";
 import { AvatarTile } from "@/components/ui/member-card";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
-import {
-  ArrowLeft,
-  MessageCircle,
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { ArrowLeft, MessageCircle, Plus, Trash2 } from "lucide-react";
 
 const KINDS: { value: SalaryComponentKind; label: string }[] = [
   { value: "BONUS", label: "Bonus" },
@@ -209,7 +204,7 @@ export default function StaffSalaryPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <Button
         variant="outline"
         size="sm"
@@ -266,7 +261,7 @@ export default function StaffSalaryPage() {
       {/* The agreed figure */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
-          <CardTitle className="text-base">Monthly salary</CardTitle>
+          <CardTitle>Monthly salary</CardTitle>
           {canManage && (
             <Button
               size="sm"
@@ -326,7 +321,7 @@ export default function StaffSalaryPage() {
           {/* What the month comes to */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">This month</CardTitle>
+              <CardTitle>This month</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <div className="flex justify-between">
@@ -368,7 +363,7 @@ export default function StaffSalaryPage() {
           {/* Bonus, incentive, benefit, deduction */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Additions &amp; deductions</CardTitle>
+              <CardTitle>Additions &amp; deductions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {cycle.components.length === 0 ? (
@@ -464,7 +459,7 @@ export default function StaffSalaryPage() {
           {/* Money handed over */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Payments</CardTitle>
+              <CardTitle>Payments</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {cycle.payments.length === 0 ? (

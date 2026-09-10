@@ -1,4 +1,5 @@
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { tenantsApi } from "@/api/tenants";
 import { getApiError } from "@/api/client";
@@ -61,18 +62,18 @@ export default function PublicPageSettingsPage() {
 
   return (
     <div className="mx-auto space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Public Page</h1>
-          <p className="text-muted-foreground">
-            Manage the details shown on your gym&apos;s public page.
-          </p>
-        </div>
-        <Button variant="outline" onClick={() => navigate("/settings")}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Settings
-        </Button>
-      </div>
+      <PageHeader
+        title="Public Page"
+        description="Manage the details shown on your gym's public page."
+        actions={
+          <>
+            <Button variant="outline" onClick={() => navigate("/settings")}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Settings
+            </Button>
+          </>
+        }
+      />
 
       <TenantPublicProfileCard
         tenant={tenant}

@@ -7,6 +7,7 @@
  * - Primary exports: StoreManagePage.
  */
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { getApiError } from "@/api/client";
 import {
@@ -22,7 +23,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { CardsGridSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Menu, MenuContent, MenuItem, MenuSeparator, MenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  Menu,
+  MenuContent,
+  MenuItem,
+  MenuSeparator,
+  MenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/toast";
 import { formatCurrency } from "@/lib/utils";
 import { Archive, Coins, Edit2, Minus, MoreHorizontal, Package, Plus, Trash2 } from "lucide-react";
@@ -99,17 +106,19 @@ export default function StoreManagePage() {
   if (loading) return <CardsGridSkeleton count={4} className="gap-4" />;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Manage store</h1>
-          <p className="text-muted-foreground">What the gym sells, and how much of it is left</p>
-        </div>
-        <Button onClick={() => navigate("/dashboard/store/manage/new")}>
-          <Plus className="h-4 w-4" />
-          New product
-        </Button>
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader
+        title="Manage store"
+        description="What the gym sells, and how much of it is left"
+        actions={
+          <>
+            <Button onClick={() => navigate("/dashboard/store/manage/new")}>
+              <Plus className="h-4 w-4" />
+              New product
+            </Button>
+          </>
+        }
+      />
 
       {error && (
         <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -136,7 +145,7 @@ export default function StoreManagePage() {
               <CardHeader className="pb-3">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <CardTitle className="flex flex-wrap items-center gap-2 text-base">
+                    <CardTitle className="flex flex-wrap items-center gap-2">
                       {product.name}
                       <Badge variant="secondary" className="text-xs">
                         {product.category}

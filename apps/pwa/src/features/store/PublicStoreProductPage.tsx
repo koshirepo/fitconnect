@@ -9,12 +9,7 @@
 import * as React from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
-import {
-  basketTotalQuantity,
-  readBasket,
-  setBasketQuantity,
-  type BasketEntry,
-} from "./basket";
+import { basketTotalQuantity, readBasket, setBasketQuantity, type BasketEntry } from "./basket";
 import {
   useAddProductComment,
   useDeleteProductComment,
@@ -167,7 +162,6 @@ export default function PublicStoreProductPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-4 md:p-6">
-
       <ProductOverview
         product={product}
         action={
@@ -250,7 +244,7 @@ export default function PublicStoreProductPage() {
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Comments ({shownComments.length})</CardTitle>
+          <CardTitle>Comments ({shownComments.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <CommentThread

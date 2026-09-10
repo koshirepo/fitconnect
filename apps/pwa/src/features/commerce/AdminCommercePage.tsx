@@ -1,4 +1,5 @@
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useNavigate } from "react-router-dom";
 import { useAdminProducts } from "@/api/queries/platform";
 import { getApiError } from "@/api/client";
@@ -33,11 +34,8 @@ export default function AdminCommercePage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">E-commerce Admin</h1>
-        <p className="text-muted-foreground">Manage the global product catalog.</p>
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader title="E-commerce Admin" description="Manage the global product catalog." />
 
       <div className="flex flex-wrap justify-end gap-2">
         <Button variant="outline" onClick={() => navigate("/platform-commerce/orders")}>

@@ -101,13 +101,13 @@ export function PasskeysCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
+        <CardTitle className="flex items-center gap-2">
           <Fingerprint className="h-5 w-5" />
           Passkeys
         </CardTitle>
         <CardDescription>
-          Sign in with your fingerprint, face, or screen lock instead of a password. The
-          key stays on your device — this gym never sees it.
+          Sign in with your fingerprint, face, or screen lock instead of a password. The key stays
+          on your device — this gym never sees it.
         </CardDescription>
       </CardHeader>
 
@@ -116,8 +116,8 @@ export function PasskeysCard() {
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : passkeys.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No passkeys yet. Add one and your password becomes a backup rather than the
-            thing you have to remember.
+            No passkeys yet. Add one and your password becomes a backup rather than the thing you
+            have to remember.
           </p>
         ) : (
           <ul className="divide-y divide-border">

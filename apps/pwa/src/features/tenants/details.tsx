@@ -199,7 +199,7 @@ export default function TenantDetails() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-2">
           <Link to="/tenants" className={buttonVariants({ variant: "outline", size: "sm" })}>
@@ -347,9 +347,7 @@ export default function TenantDetails() {
           {tenant.description?.trim() ? (
             <p className="text-sm">{tenant.description}</p>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              No short description added yet.
-            </p>
+            <p className="text-sm text-muted-foreground">No short description added yet.</p>
           )}
         </CardContent>
       </Card>
@@ -366,9 +364,7 @@ export default function TenantDetails() {
               </Markdown>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              No description added yet.
-            </p>
+            <p className="text-sm text-muted-foreground">No description added yet.</p>
           )}
         </CardContent>
       </Card>
@@ -382,10 +378,7 @@ export default function TenantDetails() {
                 <CreditCard className="h-4 w-4" />
                 Platform Billing
               </CardTitle>
-              <Button
-                size="sm"
-                onClick={() => navigate(`/tenants/${tenantId}/payments/record`)}
-              >
+              <Button size="sm" onClick={() => navigate(`/tenants/${tenantId}/payments/record`)}>
                 Record Payment
               </Button>
             </div>
@@ -466,7 +459,6 @@ export default function TenantDetails() {
           </CardContent>
         </Card>
       )}
-
     </div>
   );
 }

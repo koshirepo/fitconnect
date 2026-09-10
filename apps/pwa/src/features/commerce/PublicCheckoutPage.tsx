@@ -1,4 +1,5 @@
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useNavigate } from "react-router-dom";
 import { commerceApi } from "@/api/commerce";
 import { getApiError } from "@/api/client";
@@ -362,7 +363,9 @@ export default function PublicCheckoutPage() {
       if (result.status !== "paid") {
         await commerceApi.discardUnpaidOrder(order.id).catch(() => {});
         saveCartItems(snapshot);
-        setError("Payment was not completed, so nothing was ordered. Your basket is as you left it.");
+        setError(
+          "Payment was not completed, so nothing was ordered. Your basket is as you left it.",
+        );
         return;
       }
 
@@ -404,10 +407,7 @@ export default function PublicCheckoutPage() {
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Checkout</h1>
-            <p className="text-muted-foreground">Confirm buyer info and place your order.</p>
-          </div>
+          <PageHeader title="Checkout" description="Confirm buyer info and place your order." />
           <Button variant="outline" onClick={() => navigate("/shop/cart")}>
             <ArrowLeft className="h-4 w-4" />
             Back to Cart

@@ -8,6 +8,7 @@
  * - Primary exports: StoreProductFormPage.
  */
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useParams } from "react-router-dom";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { getApiError } from "@/api/client";
@@ -197,17 +198,15 @@ export default function StoreProductFormPage() {
   if (isEdit && productQuery.isPending) return <FormPageSkeleton fields={4} />;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          {isEdit ? "Edit product" : "New product"}
-        </h1>
-        <p className="text-muted-foreground">
-          {isEdit
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader
+        title={isEdit ? "Edit product" : "New product"}
+        description={
+          isEdit
             ? "Change the details, or manage what it is sold as."
-            : "Name it once, then add every flavour, size, or colour you sell."}
-        </p>
-      </div>
+            : "Name it once, then add every flavour, size, or colour you sell."
+        }
+      />
 
       {error && (
         <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -217,7 +216,7 @@ export default function StoreProductFormPage() {
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Details</CardTitle>
+          <CardTitle>Details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-1.5">
@@ -289,7 +288,7 @@ export default function StoreProductFormPage() {
           fields below them did not. */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">What the member sees</CardTitle>
+          <CardTitle>What the member sees</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-1.5">
@@ -308,8 +307,8 @@ export default function StoreProductFormPage() {
               placeholder="https://youtu.be/..."
             />
             <p className="text-xs text-muted-foreground">
-              Paste a YouTube link however you copied it — a share link, a watch link, or a
-              Shorts link all work.
+              Paste a YouTube link however you copied it — a share link, a watch link, or a Shorts
+              link all work.
             </p>
           </div>
 
@@ -332,7 +331,7 @@ export default function StoreProductFormPage() {
       {!isEdit && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Variants</CardTitle>
+            <CardTitle>Variants</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {variants.map((variant, index) => (
@@ -367,7 +366,7 @@ export default function StoreProductFormPage() {
       {isEdit && product && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Variants</CardTitle>
+            <CardTitle>Variants</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {product.variants.map((variant) => (
@@ -448,9 +447,7 @@ function VariantFields({
   const setAttribute = (index: number, patch: { key?: string; value?: string }) => {
     onChange({
       ...draft,
-      attributes: draft.attributes.map((pair, i) =>
-        i === index ? { ...pair, ...patch } : pair,
-      ),
+      attributes: draft.attributes.map((pair, i) => (i === index ? { ...pair, ...patch } : pair)),
     });
   };
 

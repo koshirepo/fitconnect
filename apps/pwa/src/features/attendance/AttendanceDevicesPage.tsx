@@ -8,6 +8,7 @@
  * - Primary exports: AttendanceDevicesPage.
  */
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useNavigate } from "react-router-dom";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { usePermissions } from "@/features/auth/permission-gate";
@@ -47,8 +48,7 @@ export default function AttendanceDevicesPage() {
   // with the unit in hand, which is a poor fit for a modal on a phone, and a
   // real URL means half-finished work survives a reload.
   const openCreate = () => navigate("/attendance/devices/new");
-  const openEdit = (device: AttendanceDevice) =>
-    navigate(`/attendance/devices/${device.id}/edit`);
+  const openEdit = (device: AttendanceDevice) => navigate(`/attendance/devices/${device.id}/edit`);
 
   const toggleActive = async (device: AttendanceDevice) => {
     try {
@@ -77,27 +77,27 @@ export default function AttendanceDevicesPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Attendance machines</h1>
-          <p className="text-muted-foreground">
-            RFID readers that check members in. A gym can have as many as it has doors.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate("/attendance")}>
-            <ArrowLeft className="h-4 w-4" />
-            Attendance
-          </Button>
-          {canManage && (
-            <Button onClick={openCreate}>
-              <Plus className="h-4 w-4" />
-              Add machine
-            </Button>
-          )}
-        </div>
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader
+        title="Attendance machines"
+        description="RFID readers that check members in. A gym can have as many as it has doors."
+        actions={
+          <>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => navigate("/attendance")}>
+                <ArrowLeft className="h-4 w-4" />
+                Attendance
+              </Button>
+              {canManage && (
+                <Button onClick={openCreate}>
+                  <Plus className="h-4 w-4" />
+                  Add machine
+                </Button>
+              )}
+            </div>
+          </>
+        }
+      />
 
       {!canManage ? (
         <Card>
@@ -128,7 +128,7 @@ export default function AttendanceDevicesPage() {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <CardTitle className="text-base">{device.name}</CardTitle>
+                    <CardTitle>{device.name}</CardTitle>
                     <p className="mt-1 font-mono text-xs text-muted-foreground">
                       {device.serialNumber}
                     </p>
@@ -191,18 +191,18 @@ export default function AttendanceDevicesPage() {
       {canManage && devices.length > 0 && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Pointing a machine at this gym</CardTitle>
+            <CardTitle>Pointing a machine at this gym</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>
-              On the device, set the server address to this app&apos;s API host and
-              the port it is served on, leave the path at its default, and turn on
-              the cloud or ADMS option. It will check in within a minute.
+              On the device, set the server address to this app&apos;s API host and the port it is
+              served on, leave the path at its default, and turn on the cloud or ADMS option. It
+              will check in within a minute.
             </p>
             <p>
-              Then enrol each member&apos;s card on the machine and record the PIN it
-              was enrolled under against that member — a punch carries the PIN, not
-              the card number, so an unmapped PIN is counted and ignored.
+              Then enrol each member&apos;s card on the machine and record the PIN it was enrolled
+              under against that member — a punch carries the PIN, not the card number, so an
+              unmapped PIN is counted and ignored.
             </p>
           </CardContent>
         </Card>

@@ -12,7 +12,6 @@ import {
   ArrowLeft,
   PackageSearch,
   ShoppingCart,
-
   Star,
   MessageSquare,
   FileText,
@@ -63,7 +62,6 @@ export default function PublicProductDetailPage() {
       .finally(() => setLoading(false));
   }, [productId]);
 
-
   const cartCount = getCartTotalQuantity(cart);
   const sellableVariants = React.useMemo(
     () => (product?.variants ?? []).filter((variant) => variant.isActive),
@@ -86,7 +84,9 @@ export default function PublicProductDetailPage() {
     title: product?.name ?? "Product",
     description:
       product?.description?.trim() ||
-      (product ? `Buy ${product.name} online at FitConnect. Delivered across India.` : "Gym accessories and equipment."),
+      (product
+        ? `Buy ${product.name} online at FitConnect. Delivered across India.`
+        : "Gym accessories and equipment."),
     canonicalPath: productId ? `/shop/products/${productId}` : undefined,
     image: product?.photos?.[0],
     type: "product",
@@ -110,7 +110,6 @@ export default function PublicProductDetailPage() {
         }
       : undefined,
   });
-
 
   if (loading) return <DetailPageSkeleton />;
 
@@ -137,9 +136,7 @@ export default function PublicProductDetailPage() {
       {/* ── Topbar ──────────────────────────────────────────────────────── */}
       <ShopHeader backTo="/shop" backLabel="Shop" cartCount={cartCount}>
         <p className="text-sm text-muted-foreground hidden md:block truncate max-w-xs">
-          {product.category && (
-            <span className="text-muted-foreground">{product.category} / </span>
-          )}
+          {product.category && <span className="text-muted-foreground">{product.category} / </span>}
           <span className="text-foreground font-medium">{product.name}</span>
         </p>
       </ShopHeader>
@@ -180,8 +177,7 @@ export default function PublicProductDetailPage() {
                   }}
                   className="underline-offset-2 hover:underline"
                 >
-                  {ratingStats.totalReviews}{" "}
-                  {ratingStats.totalReviews === 1 ? "review" : "reviews"}
+                  {ratingStats.totalReviews} {ratingStats.totalReviews === 1 ? "review" : "reviews"}
                 </button>
               </div>
             ) : undefined
@@ -195,8 +191,7 @@ export default function PublicProductDetailPage() {
               url={absoluteUrl(`/shop/products/${product.id}`)}
               title={product.name}
               text={
-                product.description?.trim() ||
-                `${product.name} — ${formatCurrency(product.price)}`
+                product.description?.trim() || `${product.name} — ${formatCurrency(product.price)}`
               }
             />
           }
@@ -219,51 +214,50 @@ export default function PublicProductDetailPage() {
             ) : null
           }
         >
-            {/* Always, even for a product sold in one form. A card listing a
+          {/* Always, even for a product sold in one form. A card listing a
                 single option is not clutter — it is the row that carries the
                 price and the quantity, and it is what the gym store has always
                 shown. The panel that used to sit under it is gone: it repeated
                 the price the rows already give, and its "Stock" was a total
                 across variants that no single one of them had. */}
-            <VariantOptionsCard
-              variants={sellableVariants}
-              maxPerOrder={product.maxOrderQty}
-              disabled={!product.isActive}
-              quantityFor={(variant) =>
-                cart.find(
-                  (item) => item.productId === product.id && item.variantId === variant.id,
-                )?.quantity ?? 0
-              }
-              onQuantityChange={(variant, quantity) => {
-                setError("");
-                setCart(upsertCartItem(product.id, variant.id, quantity));
-              }}
-            />
+          <VariantOptionsCard
+            variants={sellableVariants}
+            maxPerOrder={product.maxOrderQty}
+            disabled={!product.isActive}
+            quantityFor={(variant) =>
+              cart.find((item) => item.productId === product.id && item.variantId === variant.id)
+                ?.quantity ?? 0
+            }
+            onQuantityChange={(variant, quantity) => {
+              setError("");
+              setCart(upsertCartItem(product.id, variant.id, quantity));
+            }}
+          />
 
-            {cartQtyForProduct > 0 && (
-              <Button variant="outline" className="w-full" onClick={() => navigate("/shop/cart")}>
-                <ShoppingCart className="h-4 w-4" />
-                View cart · {cartQtyForProduct}
-              </Button>
-            )}
+          {cartQtyForProduct > 0 && (
+            <Button variant="outline" className="w-full" onClick={() => navigate("/shop/cart")}>
+              <ShoppingCart className="h-4 w-4" />
+              View cart · {cartQtyForProduct}
+            </Button>
+          )}
 
-            {!product.isActive && (
-              <p className="text-center text-sm text-destructive">
-                This product is currently unavailable.
-              </p>
-            )}
+          {!product.isActive && (
+            <p className="text-center text-sm text-destructive">
+              This product is currently unavailable.
+            </p>
+          )}
 
-            {product.markdown && (
-              <div className="rounded-xl border bg-card p-5">
-                <div className="mb-3 flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <h2 className="text-base font-semibold">Details</h2>
-                </div>
-                <div className="prose prose-sm prose-neutral dark:prose-invert max-w-none prose-a:text-primary prose-img:rounded-xl prose-pre:rounded-xl">
-                  <Markdown remarkPlugins={[remarkGfm]}>{product.markdown}</Markdown>
-                </div>
+          {product.markdown && (
+            <div className="rounded-xl border bg-card p-5">
+              <div className="mb-3 flex items-center gap-2">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <h2 className="text-base font-semibold">Details</h2>
               </div>
-            )}
+              <div className="prose prose-sm prose-neutral dark:prose-invert max-w-none prose-a:text-primary prose-img:rounded-xl prose-pre:rounded-xl">
+                <Markdown remarkPlugins={[remarkGfm]}>{product.markdown}</Markdown>
+              </div>
+            </div>
+          )}
         </ProductDetailLayout>
 
         {/* ── Reviews ─────────────────────────────────────────────────── */}
@@ -318,10 +312,7 @@ export default function PublicProductDetailPage() {
                 </>
               )}
               {activeTab === "write" && (
-                <ReviewForm
-                  productId={productId!}
-                  onSuccess={() => setActiveTab("details")}
-                />
+                <ReviewForm productId={productId!} onSuccess={() => setActiveTab("details")} />
               )}
             </div>
           </div>

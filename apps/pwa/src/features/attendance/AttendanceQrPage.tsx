@@ -29,23 +29,20 @@ export default function AttendanceQrPage() {
   const [successName, setSuccessName] = React.useState("");
   const [error, setError] = React.useState("");
 
-  const markAttendance = React.useCallback(
-    async () => {
-      if (!tenantId) return;
-      setError("");
-      setLoading(true);
-      try {
-        const res = await attendanceApi.qrCheckIn(tenantId);
-        setTenant(res.data.data.tenant);
-        setSuccessName(res.data.data.attendance.memberName ?? "Member");
-      } catch (err) {
-        setError(getApiError(err));
-      } finally {
-        setLoading(false);
-      }
-    },
-    [tenantId],
-  );
+  const markAttendance = React.useCallback(async () => {
+    if (!tenantId) return;
+    setError("");
+    setLoading(true);
+    try {
+      const res = await attendanceApi.qrCheckIn(tenantId);
+      setTenant(res.data.data.tenant);
+      setSuccessName(res.data.data.attendance.memberName ?? "Member");
+    } catch (err) {
+      setError(getApiError(err));
+    } finally {
+      setLoading(false);
+    }
+  }, [tenantId]);
 
   React.useEffect(() => {
     if (!tenantId) return;

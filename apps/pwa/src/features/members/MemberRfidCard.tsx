@@ -111,7 +111,7 @@ export function MemberRfidCard({
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-3">
-          <CardTitle className="flex items-center gap-2 text-base">
+          <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-4 w-4" />
             Attendance card
           </CardTitle>
@@ -129,8 +129,7 @@ export function MemberRfidCard({
             {assigned ? (
               <div className="space-y-1">
                 <p>
-                  Card{" "}
-                  <span className="font-mono">{rfidCardNumber ?? "—"}</span>
+                  Card <span className="font-mono">{rfidCardNumber ?? "—"}</span>
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Filed on the readers as #{deviceUserPin}.
@@ -138,8 +137,8 @@ export function MemberRfidCard({
               </div>
             ) : (
               <p className="text-muted-foreground">
-                This member has no card. Assign one and it is enrolled on every
-                reader automatically — there is no need to go to the machine.
+                This member has no card. Assign one and it is enrolled on every reader automatically
+                — there is no need to go to the machine.
               </p>
             )}
 
@@ -174,8 +173,8 @@ export function MemberRfidCard({
                 onChange={(e) => setCardNumber(e.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                Read it off the card, or tap the card on a reader in enrol mode
-                and copy the number it shows.
+                Read it off the card, or tap the card on a reader in enrol mode and copy the number
+                it shows.
               </p>
             </div>
 
@@ -190,16 +189,16 @@ export function MemberRfidCard({
                   onChange={(e) => setPin(e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  The number the readers file this member under. Only change it
-                  to match an enrolment already on the machine — otherwise their
-                  taps arrive under a number nobody here recognises.
+                  The number the readers file this member under. Only change it to match an
+                  enrolment already on the machine — otherwise their taps arrive under a number
+                  nobody here recognises.
                 </p>
               </div>
             ) : (
               <p className="text-xs text-muted-foreground">
                 The readers will file this member under{" "}
-                <span className="font-medium text-foreground">#{pin}</span>,
-                their own member number.{" "}
+                <span className="font-medium text-foreground">#{pin}</span>, their own member
+                number.{" "}
                 <button
                   type="button"
                   className="underline underline-offset-2 hover:text-foreground"

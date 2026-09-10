@@ -1,4 +1,5 @@
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useNavigate } from "react-router-dom";
 import { commerceApi } from "@/api/commerce";
 import { getApiError } from "@/api/client";
@@ -118,7 +119,6 @@ export default function PublicCartPage() {
     setCart(upsertCartItem(line.product.id, line.variantId, next));
   };
 
-
   const proceedToCheckout = () => {
     if (lines.length === 0) {
       setError("Your cart is empty.");
@@ -135,7 +135,16 @@ export default function PublicCartPage() {
     navigate("/shop/checkout");
   };
 
-  if (loading) return (<div className="space-y-3">{[0,1,2].map((i)=>(<div key={i} className="rounded-lg ring-1 ring-foreground/10"><SkeletonRow className="p-3" /></div>))}</div>);
+  if (loading)
+    return (
+      <div className="space-y-3">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="rounded-lg ring-1 ring-foreground/10">
+            <SkeletonRow className="p-3" />
+          </div>
+        ))}
+      </div>
+    );
 
   if (cart.length === 0) {
     return (
@@ -154,10 +163,7 @@ export default function PublicCartPage() {
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Your Cart</h1>
-            <p className="text-muted-foreground">Review quantities before checkout.</p>
-          </div>
+          <PageHeader title="Your Cart" description="Review quantities before checkout." />
           <Button variant="outline" onClick={() => navigate("/shop")}>
             <ArrowLeft className="h-4 w-4" />
             Continue Shopping

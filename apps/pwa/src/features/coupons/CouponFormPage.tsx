@@ -8,14 +8,11 @@
  * - Primary exports: CouponFormPage.
  */
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useParams } from "react-router-dom";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { getTenantDashboardPath } from "@/lib/subdomain";
-import {
-  useCoupon,
-  useCreateCoupon,
-  useUpdateCoupon,
-} from "@/api/queries/coupons";
+import { useCoupon, useCreateCoupon, useUpdateCoupon } from "@/api/queries/coupons";
 import { useBadges } from "@/api/queries/catalog";
 import { useSubscriptions } from "@/api/queries/payments";
 import { getApiError } from "@/api/client";
@@ -25,13 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormPageSkeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -44,10 +35,7 @@ import {
 import { ArrowLeft, CalendarClock, Coins, Percent } from "lucide-react";
 import type { Coupon, CouponPayload, CouponType } from "@/types/api";
 
-const TYPE_META: Record<
-  CouponType,
-  { label: string; icon: React.ElementType; hint: string }
-> = {
+const TYPE_META: Record<CouponType, { label: string; icon: React.ElementType; hint: string }> = {
   DISCOUNT: {
     label: "Discount",
     icon: Percent,
@@ -220,7 +208,7 @@ export default function CouponFormPage() {
   const TypeIcon = TYPE_META[form.type].icon;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-5 sm:space-y-6">
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"
@@ -232,16 +220,15 @@ export default function CouponFormPage() {
         </Button>
       </div>
 
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          {isEdit ? `Edit ${couponQuery.data?.coupon.code ?? "coupon"}` : "New coupon"}
-        </h1>
-        <p className="text-muted-foreground">
-          {isEdit
+      <PageHeader
+        title={isEdit ? `Edit ${couponQuery.data?.coupon.code ?? "coupon"}` : "New coupon"}
+
+        description={
+          isEdit
             ? "Changes apply to future redemptions only — what members already received is unchanged."
-            : "Set what it gives, who can use it, and how often."}
-        </p>
-      </div>
+            : "Set what it gives, who can use it, and how often."
+        }
+      />
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
@@ -259,9 +246,7 @@ export default function CouponFormPage() {
                 <Input
                   id="code"
                   value={form.code}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, code: e.target.value.toUpperCase() }))
-                  }
+                  onChange={(e) => setForm((f) => ({ ...f, code: e.target.value.toUpperCase() }))}
                   placeholder="NEWYEAR"
                   required
                   minLength={3}
@@ -389,9 +374,7 @@ export default function CouponFormPage() {
         <Card>
           <CardHeader>
             <CardTitle>Who can use it</CardTitle>
-            <CardDescription>
-              Leave everything open to let any member use the code.
-            </CardDescription>
+            <CardDescription>Leave everything open to let any member use the code.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <label className="flex items-center gap-2 text-sm">
@@ -404,8 +387,8 @@ export default function CouponFormPage() {
               First subscription only
             </label>
             <p className="-mt-2 text-xs text-muted-foreground">
-              A member who has never completed a subscription payment. Admission
-              charges and abandoned signups do not count against it.
+              A member who has never completed a subscription payment. Admission charges and
+              abandoned signups do not count against it.
             </p>
 
             <div className="grid gap-3 sm:grid-cols-2">
@@ -465,8 +448,8 @@ export default function CouponFormPage() {
                   ))}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  None selected means no badge is required. Selecting several
-                  means any one of them will do.
+                  None selected means no badge is required. Selecting several means any one of them
+                  will do.
                 </p>
               </div>
             )}
@@ -496,9 +479,7 @@ export default function CouponFormPage() {
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  None selected means every plan.
-                </p>
+                <p className="text-xs text-muted-foreground">None selected means every plan.</p>
               </div>
             )}
           </CardContent>

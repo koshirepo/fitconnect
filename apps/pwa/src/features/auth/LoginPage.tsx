@@ -11,7 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dumbbell, Fingerprint } from "lucide-react";
 import { isTenantSubdomain } from "@/lib/subdomain";
-import { readCachedTenantBranding, writeCachedTenantBranding, type TenantBranding } from "@/lib/tenant-branding";
+import {
+  readCachedTenantBranding,
+  writeCachedTenantBranding,
+  type TenantBranding,
+} from "@/lib/tenant-branding";
 import { resolveAssetUrl } from "@/lib/assets";
 
 export default function LoginPage() {
@@ -101,7 +105,9 @@ export default function LoginPage() {
     }
   };
 
-  const brandLogo = tenantBrand?.logoUrl ? resolveAssetUrl(tenantBrand.logoUrl) ?? tenantBrand.logoUrl : null;
+  const brandLogo = tenantBrand?.logoUrl
+    ? (resolveAssetUrl(tenantBrand.logoUrl) ?? tenantBrand.logoUrl)
+    : null;
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center p-4">
@@ -109,17 +115,22 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border bg-primary/5">
             {brandLogo ? (
-              <img src={brandLogo} alt={tenantBrand?.name ? `${tenantBrand.name} logo` : "Brand logo"} className="h-full w-full object-cover" />
+              <img
+                src={brandLogo}
+                alt={tenantBrand?.name ? `${tenantBrand.name} logo` : "Brand logo"}
+                className="h-full w-full object-cover"
+              />
             ) : (
               <Dumbbell className="h-8 w-8 text-primary" />
             )}
           </div>
-          <CardTitle className="text-2xl">
-            {tenantBrand?.name ?? "Welcome back"}
-          </CardTitle>
+          <CardTitle className="text-2xl">{tenantBrand?.name ?? "Welcome back"}</CardTitle>
           <CardDescription className="space-y-2">
             <span>
-              {tenantBrand?.description || (tenantContext ? "Sign in to manage your gym and members." : "Sign in to your FitConnect account.")}
+              {tenantBrand?.description ||
+                (tenantContext
+                  ? "Sign in to manage your gym and members."
+                  : "Sign in to your FitConnect account.")}
             </span>
             {tenantBrand && (
               <div className="space-y-1 text-xs text-muted-foreground">
@@ -201,10 +212,7 @@ export default function LoginPage() {
           {tenantContext && (
             <div className="mt-4 text-center text-sm text-muted-foreground">
               New here?{" "}
-              <Link
-                to="/signup"
-                className="font-medium text-foreground hover:underline"
-              >
+              <Link to="/signup" className="font-medium text-foreground hover:underline">
                 Join {tenantBrand?.name ?? "this gym"}
               </Link>
             </div>

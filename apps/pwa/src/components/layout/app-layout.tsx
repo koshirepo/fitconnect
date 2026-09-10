@@ -39,7 +39,15 @@ export function AppLayout() {
         )}
       >
         <Header />
-        <main className="p-4 md:p-6">
+        {/* A narrower gutter on a phone than on a desktop: 16px here plus a
+            card's own 16px inside put content 32px from the edge of a 375px
+            screen, which is a sixth of the width spent on nothing. Twelve all
+            round instead — enough that a title does not sit against the app
+            header and a list does not end against the bottom of the screen,
+            and little enough that the content gets the width. Screens built
+            entirely from cards drop the side gutter — see the detail pages,
+            which pull back out to full-bleed below `sm`. */}
+        <main className="p-3 md:p-6">
           <Outlet />
         </main>
       </div>

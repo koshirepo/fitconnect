@@ -8,6 +8,7 @@
  * - Primary exports: GymSettingsPage.
  */
 import { formatCurrency } from "@fitconnect/shared/utils";
+import { PageHeader } from "@/components/ui/page-header";
 import * as React from "react";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { tenantsApi } from "@/api/tenants";
@@ -28,13 +29,7 @@ import {
 import { getApiError } from "@/api/client";
 import { formatShiftWindow } from "@/lib/shifts";
 import type { TenantCharge, Shift, Tenant } from "@/types/api";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -124,10 +119,7 @@ export default function GymSettingsPage() {
   const chargesQuery = useCharges();
   const shiftsQuery = useShifts(true);
 
-  const charges = React.useMemo<TenantCharge[]>(
-    () => chargesQuery.data ?? [],
-    [chargesQuery.data],
-  );
+  const charges = React.useMemo<TenantCharge[]>(() => chargesQuery.data ?? [], [chargesQuery.data]);
   const shifts = React.useMemo<Shift[]>(() => shiftsQuery.data ?? [], [shiftsQuery.data]);
   const loading = settingsQuery.isLoading || chargesQuery.isLoading || shiftsQuery.isLoading;
 
@@ -145,13 +137,9 @@ export default function GymSettingsPage() {
 
   // Delete confirm
   const [confirmOpen, setConfirmOpen] = React.useState(false);
-  const [pendingChargeId, setPendingChargeId] = React.useState<string | null>(
-    null,
-  );
+  const [pendingChargeId, setPendingChargeId] = React.useState<string | null>(null);
   const [shiftConfirmOpen, setShiftConfirmOpen] = React.useState(false);
-  const [pendingShiftId, setPendingShiftId] = React.useState<string | null>(
-    null,
-  );
+  const [pendingShiftId, setPendingShiftId] = React.useState<string | null>(null);
 
   // Settings form
   const [overdueDays, setOverdueDays] = React.useState(30);
@@ -162,9 +150,7 @@ export default function GymSettingsPage() {
 
   // Charge form
   const [showChargeForm, setShowChargeForm] = React.useState(false);
-  const [editingCharge, setEditingCharge] = React.useState<TenantCharge | null>(
-    null,
-  );
+  const [editingCharge, setEditingCharge] = React.useState<TenantCharge | null>(null);
   const [chargeName, setChargeName] = React.useState("");
   const [chargeAmount, setChargeAmount] = React.useState("");
   const [chargeMandatory, setChargeMandatory] = React.useState(true);
@@ -367,13 +353,11 @@ export default function GymSettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Gym Settings</h1>
-        <p className="text-muted-foreground">
-          Everything that changes how this gym runs, grouped by what it affects.
-        </p>
-      </div>
+    <div className="mx-auto max-w-5xl space-y-5 sm:space-y-6">
+      <PageHeader
+        title="Gym Settings"
+        description="Everything that changes how this gym runs, grouped by what it affects."
+      />
 
       {error && (
         <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
@@ -451,8 +435,8 @@ export default function GymSettingsPage() {
                     onChange={(e) => setReferralRewardCoins(Number(e.target.value))}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Coins the referrer earns when the member they brought in pays for
-                    their first subscription. 0 turns referral rewards off.
+                    Coins the referrer earns when the member they brought in pays for their first
+                    subscription. 0 turns referral rewards off.
                   </p>
                 </div>
 

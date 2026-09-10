@@ -40,12 +40,7 @@ export function TenantPathNormalizer() {
   const [firstSegment] = location.pathname.replace(/^\/+/, "").split("/");
 
   if (firstSegment && GYM_PATH_SEGMENTS.has(firstSegment)) {
-    return (
-      <Navigate
-        to={toTenantDashboardPath(location.pathname) + location.search}
-        replace
-      />
-    );
+    return <Navigate to={toTenantDashboardPath(location.pathname) + location.search} replace />;
   }
 
   /**

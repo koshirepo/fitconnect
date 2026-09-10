@@ -1,4 +1,5 @@
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { flattenPages } from "@/api/queries/shared";
 import { useTenantsInfinite, useUpdateTenantStatus } from "@/api/queries/platform";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -41,10 +42,7 @@ export default function TenantsPage() {
   const query = useTenantsInfinite();
   const updateStatus = useUpdateTenantStatus();
 
-  const tenants = React.useMemo(
-    () => flattenPages<Tenant>(query.data?.pages),
-    [query.data],
-  );
+  const tenants = React.useMemo(() => flattenPages<Tenant>(query.data?.pages), [query.data]);
   const loading = query.isLoading;
   const loadingMore = query.isFetchingNextPage;
 
@@ -65,17 +63,19 @@ export default function TenantsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Tenants</h1>
-          <p className="text-muted-foreground">Manage gym tenants</p>
-        </div>
-        <Link to="/tenants/add" className={buttonVariants()}>
-          <Plus className="h-4 w-4" />
-          Add Tenant
-        </Link>
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader
+        title="Tenants"
+        description="Manage gym tenants"
+        actions={
+          <>
+            <Link to="/tenants/add" className={buttonVariants()}>
+              <Plus className="h-4 w-4" />
+              Add Tenant
+            </Link>
+          </>
+        }
+      />
 
       {loading ? (
         <ListPageSkeleton search={false} filters={0} />

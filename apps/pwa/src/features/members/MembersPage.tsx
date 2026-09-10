@@ -1,4 +1,5 @@
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useSearchParams } from "react-router-dom";
@@ -146,11 +147,12 @@ export default function MembersPage() {
   // Only for a caller allowed to read them: the endpoint answers 403 to anyone
   // else, and a coach opening this screen would spend a request on being told
   // no every time.
-  const roleMatrix = useTenantRoleMatrix(
-    can(Permission.ROLES_READ) ? currentTenantId : null,
-  ).data;
+  const roleMatrix = useTenantRoleMatrix(can(Permission.ROLES_READ) ? currentTenantId : null).data;
   const assignableRoles = React.useMemo(
-    () => (roleMatrix?.roles ?? []).filter((role) => !role.isSystem || ["MEMBER", "COACH", "ADMIN"].includes(role.role)),
+    () =>
+      (roleMatrix?.roles ?? []).filter(
+        (role) => !role.isSystem || ["MEMBER", "COACH", "ADMIN"].includes(role.role),
+      ),
     [roleMatrix],
   );
 
@@ -234,10 +236,7 @@ export default function MembersPage() {
   // The platform's occupation list, for the filter. Cached for the hour by the
   // hook, so opening the roster twice does not ask twice.
   const occupationsQuery = useOccupations();
-  const occupations = React.useMemo(
-    () => occupationsQuery.data ?? [],
-    [occupationsQuery.data],
-  );
+  const occupations = React.useMemo(() => occupationsQuery.data ?? [], [occupationsQuery.data]);
   const settingsQuery = useTenantSettings();
 
   const members = React.useMemo(() => membersQuery.data ?? [], [membersQuery.data]);
@@ -307,8 +306,7 @@ export default function MembersPage() {
   );
 
   const getPendingPaymentReminderUrl = React.useCallback(
-    (member: TenantMember) =>
-      buildWhatsAppUrl(member.phone, getPendingPaymentReminderText(member)),
+    (member: TenantMember) => buildWhatsAppUrl(member.phone, getPendingPaymentReminderText(member)),
     [getPendingPaymentReminderText],
   );
 
@@ -377,7 +375,8 @@ export default function MembersPage() {
 
         if (!trimmedSearch) return true;
 
-        const searchableText = `${member.name} ${member.email} ${member.phone ?? ""} ${member.memberId ?? ""}`.toLowerCase();
+        const searchableText =
+          `${member.name} ${member.email} ${member.phone ?? ""} ${member.memberId ?? ""}`.toLowerCase();
         return searchableText.includes(trimmedSearch);
       })
       .sort((a, b) => new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime());
@@ -458,14 +457,14 @@ export default function MembersPage() {
 
   const hasActiveFilters = Boolean(
     statusFilter ||
-      badgeFilter ||
-      genderFilter ||
-      occupationFilter ||
-      shiftFilter ||
-      search.trim() ||
-      hasJoinedWindow ||
-      hasDeactivatedWindow ||
-      roleParam !== "MEMBER",
+    badgeFilter ||
+    genderFilter ||
+    occupationFilter ||
+    shiftFilter ||
+    search.trim() ||
+    hasJoinedWindow ||
+    hasDeactivatedWindow ||
+    roleParam !== "MEMBER",
   );
 
   /** The dates alone, so the rest of the filters survive dropping a window. */
@@ -483,9 +482,7 @@ export default function MembersPage() {
   /** What each window is showing, for the line that says so above the list. */
   const windowLabels = [
     hasJoinedWindow ? describeWindow("Joined", joinedFrom, joinedTo) : "",
-    hasDeactivatedWindow
-      ? describeWindow("Deactivated", deactivatedFrom, deactivatedTo)
-      : "",
+    hasDeactivatedWindow ? describeWindow("Deactivated", deactivatedFrom, deactivatedTo) : "",
   ].filter(Boolean);
 
   const clearFilters = () => {
@@ -658,30 +655,32 @@ export default function MembersPage() {
   // if (loading && members.length === 0) return <PageLoader />;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Members</h1>
-          <p className="text-muted-foreground">Manage gym members</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {isAdmin && (
-            <Button
-              variant="outline"
-              onClick={handleExportMembers}
-              disabled={loading || filteredAllMembers.length === 0}
-              title="Download these members as CSV"
-            >
-              <Download className="h-4 w-4" />
-            </Button>
-          )}
-          {canAddMember && (
-            <Button onClick={() => navigate(getTenantDashboardPath("/members/add"))}>
-              <Plus className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader
+        title="Members"
+        description="Manage gym members"
+        actions={
+          <>
+            <div className="flex items-center gap-2">
+              {isAdmin && (
+                <Button
+                  variant="outline"
+                  onClick={handleExportMembers}
+                  disabled={loading || filteredAllMembers.length === 0}
+                  title="Download these members as CSV"
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              )}
+              {canAddMember && (
+                <Button onClick={() => navigate(getTenantDashboardPath("/members/add"))}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </>
+        }
+      />
 
       {/* Status Filter Tabs */}
       <div className="overflow-x-auto overflow-y-hidden border-b border-border">
@@ -752,9 +751,7 @@ export default function MembersPage() {
             className="relative h-12 w-12 shrink-0 rounded-lg p-0 sm:hidden"
             onClick={() => setFilterSheetOpen(true)}
             aria-label={
-              activeFilterCount > 0
-                ? `Filters (${activeFilterCount} applied)`
-                : "Filters"
+              activeFilterCount > 0 ? `Filters (${activeFilterCount} applied)` : "Filters"
             }
           >
             <SlidersHorizontal className="h-5 w-5" />
@@ -974,10 +971,7 @@ export default function MembersPage() {
       </div>
 
       {refreshing && (
-        <p
-          role="status"
-          className="flex items-center gap-2 text-xs text-muted-foreground"
-        >
+        <p role="status" className="flex items-center gap-2 text-xs text-muted-foreground">
           {/* The live region is this line, not the icon: the spinner carries a
               "Loading" label of its own that would be announced twice. */}
           <Spinner aria-hidden className="size-3" />
@@ -991,93 +985,94 @@ export default function MembersPage() {
         onNext={() => goToTab(1)}
         onPrevious={() => goToTab(-1)}
       >
-      {loading ? (
-        <div className="space-y-3">
-          {[0,1,2,3,4].map((i) => (
-            <div key={i} className="rounded-lg ring-1 ring-foreground/10"><SkeletonRow className="p-3" /></div>
-          ))}
-        </div>
-      ) : filteredAllMembers.length === 0 ? (
-        <EmptyState
-          icon={Users}
-          title={hasActiveFilters ? "No members match these filters" : "No members found"}
-          description={
-            hasActiveFilters
-              ? "Nobody on the roster matches every filter you have set. Clear them to see the full list."
-              : "Add members to your gym to get started."
-          }
-          action={
-            hasActiveFilters ? (
-              <Button variant="outline" onClick={clearFilters}>
-                <X className="h-4 w-4" />
-                Clear filters
-              </Button>
-            ) : canAddMember ? (
-              <Button onClick={() => navigate(getTenantDashboardPath("/members/add"))}>
-                <Plus className="h-4 w-4" />
-                Add Member
-              </Button>
-            ) : undefined
-          }
-        />
-      ) : (
-        <div className="space-y-4">
-          <div className="space-y-4">
-            {visibleMembers.map((m) => (
-              <MemberCard
-                key={m.id}
-                person={m}
-                onClick={
-                  m._pending
-                    ? undefined
-                    : () => navigate(getTenantDashboardPath(`/members/${m.id}`))
-                }
-                chips={
-                  m._pending ? (
-                    <PersonChip
-                      icon={Clock}
-                      iconOnlyOnMobile
-                      className="bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                    >
-                      Pending sync
-                    </PersonChip>
-                  ) : m.hasPendingPayment ? (
-                    <PersonChip
-                      icon={IndianRupee}
-                      iconOnlyOnMobile
-                      className="bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                    >
-                      Payment pending
-                    </PersonChip>
-                  ) : null
-                }
-                subtitle={formatPhone(m.phone, m.userId)}
-                actions={renderMemberActions(m)}
-                className={cn(m._pending && "border-dashed opacity-70")}
-              />
+        {loading ? (
+          <div className="space-y-3">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div key={i} className="rounded-lg ring-1 ring-foreground/10">
+                <SkeletonRow className="p-3" />
+              </div>
             ))}
           </div>
+        ) : filteredAllMembers.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            title={hasActiveFilters ? "No members match these filters" : "No members found"}
+            description={
+              hasActiveFilters
+                ? "Nobody on the roster matches every filter you have set. Clear them to see the full list."
+                : "Add members to your gym to get started."
+            }
+            action={
+              hasActiveFilters ? (
+                <Button variant="outline" onClick={clearFilters}>
+                  <X className="h-4 w-4" />
+                  Clear filters
+                </Button>
+              ) : canAddMember ? (
+                <Button onClick={() => navigate(getTenantDashboardPath("/members/add"))}>
+                  <Plus className="h-4 w-4" />
+                  Add Member
+                </Button>
+              ) : undefined
+            }
+          />
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-4">
+              {visibleMembers.map((m) => (
+                <MemberCard
+                  key={m.id}
+                  person={m}
+                  onClick={
+                    m._pending
+                      ? undefined
+                      : () => navigate(getTenantDashboardPath(`/members/${m.id}`))
+                  }
+                  chips={
+                    m._pending ? (
+                      <PersonChip
+                        icon={Clock}
+                        iconOnlyOnMobile
+                        className="bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                      >
+                        Pending sync
+                      </PersonChip>
+                    ) : m.hasPendingPayment ? (
+                      <PersonChip
+                        icon={IndianRupee}
+                        iconOnlyOnMobile
+                        className="bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                      >
+                        Payment pending
+                      </PersonChip>
+                    ) : null
+                  }
+                  subtitle={formatPhone(m.phone, m.userId)}
+                  actions={renderMemberActions(m)}
+                  className={cn(m._pending && "border-dashed opacity-70")}
+                />
+              ))}
+            </div>
 
-
-          {hasMore ? (
-            <div ref={sentinelRef} className="flex justify-center pt-2">
-              {/* The observer normally reveals the next screenful before this is
+            {hasMore ? (
+              <div ref={sentinelRef} className="flex justify-center pt-2">
+                {/* The observer normally reveals the next screenful before this is
                   reached. The button is what saves a reader whose browser has no
                   IntersectionObserver, or whose list sits in a container that
                   never triggers one. */}
-              <Button variant="ghost" size="sm" onClick={loadMore}>
-                Load more
-              </Button>
-            </div>
-          ) : (
-            shown > 0 && (
-              <p className="pt-2 text-center text-xs text-muted-foreground">
-                Showing all {total} members
-              </p>
-            )
-          )}
-        </div>
-      )}
+                <Button variant="ghost" size="sm" onClick={loadMore}>
+                  Load more
+                </Button>
+              </div>
+            ) : (
+              shown > 0 && (
+                <p className="pt-2 text-center text-xs text-muted-foreground">
+                  Showing all {total} members
+                </p>
+              )
+            )}
+          </div>
+        )}
       </SwipePane>
 
       <ConfirmDialog

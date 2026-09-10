@@ -50,7 +50,7 @@ export function StoreVariantPicker({
 
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-base">
+          <CardTitle>
             {onOpen ? (
               <button type="button" onClick={onOpen} className="text-left hover:underline">
                 {product.name}

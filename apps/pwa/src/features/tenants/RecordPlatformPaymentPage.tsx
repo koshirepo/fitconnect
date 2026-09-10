@@ -7,6 +7,7 @@
  * - Primary exports: RecordPlatformPaymentPage.
  */
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { tenantsApi } from "@/api/tenants";
@@ -17,13 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, ArrowLeft } from "lucide-react";
 
 export default function RecordPlatformPaymentPage() {
@@ -94,18 +89,16 @@ export default function RecordPlatformPaymentPage() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Record Platform Payment</h1>
-        <p className="text-muted-foreground">
-          Log a payment from this gym and extend how long its access runs.
-        </p>
-      </div>
+    <div className="mx-auto max-w-2xl space-y-5 sm:space-y-6">
+      <PageHeader
+        title="Record Platform Payment"
+        description="Log a payment from this gym and extend how long its access runs."
+      />
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Payment</CardTitle>
+            <CardTitle>Payment</CardTitle>
             <CardDescription>What was paid, and how far it carries access.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

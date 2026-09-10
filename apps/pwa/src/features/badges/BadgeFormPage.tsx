@@ -7,6 +7,7 @@
  * - Primary exports: BadgeFormPage.
  */
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useParams } from "react-router-dom";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
@@ -205,24 +206,20 @@ export default function BadgeFormPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {isEdit ? `Edit ${badge?.name ?? "badge"}` : "Create Badge"}
-          </h1>
-          <p className="text-muted-foreground">
-            {isEdit
-              ? "Change how this badge looks and whether members can still earn it."
-              : "Design a new badge to reward and recognize your members."}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title={isEdit ? `Edit ${badge?.name ?? "badge"}` : "Create Badge"}
+        description={
+          isEdit
+            ? "Change how this badge looks and whether members can still earn it."
+            : "Design a new badge to reward and recognize your members."
+        }
+      />
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Badge Details */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Badge Details</CardTitle>
+            <CardTitle>Badge Details</CardTitle>
             <CardDescription>Give your badge a name and optional description.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -279,9 +276,9 @@ export default function BadgeFormPage() {
               <div className="space-y-1">
                 <span className="text-sm font-medium">Admins only</span>
                 <p className="text-xs text-muted-foreground">
-                  Only admins can give or take this badge. Use it for badges that confer
-                  standing — staff credentials, lifetime membership — rather than ones that
-                  mark progress. Coaches keep assigning every other badge.
+                  Only admins can give or take this badge. Use it for badges that confer standing —
+                  staff credentials, lifetime membership — rather than ones that mark progress.
+                  Coaches keep assigning every other badge.
                 </p>
               </div>
             </label>
@@ -306,7 +303,7 @@ export default function BadgeFormPage() {
         {/* Color Selection */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Badge Color</CardTitle>
+            <CardTitle>Badge Color</CardTitle>
             <CardDescription>Choose a color that represents this badge.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

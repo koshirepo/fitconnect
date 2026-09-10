@@ -256,12 +256,9 @@ export default function MemberDetailPage() {
   const isMemberProfile = member?.role === "MEMBER";
   // The phone field is only editable by someone who can read it — a masked
   // field has nothing meaningful to type over.
-  const canEditPhone =
-    canReadPhone || (Boolean(member?.userId) && member?.userId === authUser?.id);
+  const canEditPhone = canReadPhone || (Boolean(member?.userId) && member?.userId === authUser?.id);
   // Read only by someone allowed to; for a coach the endpoint is a 403.
-  const roleMatrix = useTenantRoleMatrix(
-    can(Permission.ROLES_READ) ? currentTenantId : null,
-  ).data;
+  const roleMatrix = useTenantRoleMatrix(can(Permission.ROLES_READ) ? currentTenantId : null).data;
 
   /**
    * The members either side of this one, taken from the list cache so a swipe
@@ -293,10 +290,7 @@ export default function MemberDetailPage() {
 
   // Badges are only needed for the assignment picker; shifts only in edit mode.
   const badgesQuery = useBadges({ enabled: canManageBadges });
-  const availableBadges = React.useMemo<Badge[]>(
-    () => badgesQuery.data ?? [],
-    [badgesQuery.data],
-  );
+  const availableBadges = React.useMemo<Badge[]>(() => badgesQuery.data ?? [], [badgesQuery.data]);
   const loadingBadges = badgesQuery.isLoading;
 
   const shiftsQuery = useShifts(true, { enabled: isEditMode });
@@ -350,9 +344,7 @@ export default function MemberDetailPage() {
       // No optimistic patch needed: the mutation invalidates the member query,
       // so the refetched record is the source of truth for the new status.
       await updateMemberStatus.mutateAsync({ membershipId, status: newStatus });
-      toast.success(
-        newStatus === "ACTIVE" ? "Member activated." : "Member deactivated.",
-      );
+      toast.success(newStatus === "ACTIVE" ? "Member activated." : "Member deactivated.");
     } catch (err: unknown) {
       setActionError(getApiError(err));
       toast.error({
@@ -547,9 +539,10 @@ export default function MemberDetailPage() {
   }, [isDue, isMemberProfile, member, paymentReminderTemplateBody, gymName, lastExpiry]);
 
   const paymentReminderUrl = React.useMemo(
-    () => (paymentReminderText && member?.phone
-      ? buildWhatsAppUrl(member.phone, paymentReminderText)
-      : null),
+    () =>
+      paymentReminderText && member?.phone
+        ? buildWhatsAppUrl(member.phone, paymentReminderText)
+        : null,
     [member, paymentReminderText],
   );
 
@@ -577,7 +570,7 @@ export default function MemberDetailPage() {
   if (!member) {
     const isNotFound = error.toLowerCase().includes("not found");
     return (
-      <div className="space-y-4">
+      <div className="space-y-5 sm:space-y-6">
         <EmptyState
           icon={Shield}
           title={isNotFound ? "Member not found" : "Unable to load member"}
@@ -594,7 +587,7 @@ export default function MemberDetailPage() {
 
   if (isEditMode) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Edit Member</CardTitle>
@@ -648,7 +641,11 @@ export default function MemberDetailPage() {
   const facts: { icon: React.ElementType; label: string; value: React.ReactNode }[] = [
     { icon: Phone, label: "Phone", value: formatPhone(member.phone, member.userId) ?? "—" },
     { icon: Mail, label: "Email", value: member.email },
-    { icon: memberGender?.icon ?? User, label: "Gender", value: memberGender?.label ?? "Not recorded" },
+    {
+      icon: memberGender?.icon ?? User,
+      label: "Gender",
+      value: memberGender?.label ?? "Not recorded",
+    },
     {
       icon: Cake,
       label: "Date of birth",
@@ -691,8 +688,8 @@ export default function MemberDetailPage() {
       ? "admin"
       : member.role === "COACH"
         ? "trainer / coach"
-        : roleMatrix?.roles.find((role) => role.role === member.role)?.label?.toLowerCase() ??
-          "member";
+        : (roleMatrix?.roles.find((role) => role.role === member.role)?.label?.toLowerCase() ??
+          "member");
   const deleteDialogTitle = isMemberProfile ? "Delete member?" : `Delete ${viewedRoleLabel}?`;
   const deleteDialogDescription = isMemberProfile
     ? "This will permanently delete the member along with their payments, assigned workout plans, and plans they created. This action cannot be undone."
@@ -713,7 +710,10 @@ export default function MemberDetailPage() {
       paneIndex={siblings.index}
       onNext={() => goToSibling(siblings.nextId)}
       onPrevious={() => goToSibling(siblings.previousId)}
-      className="space-y-4 sm:space-y-5"
+      // Full-bleed on a phone. Everything here is a square-cornered card
+      // with its own 16px inside, so the layout's gutter was a second inset
+      // around a first one; from `sm` the page sits inside it again.
+      className="-mx-3 space-y-3 sm:mx-0 sm:space-y-5"
     >
       <ConfirmDialog
         open={deleteConfirmOpen}
@@ -733,7 +733,7 @@ export default function MemberDetailPage() {
       />
 
       {error && (
-        <div className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <div className="mx-3 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive sm:mx-0">
           {error}
         </div>
       )}
@@ -778,7 +778,6 @@ export default function MemberDetailPage() {
               <h1 className="truncate text-xl font-bold tracking-tight sm:text-2xl">
                 {member.name}
               </h1>
-
             </div>
 
             {/* Everything that changes or ends this membership, behind one
@@ -909,7 +908,7 @@ export default function MemberDetailPage() {
           target="_blank"
           rel="noopener noreferrer"
           onClick={recordReminderSend}
-          className="flex items-center gap-3 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm font-medium text-yellow-800 transition-colors hover:bg-yellow-100 dark:border-yellow-500/30 dark:bg-yellow-500/10 dark:text-yellow-300"
+          className="mx-3 flex items-center gap-3 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm font-medium text-yellow-800 transition-colors hover:bg-yellow-100 sm:mx-0 dark:border-yellow-500/30 dark:bg-yellow-500/10 dark:text-yellow-300"
         >
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <span className="min-w-0 flex-1">
@@ -959,7 +958,7 @@ export default function MemberDetailPage() {
       {/* ── The record itself ──────────────────────────────────────────────── */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Profile</CardTitle>
+          <CardTitle>Profile</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
@@ -1112,7 +1111,7 @@ export default function MemberDetailPage() {
         <Card id="attendance">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between gap-2">
-              <CardTitle className="flex items-center gap-2 text-lg">
+              <CardTitle className="flex items-center gap-2">
                 <CalendarDays className="h-5 w-5" />
                 Attendance
               </CardTitle>
@@ -1163,9 +1162,7 @@ export default function MemberDetailPage() {
                       key={d}
                       className={cn(
                         "flex min-h-10 flex-col items-center justify-center rounded-md p-1 text-sm",
-                        present
-                          ? "bg-emerald-500 font-medium text-white"
-                          : "text-muted-foreground",
+                        present ? "bg-emerald-500 font-medium text-white" : "text-muted-foreground",
                         isToday && "ring-2 ring-primary",
                       )}
                     >
@@ -1197,7 +1194,7 @@ export default function MemberDetailPage() {
         <Card ref={paymentsSectionRef}>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between gap-2">
-              <CardTitle className="flex items-center gap-2 text-lg">
+              <CardTitle className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5" />
                 Payments
               </CardTitle>
@@ -1311,7 +1308,7 @@ export default function MemberDetailPage() {
       {isMemberProfile && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
+            <CardTitle className="flex items-center gap-2">
               <Dumbbell className="h-5 w-5" />
               Workout plans
             </CardTitle>
@@ -1350,7 +1347,7 @@ export default function MemberDetailPage() {
       {isMemberProfile && canSeeMoney && reminders.length > 0 && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">
+            <CardTitle>
               <Link
                 to={getTenantDashboardPath("/reminders")}
                 className="flex items-center gap-2 hover:underline"

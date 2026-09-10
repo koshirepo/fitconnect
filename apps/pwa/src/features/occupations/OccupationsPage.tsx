@@ -8,6 +8,7 @@
  * - Primary exports: OccupationsPage.
  */
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { getApiError } from "@/api/client";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
@@ -131,24 +132,22 @@ export default function OccupationsPage() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-            <Briefcase className="h-6 w-6" />
-            Occupations
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            What members do for a living, as every gym's admission form offers it.
-          </p>
-        </div>
-        {canManage && (
-          <Button type="button" onClick={openCreate}>
-            <Plus className="h-4 w-4" />
-            New Occupation
-          </Button>
-        )}
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader
+        icon={Briefcase}
+        title="Occupations"
+        description="What members do for a living, as every gym's admission form offers it."
+        actions={
+          <>
+            {canManage && (
+              <Button type="button" onClick={openCreate}>
+                <Plus className="h-4 w-4" />
+                New Occupation
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {occupations.length === 0 ? (
         <EmptyState

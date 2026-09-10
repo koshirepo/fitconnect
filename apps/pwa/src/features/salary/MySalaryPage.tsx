@@ -34,7 +34,7 @@ export default function MySalaryPage() {
   const data = query.data;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
           <Wallet className="h-6 w-6" />
@@ -82,7 +82,7 @@ export default function MySalaryPage() {
             data?.cycles.map((cycle) => (
               <Card key={cycle.id}>
                 <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
-                  <CardTitle className="text-base">{formatMonthLabel(cycle.month)}</CardTitle>
+                  <CardTitle>{formatMonthLabel(cycle.month)}</CardTitle>
                   <PersonChip icon={BadgeIndianRupee} className={STATUS_CLASS[cycle.status]}>
                     {STATUS_LABEL[cycle.status]}
                   </PersonChip>

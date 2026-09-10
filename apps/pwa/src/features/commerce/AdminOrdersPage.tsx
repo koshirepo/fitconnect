@@ -1,4 +1,5 @@
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate } from "react-router-dom";
@@ -91,17 +92,19 @@ export default function AdminOrdersPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Orders</h1>
-          <p className="text-muted-foreground">Review all commerce orders in one place.</p>
-        </div>
-        <Button variant="outline" onClick={() => navigate("/platform-commerce")}>
-          <ArrowLeft className="h-4 w-4" />
-          Back to Products
-        </Button>
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader
+        title="Orders"
+        description="Review all commerce orders in one place."
+        actions={
+          <>
+            <Button variant="outline" onClick={() => navigate("/platform-commerce")}>
+              <ArrowLeft className="h-4 w-4" />
+              Back to Products
+            </Button>
+          </>
+        }
+      />
 
       {!canManageOrders ? (
         <Card>

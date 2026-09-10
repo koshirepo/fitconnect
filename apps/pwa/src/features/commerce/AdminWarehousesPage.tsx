@@ -7,6 +7,7 @@
  * - Primary exports: AdminWarehousesPage.
  */
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import {
@@ -199,9 +200,8 @@ export default function AdminWarehousesPage() {
 
   if (!canRead) {
     return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Warehouses</h1>
-        <p className="text-muted-foreground">You do not have access to this page.</p>
+      <div className="space-y-5 sm:space-y-6">
+        <PageHeader title="Warehouses" description="You do not have access to this page." />
       </div>
     );
   }
@@ -209,17 +209,12 @@ export default function AdminWarehousesPage() {
   if (warehousesQuery.isLoading) return <CardsGridSkeleton count={3} />;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Warehouses</h1>
-          <p className="text-muted-foreground">
-            Where parcels ship from, and the only place to manage them. Each one is
-            a Delhivery pickup location. Delhivery cannot be asked what it holds, so a
-            location made in its panel appears here only once you add it with
-            &ldquo;already a pickup location&rdquo; ticked.
-          </p>
-        </div>
+        <PageHeader
+          title="Warehouses"
+          description="Where parcels ship from, and the only place to manage them. Each one is a Delhivery pickup location. Delhivery cannot be asked what it holds, so a location made in its panel appears here only once you add it with &ldquo;already a pickup location&rdquo; ticked."
+        />
         {canCreate && (
           <Button onClick={openCreate}>
             <Plus className="h-4 w-4" />
@@ -417,8 +412,8 @@ export default function AdminWarehousesPage() {
                     Already a pickup location in Delhivery
                   </span>
                   <span className="block text-xs text-muted-foreground">
-                    Links it instead of registering it again. The name must match
-                    the Delhivery panel exactly — every manifest is keyed on it.
+                    Links it instead of registering it again. The name must match the Delhivery
+                    panel exactly — every manifest is keyed on it.
                   </span>
                 </span>
               </label>
@@ -430,9 +425,7 @@ export default function AdminWarehousesPage() {
                 <Input
                   id="wh-contact"
                   value={form.contactPerson}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, contactPerson: e.target.value }))
-                  }
+                  onChange={(e) => setForm((prev) => ({ ...prev, contactPerson: e.target.value }))}
                 />
               </div>
               <div className="space-y-2">
@@ -521,8 +514,8 @@ export default function AdminWarehousesPage() {
           <DialogHeader>
             <DialogTitle>Schedule a pickup</DialogTitle>
             <DialogDescription>
-              Delhivery collects from {pickupFor?.name}. The package count is whatever is
-              manifested and still waiting there, counted when you send this.
+              Delhivery collects from {pickupFor?.name}. The package count is whatever is manifested
+              and still waiting there, counted when you send this.
             </DialogDescription>
           </DialogHeader>
 

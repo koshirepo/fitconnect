@@ -6,6 +6,7 @@
  * - Primary exports: default export.
  */
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useAuthStore } from "@/stores/auth";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { getApiError } from "@/api/client";
@@ -24,13 +25,7 @@ import {
   TENANT_MANAGEABLE_PERMISSIONS,
   type PermissionScope,
 } from "@fitconnect/shared/types/permissions";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeaderSkeleton, Skeleton } from "@/components/ui/skeleton";
@@ -57,18 +52,13 @@ const TENANT_MANAGEABLE = new Set<string>(TENANT_MANAGEABLE_PERMISSIONS);
  * on either screen can act on. Platform roles keep the whole catalog: SUPPORT is
  * a platform role whose substance is tenant-scoped read access.
  */
-function catalogForRole(
-  catalog: RolePermissionCatalogGroup[],
-  role: RoleMatrixEntry | undefined,
-) {
+function catalogForRole(catalog: RolePermissionCatalogGroup[], role: RoleMatrixEntry | undefined) {
   if (!role || role.scope !== "TENANT") return catalog;
 
   return catalog
     .map((group) => ({
       ...group,
-      permissions: group.permissions.filter((permission) =>
-        TENANT_MANAGEABLE.has(permission.key),
-      ),
+      permissions: group.permissions.filter((permission) => TENANT_MANAGEABLE.has(permission.key)),
     }))
     .filter((group) => group.permissions.length > 0);
 }
@@ -240,7 +230,7 @@ export default function RolesPage({ scope }: Props) {
   // two-column shape, not the stacked form fields a form skeleton would draw.
   if (query.isLoading) {
     return (
-      <div className="space-y-6 p-4 md:p-6">
+      <div className="space-y-5 sm:space-y-6">
         <PageHeaderSkeleton />
         <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
           <Skeleton className="h-64 rounded-lg" />
@@ -261,24 +251,24 @@ export default function RolesPage({ scope }: Props) {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-            <ShieldCheck className="h-6 w-6" />
-            {isPlatform ? "Platform Roles & Permissions" : "Roles & Permissions"}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {isPlatform
-              ? "Set what each platform role can do, and the defaults every gym inherits for its own roles."
-              : "Choose what each role can do inside your gym. Changes apply to everyone holding that role."}
-          </p>
-        </div>
-        <Button type="button" onClick={() => navigate(newRolePath)}>
-          <Plus className="h-4 w-4" />
-          New Role
-        </Button>
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader
+        icon={ShieldCheck}
+        title={isPlatform ? "Platform Roles & Permissions" : "Roles & Permissions"}
+        description={
+          isPlatform
+            ? "Set what each platform role can do, and the defaults every gym inherits for its own roles."
+            : "Choose what each role can do inside your gym. Changes apply to everyone holding that role."
+        }
+        actions={
+          <>
+            <Button type="button" onClick={() => navigate(newRolePath)}>
+              <Plus className="h-4 w-4" />
+              New Role
+            </Button>
+          </>
+        }
+      />
 
       {error && (
         <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
@@ -291,7 +281,7 @@ export default function RolesPage({ scope }: Props) {
         {/* Role list */}
         <Card className="h-fit">
           <CardHeader>
-            <CardTitle className="text-base">Roles</CardTitle>
+            <CardTitle>Roles</CardTitle>
             <CardDescription>
               {isPlatform ? "Platform and default gym roles" : "Roles in your gym"}
             </CardDescription>
@@ -376,7 +366,7 @@ export default function RolesPage({ scope }: Props) {
         <Card>
           <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
             <div className="min-w-0">
-              <CardTitle className="text-base">{activeRole?.label ?? "Select a role"}</CardTitle>
+              <CardTitle>{activeRole?.label ?? "Select a role"}</CardTitle>
               <CardDescription>
                 {activeRole
                   ? `${selected.size} of ${catalog.reduce((total, group) => total + group.permissions.length, 0)} permissions granted`

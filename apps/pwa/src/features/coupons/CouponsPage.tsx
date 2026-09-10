@@ -7,6 +7,7 @@
  * - Primary exports: CouponsPage.
  */
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { getTenantDashboardPath } from "@/lib/subdomain";
@@ -40,10 +41,7 @@ import {
 } from "lucide-react";
 import type { Coupon, CouponType } from "@/types/api";
 
-const TYPE_META: Record<
-  CouponType,
-  { label: string; icon: React.ElementType; hint: string }
-> = {
+const TYPE_META: Record<CouponType, { label: string; icon: React.ElementType; hint: string }> = {
   DISCOUNT: {
     label: "Discount",
     icon: Percent,
@@ -108,7 +106,6 @@ export default function CouponsPage() {
 
   const coupons = React.useMemo(() => couponsQuery.data ?? [], [couponsQuery.data]);
 
-
   const updateCoupon = useUpdateCoupon();
   const deleteCoupon = useDeleteCoupon();
 
@@ -144,10 +141,9 @@ export default function CouponsPage() {
     }
   };
 
-
   if (couponsQuery.isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         <PageHeaderSkeleton />
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -161,19 +157,21 @@ export default function CouponsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Coupons</h1>
-          <p className="text-muted-foreground">Discounts, coins, and extra days</p>
-        </div>
-        {canCreate && (
-          <Button onClick={openCreate}>
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">New coupon</span>
-          </Button>
-        )}
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader
+        title="Coupons"
+        description="Discounts, coins, and extra days"
+        actions={
+          <>
+            {canCreate && (
+              <Button onClick={openCreate}>
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">New coupon</span>
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {analyticsQuery.data && analyticsQuery.data.totals.redemptions > 0 && (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -208,8 +206,8 @@ export default function CouponsPage() {
             <TicketX className="h-4 w-4 text-amber-600 dark:text-amber-400" />
             <span>
               <strong>{analyticsQuery.data.totals.unusedCount}</strong>{" "}
-              {analyticsQuery.data.totals.unusedCount === 1 ? "code has" : "codes have"} never
-              been used.
+              {analyticsQuery.data.totals.unusedCount === 1 ? "code has" : "codes have"} never been
+              used.
             </span>
           </CardContent>
         </Card>
@@ -316,7 +314,6 @@ export default function CouponsPage() {
         </div>
       )}
 
-
       <ConfirmDialog
         open={Boolean(pendingDelete)}
         onOpenChange={(open) => !open && setPendingDelete(null)}
@@ -356,15 +353,7 @@ export default function CouponsPage() {
 }
 
 /** One number from the totals strip. */
-function Stat({
-  label,
-  value,
-  icon: Icon,
-}: {
-  label: string;
-  value: string;
-  icon: typeof Tag;
-}) {
+function Stat({ label, value, icon: Icon }: { label: string; value: string; icon: typeof Tag }) {
   return (
     <Card>
       <CardContent className="space-y-1 p-4">

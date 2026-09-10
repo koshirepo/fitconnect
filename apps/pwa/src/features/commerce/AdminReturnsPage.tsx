@@ -8,6 +8,7 @@
  *   is why the two remain separate buttons here as they are there.
  */
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useNavigate } from "react-router-dom";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { usePermissions } from "@/features/auth/permission-gate";
@@ -101,19 +102,19 @@ export default function AdminReturnsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Returns</h1>
-          <p className="text-muted-foreground">
-            Every return request buyers have raised, newest first.
-          </p>
-        </div>
-        <Button variant="outline" onClick={() => navigate("/platform-commerce/orders")}>
-          <ArrowLeft className="h-4 w-4" />
-          Back to Orders
-        </Button>
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader
+        title="Returns"
+        description="Every return request buyers have raised, newest first."
+        actions={
+          <>
+            <Button variant="outline" onClick={() => navigate("/platform-commerce/orders")}>
+              <ArrowLeft className="h-4 w-4" />
+              Back to Orders
+            </Button>
+          </>
+        }
+      />
 
       {!canRead ? (
         <Card>
@@ -178,15 +179,15 @@ export default function AdminReturnsPage() {
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant={entry.status === "REJECTED" ? "destructive" : "secondary"}>
+                          <Badge
+                            variant={entry.status === "REJECTED" ? "destructive" : "secondary"}
+                          >
                             {RETURN_STATUS_COPY[entry.status] ?? entry.status}
                           </Badge>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() =>
-                              navigate(`/platform-commerce/orders/${entry.orderId}`)
-                            }
+                            onClick={() => navigate(`/platform-commerce/orders/${entry.orderId}`)}
                           >
                             View order
                           </Button>

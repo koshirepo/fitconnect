@@ -1,4 +1,5 @@
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useParams } from "react-router-dom";
@@ -7,9 +8,7 @@ import { useAuthStore } from "@/stores/auth";
 import { paymentsApi } from "@/api/payments";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAllMembers, useMember } from "@/api/queries/members";
-import {
-  useSettleDues,
-  usePayments, useSubscriptions } from "@/api/queries/payments";
+import { useSettleDues, usePayments, useSubscriptions } from "@/api/queries/payments";
 import { useTenantSettings } from "@/api/queries/catalog";
 import { useCoinBalance, useCouponQuote } from "@/api/queries/coupons";
 import { getApiError } from "@/api/client";
@@ -343,8 +342,7 @@ export default function RecordPaymentPage() {
    * and ₹3,500 of arrears.
    */
   const collectionTotal = totalAmount + duesTotal;
-  const receivedAmount =
-    fPaidAmount === "" ? collectionTotal : Number(fPaidAmount) || 0;
+  const receivedAmount = fPaidAmount === "" ? collectionTotal : Number(fPaidAmount) || 0;
 
   // A coupon, spent coins, or a due being unticked all move the total after the
   // plan was picked, so the prefilled figure follows it. An edited field is
@@ -406,9 +404,7 @@ export default function RecordPaymentPage() {
     // What is owed is the ceiling when settling dues. The server refuses more
     // than this too, but being told before handing over money is the point.
     if (duesOnly && amount > duesTotal) {
-      setError(
-        `That is more than the ${formatCurrency(duesTotal)} owed on the ticked dues.`,
-      );
+      setError(`That is more than the ${formatCurrency(duesTotal)} owed on the ticked dues.`);
       return;
     }
 
@@ -498,9 +494,7 @@ export default function RecordPaymentPage() {
         ...(shortfallAmount > 0 ? { paidAmount: receivedAmount } : {}),
         // The code, never the discounted figure — the server prices it.
         ...(quote?.coupon ? { couponCode: quote.coupon.code } : {}),
-        ...(quote && quote.coinsRedeemed > 0
-          ? { coinsToSpend: quote.coinsRedeemed }
-          : {}),
+        ...(quote && quote.coinsRedeemed > 0 ? { coinsToSpend: quote.coinsRedeemed } : {}),
         status: fStatus,
         // The dues this collection also closes. The server re-reads each one,
         // so a row paid elsewhere since the form loaded is simply skipped.
@@ -536,14 +530,10 @@ export default function RecordPaymentPage() {
                 : "Completed",
           // Only shown when the collection was more than the plan, which is
           // exactly when the plan price alone would be a confusing receipt.
-          totalLine:
-            duesTotal > 0 ? `Total due: ${formatCurrency(collectionTotal)}\n` : "",
-          duesLine:
-            duesTotal > 0 ? `Pending dues cleared: ${formatCurrency(duesTotal)}\n` : "",
+          totalLine: duesTotal > 0 ? `Total due: ${formatCurrency(collectionTotal)}\n` : "",
+          duesLine: duesTotal > 0 ? `Pending dues cleared: ${formatCurrency(duesTotal)}\n` : "",
           balanceLine:
-            shortfallAmount > 0
-              ? `Still pending: ${formatCurrency(shortfallAmount)}\n`
-              : "",
+            shortfallAmount > 0 ? `Still pending: ${formatCurrency(shortfallAmount)}\n` : "",
           validUntilLine: fValidUntil ? `Valid until: ${fValidUntil}\n` : "",
           noteLine: fNote ? `Note: ${fNote}\n` : "",
         });
@@ -574,11 +564,8 @@ export default function RecordPaymentPage() {
   if (loading) return <FormPageSkeleton fields={6} />;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Record Payment</h1>
-        <p className="text-muted-foreground">Add a new payment record</p>
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader title="Record Payment" description="Add a new payment record" />
 
       <Card className="max-w-2xl">
         <CardHeader>
@@ -624,9 +611,7 @@ export default function RecordPaymentPage() {
 
             {/* Subscription Selection */}
             <div className="space-y-2">
-              <Label htmlFor="subscription">
-                Subscription Plan{duesOnly ? "" : " *"}
-              </Label>
+              <Label htmlFor="subscription">Subscription Plan{duesOnly ? "" : " *"}</Label>
               <p className="text-xs text-muted-foreground">
                 {!selectedMember
                   ? "Select a member first to load eligible plans."
@@ -661,9 +646,9 @@ export default function RecordPaymentPage() {
               </Select>
               {duesOnly && (
                 <p className="rounded-md border border-primary/40 bg-primary/5 p-2 text-xs">
-                  No plan selected, so this collects against the ticked dues
-                  instead. Nothing new is sold and the membership gains no time —
-                  pay less than the total and the rest stays owed.
+                  No plan selected, so this collects against the ticked dues instead. Nothing new is
+                  sold and the membership gains no time — pay less than the total and the rest stays
+                  owed.
                 </p>
               )}
               {selectedMember && !loadingMemberBadges && availableSubscriptions.length === 0 && (
@@ -703,9 +688,7 @@ export default function RecordPaymentPage() {
                   id="amount"
                   className="flex h-8 items-center rounded-none border border-input bg-input/30 px-2.5 text-sm font-semibold tabular-nums"
                 >
-                  {fAmount
-                    ? formatCurrency(Number(fAmount))
-                    : "Choose a plan to see the amount"}
+                  {fAmount ? formatCurrency(Number(fAmount)) : "Choose a plan to see the amount"}
                 </p>
               )}
 
@@ -759,9 +742,7 @@ export default function RecordPaymentPage() {
                 </div>
               )}
 
-              {couponError && (
-                <p className="text-sm text-destructive">{couponError}</p>
-              )}
+              {couponError && <p className="text-sm text-destructive">{couponError}</p>}
 
               {quote && (quote.coupon || quote.coinsRedeemed > 0) && (
                 <div className="space-y-1 rounded-lg bg-muted/50 p-3 text-sm">
@@ -791,9 +772,7 @@ export default function RecordPaymentPage() {
                     </p>
                   )}
                   {quote.coinsGranted > 0 && (
-                    <p className="text-xs text-emerald-600">
-                      Earns {quote.coinsGranted} coins
-                    </p>
+                    <p className="text-xs text-emerald-600">Earns {quote.coinsGranted} coins</p>
                   )}
                   <button
                     type="button"
@@ -818,9 +797,7 @@ export default function RecordPaymentPage() {
                       checked={settleDueIds.includes(due.id)}
                       onChange={(e) =>
                         setSettleDueIds((prev) =>
-                          e.target.checked
-                            ? [...prev, due.id]
-                            : prev.filter((id) => id !== due.id),
+                          e.target.checked ? [...prev, due.id] : prev.filter((id) => id !== due.id),
                         )
                       }
                     />
@@ -866,9 +843,7 @@ export default function RecordPaymentPage() {
                       dues total — the two differ precisely when a part payment
                       is being taken, which is the moment the number matters. */}
                   <span>
-                    {formatCurrency(
-                      duesOnly ? Number(fAmount) || 0 : totalAmount + duesTotal,
-                    )}
+                    {formatCurrency(duesOnly ? Number(fAmount) || 0 : totalAmount + duesTotal)}
                   </span>
                 </div>
               </div>
@@ -906,13 +881,13 @@ export default function RecordPaymentPage() {
                 />
                 {balanceAmount > 0 ? (
                   <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                    {formatCurrency(balanceAmount)} will be logged as a pending balance
-                    for this member{duesTotal > 0 ? " — the plan is paid first, then the oldest dues" : ""}.
+                    {formatCurrency(balanceAmount)} will be logged as a pending balance for this
+                    member{duesTotal > 0 ? " — the plan is paid first, then the oldest dues" : ""}.
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    Prefilled with the full amount. Enter less to take a part payment — the
-                    rest is logged as a pending balance.
+                    Prefilled with the full amount. Enter less to take a part payment — the rest is
+                    logged as a pending balance.
                   </p>
                 )}
               </div>

@@ -1,4 +1,5 @@
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { Permission } from "@fitconnect/shared/types/permissions";
@@ -39,7 +40,6 @@ export default function WorkoutDetailPage() {
   const { can } = usePermissions();
   const canEdit = can(Permission.WORKOUTS_UPDATE);
   const canDeletePlan = can(Permission.WORKOUTS_DELETE);
-
 
   const planQuery = useWorkoutPlan(planId);
   const plan = planQuery.data ?? null;
@@ -156,7 +156,7 @@ export default function WorkoutDetailPage() {
 
   if (!plan) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-5 sm:space-y-6">
         <Button variant="outline" onClick={() => navigate("/workouts")}>
           Back to Workouts
         </Button>
@@ -173,22 +173,22 @@ export default function WorkoutDetailPage() {
   const assignments = plan.assignments ?? [];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 sm:space-y-6">
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold tracking-tight truncate">{plan.title}</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            by {plan.creator?.name ?? "Unknown"} · {formatDate(plan.createdAt)}
-          </p>
-        </div>
-        {plan._count && (
-          <Badge variant="secondary" className="shrink-0">
-            <Users className="h-3 w-3 mr-1" />
-            {plan._count.assignments}
-          </Badge>
-        )}
-      </div>
+      <PageHeader
+        title={plan.title}
+        description={`by ${plan.creator?.name ?? "Unknown"} · ${formatDate(plan.createdAt)}`}
+        actions={
+          <>
+            {plan._count && (
+              <Badge variant="secondary" className="shrink-0">
+                <Users className="h-3 w-3 mr-1" />
+                {plan._count.assignments}
+              </Badge>
+            )}
+          </>
+        }
+      />
 
       {/* ── Action buttons ─────────────────────────────────────────── */}
       {canEdit && (

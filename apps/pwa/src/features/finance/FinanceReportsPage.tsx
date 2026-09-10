@@ -1,16 +1,11 @@
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { tenantsApi } from "@/api/tenants";
 import { paymentsApi } from "@/api/payments";
 import { useUIStore } from "@/stores/ui";
 import { useMemberReport } from "@/api/queries/members";
 import { usePaymentAnalytics } from "@/api/queries/payments";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton, StatGridSkeleton } from "@/components/ui/skeleton";
@@ -268,7 +263,7 @@ export default function FinanceReportsPage() {
   // Four KPI tiles, then the chart row — the same shape the loaded page has.
   if (loading && !report) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         <StatGridSkeleton count={4} />
         <div className="grid gap-4 lg:grid-cols-3">
           <Skeleton className="h-72 rounded-lg lg:col-span-2" />
@@ -420,70 +415,66 @@ export default function FinanceReportsPage() {
       ]
     : [];
   const mixTotal = mixRows.reduce((sum, r) => sum + r.revenue, 0);
-  const givenAwayMonth = analytics
-    ? discounts.month.discount + discounts.month.coins
-    : 0;
-  const collectedTotal = analytics
-    ? collection.online.revenue + collection.manual.revenue
-    : 0;
+  const givenAwayMonth = analytics ? discounts.month.discount + discounts.month.coins : 0;
+  const collectedTotal = analytics ? collection.online.revenue + collection.manual.revenue : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* Header */}
       {/* Stacked on a phone: sharing one row with the buttons squeezed the
           title into three lines and pushed Refresh off the screen. */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight">Gym Analytics</h1>
-          <p className="text-sm text-muted-foreground">
-            Your gym's performance, members, and finances.
-          </p>
-        </div>
-        <div className="flex shrink-0 flex-nowrap items-center gap-2">
-          {/* This page reports what came in. The books — what went out, and what
-              is left after it — are one click away rather than a sidebar entry
-              of their own, since nobody looks at one without the other. */}
-          {canReadBooks && (
-            <Button
-              variant="outline"
-              size="sm"
-              // Carries the month, so arriving at the books from October's
-              // analytics opens October rather than resetting to today.
-              onClick={() => navigate(getTenantDashboardPath(withMonth("/expenses", month)))}
-              aria-label="Income and expenses"
-              title="Income and expenses"
-            >
-              <Wallet className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Income &amp; expenses</span>
-            </Button>
-          )}
-          {canReadSalary && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate(getTenantDashboardPath(withMonth("/salary", month)))}
-              aria-label="Staff salary"
-              title="Staff salary"
-            >
-              <BadgeIndianRupee className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Staff salary</span>
-            </Button>
-          )}
-          <Button
-            onClick={() => {
-              void reportQuery.refetch();
-              void analyticsQuery.refetch();
-            }}
-            disabled={loading}
-            size="sm"
-            aria-label={loading ? "Refreshing analytics" : "Refresh analytics"}
-            title="Refresh"
-          >
-            <RefreshCw className={`h-4 w-4 sm:mr-2 ${loading ? "animate-spin" : ""}`} />
-            <span className="hidden sm:inline">{loading ? "Refreshing…" : "Refresh"}</span>
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Gym Analytics"
+        description="Your gym's performance, members, and finances."
+        actions={
+          <>
+            <div className="flex shrink-0 flex-nowrap items-center gap-2">
+              {/* This page reports what came in. The books — what went out, and what
+                        is left after it — are one click away rather than a sidebar entry
+                        of their own, since nobody looks at one without the other. */}
+              {canReadBooks && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  // Carries the month, so arriving at the books from October's
+                  // analytics opens October rather than resetting to today.
+                  onClick={() => navigate(getTenantDashboardPath(withMonth("/expenses", month)))}
+                  aria-label="Income and expenses"
+                  title="Income and expenses"
+                >
+                  <Wallet className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Income &amp; expenses</span>
+                </Button>
+              )}
+              {canReadSalary && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(getTenantDashboardPath(withMonth("/salary", month)))}
+                  aria-label="Staff salary"
+                  title="Staff salary"
+                >
+                  <BadgeIndianRupee className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Staff salary</span>
+                </Button>
+              )}
+              <Button
+                onClick={() => {
+                  void reportQuery.refetch();
+                  void analyticsQuery.refetch();
+                }}
+                disabled={loading}
+                size="sm"
+                aria-label={loading ? "Refreshing analytics" : "Refresh analytics"}
+                title="Refresh"
+              >
+                <RefreshCw className={`h-4 w-4 sm:mr-2 ${loading ? "animate-spin" : ""}`} />
+                <span className="hidden sm:inline">{loading ? "Refreshing…" : "Refresh"}</span>
+              </Button>
+            </div>
+          </>
+        }
+      />
 
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
@@ -517,9 +508,7 @@ export default function FinanceReportsPage() {
               icon={Clock3}
               label="Payment pending"
               value={report.members.withPendingPayment}
-              subtext={
-                report.members.withPendingPayment === 1 ? "member owes" : "members owe"
-              }
+              subtext={report.members.withPendingPayment === 1 ? "member owes" : "members owe"}
               color="text-amber-600"
               // The roster, not the ledger: this counts people who owe, and
               // the ledger would answer with a different number — the unpaid
@@ -567,9 +556,7 @@ export default function FinanceReportsPage() {
                 value={formatCompact(analytics.today.totalRevenue)}
                 subtext={`${analytics.today.totalCount} payments`}
                 color="text-blue-600"
-                onClick={() =>
-                  goToPayments({ status: "COMPLETED", from: windows.today.from })
-                }
+                onClick={() => goToPayments({ status: "COMPLETED", from: windows.today.from })}
               />
             ) : (
               <StatCard
@@ -589,7 +576,7 @@ export default function FinanceReportsPage() {
                 be a month where dues fell and admissions covered the gap. */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Revenue mix</CardTitle>
+                <CardTitle>Revenue mix</CardTitle>
                 <CardDescription className="text-xs">{periods.month.full}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -628,7 +615,7 @@ export default function FinanceReportsPage() {
                 giveaways, so this is the only place the gap is visible. */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Discounts &amp; coins</CardTitle>
+                <CardTitle>Discounts &amp; coins</CardTitle>
                 <CardDescription className="text-xs">{periods.month.full}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
@@ -670,7 +657,7 @@ export default function FinanceReportsPage() {
                 owner how much of the month is sitting in a drawer. */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">How it was collected</CardTitle>
+                <CardTitle>How it was collected</CardTitle>
                 <CardDescription className="text-xs">{periods.month.full}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -745,7 +732,7 @@ export default function FinanceReportsPage() {
             {/* Revenue Trend Area Chart (2/3 width) */}
             <Card className="lg:col-span-2">
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Revenue trend</CardTitle>
+                <CardTitle>Revenue trend</CardTitle>
                 {/* Was a rolling last-30-days window sitting beside month
                     figures — two different spans presented as one story. */}
                 <CardDescription className="text-xs">
@@ -768,7 +755,7 @@ export default function FinanceReportsPage() {
             {/* Member Distribution Pie Chart (1/3 width) */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Member Distribution</CardTitle>
+                <CardTitle>Member Distribution</CardTitle>
               </CardHeader>
               <CardContent>
                 {memberPieData.length > 0 ? (
@@ -788,7 +775,7 @@ export default function FinanceReportsPage() {
                 only comparable bar left is the month itself. */}
             <Card className={periodComparisonData.length === 0 ? "hidden" : undefined}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Revenue by period</CardTitle>
+                <CardTitle>Revenue by period</CardTitle>
                 <CardDescription className="text-xs">
                   {periods.today.full} · {periods.week.full} · {periods.month.full}
                 </CardDescription>
@@ -803,7 +790,7 @@ export default function FinanceReportsPage() {
             {/* Payment Status Pie + Details */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Payment status</CardTitle>
+                <CardTitle>Payment status</CardTitle>
                 <CardDescription className="text-xs">{periods.month.full}</CardDescription>
               </CardHeader>
               <CardContent>
@@ -853,7 +840,7 @@ export default function FinanceReportsPage() {
           {occupationMix.length > 0 && (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Members by occupation</CardTitle>
+                <CardTitle>Members by occupation</CardTitle>
                 <CardDescription className="text-xs">
                   Active members · tap one to see them
                 </CardDescription>
@@ -900,7 +887,7 @@ export default function FinanceReportsPage() {
           {/* ═══════════════ ROW 4: MEMBER ACTIVITY BAR CHART ═══════════════ */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Member activity</CardTitle>
+              <CardTitle>Member activity</CardTitle>
               <CardDescription className="text-xs">Joined vs deactivated</CardDescription>
             </CardHeader>
             <CardContent>
@@ -915,7 +902,7 @@ export default function FinanceReportsPage() {
             {/* Payment Analytics Breakdown */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Payment breakdown</CardTitle>
+                <CardTitle>Payment breakdown</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
@@ -1000,7 +987,7 @@ export default function FinanceReportsPage() {
             {/* Member Analytics Table */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Member Statistics</CardTitle>
+                <CardTitle>Member Statistics</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
@@ -1035,10 +1022,7 @@ export default function FinanceReportsPage() {
                                   joinedTo: windows[key].to,
                                 })
                               }
-                              className={cn(
-                                "font-bold",
-                                key !== "allTime" && "text-green-600",
-                              )}
+                              className={cn("font-bold", key !== "allTime" && "text-green-600")}
                             />
                           </td>
                         ))}
@@ -1126,7 +1110,7 @@ export default function FinanceReportsPage() {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2">
                   <ShieldAlert className="h-5 w-5 text-red-500" /> Overdue Enforcement
                 </CardTitle>
                 <Badge variant="secondary" className="text-xs">

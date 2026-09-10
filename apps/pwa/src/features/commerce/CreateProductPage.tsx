@@ -1,4 +1,5 @@
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   useAdminProduct,
@@ -115,8 +116,7 @@ function toForm(product: Product): ProductForm {
     isReplaceable: product.isReplaceable ?? false,
     // Blank rather than the shop default: an empty box means "follow the shop",
     // and pre-filling the current default would silently freeze it here.
-    returnWindowDays:
-      product.returnWindowDays != null ? String(product.returnWindowDays) : "",
+    returnWindowDays: product.returnWindowDays != null ? String(product.returnWindowDays) : "",
     returnPolicyNote: product.returnPolicyNote ?? "",
     isActive: product.isActive,
   };
@@ -237,9 +237,13 @@ export default function CreateProductPage() {
     }
 
     if (
-      [payload.price, payload.stock, payload.minOrderQty, payload.maxOrderQty, payload.weightGrams].some(
-        (value) => Number.isNaN(value) || !Number.isInteger(value),
-      )
+      [
+        payload.price,
+        payload.stock,
+        payload.minOrderQty,
+        payload.maxOrderQty,
+        payload.weightGrams,
+      ].some((value) => Number.isNaN(value) || !Number.isInteger(value))
     ) {
       setError("Price, stock, min qty, and max qty must be whole numbers.");
       return;
@@ -319,23 +323,19 @@ export default function CreateProductPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div className="flex items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {isEditMode ? "Edit Product" : "Create Product"}
-          </h1>
-          <p className="text-muted-foreground">
-            {isEditMode
-              ? "Update product details in your e-commerce catalog."
-              : "Add a new product to your e-commerce catalog."}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title={isEditMode ? "Edit Product" : "Create Product"}
+        description={
+          isEditMode
+            ? "Update product details in your e-commerce catalog."
+            : "Add a new product to your e-commerce catalog."
+        }
+      />
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Product Details</CardTitle>
+            <CardTitle>Product Details</CardTitle>
             <CardDescription>Enter the basic information about your product.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -392,7 +392,7 @@ export default function CreateProductPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Product Photos *</CardTitle>
+            <CardTitle>Product Photos *</CardTitle>
             <CardDescription>Add photos to showcase your product.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -441,7 +441,7 @@ export default function CreateProductPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Pricing & Inventory</CardTitle>
+            <CardTitle>Pricing & Inventory</CardTitle>
             <CardDescription>Set product price and inventory details.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -509,7 +509,7 @@ export default function CreateProductPage() {
         {/* ── Shipping ──────────────────────────────────────────────────── */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Shipping</CardTitle>
+            <CardTitle>Shipping</CardTitle>
             <CardDescription>
               What the courier charges depends on both of these. A wrong weight is a wrong quote at
               checkout, and the warehouse decides which parcel this item travels in.
@@ -626,7 +626,7 @@ export default function CreateProductPage() {
             damaged while never being returnable for a change of mind. */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Returns policy</CardTitle>
+            <CardTitle>Returns policy</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <label
@@ -644,8 +644,8 @@ export default function CreateProductPage() {
               <span className="space-y-1">
                 <span className="block text-sm font-medium">Buyer can return this</span>
                 <span className="block text-xs text-muted-foreground">
-                  An order is only returnable when everything in it is, because one
-                  parcel goes back as a whole.
+                  An order is only returnable when everything in it is, because one parcel goes back
+                  as a whole.
                 </span>
               </span>
             </label>
@@ -667,8 +667,8 @@ export default function CreateProductPage() {
                   Faulty one is replaced, not refunded
                 </span>
                 <span className="block text-xs text-muted-foreground">
-                  For sealed goods that cannot come back for a change of mind but
-                  should still be made good when they arrive damaged.
+                  For sealed goods that cannot come back for a change of mind but should still be
+                  made good when they arrive damaged.
                 </span>
               </span>
             </label>
@@ -688,8 +688,8 @@ export default function CreateProductPage() {
                   }
                 />
                 <p className="text-xs text-muted-foreground">
-                  Leave blank to follow the shop-wide window, so changing that still
-                  moves this product. A number here is a deliberate exception.
+                  Leave blank to follow the shop-wide window, so changing that still moves this
+                  product. A number here is a deliberate exception.
                 </p>
               </div>
             )}
@@ -701,9 +701,7 @@ export default function CreateProductPage() {
                 maxLength={300}
                 placeholder="Unopened, in original packaging"
                 value={form.returnPolicyNote}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, returnPolicyNote: e.target.value }))
-                }
+                onChange={(e) => setForm((prev) => ({ ...prev, returnPolicyNote: e.target.value }))}
               />
             </div>
           </CardContent>
@@ -711,7 +709,7 @@ export default function CreateProductPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Availability</CardTitle>
+            <CardTitle>Availability</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">

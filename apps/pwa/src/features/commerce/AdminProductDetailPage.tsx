@@ -1,12 +1,9 @@
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  useAdminOrdersInfinite,
-  useAdminProduct,
-  useDeleteProduct,
-} from "@/api/queries/platform";
+import { useAdminOrdersInfinite, useAdminProduct, useDeleteProduct } from "@/api/queries/platform";
 import { flattenPages } from "@/api/queries/shared";
 import { getApiError } from "@/api/client";
 import { useToast } from "@/components/ui/toast";
@@ -95,13 +92,11 @@ export default function AdminProductDetailPage() {
 
   if (!product) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Product Details</h1>
-            <p className="text-muted-foreground">The requested product could not be loaded.</p>
-          </div>
-        </div>
+      <div className="space-y-5 sm:space-y-6">
+        <PageHeader
+          title="Product Details"
+          description="The requested product could not be loaded."
+        />
 
         <EmptyState
           icon={PackageOpen}
@@ -118,13 +113,10 @@ export default function AdminProductDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Product Details</h1>
-            <p className="text-muted-foreground">{product.name}</p>
-          </div>
+          <PageHeader title="Product Details" description={product.name} />
         </div>
 
         <div className="flex items-center gap-2">
@@ -132,7 +124,10 @@ export default function AdminProductDetailPage() {
             <ShoppingBag className="h-4 w-4" />
             View All Orders
           </Button>
-          <Button variant="outline" onClick={() => navigate(`/platform-commerce/edit/${product.id}`)}>
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/platform-commerce/edit/${product.id}`)}
+          >
             <Edit2 className="h-4 w-4" />
             Edit
           </Button>
@@ -174,7 +169,10 @@ export default function AdminProductDetailPage() {
             {product.photos.length > 1 && (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {product.photos.slice(1).map((photo, index) => (
-                  <div key={`${photo}-${index}`} className="overflow-hidden rounded-md border bg-muted">
+                  <div
+                    key={`${photo}-${index}`}
+                    className="overflow-hidden rounded-md border bg-muted"
+                  >
                     <img
                       src={photo}
                       alt={`${product.name} ${index + 2}`}
@@ -229,7 +227,9 @@ export default function AdminProductDetailPage() {
             </div>
             <div className="rounded-md border p-3">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Updated</p>
-              <p className="mt-1 font-medium">{formatDateTime(product.updatedAt ?? product.createdAt)}</p>
+              <p className="mt-1 font-medium">
+                {formatDateTime(product.updatedAt ?? product.createdAt)}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -287,7 +287,9 @@ export default function AdminProductDetailPage() {
                           Qty {line.quantity} | Line total {fmt(line.lineTotal)}
                         </p>
                       </div>
-                      <Badge variant={STATUS_STYLE[order.status] ?? "secondary"}>{order.status}</Badge>
+                      <Badge variant={STATUS_STYLE[order.status] ?? "secondary"}>
+                        {order.status}
+                      </Badge>
                     </div>
                   </div>
                 );

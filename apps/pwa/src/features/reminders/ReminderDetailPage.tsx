@@ -77,7 +77,12 @@ function useAdjacentReminders(month: string | null, currentId: string | undefine
   const tenantId = useAuthStore((state) => state.currentTenantId);
 
   return React.useMemo(() => {
-    const empty = { previousId: null as string | null, nextId: null as string | null, index: 0, total: 0 };
+    const empty = {
+      previousId: null as string | null,
+      nextId: null as string | null,
+      index: 0,
+      total: 0,
+    };
     if (!month || !currentId || !tenantId) return empty;
 
     const cached = queryClient.getQueryData<ReminderCalendar>(
@@ -129,7 +134,7 @@ export default function ReminderDetailPage() {
 
   if (error || !reminder) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-5 sm:space-y-6">
         <Button variant="outline" onClick={backToCalendar}>
           <ArrowLeft className="h-4 w-4" />
           Back
@@ -197,19 +202,14 @@ export default function ReminderDetailPage() {
                   : "rounded-full bg-blue-500/10 p-2 text-blue-600"
               }
             >
-              {isWhatsApp ? (
-                <MessageCircle className="h-5 w-5" />
-              ) : (
-                <Bell className="h-5 w-5" />
-              )}
+              {isWhatsApp ? <MessageCircle className="h-5 w-5" /> : <Bell className="h-5 w-5" />}
             </span>
             <div className="min-w-0 flex-1">
               <h1 className="text-lg font-semibold">
                 {REASON_LABELS[reminder.reason] ?? reminder.reason}
               </h1>
               <p className="text-sm text-muted-foreground">
-                {isWhatsApp ? "WhatsApp" : "Push notification"} ·{" "}
-                {formatDateTime(reminder.sentAt)}
+                {isWhatsApp ? "WhatsApp" : "Push notification"} · {formatDateTime(reminder.sentAt)}
               </p>
             </div>
           </div>
@@ -232,9 +232,7 @@ export default function ReminderDetailPage() {
           </p>
 
           {reminder.actor && (
-            <p className="text-xs text-muted-foreground">
-              Sent by {reminder.actor.user.name}
-            </p>
+            <p className="text-xs text-muted-foreground">Sent by {reminder.actor.user.name}</p>
           )}
         </CardContent>
       </Card>
@@ -249,9 +247,7 @@ export default function ReminderDetailPage() {
           <button
             type="button"
             className="flex w-full rounded-lg px-1 py-1 text-left transition-colors hover:bg-muted/60"
-            onClick={() =>
-              navigate(getTenantDashboardPath(`/members/${reminder.membershipId}`))
-            }
+            onClick={() => navigate(getTenantDashboardPath(`/members/${reminder.membershipId}`))}
           >
             <AvatarCard
               name={reminder.member?.user.name ?? "Removed member"}
@@ -285,14 +281,10 @@ export default function ReminderDetailPage() {
             <button
               type="button"
               className="flex w-full items-center justify-between gap-3 rounded-lg border p-3 text-left transition-colors hover:bg-muted/60"
-              onClick={() =>
-                navigate(getTenantDashboardPath(`/payments/${reminder.payment!.id}`))
-              }
+              onClick={() => navigate(getTenantDashboardPath(`/payments/${reminder.payment!.id}`))}
             >
               <div className="min-w-0">
-                <p className="text-sm font-medium">
-                  {reminder.payment.description ?? "Payment"}
-                </p>
+                <p className="text-sm font-medium">{reminder.payment.description ?? "Payment"}</p>
                 <p className="text-xs text-muted-foreground">
                   {reminder.payment.paidAt
                     ? `Paid ${formatDate(reminder.payment.paidAt)}`

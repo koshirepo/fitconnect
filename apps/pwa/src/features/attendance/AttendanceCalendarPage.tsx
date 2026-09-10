@@ -1,4 +1,5 @@
 import { getMonthStr, parseMonth } from "@/lib/month";
+import { PageHeader } from "@/components/ui/page-header";
 import * as React from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAppNavigate } from "@/lib/use-app-navigate";
@@ -21,9 +22,7 @@ import AvatarCard from "@/components/ui/avatarCard";
  * check-in time, and the cast below meant the compiler had nothing to object
  * to until CI ran a stricter config.
  */
-type DayData = NonNullable<
-  ReturnType<typeof useAttendanceCalendar>["data"]
->["days"][string];
+type DayData = NonNullable<ReturnType<typeof useAttendanceCalendar>["data"]>["days"][string];
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -50,8 +49,6 @@ export default function AttendanceCalendarPage() {
     setSelectedDate(null);
   }, [currentMonth]);
 
-
-
   // Build calendar grid
   const monthDate = parseMonth(currentMonth);
   const year = monthDate.getFullYear();
@@ -70,18 +67,23 @@ export default function AttendanceCalendarPage() {
   const selectedDayData = selectedDate ? days[selectedDate] : null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Attendance Calendar</h1>
-          <p className="text-muted-foreground">Monthly overview of gym visits</p>
-        </div>
-        <Button variant="outline" onClick={() => navigate(getTenantDashboardPath("/attendance"))}>
-          <List className="h-4 w-4 mr-2" />
-          Daily View
-        </Button>
-      </div>
+      <PageHeader
+        title="Attendance Calendar"
+        description="Monthly overview of gym visits"
+        actions={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => navigate(getTenantDashboardPath("/attendance"))}
+            >
+              <List className="h-4 w-4 mr-2" />
+              Daily View
+            </Button>
+          </>
+        }
+      />
 
       {error && (
         <p className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">

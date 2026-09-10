@@ -8,6 +8,7 @@
  * - Primary exports: TodoFormPage.
  */
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { Navigate, useParams } from "react-router-dom";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
@@ -19,13 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -118,9 +113,7 @@ function TodoForm({
 
   const [title, setTitle] = React.useState(todo?.title ?? "");
   const [description, setDescription] = React.useState(todo?.description ?? "");
-  const [visibility, setVisibility] = React.useState<TodoVisibility>(
-    todo?.visibility ?? "PUBLIC",
-  );
+  const [visibility, setVisibility] = React.useState<TodoVisibility>(todo?.visibility ?? "PUBLIC");
   const [error, setError] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
 
@@ -169,22 +162,20 @@ function TodoForm({
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          {isEdit ? "Edit Todo" : "New Todo"}
-        </h1>
-        <p className="text-muted-foreground">
-          {isEdit
+    <div className="mx-auto max-w-2xl space-y-5 sm:space-y-6">
+      <PageHeader
+        title={isEdit ? "Edit Todo" : "New Todo"}
+        description={
+          isEdit
             ? "Update what this task says and who can see it."
-            : "Add a task for your gym team to pick up."}
-        </p>
-      </div>
+            : "Add a task for your gym team to pick up."
+        }
+      />
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Task</CardTitle>
+            <CardTitle>Task</CardTitle>
             <CardDescription>What needs doing, and any context for it.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

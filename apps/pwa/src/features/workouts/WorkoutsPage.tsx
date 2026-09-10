@@ -1,4 +1,5 @@
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useAppNavigate } from "@/lib/use-app-navigate";
@@ -41,7 +42,6 @@ export default function WorkoutsPage() {
   const canCreate = can(Permission.WORKOUTS_CREATE);
   const canDeletePlan = can(Permission.WORKOUTS_DELETE);
   const canReadAllPlans = can(Permission.WORKOUTS_CREATE);
-
 
   const plansQuery = useWorkoutPlansInfinite();
   const plans = React.useMemo(
@@ -125,21 +125,21 @@ export default function WorkoutsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Workout Plans</h1>
-          <p className="text-muted-foreground">
-            {canReadAllPlans ? "Manage workout plans" : "Your assigned plans"}
-          </p>
-        </div>
-        {canCreate && (
-          <Button onClick={() => navigate("/workouts/new")}>
-            <Plus className="h-4 w-4" />
-            New Plan
-          </Button>
-        )}
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader
+        title="Workout Plans"
+        description={canReadAllPlans ? "Manage workout plans" : "Your assigned plans"}
+        actions={
+          <>
+            {canCreate && (
+              <Button onClick={() => navigate("/workouts/new")}>
+                <Plus className="h-4 w-4" />
+                New Plan
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {loading ? (
         <ListPageSkeleton search={false} filters={0} />
@@ -171,7 +171,7 @@ export default function WorkoutsPage() {
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div>
-                      <CardTitle className="text-base">{plan.title}</CardTitle>
+                      <CardTitle>{plan.title}</CardTitle>
                       <CardDescription>
                         by {plan.creator?.name ?? "Unknown"} · {formatDate(plan.createdAt)}
                       </CardDescription>

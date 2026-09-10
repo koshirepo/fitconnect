@@ -116,7 +116,9 @@ export function RequireTenantHost() {
       <Card className="w-full">
         <CardHeader className="items-center text-center">
           <Building2 className="h-10 w-10 text-muted-foreground" />
-          <CardTitle>{target ? "Opening your gym…" : "Gym pages live on your gym's address"}</CardTitle>
+          <CardTitle>
+            {target ? "Opening your gym…" : "Gym pages live on your gym's address"}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 text-center">
           {target ? (
@@ -182,9 +184,7 @@ export function RedirectIfAuth() {
 
   // Read from the store rather than subscribed to it: this has to be the
   // value at mount, and a subscription would make it the current one.
-  const [wasAuthenticated] = React.useState(
-    () => useAuthStore.getState().isAuthenticated,
-  );
+  const [wasAuthenticated] = React.useState(() => useAuthStore.getState().isAuthenticated);
 
   if (wasAuthenticated) {
     return <Navigate to={target} replace />;

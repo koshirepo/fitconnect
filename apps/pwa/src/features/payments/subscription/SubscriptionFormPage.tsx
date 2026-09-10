@@ -7,6 +7,7 @@
  * - Primary exports: SubscriptionFormPage.
  */
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useParams } from "react-router-dom";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
@@ -253,24 +254,20 @@ export default function SubscriptionFormPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {isEdit ? `Edit ${editingPlan?.title ?? "plan"}` : "Create Subscription Plan"}
-          </h1>
-          <p className="text-muted-foreground">
-            {isEdit
-              ? "Change the price, duration, eligibility, or freeze allowance for this plan."
-              : "Set up a new subscription plan for your gym members."}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title={isEdit ? `Edit ${editingPlan?.title ?? "plan"}` : "Create Subscription Plan"}
+        description={
+          isEdit
+            ? "Change the price, duration, eligibility, or freeze allowance for this plan."
+            : "Set up a new subscription plan for your gym members."
+        }
+      />
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Plan Details */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Plan Details</CardTitle>
+            <CardTitle>Plan Details</CardTitle>
             <CardDescription>
               Give your plan a descriptive name and optional details.
             </CardDescription>
@@ -305,7 +302,7 @@ export default function SubscriptionFormPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Badge Access</CardTitle>
+            <CardTitle>Badge Access</CardTitle>
             <CardDescription>
               Limit this plan to specific badges, or leave it open for all members.
             </CardDescription>
@@ -369,7 +366,7 @@ export default function SubscriptionFormPage() {
         {/* Pricing */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Pricing</CardTitle>
+            <CardTitle>Pricing</CardTitle>
             <CardDescription>Set the price for this subscription plan.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -399,7 +396,7 @@ export default function SubscriptionFormPage() {
         {/* Duration */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Duration</CardTitle>
+            <CardTitle>Duration</CardTitle>
             <CardDescription>Choose how long this subscription lasts.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -466,8 +463,8 @@ export default function SubscriptionFormPage() {
           <CardHeader>
             <CardTitle>Freezing</CardTitle>
             <CardDescription>
-              How long a member on this plan may pause, and how many times. Leave
-              at zero and this plan cannot be frozen.
+              How long a member on this plan may pause, and how many times. Leave at zero and this
+              plan cannot be frozen.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -496,8 +493,7 @@ export default function SubscriptionFormPage() {
                 onChange={(ev) => setFreezeCount(ev.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                How many separate breaks that budget splits across. Each one is
-                at least 3 days.
+                How many separate breaks that budget splits across. Each one is at least 3 days.
               </p>
             </div>
           </CardContent>

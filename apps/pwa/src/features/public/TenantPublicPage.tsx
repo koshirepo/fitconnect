@@ -82,7 +82,6 @@ export default function TenantPublicPage() {
       : undefined,
   });
 
-
   React.useEffect(() => {
     if (!isTenantSubdomain()) {
       setTenant(null);
@@ -215,20 +214,16 @@ export default function TenantPublicPage() {
                   rather than shown the shop they clicked on. The public
                   storefront answers for all of them, and a member still reaches
                   the buying view from their own dashboard. */}
-              <Button
-                variant="outline"
-                onClick={() => navigate("/shop")}
-              >
+              <Button variant="outline" onClick={() => navigate("/shop")}>
                 <ShoppingBag className="h-4 w-4" />
                 Visit Store
               </Button>
-
             </div>
           </div>
 
           <Card className="lg:col-span-2 bg-background/80">
             <CardHeader>
-              <CardTitle className="text-lg">Gym Snapshot</CardTitle>
+              <CardTitle>Gym Snapshot</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
@@ -304,9 +299,7 @@ export default function TenantPublicPage() {
             <CardContent className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-lg border p-4">
                 <p className="text-xs text-muted-foreground">Community</p>
-                <p className="mt-1 text-sm font-medium">
-                  {memberCount} members already enrolled.
-                </p>
+                <p className="mt-1 text-sm font-medium">{memberCount} members already enrolled.</p>
               </div>
               <div className="rounded-lg border p-4">
                 <p className="text-xs text-muted-foreground">Plan Flexibility</p>
@@ -339,7 +332,7 @@ export default function TenantPublicPage() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2">
                 <QrCodeIcon className="h-5 w-5" />
                 Attendance QR
               </CardTitle>
@@ -374,7 +367,7 @@ export default function TenantPublicPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5" />
                 Subscription Plans
               </CardTitle>
@@ -409,7 +402,7 @@ export default function TenantPublicPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2">
                 <Clock3 className="h-5 w-5" />
                 Shift Details
               </CardTitle>
@@ -432,9 +425,7 @@ export default function TenantPublicPage() {
                       </BadgeUI>
                     </div>
                     {shift.description && (
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        {shift.description}
-                      </p>
+                      <p className="mt-2 text-sm text-muted-foreground">{shift.description}</p>
                     )}
                   </div>
                 ))
@@ -444,7 +435,7 @@ export default function TenantPublicPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Contact</CardTitle>
+              <CardTitle>Contact</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {tenant.email && (
@@ -505,11 +496,7 @@ export default function TenantPublicPage() {
                 <ArrowRight className="h-4 w-4" />
               </Button>
               {!isAuthenticated && (
-                <Button
-                  variant="ghost"
-                  className="mt-2 w-full"
-                  onClick={() => navigate("/login")}
-                >
+                <Button variant="ghost" className="mt-2 w-full" onClick={() => navigate("/login")}>
                   I already have an account
                 </Button>
               )}

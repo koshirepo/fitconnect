@@ -40,7 +40,7 @@ export function RolePermissionEditor({
   const showDeviations = role.isSystem;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {catalog.map((group) => {
         const editable = group.permissions.filter(
           (permission) => permission.manageable && !locked.has(permission.key),
@@ -73,8 +73,7 @@ export function RolePermissionEditor({
               {group.permissions.map((permission) => {
                 const isLocked = locked.has(permission.key);
                 const isChecked = isLocked || selected.has(permission.key);
-                const isDisabled =
-                  disabled || !role.editable || isLocked || !permission.manageable;
+                const isDisabled = disabled || !role.editable || isLocked || !permission.manageable;
                 const deviates = showDeviations && isChecked !== baseline.has(permission.key);
 
                 return (

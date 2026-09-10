@@ -7,28 +7,19 @@
  * - Primary exports: WorkoutFormPage.
  */
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { Navigate, useParams } from "react-router-dom";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
-import {
-  useCreateWorkoutPlan,
-  useUpdateWorkoutPlan,
-  useWorkoutPlan,
-} from "@/api/queries/catalog";
+import { useCreateWorkoutPlan, useUpdateWorkoutPlan, useWorkoutPlan } from "@/api/queries/catalog";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormPageSkeleton } from "@/components/ui/skeleton";
 import { AlertCircle, ArrowLeft, Plus, X } from "lucide-react";
 import type { Exercise } from "@/types/api";
@@ -149,22 +140,20 @@ function WorkoutForm({
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          {isEdit ? `Edit ${plan?.title ?? "plan"}` : "New Workout Plan"}
-        </h1>
-        <p className="text-muted-foreground">
-          {isEdit
+    <div className="mx-auto max-w-3xl space-y-5 sm:space-y-6">
+      <PageHeader
+        title={isEdit ? `Edit ${plan?.title ?? "plan"}` : "New Workout Plan"}
+        description={
+          isEdit
             ? "Change this plan's details and exercises."
-            : "Build a plan you can assign to members."}
-        </p>
-      </div>
+            : "Build a plan you can assign to members."
+        }
+      />
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Plan Details</CardTitle>
+            <CardTitle>Plan Details</CardTitle>
             <CardDescription>Name the plan and describe who it is for.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -198,7 +187,7 @@ function WorkoutForm({
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
               <div>
-                <CardTitle className="text-lg">Exercises</CardTitle>
+                <CardTitle>Exercises</CardTitle>
                 <CardDescription>Sets, reps, and any coaching notes.</CardDescription>
               </div>
               <Button type="button" variant="outline" size="sm" onClick={addExercise}>

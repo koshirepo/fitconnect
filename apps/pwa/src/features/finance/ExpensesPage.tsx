@@ -9,6 +9,7 @@
  * - Primary exports: ExpensesPage.
  */
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useSearchParams } from "react-router-dom";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import {
@@ -110,9 +111,10 @@ export default function ExpensesPage() {
 
   const [showExpenseForm, setShowExpenseForm] = React.useState(false);
   const [showRecurringForm, setShowRecurringForm] = React.useState(false);
-  const [removingExpense, setRemovingExpense] = React.useState<{ id: string; label: string } | null>(
-    null,
-  );
+  const [removingExpense, setRemovingExpense] = React.useState<{
+    id: string;
+    label: string;
+  } | null>(null);
   const [removingRecurring, setRemovingRecurring] = React.useState<{
     id: string;
     label: string;
@@ -221,27 +223,25 @@ export default function ExpensesPage() {
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight sm:text-2xl">
-            <Wallet className="size-5 shrink-0 sm:size-6" />
-            Income &amp; expenses
-          </h1>
-          <p className="mt-0.5 truncate text-sm text-muted-foreground">
-            What came in, what went out, what is left.
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          className="shrink-0"
-          onClick={handleExport}
-          disabled={expenses.length === 0}
-          aria-label={`Download ${formatMonthLabel(month)} expenses as CSV`}
-          title={`Download ${formatMonthLabel(month)} expenses as CSV`}
-        >
-          <Download className="h-4 w-4" />
-        </Button>
-      </div>
+      <PageHeader
+        icon={Wallet}
+        title="Income &amp; expenses"
+        description="What came in, what went out, what is left."
+        actions={
+          <>
+            <Button
+              variant="outline"
+              className="shrink-0"
+              onClick={handleExport}
+              disabled={expenses.length === 0}
+              aria-label={`Download ${formatMonthLabel(month)} expenses as CSV`}
+              title={`Download ${formatMonthLabel(month)} expenses as CSV`}
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+          </>
+        }
+      />
 
       {error && (
         <p className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -332,7 +332,7 @@ export default function ExpensesPage() {
           {/* Fixed monthly costs */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-2">
                 <Repeat className="h-4 w-4" />
                 Fixed monthly
               </CardTitle>
@@ -392,7 +392,11 @@ export default function ExpensesPage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={submitRecurring} disabled={createRecurring.isPending}>
+                    <Button
+                      size="sm"
+                      onClick={submitRecurring}
+                      disabled={createRecurring.isPending}
+                    >
                       {createRecurring.isPending ? "Saving..." : "Save"}
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => setShowRecurringForm(false)}>
@@ -454,7 +458,9 @@ export default function ExpensesPage() {
                               size="sm"
                               variant="ghost"
                               className="size-9 p-0"
-                              aria-label={row.isActive ? `Pause ${row.label}` : `Resume ${row.label}`}
+                              aria-label={
+                                row.isActive ? `Pause ${row.label}` : `Resume ${row.label}`
+                              }
                               title={row.isActive ? "Pause" : "Resume"}
                               onClick={() =>
                                 updateRecurring.mutateAsync({
@@ -492,7 +498,7 @@ export default function ExpensesPage() {
           {/* Everything else */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
-              <CardTitle className="flex min-w-0 items-center gap-2 text-base">
+              <CardTitle className="flex min-w-0 items-center gap-2">
                 <Receipt className="size-4 shrink-0" />
                 <span className="truncate">Spent this month</span>
                 <span className="shrink-0 text-xs font-normal tabular-nums text-muted-foreground">

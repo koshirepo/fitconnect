@@ -7,6 +7,7 @@
  * - Primary exports: StorePage.
  */
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Boxes,
   Check,
@@ -96,9 +97,10 @@ export default function StorePage() {
   const canManage = can(Permission.STORE_MANAGE);
 
   const [tab, setTab] = React.useState<string>("PENDING");
-  const [confirm, setConfirm] = React.useState<
-    { order: StoreOrderRow; action: "complete" | "reject" } | null
-  >(null);
+  const [confirm, setConfirm] = React.useState<{
+    order: StoreOrderRow;
+    action: "complete" | "reject";
+  } | null>(null);
 
   const ordersQuery = useStoreOrders({ status: tab });
   // Its own read, so the tile reads the same on every tab. Sharing the list
@@ -132,10 +134,7 @@ export default function StorePage() {
   const [coinsToSpend, setCoinsToSpend] = React.useState("");
   const [selling, setSelling] = React.useState(false);
 
-  const counterTotal = lines.reduce(
-    (sum, line) => sum + line.unitPrice * line.quantity,
-    0,
-  );
+  const counterTotal = lines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0);
 
   const addLine = (product: StoreProduct, variant: StoreVariant) => {
     setLines((prev) => {
@@ -242,10 +241,7 @@ export default function StorePage() {
     return {
       out: variants.filter((entry) => entry.variant.stock === 0),
       low: variants.filter((entry) => entry.variant.stock > 0 && entry.variant.stock <= 3),
-      value: variants.reduce(
-        (sum, entry) => sum + entry.variant.price * entry.variant.stock,
-        0,
-      ),
+      value: variants.reduce((sum, entry) => sum + entry.variant.price * entry.variant.stock, 0),
     };
   }, [products]);
 
@@ -282,40 +278,40 @@ export default function StorePage() {
   if (ordersQuery.isPending) return <ListPageSkeleton rows={5} search={false} filters={0} />;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Store admin</h1>
-          <p className="text-muted-foreground">
-            Hand over reservations, take the money, and keep stock honest.
-          </p>
-        </div>
-        {/* On a phone these used to wrap two-then-one, leaving a stray button on
-            its own line. The primary action takes the full width and the two
-            secondaries split the row beneath it; from `sm` up they sit inline
-            as before. */}
-        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
-          {canSell && (
-            <Button
-              className="col-span-2 sm:col-span-1"
-              onClick={() => setSellOpen((open) => !open)}
-            >
-              <ShoppingCart className="h-4 w-4" />
-              {sellOpen ? "Close sale" : "Sell at counter"}
-            </Button>
-          )}
-          <Button variant="outline" onClick={() => navigateRaw("/dashboard/store")}>
-            <Package className="h-4 w-4" />
-            View shop
-          </Button>
-          {canManage && (
-            <Button variant="outline" onClick={() => navigate("/dashboard/store/manage")}>
-              <Settings className="h-4 w-4" />
-              Products &amp; stock
-            </Button>
-          )}
-        </div>
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader
+        title="Store admin"
+        description="Hand over reservations, take the money, and keep stock honest."
+        actions={
+          <>
+            {/* On a phone these used to wrap two-then-one, leaving a stray button on
+                      its own line. The primary action takes the full width and the two
+                      secondaries split the row beneath it; from `sm` up they sit inline
+                      as before. */}
+            <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
+              {canSell && (
+                <Button
+                  className="col-span-2 sm:col-span-1"
+                  onClick={() => setSellOpen((open) => !open)}
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  {sellOpen ? "Close sale" : "Sell at counter"}
+                </Button>
+              )}
+              <Button variant="outline" onClick={() => navigateRaw("/dashboard/store")}>
+                <Package className="h-4 w-4" />
+                View shop
+              </Button>
+              {canManage && (
+                <Button variant="outline" onClick={() => navigate("/dashboard/store/manage")}>
+                  <Settings className="h-4 w-4" />
+                  Products &amp; stock
+                </Button>
+              )}
+            </div>
+          </>
+        }
+      />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
@@ -359,7 +355,7 @@ export default function StorePage() {
       {sellOpen && canSell && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Sell at the counter</CardTitle>
+            <CardTitle>Sell at the counter</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* A counter sale is complete the moment it is made — the money is
@@ -389,9 +385,7 @@ export default function StorePage() {
                   members={members}
                   selectedMember={buyer}
                   onSelect={setBuyer}
-                  placeholder={
-                    membersQuery.isPending ? "Loading members…" : "Choose the buyer"
-                  }
+                  placeholder={membersQuery.isPending ? "Loading members…" : "Choose the buyer"}
                   title="Who is buying?"
                 />
               ) : (
@@ -419,9 +413,7 @@ export default function StorePage() {
             <div className="space-y-2">
               <Label>Items</Label>
               {lines.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Pick from the catalogue below.
-                </p>
+                <p className="text-sm text-muted-foreground">Pick from the catalogue below.</p>
               ) : (
                 <div className="space-y-2">
                   {lines.map((line) => (
@@ -503,9 +495,7 @@ export default function StorePage() {
                 same size under a thumb. */}
             <div className="flex flex-col gap-3 border-t border-border pt-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">
-                  Before any coupon or coins
-                </p>
+                <p className="text-xs text-muted-foreground">Before any coupon or coins</p>
                 <p className="text-lg font-bold tabular-nums">{formatCurrency(counterTotal)}</p>
               </div>
               <div className="flex flex-col-reverse gap-2 sm:flex-row">
@@ -536,9 +526,7 @@ export default function StorePage() {
       {stockView && (
         <Card>
           <CardHeader className="flex-row items-center justify-between pb-3">
-            <CardTitle className="text-base">
-              {stockView === "LOW" ? "Running low" : "Out of stock"}
-            </CardTitle>
+            <CardTitle>{stockView === "LOW" ? "Running low" : "Out of stock"}</CardTitle>
             <Button variant="ghost" size="sm" onClick={() => setStockView(null)}>
               <X className="h-4 w-4" />
               Close
@@ -547,9 +535,7 @@ export default function StorePage() {
           <CardContent>
             {(stockView === "LOW" ? stock.low : stock.out).length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                {stockView === "LOW"
-                  ? "Nothing is running low."
-                  : "Everything is in stock."}
+                {stockView === "LOW" ? "Nothing is running low." : "Everything is in stock."}
               </p>
             ) : (
               <ul className="divide-y divide-border">
@@ -619,7 +605,7 @@ export default function StorePage() {
                       the two never fit, and letting them wrap dropped the total
                       onto its own line at body size — so it is stated first
                       instead, which is what the person at the counter reads. */}
-                  <CardTitle className="flex flex-col gap-1 text-base sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-2">
+                  <CardTitle className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-2">
                     <span className="order-2 flex flex-wrap items-center gap-2 sm:order-1">
                       {buyer.name}
                       <Badge variant="secondary" className="text-[10px]">
@@ -677,16 +663,11 @@ export default function StorePage() {
                     ))}
                   </ul>
 
-                  {order.note && (
-                    <p className="text-sm text-muted-foreground">{order.note}</p>
-                  )}
+                  {order.note && <p className="text-sm text-muted-foreground">{order.note}</p>}
 
                   {order.status === "PENDING" && canSell && (
                     <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:flex-wrap">
-                      <Button
-                        size="sm"
-                        onClick={() => setConfirm({ order, action: "complete" })}
-                      >
+                      <Button size="sm" onClick={() => setConfirm({ order, action: "complete" })}>
                         <Check className="h-4 w-4" />
                         Collected &amp; paid
                       </Button>
@@ -710,9 +691,7 @@ export default function StorePage() {
       <ConfirmDialog
         open={Boolean(confirm)}
         onOpenChange={(open) => !open && setConfirm(null)}
-        title={
-          confirm?.action === "complete" ? "Hand this order over?" : "Drop this reservation?"
-        }
+        title={confirm?.action === "complete" ? "Hand this order over?" : "Drop this reservation?"}
         description={
           confirm?.action === "complete"
             ? `Confirms ${formatCurrency(confirm.order.totalAmount)} taken and takes the items out of stock.${

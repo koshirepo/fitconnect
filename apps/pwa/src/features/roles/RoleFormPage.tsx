@@ -11,6 +11,7 @@
  * - Primary exports: RoleFormPage.
  */
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useParams } from "react-router-dom";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
@@ -27,13 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormPageSkeleton } from "@/components/ui/skeleton";
 import { AlertCircle, ArrowLeft } from "lucide-react";
 
@@ -153,22 +148,20 @@ export default function RoleFormPage({ scope }: Props) {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          {isEdit ? "Edit Role" : "New Role"}
-        </h1>
-        <p className="text-muted-foreground">
-          {isEdit
+    <div className="mx-auto max-w-2xl space-y-5 sm:space-y-6">
+      <PageHeader
+        title={isEdit ? "Edit Role" : "New Role"}
+        description={
+          isEdit
             ? "Rename the role or update its description. Its key stays stable, so members keep their assignments."
-            : "Add a custom role for your gym, then set its permissions on the roles page."}
-        </p>
-      </div>
+            : "Add a custom role for your gym, then set its permissions on the roles page."
+        }
+      />
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Role details</CardTitle>
+            <CardTitle>Role details</CardTitle>
             <CardDescription>What this role is called and what it is for.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

@@ -50,8 +50,7 @@ export default function PublicCatalogPage() {
       "@type": "CollectionPage",
       name: "FitConnect Shop",
       url: absoluteUrl("/shop"),
-      description:
-        "Gym accessories and equipment: apparel, hydration, shakers and workout gear.",
+      description: "Gym accessories and equipment: apparel, hydration, shakers and workout gear.",
     },
   });
 
@@ -153,7 +152,8 @@ export default function PublicCatalogPage() {
     }
   };
 
-  if (loading) return <CardsGridSkeleton count={8} className="grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4" />;
+  if (loading)
+    return <CardsGridSkeleton count={8} className="grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4" />;
 
   return (
     <div className="min-h-screen bg-background">
@@ -320,50 +320,48 @@ export default function PublicCatalogPage() {
                             Options
                           </Button>
                         ) : inCart === 0 ? (
-                <Button
-                  className="w-full"
-                  onClick={() => handleAdd(product)}
-                  disabled={unavailable}
-                >
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Add to Cart
-                </Button>
-              ) : (
-                <div className="flex items-center justify-between gap-2 rounded-lg border bg-muted/40 p-1">
-                  <button
-                    type="button"
-                    onClick={() => handleDecrease(product)}
-                    className="flex h-9 w-9 items-center justify-center rounded-md bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                    title={
-                      inCart <= product.minOrderQty ? "Remove from cart" : "Decrease"
-                    }
-                  >
-                    {inCart <= product.minOrderQty ? (
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    ) : (
-                      <Minus className="h-4 w-4" />
-                    )}
-                  </button>
+                          <Button
+                            className="w-full"
+                            onClick={() => handleAdd(product)}
+                            disabled={unavailable}
+                          >
+                            <ShoppingCart className="h-4 w-4 mr-2" />
+                            Add to Cart
+                          </Button>
+                        ) : (
+                          <div className="flex items-center justify-between gap-2 rounded-lg border bg-muted/40 p-1">
+                            <button
+                              type="button"
+                              onClick={() => handleDecrease(product)}
+                              className="flex h-9 w-9 items-center justify-center rounded-md bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                              title={
+                                inCart <= product.minOrderQty ? "Remove from cart" : "Decrease"
+                              }
+                            >
+                              {inCart <= product.minOrderQty ? (
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              ) : (
+                                <Minus className="h-4 w-4" />
+                              )}
+                            </button>
 
-                  <div className="flex-1 text-center">
-                    <span className="text-lg font-bold tabular-nums leading-none">
-                      {inCart}
-                    </span>
-                    <p className="text-xs text-muted-foreground leading-none">
-                      in cart
-                    </p>
-                  </div>
+                            <div className="flex-1 text-center">
+                              <span className="text-lg font-bold tabular-nums leading-none">
+                                {inCart}
+                              </span>
+                              <p className="text-xs text-muted-foreground leading-none">in cart</p>
+                            </div>
 
-                  <button
-                    type="button"
-                    onClick={() => handleIncrease(product)}
-                    disabled={inCart >= product.maxOrderQty || inCart >= product.stock}
-                    className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-                    title="Increase quantity"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
-                </div>
+                            <button
+                              type="button"
+                              onClick={() => handleIncrease(product)}
+                              disabled={inCart >= product.maxOrderQty || inCart >= product.stock}
+                              className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                              title="Increase quantity"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </div>
                         )
                       }
                     />

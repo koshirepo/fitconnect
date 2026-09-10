@@ -7,6 +7,7 @@
  * - Primary exports: AttendanceDeviceFormPage.
  */
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useNavigate, useParams } from "react-router-dom";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { usePermissions } from "@/features/auth/permission-gate";
@@ -153,26 +154,26 @@ export default function AttendanceDeviceFormPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {isEdit ? "Edit machine" : "Add machine"}
-          </h1>
-          <p className="text-muted-foreground">
-            {isEdit
-              ? "The serial cannot change — it is what every punch is matched on."
-              : "Register a reader so its check-ins are accepted for this gym."}
-          </p>
-        </div>
-        <Button variant="outline" onClick={() => navigate("/attendance/devices")}>
-          <ArrowLeft className="h-4 w-4" />
-          Back
-        </Button>
-      </div>
+      <PageHeader
+        title={isEdit ? "Edit machine" : "Add machine"}
+        description={
+          isEdit
+            ? "The serial cannot change — it is what every punch is matched on."
+            : "Register a reader so its check-ins are accepted for this gym."
+        }
+        actions={
+          <>
+            <Button variant="outline" onClick={() => navigate("/attendance/devices")}>
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+          </>
+        }
+      />
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Device details</CardTitle>
+          <CardTitle>Device details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -186,8 +187,8 @@ export default function AttendanceDeviceFormPage() {
               onChange={(e) => update({ serialNumber: e.target.value })}
             />
             <p className="text-xs text-muted-foreground">
-              Printed on the back of the unit, and shown in its own network menu.
-              Until a serial is registered here, anything that device sends is ignored.
+              Printed on the back of the unit, and shown in its own network menu. Until a serial is
+              registered here, anything that device sends is ignored.
             </p>
           </div>
 
@@ -226,10 +227,9 @@ export default function AttendanceDeviceFormPage() {
               ))}
             </datalist>
             <p className="text-xs text-muted-foreground">
-              The machine reports the time on its own clock with no timezone
-              attached, so this is what decides which day a check-in is filed
-              under. Get it wrong and an early-morning session lands on
-              yesterday.
+              The machine reports the time on its own clock with no timezone attached, so this is
+              what decides which day a check-in is filed under. Get it wrong and an early-morning
+              session lands on yesterday.
             </p>
           </div>
 
@@ -249,17 +249,17 @@ export default function AttendanceDeviceFormPage() {
       {!isEdit && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">After you save</CardTitle>
+            <CardTitle>After you save</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>
-              On the device, point its server address at this app&apos;s API host
-              and turn on the cloud or ADMS option. It checks in within a minute
-              and this page will show it as online.
+              On the device, point its server address at this app&apos;s API host and turn on the
+              cloud or ADMS option. It checks in within a minute and this page will show it as
+              online.
             </p>
             <p>
-              Every member who already has a card is queued to the new reader
-              automatically, so nobody needs re-enrolling at its keypad.
+              Every member who already has a card is queued to the new reader automatically, so
+              nobody needs re-enrolling at its keypad.
             </p>
           </CardContent>
         </Card>

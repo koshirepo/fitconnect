@@ -1,4 +1,5 @@
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useMyOrdersInfinite } from "@/api/queries/platform";
 import { flattenPages } from "@/api/queries/shared";
@@ -50,16 +51,18 @@ export default function UserOrderHistoryPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">My Orders</h1>
-          <p className="text-muted-foreground">Track all orders linked to your account.</p>
-        </div>
-        <Button variant="outline" onClick={() => navigate("/shop")}>
-          Go to Shop
-        </Button>
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader
+        title="My Orders"
+        description="Track all orders linked to your account."
+        actions={
+          <>
+            <Button variant="outline" onClick={() => navigate("/shop")}>
+              Go to Shop
+            </Button>
+          </>
+        }
+      />
 
       {loading ? (
         <ListPageSkeleton search={false} filters={0} />
@@ -76,7 +79,7 @@ export default function UserOrderHistoryPage() {
             <Card key={order.id}>
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">Order {order.id}</CardTitle>
+                  <CardTitle>Order {order.id}</CardTitle>
                   <Badge variant={STATUS_STYLE[order.status] ?? "secondary"}>{order.status}</Badge>
                 </div>
               </CardHeader>

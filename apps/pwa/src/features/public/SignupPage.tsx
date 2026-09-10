@@ -17,13 +17,7 @@ import { haptics } from "@/lib/haptics";
 import { openRazorpayCheckout } from "@/lib/razorpay-checkout";
 import { resolveAssetUrl } from "@/lib/assets";
 import MemberForm, { type MemberFormData } from "@/components/forms/MemberForm";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -85,9 +79,7 @@ export default function SignupPage() {
         const data = res.data.data;
         setOptions(data);
         // Mandatory charges are never optional, so they start ticked and stay so.
-        setSelectedChargeIds(
-          data.charges.filter((charge) => charge.isMandatory).map((c) => c.id),
-        );
+        setSelectedChargeIds(data.charges.filter((charge) => charge.isMandatory).map((c) => c.id));
       })
       .catch((caught) => {
         if (active) setLoadError(getApiError(caught));
@@ -171,9 +163,7 @@ export default function SignupPage() {
   const handleToggleCharge = (chargeId: string, mandatory: boolean) => {
     if (mandatory) return;
     setSelectedChargeIds((prev) =>
-      prev.includes(chargeId)
-        ? prev.filter((id) => id !== chargeId)
-        : [...prev, chargeId],
+      prev.includes(chargeId) ? prev.filter((id) => id !== chargeId) : [...prev, chargeId],
     );
   };
 
@@ -218,9 +208,7 @@ export default function SignupPage() {
         avatarDataUrl: await readFileAsDataUrl(memberData.photoFile),
         subscriptionId: selectedPlan.id,
         ...(selectedChargeIds.length > 0 ? { chargeIds: selectedChargeIds } : {}),
-        ...(couponCode.trim() && discount > 0
-          ? { couponCode: couponCode.trim() }
-          : {}),
+        ...(couponCode.trim() && discount > 0 ? { couponCode: couponCode.trim() } : {}),
         ...(memberData.shiftId ? { shiftId: memberData.shiftId } : {}),
         paymentMode,
         ...(turnstileToken ? { "cf-turnstile-response": turnstileToken } : {}),
@@ -348,9 +336,7 @@ export default function SignupPage() {
 
             <div className="text-center">
               <h2 className="text-lg font-semibold">
-                {active
-                  ? `Welcome to ${options.tenant.name}!`
-                  : "Membership Pending Payment"}
+                {active ? `Welcome to ${options.tenant.name}!` : "Membership Pending Payment"}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 {active
@@ -373,9 +359,7 @@ export default function SignupPage() {
                 <span className="font-medium">Your phone number</span>
               </div>
               <div className="flex justify-between border-t pt-2">
-                <span className="text-muted-foreground">
-                  {active ? "Paid" : "Amount due"}
-                </span>
+                <span className="text-muted-foreground">{active ? "Paid" : "Amount due"}</span>
                 <span className="font-semibold">{formatCurrency(signup.total)}</span>
               </div>
             </div>
@@ -384,9 +368,7 @@ export default function SignupPage() {
               Your password is your phone number — change it from your profile.
             </p>
 
-            <Button onClick={() => navigate(getTenantDashboardPath("/"))}>
-              Go to Dashboard
-            </Button>
+            <Button onClick={() => navigate(getTenantDashboardPath("/"))}>Go to Dashboard</Button>
           </CardContent>
         </Card>
       </div>
@@ -409,9 +391,7 @@ export default function SignupPage() {
           )}
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Join {options.tenant.name}
-          </h1>
+          <h1 className="text-2xl font-bold tracking-tight">Join {options.tenant.name}</h1>
           <p className="text-muted-foreground">
             {step === 1 ? "Step 1: Your details" : "Step 2: Plan & payment"}
           </p>
@@ -423,8 +403,8 @@ export default function SignupPage() {
           <CardHeader>
             <CardTitle>Your Details</CardTitle>
             <CardDescription>
-              Fill in your details to create your membership. You'll get login
-              access to the gym portal once you're done.
+              Fill in your details to create your membership. You'll get login access to the gym
+              portal once you're done.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -452,15 +432,12 @@ export default function SignupPage() {
           <Card>
             <CardHeader>
               <CardTitle>Choose a Membership Plan</CardTitle>
-              <CardDescription>
-                Pick the plan you'd like to start with.
-              </CardDescription>
+              <CardDescription>Pick the plan you'd like to start with.</CardDescription>
             </CardHeader>
             <CardContent>
               {plans.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  This gym hasn't published any plans yet. Please contact the gym
-                  to join.
+                  This gym hasn't published any plans yet. Please contact the gym to join.
                 </p>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -482,9 +459,7 @@ export default function SignupPage() {
                         </p>
                       )}
                       <div className="mt-2 flex items-center gap-2">
-                        <span className="text-lg font-bold">
-                          {formatCurrency(plan.amount)}
-                        </span>
+                        <span className="text-lg font-bold">{formatCurrency(plan.amount)}</span>
                         <span className="text-xs text-muted-foreground">
                           / {plan.durationDays} days
                         </span>
@@ -523,9 +498,7 @@ export default function SignupPage() {
                           <input
                             type="checkbox"
                             checked={isSelected}
-                            onChange={() =>
-                              handleToggleCharge(charge.id, charge.isMandatory)
-                            }
+                            onChange={() => handleToggleCharge(charge.id, charge.isMandatory)}
                             disabled={charge.isMandatory}
                             className="rounded"
                           />
@@ -607,9 +580,7 @@ export default function SignupPage() {
                       {checkingCoupon ? "Checking…" : "Apply"}
                     </Button>
                   </div>
-                  {couponError && (
-                    <p className="text-xs text-destructive">{couponError}</p>
-                  )}
+                  {couponError && <p className="text-xs text-destructive">{couponError}</p>}
                   {discount > 0 && !couponError && (
                     <p className="text-xs text-emerald-600 dark:text-emerald-400">
                       {formatCurrency(discount)} off applied.
@@ -620,8 +591,8 @@ export default function SignupPage() {
 
               {!options.onlinePaymentsEnabled && (
                 <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-700">
-                  This gym isn't taking card payments yet. You can still join —
-                  your membership stays pending until you pay at the gym.
+                  This gym isn't taking card payments yet. You can still join — your membership
+                  stays pending until you pay at the gym.
                 </p>
               )}
 
@@ -669,8 +640,8 @@ export default function SignupPage() {
 
                 {options.onlinePaymentsEnabled && (
                   <p className="text-center text-xs text-muted-foreground">
-                    Paying at the gym leaves your membership pending until the
-                    front desk records it, so it does not start today.
+                    Paying at the gym leaves your membership pending until the front desk records
+                    it, so it does not start today.
                   </p>
                 )}
 

@@ -395,6 +395,13 @@ export interface MemberDetail {
 /** What a member ID card prints. Re-read on every open, never stored. */
 export interface MemberIdCard {
   member: {
+    /**
+     * The membership id, which is what the card's QR points at.
+     *
+     * Safe to carry on a public payload: it only names a row, and the screen
+     * behind it is behind a login and `members:read:detail`.
+     */
+    id: string;
     name: string;
     memberId: number;
     avatarUrl?: string | null;

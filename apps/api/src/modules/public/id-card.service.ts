@@ -105,6 +105,8 @@ export const idCardService = {
       data: {
         card: {
           member: {
+            // What the QR on the card resolves to: this member's record.
+            id: membership.id,
             name: membership.user.name,
             memberId: membership.memberId,
             avatarUrl: membership.user.avatarUrl,

@@ -54,21 +54,21 @@ export function ProductOverview({
         </>
       }
     >
-        <VariantOptionsCard
-          variants={product.variants}
-          quantityFor={quantityFor ?? (() => 0)}
-          onQuantityChange={onQuantityChange ?? (() => {})}
-        />
+      <VariantOptionsCard
+        variants={product.variants}
+        quantityFor={quantityFor ?? (() => 0)}
+        onQuantityChange={onQuantityChange ?? (() => {})}
+      />
 
-        {product.markdown && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <MarkdownView>{product.markdown}</MarkdownView>
-            </CardContent>
-          </Card>
+      {product.markdown && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle>Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MarkdownView>{product.markdown}</MarkdownView>
+          </CardContent>
+        </Card>
       )}
     </ProductDetailLayout>
   );

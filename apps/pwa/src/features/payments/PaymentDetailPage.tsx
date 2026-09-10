@@ -249,7 +249,7 @@ export default function PaymentDetailPage() {
 
   if (!payment) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-5 sm:space-y-6">
         <Button variant="outline" onClick={() => navigate("/payments")}>
           Back to Payments
         </Button>
@@ -322,7 +322,9 @@ export default function PaymentDetailPage() {
       paneIndex={siblings.index}
       onNext={() => goToSibling(siblings.nextId)}
       onPrevious={() => goToSibling(siblings.previousId)}
-      className="space-y-4 sm:space-y-5"
+      // Full-bleed on a phone, for the same reason as the member page: this
+      // screen is nothing but cards, each already padded inside.
+      className="-mx-3 space-y-3 sm:mx-0 sm:space-y-5"
     >
       <ConfirmDialog
         open={refundConfirmOpen}
@@ -344,7 +346,7 @@ export default function PaymentDetailPage() {
       />
 
       {error && (
-        <p className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p className="mx-3 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive sm:mx-0">
           {error}
         </p>
       )}
@@ -354,7 +356,7 @@ export default function PaymentDetailPage() {
           a label/value list inside a card, in the same type as "Note", while
           the top of the page went to a title and a row of six small buttons. */}
       <Card className="overflow-hidden py-0">
-        <div className="flex items-start justify-between gap-3 px-4 pb-4 pt-5 sm:px-6">
+        <div className="flex items-start justify-between gap-3 px-4 pt-5 pb-4 sm:px-6">
           <div className="min-w-0">
             <p className={cn("text-3xl font-bold tabular-nums sm:text-4xl", amountColor)}>
               {formatCurrency(payment.amount)}
@@ -397,10 +399,7 @@ export default function PaymentDetailPage() {
                     </MenuItem>
                   ))}
                   {payment.status === "COMPLETED" && (
-                    <MenuItem
-                      onClick={() => setRefundConfirmOpen(true)}
-                      disabled={updatingStatus}
-                    >
+                    <MenuItem onClick={() => setRefundConfirmOpen(true)} disabled={updatingStatus}>
                       <RefreshCw className="h-4 w-4" />
                       Refund
                     </MenuItem>
@@ -587,8 +586,7 @@ export default function PaymentDetailPage() {
         <Card>
           <CardContent className="p-4 sm:p-6">
             <p className="text-sm font-medium">
-              Collected after {reminders.length}{" "}
-              {reminders.length === 1 ? "reminder" : "reminders"}
+              Collected after {reminders.length} {reminders.length === 1 ? "reminder" : "reminders"}
             </p>
             <div className="mt-3 space-y-2">
               {reminders.map((reminder) => (

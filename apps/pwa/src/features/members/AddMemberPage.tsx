@@ -1,4 +1,5 @@
 import { formatCurrency } from "@fitconnect/shared/utils";
+import { PageHeader } from "@/components/ui/page-header";
 import * as React from "react";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
@@ -23,13 +24,7 @@ import type {
   TenantMember,
   AddMemberPayload,
 } from "@/types/api";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   CheckCircle2,
@@ -63,11 +58,8 @@ export default function AddMemberPage() {
   const [success, setSuccess] = React.useState(false);
   const [emailSent, setEmailSent] = React.useState(false);
 
-  const [selectedSubscriptionId, setSelectedSubscriptionId] =
-    React.useState<string>("");
-  const [selectedChargeIds, setSelectedChargeIds] = React.useState<string[]>(
-    [],
-  );
+  const [selectedSubscriptionId, setSelectedSubscriptionId] = React.useState<string>("");
+  const [selectedChargeIds, setSelectedChargeIds] = React.useState<string[]>([]);
 
   const shiftsQuery = useShifts(false);
   const shifts = React.useMemo<Shift[]>(() => shiftsQuery.data ?? [], [shiftsQuery.data]);
@@ -115,9 +107,7 @@ export default function AddMemberPage() {
   const handleToggleCharge = (chargeId: string, mandatory: boolean) => {
     if (mandatory) return; // Can't unselect mandatory charges
     setSelectedChargeIds((prev) =>
-      prev.includes(chargeId)
-        ? prev.filter((id) => id !== chargeId)
-        : [...prev, chargeId],
+      prev.includes(chargeId) ? prev.filter((id) => id !== chargeId) : [...prev, chargeId],
     );
   };
 
@@ -125,9 +115,7 @@ export default function AddMemberPage() {
     () => subscriptions.filter((subscription) => subscription.badges.length === 0),
     [subscriptions],
   );
-  const selectedSubscription = selectableSubscriptions.find(
-    (s) => s.id === selectedSubscriptionId,
-  );
+  const selectedSubscription = selectableSubscriptions.find((s) => s.id === selectedSubscriptionId);
   const hiddenBadgeScopedPlanCount = subscriptions.length - selectableSubscriptions.length;
   const selectedChargesTotal = charges
     .filter((c) => selectedChargeIds.includes(c.id))
@@ -197,15 +185,9 @@ export default function AddMemberPage() {
         dateOfBirth: memberData.dateOfBirth,
         ...(memberData.occupationId ? { occupationId: memberData.occupationId } : {}),
         role: memberData.role,
-        ...(selectedSubscriptionId
-          ? { subscriptionId: selectedSubscriptionId }
-          : {}),
-        ...(selectedChargeIds.length > 0
-          ? { chargeIds: selectedChargeIds }
-          : {}),
-        ...(couponCode.trim() && discount > 0
-          ? { couponCode: couponCode.trim() }
-          : {}),
+        ...(selectedSubscriptionId ? { subscriptionId: selectedSubscriptionId } : {}),
+        ...(selectedChargeIds.length > 0 ? { chargeIds: selectedChargeIds } : {}),
+        ...(couponCode.trim() && discount > 0 ? { couponCode: couponCode.trim() } : {}),
         ...(memberData.shiftId ? { shiftId: memberData.shiftId } : {}),
         ...(memberData.referredByMembershipId
           ? { referredByMembershipId: memberData.referredByMembershipId }
@@ -287,16 +269,10 @@ export default function AddMemberPage() {
   return (
     <div className="mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Add Member</h1>
-          <p className="text-muted-foreground">
-            {step === 1
-              ? "Step 1: Member details"
-              : "Step 2: Subscription & charges"}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Add Member"
+        description={step === 1 ? "Step 1: Member details" : "Step 2: Subscription & charges"}
+      />
 
       {/* Success State */}
       {success ? (
@@ -306,12 +282,9 @@ export default function AddMemberPage() {
               <CheckCircle2 className="h-7 w-7 text-green-600" />
             </div>
             <div className="text-center">
-              <h2 className="text-lg font-semibold">
-                Member Added Successfully
-              </h2>
+              <h2 className="text-lg font-semibold">Member Added Successfully</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                The new member has been registered and their details have been
-                shared.
+                The new member has been registered and their details have been shared.
               </p>
             </div>
 
@@ -320,26 +293,25 @@ export default function AddMemberPage() {
                 <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-center">
                   <div className="flex items-center justify-center gap-2 mb-1">
                     <Mail className="h-4 w-4 text-blue-600" />
-                    <p className="text-sm font-medium text-blue-700">
-                      Email Sent
-                    </p>
+                    <p className="text-sm font-medium text-blue-700">Email Sent</p>
                   </div>
                   <p className="text-xs text-blue-600">
-                    Login credentials and payment details have been sent to the
-                    member's email.
+                    Login credentials and payment details have been sent to the member's email.
                   </p>
                 </div>
                 <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-center">
                   <p className="text-xs text-green-600">
-                    WhatsApp message with admission details has been opened in a
-                    new tab.
+                    WhatsApp message with admission details has been opened in a new tab.
                   </p>
                 </div>
               </div>
             )}
 
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => navigate(getTenantDashboardPath("/members"))}>
+              <Button
+                variant="outline"
+                onClick={() => navigate(getTenantDashboardPath("/members"))}
+              >
                 Back to Members
               </Button>
               <Button onClick={handleAddAnother}>
@@ -355,8 +327,8 @@ export default function AddMemberPage() {
           <CardHeader>
             <CardTitle>New Member Details</CardTitle>
             <CardDescription>
-              Fill in the details below. The member will receive login
-              credentials for the gym portal.
+              Fill in the details below. The member will receive login credentials for the gym
+              portal.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -410,8 +382,8 @@ export default function AddMemberPage() {
                       {hiddenBadgeScopedPlanCount > 0 && (
                         <p className="text-xs text-muted-foreground">
                           {hiddenBadgeScopedPlanCount} badge-restricted plan
-                          {hiddenBadgeScopedPlanCount === 1 ? "" : "s"} will appear only after
-                          the member has the required badge.
+                          {hiddenBadgeScopedPlanCount === 1 ? "" : "s"} will appear only after the
+                          member has the required badge.
                         </p>
                       )}
                       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -472,42 +444,30 @@ export default function AddMemberPage() {
                       Fixed Charges
                     </CardTitle>
                     <CardDescription>
-                      Mandatory charges are auto-selected. Toggle optional
-                      charges as needed.
+                      Mandatory charges are auto-selected. Toggle optional charges as needed.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
                       {charges.map((charge) => {
-                        const isSelected = selectedChargeIds.includes(
-                          charge.id,
-                        );
+                        const isSelected = selectedChargeIds.includes(charge.id);
                         return (
                           <label
                             key={charge.id}
                             className={`flex items-center justify-between rounded-lg border p-3 cursor-pointer transition-all ${
-                              isSelected
-                                ? "border-primary bg-primary/5"
-                                : "border-border"
+                              isSelected ? "border-primary bg-primary/5" : "border-border"
                             } ${charge.isMandatory ? "cursor-default" : ""}`}
                           >
                             <div className="flex items-center gap-3">
                               <input
                                 type="checkbox"
                                 checked={isSelected}
-                                onChange={() =>
-                                  handleToggleCharge(
-                                    charge.id,
-                                    charge.isMandatory,
-                                  )
-                                }
+                                onChange={() => handleToggleCharge(charge.id, charge.isMandatory)}
                                 disabled={charge.isMandatory}
                                 className="rounded"
                               />
                               <div>
-                                <p className="text-sm font-medium">
-                                  {charge.name}
-                                </p>
+                                <p className="text-sm font-medium">{charge.name}</p>
                                 {charge.isMandatory && (
                                   <span className="inline-flex items-center gap-1 text-xs text-blue-600">
                                     <Shield className="h-3 w-3" />
@@ -538,17 +498,14 @@ export default function AddMemberPage() {
                       .filter((c) => selectedChargeIds.includes(c.id))
                       .map((charge) => (
                         <div key={charge.id} className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            {charge.name}
-                          </span>
+                          <span className="text-muted-foreground">{charge.name}</span>
                           <span>{formatCurrency(charge.amount)}</span>
                         </div>
                       ))}
                     {selectedSubscription && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">
-                          {selectedSubscription.title} (
-                          {selectedSubscription.durationDays} days)
+                          {selectedSubscription.title} ({selectedSubscription.durationDays} days)
                         </span>
                         <span>{formatCurrency(selectedSubscription.amount)}</span>
                       </div>
@@ -587,9 +544,7 @@ export default function AddMemberPage() {
                         {couponQuote.isPending ? "Checking…" : "Apply"}
                       </Button>
                     </div>
-                    {couponError && (
-                      <p className="text-xs text-destructive">{couponError}</p>
-                    )}
+                    {couponError && <p className="text-xs text-destructive">{couponError}</p>}
                     {discount > 0 && !couponError && (
                       <p className="text-xs text-emerald-600 dark:text-emerald-400">
                         {formatCurrency(discount)} off applied.
@@ -608,11 +563,7 @@ export default function AddMemberPage() {
                       <ArrowLeft className="mr-1 h-4 w-4" />
                       Back
                     </Button>
-                    <Button
-                      onClick={handleFinalSubmit}
-                      disabled={submitting}
-                      className="flex-1"
-                    >
+                    <Button onClick={handleFinalSubmit} disabled={submitting} className="flex-1">
                       {submitting ? (
                         "Adding Member..."
                       ) : (

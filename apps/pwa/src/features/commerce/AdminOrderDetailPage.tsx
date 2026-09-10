@@ -1,4 +1,5 @@
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useNavigate, useParams } from "react-router-dom";
@@ -197,26 +198,22 @@ export default function AdminOrderDetailPage() {
 
   if (!canManageOrders) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Order Details</h1>
-            <p className="text-muted-foreground">Super admin access is required for this page.</p>
-          </div>
-        </div>
+      <div className="space-y-5 sm:space-y-6">
+        <PageHeader
+          title="Order details"
+          description="Super admin access is required for this page."
+        />
       </div>
     );
   }
 
   if (!order) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Order Details</h1>
-            <p className="text-muted-foreground">The requested order could not be loaded.</p>
-          </div>
-        </div>
+      <div className="space-y-5 sm:space-y-6">
+        <PageHeader
+          title="Order details"
+          description="The requested order could not be loaded."
+        />
 
         <EmptyState
           icon={PackageSearch}
@@ -233,28 +230,25 @@ export default function AdminOrderDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Order Details</h1>
-            <p className="text-muted-foreground">Order ID: {order.id}</p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={STATUS_STYLE[order.status] ?? "secondary"}>
-            {order.status.replace(/_/g, " ")}
-          </Badge>
-          <Badge variant={order.paymentStatus === "COMPLETED" ? "default" : "secondary"}>
-            {order.paymentStatus ?? "PENDING"}
-          </Badge>
-          <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
-            <Trash2 className="h-4 w-4" />
-            Delete Order
-          </Button>
-        </div>
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader
+        title="Order details"
+        description={`Order ID: ${order.id}`}
+        actions={
+          <>
+            <Badge variant={STATUS_STYLE[order.status] ?? "secondary"}>
+              {order.status.replace(/_/g, " ")}
+            </Badge>
+            <Badge variant={order.paymentStatus === "COMPLETED" ? "default" : "secondary"}>
+              {order.paymentStatus ?? "PENDING"}
+            </Badge>
+            <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
+              <Trash2 className="h-4 w-4" />
+              Delete order
+            </Button>
+          </>
+        }
+      />
 
       {/* ── Fulfilment ─────────────────────────────────────────────────── */}
       <Card>
@@ -266,9 +260,7 @@ export default function AdminOrderDetailPage() {
             <Button
               variant="outline"
               disabled={working || forwards.length > 0 || order.status === "CANCELLED"}
-              onClick={() =>
-                run("Courier booked.", () => shipOrder.mutateAsync(order.id))
-              }
+              onClick={() => run("Courier booked.", () => shipOrder.mutateAsync(order.id))}
             >
               <Truck className="h-4 w-4" />
               {forwards.length > 0 ? "Courier booked" : "Book courier"}
@@ -283,10 +275,7 @@ export default function AdminOrderDetailPage() {
             </Button>
             <Button
               variant="outline"
-              disabled={
-                working ||
-                order.paymentStatus !== "COMPLETED"
-              }
+              disabled={working || order.paymentStatus !== "COMPLETED"}
               onClick={() => setRefundDialogOpen(true)}
             >
               <IndianRupee className="h-4 w-4" />
@@ -334,8 +323,8 @@ export default function AdminOrderDetailPage() {
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              No consignment yet. Paid orders book one automatically; use the button above when
-              that failed or when the order was settled off-app.
+              No consignment yet. Paid orders book one automatically; use the button above when that
+              failed or when the order was settled off-app.
             </p>
           )}
 
@@ -484,7 +473,9 @@ export default function AdminOrderDetailPage() {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Shipping</span>
                 <span
-                  className={order.shippingQuoteIssue ? "text-amber-600 dark:text-amber-400" : undefined}
+                  className={
+                    order.shippingQuoteIssue ? "text-amber-600 dark:text-amber-400" : undefined
+                  }
                 >
                   {order.shippingAmount ? fmt(order.shippingAmount) : "Free"}
                 </span>
@@ -497,8 +488,8 @@ export default function AdminOrderDetailPage() {
                   finding it on a courier invoice weeks later. */}
               {order.shippingQuoteIssue && (
                 <p className="rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-300">
-                  {order.shippingQuoteIssue} Re-price this before dispatch if the
-                  buyer should have been charged.
+                  {order.shippingQuoteIssue} Re-price this before dispatch if the buyer should have
+                  been charged.
                 </p>
               )}
               <div className="flex items-center justify-between text-sm">

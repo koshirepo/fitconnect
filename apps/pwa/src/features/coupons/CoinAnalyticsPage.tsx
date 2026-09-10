@@ -8,6 +8,7 @@
  * - Primary exports: CoinAnalyticsPage.
  */
 import { useCoinActivity, useCoinHolders, useCoinOverview } from "@/api/queries/coupons";
+import { PageHeader } from "@/components/ui/page-header";
 import { useCurrentTenantId } from "@/api/queries/shared";
 import { getApiError } from "@/api/client";
 import * as React from "react";
@@ -133,13 +134,11 @@ export default function CoinAnalyticsPage() {
   const reasonOptions = [...new Set(allActivity.map((entry) => entry.reason))].sort();
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Coins</h1>
-        <p className="text-muted-foreground">
-          What this gym has given away, what members have spent, and what is still owed.
-        </p>
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader
+        title="Coins"
+        description="What this gym has given away, what members have spent, and what is still owed."
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat
@@ -185,8 +184,8 @@ export default function CoinAnalyticsPage() {
             </span>
           ) : (
             <span className="text-muted-foreground">
-              Coins never expire. Everything outstanding above stays owed until it is spent —
-              set an expiry in gym settings to cap it.
+              Coins never expire. Everything outstanding above stays owed until it is spent — set an
+              expiry in gym settings to cap it.
             </span>
           )}
         </CardContent>
@@ -195,7 +194,7 @@ export default function CoinAnalyticsPage() {
       {overview.byReason.length > 0 && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Where they came from, and went</CardTitle>
+            <CardTitle>Where they came from, and went</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {overview.byReason.map((row) => (
@@ -230,7 +229,7 @@ export default function CoinAnalyticsPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Biggest balances</CardTitle>
+            <CardTitle>Biggest balances</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {holders.length === 0 ? (
@@ -266,7 +265,7 @@ export default function CoinAnalyticsPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">
+            <CardTitle>
               Every transaction
               <span className="ml-2 text-xs font-normal text-muted-foreground">
                 {activity.length === allActivity.length
@@ -314,12 +313,11 @@ export default function CoinAnalyticsPage() {
               <p className="py-6 text-center text-sm text-muted-foreground">
                 No coins have moved yet.
               </p>
+            ) : activity.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                Nothing matches that search.
+              </p>
             ) : (
-              activity.length === 0 ? (
-                <p className="py-6 text-center text-sm text-muted-foreground">
-                  Nothing matches that search.
-                </p>
-              ) : (
               activity.map((entry) => (
                 <div key={entry.id} className="rounded-lg border px-3 py-2 text-sm">
                   <div className="flex items-baseline justify-between gap-3">
@@ -357,9 +355,7 @@ export default function CoinAnalyticsPage() {
                         {entry.actedByMembershipId ? (
                           <button
                             type="button"
-                            onClick={() =>
-                              navigate(`/members/${entry.actedByMembershipId}`)
-                            }
+                            onClick={() => navigate(`/members/${entry.actedByMembershipId}`)}
                             className="font-medium text-foreground hover:text-primary hover:underline"
                           >
                             {entry.actedByName}
@@ -379,7 +375,7 @@ export default function CoinAnalyticsPage() {
                   )}
                 </div>
               ))
-            ))}
+            )}
           </CardContent>
         </Card>
       </div>

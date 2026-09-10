@@ -7,6 +7,7 @@
  * - Primary exports: PublicOrderStatusPage.
  */
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useNavigate, useParams } from "react-router-dom";
 import { commerceApi } from "@/api/commerce";
 import { getApiError } from "@/api/client";
@@ -255,10 +256,7 @@ export default function PublicOrderStatusPage() {
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Your order</h1>
-            <p className="text-muted-foreground">Order ID: {order.id}</p>
-          </div>
+          <PageHeader title="Your order" description={`Order ID: ${order.id}`} />
           <Button variant="outline" onClick={() => navigate("/shop")}>
             <ArrowLeft className="h-4 w-4" />
             Back to Catalog
@@ -302,8 +300,7 @@ export default function PublicOrderStatusPage() {
                     {order.status === "CANCELLED" ? "Order cancelled" : "Order returned"}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {order.cancelReason ??
-                      "The parcel is back with us and this order is closed."}
+                    {order.cancelReason ?? "The parcel is back with us and this order is closed."}
                     {order.refundedAt
                       ? ` Refund of ${fmt(order.refundAmount ?? order.totalAmount)} issued on ${formatDateTime(order.refundedAt)}.`
                       : ""}
@@ -319,7 +316,10 @@ export default function PublicOrderStatusPage() {
                   const active = currentStep === index;
                   const Icon = step.icon;
                   return (
-                    <li key={step.key} className="flex items-center gap-2 sm:flex-col sm:text-center">
+                    <li
+                      key={step.key}
+                      className="flex items-center gap-2 sm:flex-col sm:text-center"
+                    >
                       <span
                         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${
                           done
@@ -350,11 +350,7 @@ export default function PublicOrderStatusPage() {
             {(tracking?.canCancel || tracking?.canRequestReturn) && (
               <div className="flex flex-wrap gap-2 border-t pt-4">
                 {tracking.canCancel && (
-                  <Button
-                    variant="outline"
-                    disabled={working}
-                    onClick={() => setCancelOpen(true)}
-                  >
+                  <Button variant="outline" disabled={working} onClick={() => setCancelOpen(true)}>
                     <XCircle className="h-4 w-4" />
                     Cancel order
                   </Button>
@@ -507,9 +503,7 @@ export default function PublicOrderStatusPage() {
             <p className="text-muted-foreground">{order.buyerAddress}</p>
             {(order.buyerCity || order.buyerPincode) && (
               <p className="text-muted-foreground">
-                {[order.buyerCity, order.buyerState, order.buyerPincode]
-                  .filter(Boolean)
-                  .join(", ")}
+                {[order.buyerCity, order.buyerState, order.buyerPincode].filter(Boolean).join(", ")}
               </p>
             )}
             <p className="text-muted-foreground">{order.buyerPhone}</p>

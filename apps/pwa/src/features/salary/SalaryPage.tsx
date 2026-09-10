@@ -7,6 +7,7 @@
  * - Primary exports: SalaryPage.
  */
 import { useSearchParams } from "react-router-dom";
+import { PageHeader } from "@/components/ui/page-header";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useSalaryList } from "@/api/queries/finance";
 import { getApiError } from "@/api/client";
@@ -80,41 +81,39 @@ export default function SalaryPage() {
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight sm:text-2xl">
-            <Wallet className="size-5 shrink-0 sm:size-6" />
-            Staff salary
-          </h1>
-          <p className="mt-0.5 truncate text-sm text-muted-foreground">
-            What each person is owed, and what has gone out.
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {/* The other half of the same month's books. This page and the
-              expense page each showed a figure the other explains, with no way
-              across between them. */}
-          {canReadBooks && (
-            <Button
-              variant="outline"
-              onClick={() => navigate(getTenantDashboardPath(withMonth("/expenses", month)))}
-              aria-label="Income and expenses for this month"
-              title="Income & expenses"
-            >
-              <Wallet className="h-4 w-4" />
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            onClick={handleExport}
-            disabled={staff.length === 0}
-            aria-label={`Download ${formatMonthLabel(month)} payroll as CSV`}
-            title={`Download ${formatMonthLabel(month)} payroll as CSV`}
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={Wallet}
+        title="Staff salary"
+        description="What each person is owed, and what has gone out."
+        actions={
+          <>
+            <div className="flex shrink-0 items-center gap-2">
+              {/* The other half of the same month's books. This page and the
+                        expense page each showed a figure the other explains, with no way
+                        across between them. */}
+              {canReadBooks && (
+                <Button
+                  variant="outline"
+                  onClick={() => navigate(getTenantDashboardPath(withMonth("/expenses", month)))}
+                  aria-label="Income and expenses for this month"
+                  title="Income & expenses"
+                >
+                  <Wallet className="h-4 w-4" />
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                onClick={handleExport}
+                disabled={staff.length === 0}
+                aria-label={`Download ${formatMonthLabel(month)} payroll as CSV`}
+                title={`Download ${formatMonthLabel(month)} payroll as CSV`}
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            </div>
+          </>
+        }
+      />
 
       {query.isError && (
         <p className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">

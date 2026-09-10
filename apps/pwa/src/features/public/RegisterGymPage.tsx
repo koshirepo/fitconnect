@@ -17,13 +17,7 @@ import { readFileAsDataUrl } from "@/lib/file";
 import { haptics } from "@/lib/haptics";
 import { buildTenantPublicUrl, getRootHostname } from "@/lib/subdomain";
 import { useAuthStore } from "@/stores/auth";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -189,8 +183,7 @@ export default function RegisterGymPage() {
     slugState.kind !== "taken" &&
     Boolean(logoFile);
 
-  const passwordsMatch =
-    owner.password.length > 0 && owner.password === owner.confirmPassword;
+  const passwordsMatch = owner.password.length > 0 && owner.password === owner.confirmPassword;
 
   const ownerStepValid =
     owner.name.trim().length >= 2 &&
@@ -275,8 +268,8 @@ export default function RegisterGymPage() {
             </div>
             <CardTitle className="text-2xl">{outcome.tenant.name} is registered</CardTitle>
             <CardDescription>
-              You're signed in as the gym's admin. Set the place up now — plans,
-              charges, shifts and staff — and it goes live the moment we approve it.
+              You're signed in as the gym's admin. Set the place up now — plans, charges, shifts and
+              staff — and it goes live the moment we approve it.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -285,18 +278,15 @@ export default function RegisterGymPage() {
               <div className="space-y-1 text-sm">
                 <p className="font-medium">Awaiting approval</p>
                 <p className="text-muted-foreground">
-                  Until then your gym is inactive: it won't appear in the public gym
-                  list, and members can't sign up yet. Everything you set up now is
-                  kept.
+                  Until then your gym is inactive: it won't appear in the public gym list, and
+                  members can't sign up yet. Everything you set up now is kept.
                 </p>
               </div>
             </div>
 
             <div className="space-y-1.5">
               <p className="text-sm font-medium">Your gym's address</p>
-              <p className="break-all rounded-md bg-muted px-3 py-2 font-mono text-sm">
-                {gymUrl}
-              </p>
+              <p className="break-all rounded-md bg-muted px-3 py-2 font-mono text-sm">{gymUrl}</p>
               <p className="text-xs text-muted-foreground">
                 It can take a few minutes for a new address to start working.
               </p>
@@ -383,9 +373,7 @@ export default function RegisterGymPage() {
                     placeholder="rudra-fitness"
                     required
                   />
-                  <span className="shrink-0 text-sm text-muted-foreground">
-                    .{rootHost}
-                  </span>
+                  <span className="shrink-0 text-sm text-muted-foreground">.{rootHost}</span>
                 </div>
                 <div className="flex min-h-5 items-center gap-1.5 text-xs">
                   {slugState.kind === "checking" && (
@@ -429,8 +417,7 @@ export default function RegisterGymPage() {
                   disabled={submitting}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Required. It appears on your public page, your members' ID cards,
-                  and the app.
+                  Required. It appears on your public page, your members' ID cards, and the app.
                 </p>
               </div>
 
@@ -572,8 +559,8 @@ export default function RegisterGymPage() {
               <div className="flex items-start gap-3 rounded-lg border bg-muted/40 p-3">
                 <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
                 <p className="text-xs text-muted-foreground">
-                  Your gym is created inactive and reviewed before it goes live. You
-                  can sign in and set everything up straight away.
+                  Your gym is created inactive and reviewed before it goes live. You can sign in and
+                  set everything up straight away.
                 </p>
               </div>
 

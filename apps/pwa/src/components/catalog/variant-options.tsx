@@ -40,7 +40,7 @@ export function VariantOptionsCard({
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base">{title}</CardTitle>
+        <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
         {variants.map((variant) => {

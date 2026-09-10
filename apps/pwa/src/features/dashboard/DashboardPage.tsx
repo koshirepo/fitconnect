@@ -1,4 +1,5 @@
 import { usePermissions } from "@/features/auth/permission-gate";
+import { PageHeader } from "@/components/ui/page-header";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useMemberBirthdays, useMembers, useMyProfile } from "@/api/queries/members";
@@ -84,12 +85,7 @@ function getSubscriptionStatus(profile: TenantProfile | null) {
 }
 
 export default function DashboardPage() {
-  const {
-    currentTenantId,
-    currentMembership,
-    user,
-    isPlatformStaff,
-  } = useAuthStore();
+  const { currentTenantId, currentMembership, user, isPlatformStaff } = useAuthStore();
   const { can } = usePermissions();
   const navigate = useAppNavigate();
 
@@ -210,18 +206,8 @@ export default function DashboardPage() {
 
   if (showPlatformDashboard) {
     return (
-      <div className="space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Platform Dashboard</h1>
-            <div className="text-muted-foreground">
-              Welcome back, {user?.name}!{" "}
-              <Badge variant="accent" className="ml-1">
-                {user?.platformRole ?? "Platform Staff"}
-              </Badge>
-            </div>
-          </div>
-        </div>
+      <div className="space-y-5 sm:space-y-6">
+        <PageHeader title="Platform Dashboard" />
 
         {platformError && (
           <Card className="border-destructive bg-destructive/5">
@@ -359,7 +345,15 @@ export default function DashboardPage() {
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-medium">{formatCurrency(order.totalAmount)}</p>
-                          <Badge variant={order.status === "DELIVERED" ? "success" : order.status === "PENDING" ? "warning" : "secondary"}>
+                          <Badge
+                            variant={
+                              order.status === "DELIVERED"
+                                ? "success"
+                                : order.status === "PENDING"
+                                  ? "warning"
+                                  : "secondary"
+                            }
+                          >
                             {order.status}
                           </Badge>
                         </div>
@@ -421,13 +415,15 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      <div className="min-w-0">
-        <h1 className="truncate text-xl font-bold tracking-tight sm:text-2xl">Dashboard</h1>
-        <p className="truncate text-sm text-muted-foreground">
-          Welcome back, {user?.name?.split(" ")[0] ?? "there"}
-          {membership ? ` · ${membership.tenantName}` : ""}
-        </p>
-      </div>
+      <PageHeader
+        title="Dashboard"
+        description={
+          <>
+            Welcome back, {user?.name?.split(" ")[0] ?? "there"}
+            {membership ? ` · ${membership.tenantName}` : ""}
+          </>
+        }
+      />
 
       {/* Two-up on a phone. These were one per row, so four tiles filled the
           screen and everything the dashboard is actually for started below
@@ -510,7 +506,7 @@ export default function DashboardPage() {
           )}
         >
           <CardHeader className="pb-1">
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle className="flex items-center gap-2">
               {subscriptionStatus.state === "current" ? (
                 <CheckCircle2 className="size-4 shrink-0 text-emerald-500" />
               ) : subscriptionStatus.state === "overdue" ? (
@@ -556,7 +552,7 @@ export default function DashboardPage() {
       {canViewGymMembers && birthdays.length > 0 && (
         <Card>
           <CardHeader className="pb-1">
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle className="flex items-center gap-2">
               <Cake className="size-4 shrink-0 text-pink-500" />
               Birthdays this week
             </CardTitle>
@@ -621,7 +617,7 @@ export default function DashboardPage() {
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader className="pb-1">
-            <CardTitle className="text-base">Recent payments</CardTitle>
+            <CardTitle>Recent payments</CardTitle>
             <CardDescription className="text-xs">
               {canViewAllPayments ? "Latest across the gym" : "Your payment history"}
             </CardDescription>
@@ -675,7 +671,7 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader className="pb-1">
-            <CardTitle className="text-base">
+            <CardTitle>
               {canViewGymMembers ? "Recent workout plans" : "Your workout plans"}
             </CardTitle>
             <CardDescription className="text-xs">Active programs</CardDescription>
@@ -715,7 +711,7 @@ export default function DashboardPage() {
       {profile && (
         <Card>
           <CardHeader className="pb-1">
-            <CardTitle className="text-base">Your profile</CardTitle>
+            <CardTitle>Your profile</CardTitle>
           </CardHeader>
           <CardContent>
             {/* Label over value rather than "Label: value" on one line: an

@@ -7,6 +7,7 @@
  * - Primary exports: ReferralsPage.
  */
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useSearchParams } from "react-router-dom";
@@ -157,20 +158,18 @@ export default function ReferralsPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 sm:space-y-6">
       {/* The count sits with the title at every width. It used to be a card
           hidden below `sm`, which took the one number off the screen it matters
           most on. */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight">Referrals</h1>
-          <p className="text-sm text-muted-foreground">
-            {total > 0
-              ? `${total} ${total === 1 ? "member has" : "members have"} brought a friend in.`
-              : "Who brings friends to the gym."}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Referrals"
+        description={
+          total > 0
+            ? `${total} ${total === 1 ? "member has" : "members have"} brought a friend in.`
+            : "Who brings friends to the gym."
+        }
+      />
 
       <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px]">
         <div className="relative min-w-0">

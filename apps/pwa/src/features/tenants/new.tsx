@@ -1,4 +1,5 @@
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useNavigate } from "react-router-dom";
 import { toSlug } from "@fitconnect/shared/utils";
 import { useCreateTenant } from "@/api/queries/platform";
@@ -293,12 +294,10 @@ export default function NewTenant() {
 
   return (
     <div className="mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Create Tenant</h1>
-        <p className="text-muted-foreground">
-          Create a gym tenant, assign an admin, and upload logo/avatar in one flow.
-        </p>
-      </div>
+      <PageHeader
+        title="Create Tenant"
+        description="Create a gym tenant, assign an admin, and upload logo/avatar in one flow."
+      />
 
       <Card>
         <CardHeader>

@@ -125,7 +125,7 @@ export default function ProfilePage() {
 
   if (!currentTenantId || !profile) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
@@ -149,7 +149,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* ── Identity ──────────────────────────────────────────────────────
           This page used to open with the avatar inside a card, sitting in a
           three-column grid beside five more cards of exactly the same weight —
@@ -219,7 +219,10 @@ export default function ProfilePage() {
               )}
               {profile.occupation && (
                 <span className="flex items-center gap-1 whitespace-nowrap">
-                  <OccupationGlyph icon={profile.occupation.icon} className="h-3.5 w-3.5 shrink-0" />
+                  <OccupationGlyph
+                    icon={profile.occupation.icon}
+                    className="h-3.5 w-3.5 shrink-0"
+                  />
                   {profile.occupation.name}
                 </span>
               )}

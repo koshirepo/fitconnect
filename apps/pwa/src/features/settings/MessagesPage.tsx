@@ -1,15 +1,10 @@
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useTenantSettings, useUpdateTenantSettings } from "@/api/queries/catalog";
 import { getApiError } from "@/api/client";
 import type { WhatsAppTemplate, WhatsAppTemplateKey } from "@/types/api";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,13 +14,10 @@ import { ArrowLeft, MessageSquare, RotateCcw } from "lucide-react";
 function toTemplateBodyMap(
   templates: WhatsAppTemplate[],
 ): Partial<Record<WhatsAppTemplateKey, string>> {
-  return templates.reduce<Partial<Record<WhatsAppTemplateKey, string>>>(
-    (acc, template) => {
-      acc[template.key] = template.body;
-      return acc;
-    },
-    {},
-  );
+  return templates.reduce<Partial<Record<WhatsAppTemplateKey, string>>>((acc, template) => {
+    acc[template.key] = template.body;
+    return acc;
+  }, {});
 }
 
 export default function MessagesPage() {
@@ -59,12 +51,13 @@ export default function MessagesPage() {
     setSuccessMsg("");
     try {
       const settings = await updateSettings.mutateAsync({
-        whatsappTemplates: templates.reduce<
-          Partial<Record<WhatsAppTemplateKey, string>>
-        >((acc, template) => {
-          acc[template.key] = templateBodies[template.key] ?? template.body;
-          return acc;
-        }, {}),
+        whatsappTemplates: templates.reduce<Partial<Record<WhatsAppTemplateKey, string>>>(
+          (acc, template) => {
+            acc[template.key] = templateBodies[template.key] ?? template.body;
+            return acc;
+          },
+          {},
+        ),
       });
       const nextTemplates = settings.whatsappTemplates;
       setTemplates(nextTemplates);
@@ -84,18 +77,18 @@ export default function MessagesPage() {
 
   return (
     <div className="mx-auto space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Messages</h1>
-          <p className="text-muted-foreground">
-            Customize tenant-specific WhatsApp templates used across the app.
-          </p>
-        </div>
-        <Button variant="outline" onClick={() => navigate("/settings")}>
-          <ArrowLeft className="h-4 w-4" />
-          Back to Settings
-        </Button>
-      </div>
+      <PageHeader
+        title="Messages"
+        description="Customize tenant-specific WhatsApp templates used across the app."
+        actions={
+          <>
+            <Button variant="outline" onClick={() => navigate("/settings")}>
+              <ArrowLeft className="h-4 w-4" />
+              Back to Settings
+            </Button>
+          </>
+        }
+      />
 
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
@@ -127,14 +120,10 @@ export default function MessagesPage() {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="space-y-1">
                     <p className="font-medium">{template.label}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {template.description}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{template.description}</p>
                     <p className="text-xs text-muted-foreground">
                       Variables:{" "}
-                      {template.variables
-                        .map((variable) => `{{${variable}}}`)
-                        .join(", ")}
+                      {template.variables.map((variable) => `{{${variable}}}`).join(", ")}
                     </p>
                   </div>
                   <Button

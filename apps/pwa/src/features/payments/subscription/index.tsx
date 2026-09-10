@@ -1,4 +1,5 @@
 import * as React from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useAppNavigate } from "@/lib/use-app-navigate";
@@ -237,21 +238,21 @@ export default function SubscriptionsPage() {
         : "This plan will become available again for new payments.";
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Subscriptions</h1>
-          <p className="text-muted-foreground">
-            {isAdmin ? "Manage subscription plans" : "Available plans"}
-          </p>
-        </div>
-        {isAdmin && (
-          <Button onClick={() => navigate("/subscriptions/create")}>
-            <Plus className="h-4 w-4" />
-            New Plan
-          </Button>
-        )}
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader
+        title="Subscriptions"
+        description={isAdmin ? "Manage subscription plans" : "Available plans"}
+        actions={
+          <>
+            {isAdmin && (
+              <Button onClick={() => navigate("/subscriptions/create")}>
+                <Plus className="h-4 w-4" />
+                New Plan
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {/* What this member has to spend, said plainly and on the screen the
           referral notification sends them to. The balance used to live only on
@@ -262,7 +263,7 @@ export default function SubscriptionsPage() {
       {!isAdmin && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle className="flex items-center gap-2">
               <Coins className="h-5 w-5" />
               {coinBalance} coin{coinBalance === 1 ? "" : "s"}
             </CardTitle>
@@ -315,7 +316,7 @@ export default function SubscriptionsPage() {
       {redeeming && (
         <Card className="border-primary/40">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Paying for {redeeming.title}</CardTitle>
+            <CardTitle>Paying for {redeeming.title}</CardTitle>
             <CardDescription>
               {formatCurrency(redeeming.amount)} for {redeeming.durationDays} days.
             </CardDescription>
@@ -358,9 +359,9 @@ export default function SubscriptionsPage() {
             )}
 
             <p className="text-xs text-muted-foreground">
-              The gym works out the final price. Anything you still owe is added to
-              the same payment. A coupon and coins come off only when paying
-              online — at the desk the gym applies them as they take the money.
+              The gym works out the final price. Anything you still owe is added to the same
+              payment. A coupon and coins come off only when paying online — at the desk the gym
+              applies them as they take the money.
             </p>
 
             <div className="flex flex-wrap gap-2">
@@ -434,7 +435,7 @@ export default function SubscriptionsPage() {
               <Card key={sub.id} className={!sub.isActive ? "opacity-75" : ""}>
                 <CardHeader>
                   <div className="flex items-start justify-between gap-3">
-                    <CardTitle className="text-base">{sub.title}</CardTitle>
+                    <CardTitle>{sub.title}</CardTitle>
                     <Badge variant={sub.isActive ? "success" : "secondary"}>
                       {sub.isActive ? "Active" : "Inactive"}
                     </Badge>
