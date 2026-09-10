@@ -21,12 +21,19 @@ import { Button } from "@/components/ui/button";
 import { ShareButton } from "@/components/ui/share-button";
 import { QrCode } from "@/components/ui/qr-code";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Spinner } from "@/components/ui/spinner";
 import { SkeletonRow } from "@/components/ui/skeleton";
-import AvatarCard from "@/components/ui/avatarCard";
 import { AvatarTile } from "@/components/ui/member-card";
 import { formatDate } from "@/lib/utils";
+import { formatShiftLabel } from "@/lib/shifts";
 import { cn } from "@/lib/utils";
 import { getTenantDashboardPath } from "@/lib/subdomain";
 import { useInfiniteScroll } from "@/lib/use-infinite-scroll";
@@ -324,7 +331,7 @@ export default function AttendancePage() {
                 </Button>
               )}
               {isStaff && (
-                <Button variant="outline" onClick={() => setShowBulk(!showBulk)}>
+                <Button variant="outline" onClick={() => setShowBulk(true)}>
                   <Users className="h-4 w-4 mr-2" />
                   Mark All
                 </Button>
@@ -336,7 +343,7 @@ export default function AttendancePage() {
 
       {/* Date Picker */}
       {isStaff && (
-        <div className="flex items-center gap-3 justify-center">
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
           <Button variant="ghost" size="sm" onClick={() => shiftDate(-1)}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -392,93 +399,130 @@ export default function AttendancePage() {
         </Card>
       )}
 
-      {/* Bulk Mark Panel */}
-      {showBulk && isStaff && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Mark Attendance for Members</CardTitle>
-            <CardDescription>
-              Select members who are present{" "}
-              {isToday ? "today" : `on ${formatDate(date + "T00:00:00.000Z")}`}. Already marked
-              members are excluded.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search by name, phone, email, or admission no..."
-                value={memberSearch}
-                onChange={(e) => setMemberSearch(e.target.value)}
-                className="w-full pl-10 pr-10 py-2 border border-input rounded-md bg-background text-sm"
-              />
-              {memberSearch && (
-                <button
-                  onClick={() => setMemberSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
+      {/* Marking a roomful is a task with an end, so it opens over the page
+          rather than pushing the register down it. */}
+      {isStaff && (
+        <Dialog open={showBulk} onOpenChange={setShowBulk}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Mark attendance</DialogTitle>
+              <DialogDescription>
+                Who is present {isToday ? "today" : `on ${formatDate(date + "T00:00:00.000Z")}`}.
+                Anyone already marked is left out of this list.
+              </DialogDescription>
+            </DialogHeader>
 
-            {/* Select all */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-sm">
+            <div className="space-y-3">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <input
-                  type="checkbox"
-                  checked={selected.size > 0 && selected.size === filteredMembers.length}
-                  onChange={toggleAll}
-                  className="rounded"
+                  type="text"
+                  placeholder="Search by name, phone, email, or admission no..."
+                  value={memberSearch}
+                  onChange={(e) => setMemberSearch(e.target.value)}
+                  className="w-full pl-10 pr-10 py-2 border border-input rounded-md bg-background text-sm"
                 />
-                Select all ({filteredMembers.length})
-              </label>
-              <span className="text-sm text-muted-foreground">{selected.size} selected</span>
-            </div>
+                {memberSearch && (
+                  <button
+                    onClick={() => setMemberSearch("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
 
-            {/* Member list */}
-            <div className="max-h-64 overflow-y-auto space-y-1">
-              {filteredMembers.map((m) => (
-                <label
-                  key={m.id}
-                  className="flex items-center gap-3 rounded-md p-2 hover:bg-muted cursor-pointer"
-                >
+              {/* Select all, and the running count of what is picked. */}
+              <div className="flex items-center justify-between gap-3 border-y py-2">
+                <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
                   <input
                     type="checkbox"
-                    checked={selected.has(m.id)}
-                    onChange={() => toggleSelect(m.id)}
-                    className="rounded"
+                    checked={selected.size > 0 && selected.size === filteredMembers.length}
+                    onChange={toggleAll}
+                    className="size-4 rounded"
                   />
-                  <AvatarCard
-                    name={m.name}
-                    avatarUrl={m.avatarUrl}
-                    gender={m.gender}
-                    memberId={m.memberId}
-                    variant="sm"
-                    isActive={m.status === "ACTIVE"}
-                  />
+                  Select all
+                  <span className="text-muted-foreground">({filteredMembers.length})</span>
                 </label>
-              ))}
-              {filteredMembers.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  {members.length === 0 ? "Loading members..." : "All members already marked!"}
-                </p>
-              )}
-            </div>
+                <span className="text-sm tabular-nums text-muted-foreground">
+                  {selected.size} selected
+                </span>
+              </div>
 
-            <Button
-              onClick={handleBulkMark}
-              disabled={bulkLoading || selected.size === 0}
-              className="w-full"
-            >
-              {bulkLoading
-                ? "Marking..."
-                : `Mark ${selected.size} Member${selected.size !== 1 ? "s" : ""} Present`}
-            </Button>
-          </CardContent>
-        </Card>
+              {/* One row per member rather than a card each: the panel is a list
+                to tick down, and a 40px avatar with a card's padding around it
+                left so little width that every name on a phone truncated to
+                "#624 – Raushan Ku…". The whole row is the target — a checkbox
+                alone is a 16px one — and a picked row says so with a tint
+                rather than only with a tick 40px away from the name. */}
+              <ul className="-mx-1 max-h-[45vh] divide-y overflow-y-auto sm:max-h-80">
+                {filteredMembers.map((m) => {
+                  const picked = selected.has(m.id);
+
+                  return (
+                    <li key={m.id}>
+                      <label
+                        className={cn(
+                          "flex cursor-pointer items-center gap-3 px-1 py-2 transition-colors hover:bg-muted/60",
+                          picked && "bg-primary/5",
+                        )}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={picked}
+                          onChange={() => toggleSelect(m.id)}
+                          className="size-4 shrink-0 rounded"
+                        />
+                        <AvatarTile
+                          person={{
+                            name: m.name,
+                            avatarUrl: m.avatarUrl,
+                            gender: m.gender,
+                            status: m.status,
+                          }}
+                          size="sm"
+                          stacked
+                          className="size-9 shrink-0 rounded-lg"
+                        />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium">
+                            <span className="text-muted-foreground">#{m.memberId} </span>
+                            {m.name}
+                          </span>
+                          {m.shift && (
+                            <span className="block truncate text-xs text-muted-foreground">
+                              {formatShiftLabel(m.shift)}
+                            </span>
+                          )}
+                        </span>
+                      </label>
+                    </li>
+                  );
+                })}
+                {filteredMembers.length === 0 && (
+                  <li className="py-6 text-center text-sm text-muted-foreground">
+                    {members.length === 0 ? "Loading members…" : "Everyone is already marked."}
+                  </li>
+                )}
+              </ul>
+
+              {/* The count belongs in the button: "Mark 0 Members Present" reads
+                as a broken button rather than as nothing being picked yet. */}
+              <Button
+                onClick={handleBulkMark}
+                disabled={bulkLoading || selected.size === 0}
+                className="w-full"
+              >
+                {bulkLoading
+                  ? "Marking…"
+                  : selected.size === 0
+                    ? "Pick who is present"
+                    : `Mark ${selected.size} present`}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* Attendance List */}
@@ -500,21 +544,32 @@ export default function AttendancePage() {
             />
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">
-                  Present — {records.length} member{records.length !== 1 ? "s" : ""}
-                </h2>
-              </div>
-              <div className="space-y-2">
-                {records.map((r) => (
-                  <Card key={r.id} className="hover:shadow-sm transition-shadow">
-                    {/* Who, then when. Both had to share one line before, which
-                        on a phone truncated the person to "Rudra Gym Ad…" and
-                        broke "06:00 AM" across two lines. */}
-                    <div className="flex items-start gap-2 p-3">
+              {/* Who is in today.
+
+                Fifty people used to be fifty cards, each three lines tall with
+                a red cross on the right: a screen and a half of scrolling to
+                read a register, and the loudest thing on it was the button
+                that deletes a visit. One card holding one row each instead —
+                the same information at a third of the height, with the time
+                where the eye can compare it down the column, and the remove
+                control quiet until it is reached for. */}
+              <Card className="overflow-hidden py-0">
+                <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
+                  <h2 className="text-base font-semibold">Present</h2>
+                  <span className="text-sm tabular-nums text-muted-foreground">
+                    {records.length} {records.length === 1 ? "member" : "members"}
+                  </span>
+                </div>
+
+                <ul className="divide-y">
+                  {records.map((r) => (
+                    <li
+                      key={r.id}
+                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/40"
+                    >
                       <button
                         type="button"
-                        className="flex min-w-0 flex-1 items-start gap-3 text-left transition-opacity hover:opacity-80"
+                        className="flex min-w-0 flex-1 items-center gap-3 text-left"
                         onClick={() =>
                           r.membershipId &&
                           navigate(getTenantDashboardPath(`/members/${r.membershipId}#attendance`))
@@ -528,41 +583,50 @@ export default function AttendancePage() {
                           }}
                           size="sm"
                           stacked
-                          className="h-10 w-10 rounded-lg"
+                          className="h-9 w-9 rounded-lg"
                         />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium">
                             {r.memberId !== undefined && r.memberId !== null && (
                               <span className="text-muted-foreground">#{r.memberId} </span>
                             )}
                             {r.memberName}
-                          </p>
-                          <p className="mt-0.5 truncate text-xs text-muted-foreground tabular-nums">
-                            {new Date(r.checkInAt).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                            {r.markedBy ? ` · by ${r.markedBy.name}` : ""}
-                          </p>
-                        </div>
+                          </span>
+                          {/* Who marked them, when somebody did. A member who
+                            walked in and scanned needs no second line. */}
+                          {r.markedBy && (
+                            <span className="block truncate text-xs text-muted-foreground">
+                              by {r.markedBy.name}
+                            </span>
+                          )}
+                        </span>
                       </button>
-                      <div className="flex shrink-0 items-center gap-1 text-sm text-muted-foreground">
-                        {canDeleteAttendance && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive h-7 w-7 p-0"
-                            onClick={() => r.membershipId && handleRemove(r.membershipId)}
-                            title="Remove"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
+
+                      {/* The time, in a column of its own so the morning rush
+                        reads as a shape rather than as fifty separate lines. */}
+                      <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                        {new Date(r.checkInAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+
+                      {canDeleteAttendance && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="size-7 shrink-0 p-0 text-muted-foreground hover:text-destructive"
+                          onClick={() => r.membershipId && handleRemove(r.membershipId)}
+                          title={`Remove ${r.memberName ?? "this visit"}`}
+                          aria-label={`Remove ${r.memberName ?? "this visit"}`}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </Card>
               {records.length > 0 && (hasMore || loadingMore) && (
                 <div
                   ref={loadMoreRef}

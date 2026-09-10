@@ -31,12 +31,24 @@ export function PageHeader({
   title: React.ReactNode;
   /** One line about what this screen is for. Optional, and never more than a line or two. */
   description?: React.ReactNode;
-  /** Buttons and links for this screen. They keep their width; the title gives way first. */
+  /**
+   * Buttons and links for this screen.
+   *
+   * They sit under the title on a phone and beside it from `sm`. Beside it at
+   * every width is what broke the attendance screen: four buttons that would
+   * not shrink pushed the page wider than the viewport, and everything on it
+   * scrolled sideways.
+   */
   actions?: React.ReactNode;
   className?: string;
 }) {
   return (
-    <div className={cn("flex items-start justify-between gap-3", className)}>
+    <div
+      className={cn(
+        "flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between",
+        className,
+      )}
+    >
       <div className="min-w-0">
         <h1 className="flex min-w-0 items-center gap-2 text-xl font-bold tracking-tight sm:text-2xl">
           {Icon && <Icon aria-hidden className="size-5 shrink-0 sm:size-6" />}
@@ -46,7 +58,9 @@ export function PageHeader({
       </div>
 
       {actions && (
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">{actions}</div>
+        <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:justify-end">
+          {actions}
+        </div>
       )}
     </div>
   );
