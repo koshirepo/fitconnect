@@ -182,29 +182,6 @@ export const attendanceRepository = {
   },
 
   /**
-   * Run the `find membership` persistence operation for the attendance module.
-   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
-   */
-  /**
-   * The member whose ID card carries this token.
-   *
-   * Status is returned rather than filtered on: somebody lapsed is still
-   * standing at the desk, and the screen should say so rather than pretend the
-   * card is unknown.
-   */
-  findMembershipByCardToken(tenantId: string, idCardToken: string) {
-    return prisma.tenantMembership.findFirst({
-      where: { idCardToken, tenantId },
-      select: {
-        id: true,
-        memberId: true,
-        status: true,
-        user: { select: { name: true, avatarUrl: true } },
-      },
-    });
-  },
-
-  /**
    * A membership in this gym, whatever state it is in.
    *
    * Deliberately unfiltered by status, unlike `findMembership`. Recording a

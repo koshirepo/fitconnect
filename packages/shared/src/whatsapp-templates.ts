@@ -17,6 +17,7 @@ type TemplateMetadata = {
 
 export const whatsappTemplateKeys = [
   "new_member_welcome",
+  "birthday_greeting",
   "payment_reminder",
   "pending_payment_reminder",
   "payment_receipt",
@@ -46,6 +47,16 @@ Member ID: *{{memberId}}*
 {{paymentSummarySection}}{{subscriptionLine}}Your login password is your phone number and your username is {{email}}.{{idCardLine}}
 
 Thank you for joining us.`,
+  },
+  birthday_greeting: {
+    label: "Birthday Greeting",
+    description: "Opened from the birthdays list, on a member's birthday.",
+    variables: ["gymName", "memberName", "age"],
+    defaultBody: `Happy birthday, *{{memberName}}*! 🎉
+
+Everyone at *{{gymName}}* wishes you a brilliant year — strong, healthy and consistent.
+
+See you at the gym!`,
   },
   payment_reminder: {
     label: "Payment Reminder",

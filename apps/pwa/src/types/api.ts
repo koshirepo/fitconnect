@@ -25,6 +25,7 @@ export type {
   CreateTenantPayload,
   UpdateTenantPayload,
   TenantMember,
+  MemberBirthday,
   Occupation,
   OccupationSummary,
   CreateOccupationPayload,

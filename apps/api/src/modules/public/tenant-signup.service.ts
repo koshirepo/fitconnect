@@ -18,6 +18,7 @@ import { provisionTenantSubdomain } from "../../lib/tenant-subdomain";
 import { authRepository } from "../auth/auth.repository";
 import { tenantRepository } from "../tenants/tenants.repository";
 import type { RegisterTenantInput } from "./tenant-signup.schema";
+import { log } from "../../lib/logger";
 
 type ServiceError = { error: string; status: 400 | 403 | 404 | 409 };
 
@@ -120,7 +121,7 @@ export const tenantSignupService = {
     // single database flip it is today.
     const provisioning = provisionTenantSubdomain(input.slug).then((outcome) => {
       if (outcome.status === "failed") {
-        console.error("Tenant subdomain provisioning failed.", {
+        log.error("tenant.subdomain.provision.failed", {
           slug: input.slug,
           hostname: outcome.hostname,
           reason: outcome.reason,

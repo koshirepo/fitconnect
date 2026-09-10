@@ -21,6 +21,7 @@ import type {
   UpdateTenantInput,
   RecordPlatformPaymentInput,
 } from "./tenants.schema";
+import { log } from "../../lib/logger";
 
 
 /**
@@ -125,7 +126,7 @@ export const tenantService = {
     // is a far better outcome than a creation that failed at the last step.
     const provisioning = provisionTenantSubdomain(slug).then((outcome) => {
       if (outcome.status === "failed") {
-        console.error("Tenant subdomain provisioning failed.", {
+        log.error("tenant.subdomain.provision.failed", {
           slug,
           hostname: outcome.hostname,
           reason: outcome.reason,

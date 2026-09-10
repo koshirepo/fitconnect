@@ -3,7 +3,7 @@
  *
  * - Builds middleware that resolves an actor's effective permission set (platform-role grants unioned with tenant-role grants, plus any stored overrides) and gates routes on named capabilities instead of role strings.
  * - Keep authorization wiring here so route files stay declarative and authorization errors remain consistent.
- * - Primary exports: requirePermissions, requireAnyPermission, requireTenantPermissions, requireAnyTenantPermission, resolveTenantPermissions, requirePlatformRoles, requireTenantRoles.
+ * - Primary exports: requirePermissions, requireTenantPermissions, requireAnyTenantPermission, resolveTenantPermissions.
  */
 import { PlatformRole, type TenantRole } from "@fitconnect/shared/types/enums";
 import {
@@ -135,10 +135,6 @@ function authorize(required: readonly Permission[], options: AuthorizeOptions = 
 export const requirePermissions = (...permissions: Permission[]) =>
   authorize(permissions, { mode: "all", scope: "global" });
 
-/** Require at least one of the listed permissions, without a tenant context. */
-export const requireAnyPermission = (...permissions: Permission[]) =>
-  authorize(permissions, { mode: "any", scope: "global" });
-
 /** Resolve the tenant membership, then require every listed permission. */
 export const requireTenantPermissions = (...permissions: Permission[]) =>
   authorize(permissions, { mode: "all", scope: "tenant" });
@@ -180,74 +176,3 @@ export const resolveTenantPermissions = createMiddleware<AppBindings>(async (c, 
 
   await next();
 });
-
-// ─── Role middleware (kept for coarse platform gates) ─────────────────────────
-
-/**
- * Platform-role check for the few routes that gate on identity rather than a
- * capability (for example, "super admins only" bootstrap-style endpoints).
- */
-export const requirePlatformRoles = (allowedRoles: PlatformRole[]) => {
-  return createMiddleware<AppBindings>(async (c, next) => {
-    const user = c.get("authUser");
-
-    if (!allowedRoles.includes(user.platformRole)) {
-      return forbidden(c, "Insufficient platform permissions.");
-    }
-
-    const overrides = await rolePermissionRepository.listApplicableOverrides(null);
-    c.set(
-      "permissions",
-      resolveEffectivePermissions({ platformRole: user.platformRole, overrides }),
-    );
-    await next();
-  });
-};
-
-/**
- * Tenant-role check retained for routes that genuinely gate on membership role
- * rather than a capability. Prefer `requireTenantPermissions` for new routes —
- * this still resolves and publishes the effective permission set.
- */
-export const requireTenantRoles = (allowedRoles: TenantRole[]) => {
-  return createMiddleware<AppBindings>(async (c, next) => {
-    const user = c.get("authUser");
-    const tenantId = c.req.param("tenantId") || c.req.header("x-tenant-id");
-
-    if (!tenantId) {
-      return badRequest(c, "Missing tenant context.");
-    }
-
-    const membershipRole = user.tenants?.[tenantId] as TenantRole | undefined;
-    const platformStaff = isPlatformStaffRole(user.platformRole);
-
-    if (!membershipRole && !platformStaff) {
-      return forbidden(c, "You are not a member of this tenant.");
-    }
-
-    if (membershipRole && !platformStaff) {
-      if (!allowedRoles.includes(membershipRole)) {
-        return forbidden(c, "Insufficient tenant permissions.");
-      }
-
-      // Shares `authorize`'s cached read rather than repeating the query, so
-      // the two paths cannot drift on what "expired" means.
-      if (isPlatformExpired(await tenantPlatformExpiresAt(tenantId))) {
-        return forbidden(c, PLATFORM_EXPIRED_MESSAGE);
-      }
-    }
-
-    const overrides = await rolePermissionRepository.listApplicableOverrides(tenantId);
-
-    c.set("tenantAccess", membershipRole ? { tenantId, role: membershipRole } : null);
-    c.set(
-      "permissions",
-      resolveEffectivePermissions({
-        platformRole: user.platformRole,
-        tenantRole: membershipRole ?? null,
-        overrides,
-      }),
-    );
-    await next();
-  });
-};

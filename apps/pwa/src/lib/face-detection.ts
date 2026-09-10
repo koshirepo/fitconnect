@@ -103,13 +103,6 @@ export async function validateFace(source: Blob): Promise<FaceDetectionResult> {
   return { count: 1, error: null };
 }
 
-/**
- * Returns true if the browser supports at least one face detection method.
- */
-export function isFaceDetectionSupported(): boolean {
-  return typeof _win.FaceDetector !== "undefined" || true; // tf.js is always loadable
-}
-
 // ─── Real-time face detection for live camera feeds ──────────────────────────
 
 export interface LiveFaceBox {

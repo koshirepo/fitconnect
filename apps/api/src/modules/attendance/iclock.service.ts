@@ -11,6 +11,7 @@
 import { prisma } from "../../lib/prisma";
 import { attendanceRepository } from "./attendance.repository";
 import { attendanceService } from "./attendance.service";
+import { log } from "../../lib/logger";
 
 /**
  * Seconds between a device's command polls.
@@ -180,7 +181,13 @@ export const iclockService = {
     const now = new Date();
     await prisma.attendanceDevice.update({
       where: { id: deviceId },
-      data: { lastSeenAt: now, ...(punched ? { lastPunchAt: now } : {}) },
+      data: {
+        lastSeenAt: now,
+        ...(punched ? { lastPunchAt: now } : {}),
+        // Back from the dead: the next silence is a new one, and deserves to
+        // be reported again.
+        silenceAlertedAt: null,
+      },
     });
   },
 
@@ -226,7 +233,7 @@ export const iclockService = {
     // asks again forever.
     const tenant = await attendanceService.resolveTenantForCheckIn(device.tenantId);
     if ("error" in tenant) {
-      console.warn("[iclock] punches dropped, gym cannot record attendance", {
+      log.warn("iclock.punches.dropped", {
         tenantId: device.tenantId,
         reason: tenant.error,
         received: punches.length,

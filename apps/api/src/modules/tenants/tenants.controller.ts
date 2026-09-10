@@ -63,7 +63,6 @@ export const tenantController = {
    */
   async getById(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
-    console.log("Fetching tenant with ID:", tenantId); // Debug log
     const result = await tenantService.getById(tenantId);
     if ("error" in result) return notFound(c, result.error!);
     return ok(c, result.data);

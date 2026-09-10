@@ -15,9 +15,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton, StatGridSkeleton } from "@/components/ui/skeleton";
 import { StatCard } from "@/components/ui/stat-card";
-import { ChartTooltip } from "@/components/ui/chart-tooltip";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn, formatCompactCurrency, formatCurrency } from "@/lib/utils";
 import { dayKey } from "@/lib/day-window";
+import { OccupationGlyph } from "@/components/ui/occupation-glyph";
 import { getApiError } from "@/api/client";
 import { getMonthStr, formatMonthLabel, parseMonth, withMonth } from "@/lib/month";
 import { MonthNav } from "@/components/ui/month-nav";
@@ -42,36 +42,50 @@ import {
   BadgeIndianRupee,
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-  AreaChart,
-  Area,
-  CartesianGrid,
-} from "recharts";
+import { ChartFrame } from "@/components/ui/chart-frame";
+import { CHART_COLORS } from "./chart-colors";
+
+/**
+ * The charts, fetched only when one is scrolled near.
+ *
+ * They are ~200KB of this screen — more than the rest of it put together —
+ * and the figures a gym opens this page for are all above them. Five lazy
+ * handles rather than one component because they sit in five different places
+ * in the layout; they all resolve to the same chunk, so the first one to come
+ * into view brings the rest with it.
+ */
+const RevenueTrendChart = React.lazy(() =>
+  import("./FinanceCharts").then((m) => ({ default: m.RevenueTrendChart })),
+);
+const MemberDistributionChart = React.lazy(() =>
+  import("./FinanceCharts").then((m) => ({ default: m.MemberDistributionChart })),
+);
+const RevenueByPeriodChart = React.lazy(() =>
+  import("./FinanceCharts").then((m) => ({ default: m.RevenueByPeriodChart })),
+);
+const PaymentStatusChart = React.lazy(() =>
+  import("./FinanceCharts").then((m) => ({ default: m.PaymentStatusChart })),
+);
+const MemberActivityChart = React.lazy(() =>
+  import("./FinanceCharts").then((m) => ({ default: m.MemberActivityChart })),
+);
 
 type ReportData = Awaited<ReturnType<typeof tenantsApi.generateReport>>["data"]["data"];
 type AnalyticsData = Awaited<ReturnType<typeof paymentsApi.analytics>>["data"]["data"]["analytics"];
 
-const COLORS = {
-  green: "#22c55e",
-  yellow: "#eab308",
-  red: "#ef4444",
-  blue: "#3b82f6",
-  purple: "#a855f7",
-  muted: "#94a3b8",
-};
+// Shared with the chart bundle, and defined outside it so importing the
+// palette does not drag recharts back into this chunk.
+const COLORS = CHART_COLORS;
 
+/**
+ * A rupee figure for a stat tile: abbreviated past a lakh, and spaced.
+ *
+ * The space after the symbol is this page's own house style. The abbreviation
+ * is what keeps the figure inside a tile — two of them share a phone's width,
+ * and an all-time revenue of ₹6,52,700 was being cut to "₹6,52,7…".
+ */
 function formatCompact(amount: number) {
-  return formatCurrency(amount).replace("₹", "₹ ");
+  return formatCompactCurrency(amount).replace("₹", "₹ ");
 }
 
 /**
@@ -273,6 +287,16 @@ export default function FinanceReportsPage() {
       Payments: d.count,
     };
   });
+
+  /**
+   * What this gym's members do for a living, commonest first.
+   *
+   * "Not recorded" stays in the list rather than being filtered out: it is the
+   * row that says how much of the rest to trust, and hiding it would make a
+   * gym that has asked twelve people look like a gym of students.
+   */
+  const occupationMix = report?.members.occupations ?? [];
+  const occupationTotal = occupationMix.reduce((sum, row) => sum + row.members, 0) || 1;
 
   const memberPieData = report
     ? [
@@ -730,49 +754,9 @@ export default function FinanceReportsPage() {
               </CardHeader>
               <CardContent>
                 {revenueChartData && revenueChartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={isMobile ? 220 : 280}>
-                    <AreaChart
-                      data={revenueChartData}
-                      margin={{ top: 4, right: 4, bottom: 0, left: isMobile ? -18 : 0 }}
-                    >
-                      <defs>
-                        <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor={COLORS.green} stopOpacity={0.3} />
-                          <stop offset="95%" stopColor={COLORS.green} stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      {/* Thirty date labels do not fit across a phone — they
-                          overprint into a grey smear. Every fifth is legible
-                          and still says which end of the month you are on. */}
-                      <XAxis
-                        dataKey="name"
-                        tick={{ fontSize: isMobile ? 9 : 11 }}
-                        interval={isMobile ? 4 : "preserveStartEnd"}
-                        className="text-muted-foreground"
-                      />
-                      <YAxis
-                        tick={{ fontSize: isMobile ? 9 : 11 }}
-                        width={isMobile ? 44 : 72}
-                        // Full rupee figures need ~80px of gutter, which is a
-                        // fifth of a phone screen. Thousands do the same job.
-                        tickFormatter={(v) =>
-                          isMobile
-                            ? `₹${Math.round(Number(v) / 1000)}k`
-                            : `₹${Number(v).toLocaleString("en-IN")}`
-                        }
-                        className="text-muted-foreground"
-                      />
-                      <Tooltip content={<ChartTooltip />} />
-                      <Area
-                        type="monotone"
-                        dataKey="Revenue"
-                        stroke={COLORS.green}
-                        fill="url(#revenueGradient)"
-                        strokeWidth={2}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                  <ChartFrame height={isMobile ? 220 : 280}>
+                    <RevenueTrendChart data={revenueChartData} isMobile={isMobile} />
+                  </ChartFrame>
                 ) : (
                   <p className="text-sm text-muted-foreground text-center py-12">
                     No payment data yet
@@ -788,30 +772,9 @@ export default function FinanceReportsPage() {
               </CardHeader>
               <CardContent>
                 {memberPieData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={280}>
-                    <PieChart>
-                      <Pie
-                        data={memberPieData}
-                        cx="50%"
-                        cy="45%"
-                        innerRadius={55}
-                        outerRadius={85}
-                        paddingAngle={3}
-                        dataKey="value"
-                      >
-                        {memberPieData.map((entry, i) => (
-                          <Cell key={i} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value, name) => [`${value} members`, name]} />
-                      <Legend
-                        verticalAlign="bottom"
-                        iconType="circle"
-                        iconSize={8}
-                        formatter={(value) => <span className="text-xs">{value}</span>}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <ChartFrame height={280}>
+                    <MemberDistributionChart data={memberPieData} />
+                  </ChartFrame>
                 ) : (
                   <p className="text-sm text-muted-foreground text-center py-12">No members</p>
                 )}
@@ -831,26 +794,9 @@ export default function FinanceReportsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={isMobile ? 200 : 250}>
-                  <BarChart
-                    data={periodComparisonData}
-                    margin={{ top: 4, right: 4, bottom: 0, left: isMobile ? -18 : 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="period" tick={{ fontSize: isMobile ? 10 : 12 }} />
-                    <YAxis
-                      tick={{ fontSize: isMobile ? 9 : 11 }}
-                      width={isMobile ? 44 : 72}
-                      tickFormatter={(v) =>
-                        isMobile
-                          ? `₹${Math.round(Number(v) / 1000)}k`
-                          : `₹${Number(v).toLocaleString("en-IN")}`
-                      }
-                    />
-                    <Tooltip content={<ChartTooltip />} />
-                    <Bar dataKey="Revenue" fill={COLORS.green} radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <ChartFrame height={isMobile ? 200 : 250}>
+                  <RevenueByPeriodChart data={periodComparisonData} isMobile={isMobile} />
+                </ChartFrame>
               </CardContent>
             </Card>
 
@@ -866,24 +812,11 @@ export default function FinanceReportsPage() {
                     Stacked below `sm`, both get the full column. */}
                 {paymentStatusData.length > 0 ? (
                   <div className="flex flex-col items-center gap-4 sm:flex-row">
-                    <ResponsiveContainer width={isMobile ? "100%" : "50%"} height={isMobile ? 180 : 220}>
-                      <PieChart>
-                        <Pie
-                          data={paymentStatusData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={isMobile ? 34 : 40}
-                          outerRadius={isMobile ? 58 : 70}
-                          paddingAngle={3}
-                          dataKey="value"
-                        >
-                          {paymentStatusData.map((entry, i) => (
-                            <Cell key={i} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
+                    <div className={isMobile ? "w-full" : "w-1/2"}>
+                      <ChartFrame height={isMobile ? 180 : 220}>
+                        <PaymentStatusChart data={paymentStatusData} isMobile={isMobile} />
+                      </ChartFrame>
+                    </div>
                     <div className="w-full flex-1 space-y-3">
                       {paymentStatusData.map((s) => (
                         <div key={s.name} className="flex items-center gap-2.5">
@@ -913,6 +846,57 @@ export default function FinanceReportsPage() {
             </Card>
           </div>
 
+          {/* ═══════════════ ROW 3b: WHO TRAINS HERE ═══════════════
+              Drawn as bars rather than another pie: this is a ranking, and a
+              ranking is read down a list. It also costs no chart library,
+              which matters on the heaviest screen in the app. */}
+          {occupationMix.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Members by occupation</CardTitle>
+                <CardDescription className="text-xs">
+                  Active members · tap one to see them
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {occupationMix.map((row) => {
+                  const share = Math.round((row.members / occupationTotal) * 100);
+
+                  return (
+                    <button
+                      key={row.id ?? "unknown"}
+                      type="button"
+                      disabled={!row.id}
+                      onClick={() => row.id && goToMembers({ occupation: row.id })}
+                      className="flex w-full items-center gap-3 rounded-md px-1 py-1.5 text-left transition-colors enabled:hover:bg-muted/60 disabled:cursor-default"
+                    >
+                      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                        <OccupationGlyph icon={row.icon} className="size-3.5" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-baseline justify-between gap-2">
+                          <span className="truncate text-sm font-medium">{row.name}</span>
+                          <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                            {row.members} · {share}%
+                          </span>
+                        </span>
+                        <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-muted">
+                          <span
+                            className={cn(
+                              "block h-full rounded-full",
+                              row.id ? "bg-primary" : "bg-muted-foreground/40",
+                            )}
+                            style={{ width: `${Math.max(share, 2)}%` }}
+                          />
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+
           {/* ═══════════════ ROW 4: MEMBER ACTIVITY BAR CHART ═══════════════ */}
           <Card>
             <CardHeader className="pb-2">
@@ -920,21 +904,9 @@ export default function FinanceReportsPage() {
               <CardDescription className="text-xs">Joined vs deactivated</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={memberActivityData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="period" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                  <Tooltip />
-                  <Legend
-                    iconType="circle"
-                    iconSize={8}
-                    formatter={(value) => <span className="text-xs">{value}</span>}
-                  />
-                  <Bar dataKey="Joined" fill={COLORS.green} radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Deactivated" fill={COLORS.red} radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <ChartFrame height={260}>
+                <MemberActivityChart data={memberActivityData} />
+              </ChartFrame>
             </CardContent>
           </Card>
 

@@ -10,6 +10,7 @@ import { Hono } from "hono";
 import { iclockService, parseAttendanceLog } from "./iclock.service";
 import { provisioningService } from "./provisioning.service";
 import type { AppBindings } from "../../types/app-context";
+import { log } from "../../lib/logger";
 
 export const iclockRoutes = new Hono<AppBindings>();
 
@@ -32,7 +33,7 @@ iclockRoutes.get("/cdata", async (c) => {
   if (device?.isActive) {
     await iclockService.touch(device.id);
   } else {
-    console.info("[iclock] handshake from an unregistered device", { serial });
+    log.info("iclock.handshake.unregistered", { serial });
   }
 
   return ok(iclockService.configFor(serial));
@@ -52,7 +53,7 @@ iclockRoutes.post("/cdata", async (c) => {
 
   const device = await iclockService.findDevice(serial);
   if (!device || !device.isActive) {
-    console.warn("[iclock] upload from an unregistered device", { serial, table });
+    log.warn("iclock.upload.unregistered", { serial, table });
     return ok();
   }
 
@@ -67,7 +68,7 @@ iclockRoutes.post("/cdata", async (c) => {
   // Worth a line in the log: a device that is punching but mapping to nobody is
   // the most likely way this is misconfigured, and it is invisible otherwise.
   if (result.unmapped > 0 || result.unreadable > 0) {
-    console.warn("[iclock] punches not recorded", {
+    log.warn("iclock.punches.not_recorded", {
       serial,
       device: device.name,
       ...result,

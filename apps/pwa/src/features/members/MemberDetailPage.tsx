@@ -35,7 +35,7 @@ import { FreezeCard } from "@/components/ui/freeze-card";
 import { MemberRfidCard } from "@/features/members/MemberRfidCard";
 import { SwipePane } from "@/components/ui/swipe-pane";
 import { useToast } from "@/components/ui/toast";
-import { formatShiftLabel, formatShiftWindow } from "@/lib/shifts";
+import { formatShiftLabel } from "@/lib/shifts";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { usePhoneDisplay } from "@/lib/use-phone-display";
 import { ageFromDateOfBirth, toDateInputValue } from "@/lib/occupation";
@@ -69,10 +69,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DetailPageSkeleton } from "@/components/ui/skeleton";
+// Aliased: `Badge` in this file is the gym's own badge type, which a member
+// holds several of, and the two would shadow each other.
+import { Badge as StatusBadge } from "@/components/ui/badge";
+import { StatCard } from "@/components/ui/stat-card";
+import {
+  Menu,
+  MenuContent,
+  MenuItem,
+  MenuSeparator,
+  MenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   Shield,
-  Award,
   Dumbbell,
   Clock,
   CreditCard,
@@ -86,17 +96,20 @@ import {
   X,
   PhoneCall,
   MessageCircle,
+  User,
   UserCheck,
   UserX,
   AlertTriangle,
   ChevronLeft,
   ChevronRight,
   CalendarDays,
+  CalendarClock,
   Cake,
+  Briefcase,
+  MoreVertical,
   Trash2,
 } from "lucide-react";
 import type { Badge, MemberDetail, Shift, TenantMember } from "@/types/api";
-import AvatarCard from "@/components/ui/avatarCard";
 import MemberForm, { type MemberFormData } from "@/components/forms/MemberForm";
 import { ShareButton } from "@/components/ui/share-button";
 
@@ -128,6 +141,76 @@ function whatsappSender(reminder: { actor?: { user: { name: string } } | null })
 }
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+/**
+ * A date short enough for a stat tile: "24 Sep 26".
+ *
+ * Two of those tiles share a phone's width, which leaves room for about eight
+ * characters — so the page's ordinary `formatDate` ("24 Sept 2026") was being
+ * cut to "24 Sept …". The two-digit year is the only thing given up, and the
+ * full date is still spelled out in the payments list below.
+ */
+function shortDate(value: string) {
+  return new Date(value).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "2-digit",
+  });
+}
+
+/**
+ * One of the four things the desk does from this screen.
+ *
+ * A link when there is somewhere to go, a button when there is something to
+ * do, and a disabled cell when the member has no phone or no card — the row
+ * keeps its four columns either way, so the buttons do not move under the
+ * thumb from one member to the next.
+ */
+function QuickAction({
+  icon: Icon,
+  label,
+  iconClass,
+  href,
+  external,
+  onClick,
+}: {
+  icon: React.ElementType;
+  label: string;
+  iconClass?: string;
+  href?: string;
+  external?: boolean;
+  onClick?: () => void;
+}) {
+  const inner = (
+    <>
+      <Icon className={cn("h-5 w-5", iconClass)} />
+      <span className="text-[11px] font-medium">{label}</span>
+    </>
+  );
+  const shell = "flex flex-col items-center justify-center gap-1 py-3 transition-colors";
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+        className={cn(shell, "hover:bg-accent")}
+      >
+        {inner}
+      </a>
+    );
+  }
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={cn(shell, "hover:bg-accent")}>
+        {inner}
+      </button>
+    );
+  }
+
+  return <span className={cn(shell, "cursor-not-allowed opacity-40")}>{inner}</span>;
+}
 
 export default function MemberDetailPage() {
   const { membershipId } = useParams<{ membershipId: string }>();
@@ -538,6 +621,7 @@ export default function MemberDetailPage() {
                 photoPreview: member.avatarUrl,
               }}
               phoneReadOnly={!canEditPhone}
+              currentOccupation={member.occupation}
               shiftOptions={shiftOptions}
               loadingShifts={loadingShifts}
               onSubmit={handleEditSubmit}
@@ -550,237 +634,58 @@ export default function MemberDetailPage() {
     );
   }
 
-  // ─── Shared meta + badges (used in both mobile and desktop layouts) ──────────
+  // ─── Presentation ───────────────────────────────────────────────────────────
   const memberGender = genderMeta(member.gender);
   const memberAge = ageFromDateOfBirth(member.dateOfBirth);
 
-  const memberMeta = (
-    <>
-      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-muted-foreground">
-        {/* The email is the one item that can be long enough to push the row
-            around, so it gets the whole line to itself and truncates. */}
-        <span className="flex w-full min-w-0 items-center gap-1 sm:w-auto">
-          <Mail className="h-3.5 w-3.5 shrink-0" />
-          <span className="truncate">{member.email}</span>
+  /**
+   * Everything the gym knows about the person, as labelled facts.
+   *
+   * These used to run along one line as unlabelled chips — an envelope, a
+   * phone, a cake, a clock — which read as a row of icons rather than as a
+   * record. A label costs one line and answers "17:00–22:00 of what?".
+   */
+  const facts: { icon: React.ElementType; label: string; value: React.ReactNode }[] = [
+    { icon: Phone, label: "Phone", value: formatPhone(member.phone, member.userId) ?? "—" },
+    { icon: Mail, label: "Email", value: member.email },
+    { icon: memberGender?.icon ?? User, label: "Gender", value: memberGender?.label ?? "Not recorded" },
+    {
+      icon: Cake,
+      label: "Date of birth",
+      value: member.dateOfBirth
+        ? `${formatDate(member.dateOfBirth)}${memberAge !== null ? ` · ${memberAge} yrs` : ""}`
+        : "Not recorded",
+    },
+    {
+      icon: Briefcase,
+      label: "Occupation",
+      value: member.occupation ? (
+        <span className="flex items-center gap-1.5">
+          <OccupationGlyph icon={member.occupation.icon} className="h-3.5 w-3.5 shrink-0" />
+          {member.occupation.name}
         </span>
-        {member.phone && (
-          <span className="flex items-center gap-1 whitespace-nowrap">
-            <Phone className="h-3.5 w-3.5 shrink-0" />
-            {formatPhone(member.phone, member.userId)}
-          </span>
-        )}
-        {memberGender && (
-          <span className="flex items-center gap-1 whitespace-nowrap">
-            <memberGender.icon className="h-3.5 w-3.5 shrink-0" />
-            {memberGender.label}
-          </span>
-        )}
-        {member.dateOfBirth && (
-          <span className="flex items-center gap-1 whitespace-nowrap">
-            <Cake className="h-3.5 w-3.5 shrink-0" />
-            {formatDate(member.dateOfBirth)}
-            {memberAge !== null && ` · ${memberAge}`}
-          </span>
-        )}
-        {member.occupation && (
-          <span className="flex items-center gap-1 whitespace-nowrap">
-            <OccupationGlyph icon={member.occupation.icon} className="h-3.5 w-3.5 shrink-0" />
-            {member.occupation.name}
-          </span>
-        )}
-        <span className="flex items-center gap-1 whitespace-nowrap">
-          <Calendar className="h-3.5 w-3.5 shrink-0" />
-          Joined {formatDate(member.joinedAt)}
-        </span>
-        {member.shift && (
-          <span className="flex items-center gap-1 whitespace-nowrap">
-            <Clock className="h-3.5 w-3.5 shrink-0" />
-            {formatShiftLabel(member.shift)}
-          </span>
-        )}
-      </div>
+      ) : (
+        "Not recorded"
+      ),
+    },
+    { icon: Calendar, label: "Joined", value: formatDate(member.joinedAt) },
+    {
+      icon: Clock,
+      label: "Shift",
+      value: member.shift ? formatShiftLabel(member.shift) : "Unassigned",
+    },
+  ];
 
-      {/* One row for everything this member holds: coins, their card, and their
-          badges. These used to be two containers that each wrapped on their
-          own, so a short first row still forced the badges onto a line of their
-          own and pushed what staff actually edit below the fold. Wrapping only
-          happens now when the row genuinely runs out of width. */}
-      {/* On a phone these carry their icon alone. Four labelled pills wrap onto
-          three lines on a 390px screen and push the actions below the fold; the
-          icons are the same controls, and every one keeps its words in a
-          `title` and an accessible name so nothing is lost to a screen reader
-          or a long press. The coin *count* survives on mobile — a bare coin
-          icon says a member has coins but not whether it is five or five
-          hundred. */}
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        {(coinBalance > 0 || canGiftCoins || member.idCardUrl) && (
-          <>
-          {/* A button for whoever may change it, a plain badge for everyone
-              else. Shown at zero too, because giving coins to somebody who has
-              none is the common case. */}
-          {canGiftCoins ? (
-            <button
-              type="button"
-              onClick={() => setGiftOpen(true)}
-              title={coinBalance > 0 ? `${coinBalance} coins to spend` : "Give coins"}
-              aria-label={coinBalance > 0 ? `${coinBalance} coins to spend` : "Give coins"}
-              className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-500/20 dark:text-amber-400"
-            >
-              <Coins className="h-3.5 w-3.5 shrink-0" />
-              {coinBalance > 0 ? (
-                <>
-                  {coinBalance}
-                  <span className="hidden sm:inline">coins to spend</span>
-                </>
-              ) : (
-                <span className="hidden sm:inline">Give coins</span>
-              )}
-            </button>
-          ) : (
-            coinBalance > 0 && (
-              <span
-                title={`${coinBalance} coins to spend`}
-                className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-400"
-              >
-                <Coins className="h-3.5 w-3.5 shrink-0" />
-                {coinBalance}
-                <span className="hidden sm:inline">coins to spend</span>
-              </span>
-            )
-          )}
-
-          {member.idCardUrl && (
-            <>
-              <a
-                href={member.idCardUrl}
-                title="Membership card"
-                aria-label="Membership card"
-                className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent"
-              >
-                <CreditCard className="h-3.5 w-3.5 shrink-0" />
-                <span className="hidden sm:inline">Membership card</span>
-              </a>
-
-              {/* The card, not this page.
-
-                  A dashboard URL is no use to anybody without a login and the
-                  permission to read members, so sharing it would hand most
-                  recipients a sign-in screen. The card link is the member's own,
-                  works for whoever opens it, and is what the welcome message
-                  already sends — this is the same link, offered again when
-                  somebody at the desk needs to re-send it.
-
-                  What it exposes is deliberately narrow: a name, a number, a
-                  photo and the dates. Nothing more than the member would show
-                  at the front desk, which is the standard the card was built to. */}
-              <ShareButton
-                url={member.idCardUrl}
-                title={`${member.name} — membership card`}
-                text={`Your membership card at ${currentMembership()?.tenantName ?? "the gym"}.`}
-                label="Send card"
-                size="sm"
-                iconOnlyOnMobile
-                className="h-auto rounded-full px-3 py-1.5 text-xs"
-              />
-            </>
-          )}
-          </>
-        )}
-
-        {member.badges.map((badge) => (
-          <span
-            key={badge.id}
-            title={badge.name}
-            className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium"
-          >
-            <span
-              className="h-4 w-4 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-              style={{ backgroundColor: badge.color }}
-            >
-              {(badge.icon ?? badge.name).charAt(0).toUpperCase()}
-            </span>
-            {/* The coloured initial is the badge on a phone. Its name is in the
-                `title`, and the remove control beside it keeps its own label. */}
-            <span className="hidden sm:inline">{badge.name}</span>
-            {canManageBadges && (
-              <button
-                type="button"
-                onClick={() => handleRemoveBadge(badge.id)}
-                className="ml-0.5 rounded-full text-muted-foreground hover:text-destructive transition-colors"
-                title="Remove badge"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            )}
-          </span>
-        ))}
-
-        {canManageBadges && assignableBadges.length > 0 && !showBadgePicker && (
-          <button
-            type="button"
-            onClick={() => setShowBadgePicker(true)}
-            className="flex items-center gap-1 rounded-full border border-dashed px-2.5 py-1 text-xs text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-            title="Add badge"
-            aria-label="Add badge"
-          >
-            <Plus className="h-3 w-3 shrink-0" />
-            <span className="hidden sm:inline">Add Badge</span>
-          </button>
-        )}
-
-        {canManageBadges && showBadgePicker && assignableBadges.length > 0 && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <Select
-              value={selectedBadgeId}
-              onValueChange={(value) => setSelectedBadgeId(value ?? "")}
-              disabled={loadingBadges}
-            >
-              <SelectTrigger className="h-7 text-xs py-0 w-36 sm:w-44">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">{loadingBadges ? "Loading…" : "Choose badge…"}</SelectItem>
-                {assignableBadges.map((badge) => (
-                  <SelectItem key={badge.id} value={badge.id}>
-                    {badge.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              size="sm"
-              className="h-7 text-xs px-3"
-              onClick={handleAssignBadge}
-              disabled={!selectedBadgeId}
-            >
-              Assign
-            </Button>
-            <button
-              type="button"
-              onClick={() => {
-                setShowBadgePicker(false);
-                setSelectedBadgeId("");
-              }}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-              title="Close"
-            >
-              <X className="h-4 w-4" />
-            </button>
-            {badgeError && <p className="text-xs text-destructive w-full">{badgeError}</p>}
-          </div>
-        )}
-      </div>
-    </>
-  );
-
-  const mobilePhotoRingClass =
+  /** The ring around the photo says the one thing worth seeing from across the room. */
+  const photoRingClass =
     isMemberProfile && getDueDateState(member.dueDate) === "overdue"
-      ? "ring-4 ring-red-500"
+      ? "ring-red-500"
       : isMemberProfile && getDueDateState(member.dueDate) === "current"
-        ? "ring-4 ring-emerald-500"
+        ? "ring-emerald-500"
         : member.status === "ACTIVE"
-          ? "ring-4 ring-blue-500"
-          : "ring-4 ring-yellow-500";
+          ? "ring-blue-500"
+          : "ring-yellow-500";
+
   const viewedRoleLabel =
     member.role === "ADMIN"
       ? "admin"
@@ -793,13 +698,22 @@ export default function MemberDetailPage() {
     ? "This will permanently delete the member along with their payments, assigned workout plans, and plans they created. This action cannot be undone."
     : `This will permanently delete this ${viewedRoleLabel} profile. Workout plans assigned to them and workout plans created by them will be deleted. Payments they collected and attendance entries they marked will be kept, but the collected-by and marked-by references will be cleared. This action cannot be undone.`;
 
+  /** The membership tile's headline: when this term runs out, or that it has. */
+  const validUntilDate = member.payments
+    .filter((payment) => payment.validUntil)
+    .map((payment) => new Date(payment.validUntil!).getTime())
+    .sort((a, b) => b - a)[0];
+
+  const editPath = getTenantDashboardPath(`/members/${membershipId}/edit`);
+  const whatsappUrl = buildWhatsAppUrl(member.phone, `Hi ${member.name}`);
+
   return (
     <SwipePane
       paneKey={membershipId ?? "member"}
       paneIndex={siblings.index}
       onNext={() => goToSibling(siblings.nextId)}
       onPrevious={() => goToSibling(siblings.previousId)}
-      className="space-y-6"
+      className="space-y-4 sm:space-y-5"
     >
       <ConfirmDialog
         open={deleteConfirmOpen}
@@ -811,242 +725,378 @@ export default function MemberDetailPage() {
         onConfirm={handleDeleteMember}
       />
 
+      <ImageLightbox
+        src={member.avatarUrl}
+        alt={member.name}
+        open={photoZoomOpen}
+        onOpenChange={setPhotoZoomOpen}
+      />
+
       {error && (
         <div className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {error}
         </div>
       )}
-      {/* ── Mobile header: full-width photo ──────────────────────────────── */}
-      <div className="sm:hidden space-y-4">
-        <div
-          className={cn(
-            "relative w-32 h-32 mx-auto overflow-hidden rounded-2xl bg-muted",
-            mobilePhotoRingClass,
-          )}
-        >
-          {member.avatarUrl ? (
-            /* `AssetImage` rather than a bare tag: it falls back to the address
-               the photo was stored at when the proxy cannot serve it, which is
-               the difference between a face and a pair of initials. */
-            <AssetImage
-              src={member.avatarUrl}
-              alt={member.name}
-              className="h-full w-full cursor-zoom-in object-cover"
-              onClick={() => setPhotoZoomOpen(true)}
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center">
-              <span className="text-7xl font-extrabold text-muted-foreground select-none">
-                {getInitials(member.name)}
-              </span>
+
+      {/* ── Who this is ──────────────────────────────────────────────────────
+          One header at every width, rather than a phone version and a desktop
+          version of the same facts kept in step by hand. The photo shrinks and
+          the actions wrap; nothing appears or disappears with the viewport. */}
+      <Card className="overflow-hidden py-0">
+        {/* A wash of the gym's accent behind the identity block, so the page
+            opens on the person rather than on a white field of cards. */}
+        <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent px-4 pb-4 pt-5 sm:px-6 sm:pb-5 sm:pt-6">
+          <div className="flex items-start gap-4">
+            <button
+              type="button"
+              onClick={() => member.avatarUrl && setPhotoZoomOpen(true)}
+              className={cn(
+                "relative size-20 shrink-0 overflow-hidden rounded-2xl bg-muted ring-2 ring-offset-2 ring-offset-background sm:size-24",
+                photoRingClass,
+                member.avatarUrl ? "cursor-zoom-in" : "cursor-default",
+              )}
+              aria-label={member.avatarUrl ? "View photo" : undefined}
+            >
+              {member.avatarUrl ? (
+                /* `AssetImage` rather than a bare tag: it falls back to the
+                   address the photo was stored at when the proxy cannot serve
+                   it, which is the difference between a face and initials. */
+                <AssetImage
+                  src={member.avatarUrl}
+                  alt={member.name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center text-2xl font-extrabold text-muted-foreground select-none sm:text-3xl">
+                  {getInitials(member.name)}
+                </span>
+              )}
+            </button>
+
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-muted-foreground">#{member.memberId}</p>
+              <h1 className="truncate text-xl font-bold tracking-tight sm:text-2xl">
+                {member.name}
+              </h1>
+
             </div>
-          )}
-          <div
-            className={cn(
-              "absolute top-3 right-3 h-3.5 w-3.5 rounded-full ring-2 ring-background",
-              member.status === "ACTIVE" ? "bg-green-500" : "bg-yellow-500",
+
+            {/* Everything that changes or ends this membership, behind one
+                control. Edit sat beside Delete on the old header, which put a
+                destructive button under the thumb of anyone reaching for the
+                common one. */}
+            {(canChangeStatus || canDeleteMember) && (
+              <Menu>
+                <MenuTrigger
+                  className="flex size-9 shrink-0 items-center justify-center rounded-md border bg-background transition-colors hover:bg-accent"
+                  aria-label="More actions"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </MenuTrigger>
+                <MenuContent align="end">
+                  <MenuItem onClick={() => navigate(editPath)}>
+                    <Edit className="h-4 w-4" />
+                    Edit details
+                  </MenuItem>
+                  {canChangeStatus && (
+                    <MenuItem onClick={handleToggleStatus} disabled={statusLoading}>
+                      {member.status === "ACTIVE" ? (
+                        <>
+                          <UserX className="h-4 w-4 text-yellow-500" />
+                          Deactivate
+                        </>
+                      ) : (
+                        <>
+                          <UserCheck className="h-4 w-4 text-green-500" />
+                          Activate
+                        </>
+                      )}
+                    </MenuItem>
+                  )}
+                  {canDeleteMember && (
+                    <>
+                      <MenuSeparator />
+                      <MenuItem
+                        onClick={() => setDeleteConfirmOpen(true)}
+                        disabled={deletingMember}
+                        className="text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete
+                      </MenuItem>
+                    </>
+                  )}
+                </MenuContent>
+              </Menu>
             )}
+          </div>
+
+          {/* Under the photo and the name rather than beside them: squeezed
+              into the column next to a 96px photo and a menu button, three
+              short chips were already wrapping onto a second line on a phone.
+              Down here they have the card's whole width, and wrap only when
+              they genuinely run out of it. */}
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            <StatusBadge variant={member.status === "ACTIVE" ? "success" : "destructive"}>
+              {member.status === "ACTIVE" ? "Active" : "Inactive"}
+            </StatusBadge>
+            <StatusBadge variant="outline">{viewedRoleLabel}</StatusBadge>
+            {isMemberProfile && isDue && (
+              <StatusBadge variant="destructive">
+                {lastExpiry ? `Due since ${lastExpiry}` : "Payment due"}
+              </StatusBadge>
+            )}
+            {member.occupation && (
+              <StatusBadge variant="outline">
+                <OccupationGlyph icon={member.occupation.icon} className="h-3 w-3" />
+                {member.occupation.name}
+              </StatusBadge>
+            )}
+            {memberAge !== null && (
+              <StatusBadge variant="outline">
+                <Cake className="h-3 w-3" />
+                {memberAge}
+              </StatusBadge>
+            )}
+            {coinBalance > 0 && (
+              <StatusBadge
+                variant="outline"
+                className="border-amber-500/40 text-amber-700 dark:text-amber-400"
+              >
+                <Coins className="h-3 w-3" />
+                {coinBalance}
+              </StatusBadge>
+            )}
+          </div>
+        </div>
+
+        {/* The four things the desk does from this screen, as one row of equal
+            targets — the same buttons a phone had, at a size a mouse is happy
+            with too. */}
+        <div className="grid grid-cols-4 divide-x border-t">
+          <QuickAction
+            icon={PhoneCall}
+            label="Call"
+            iconClass="text-green-600"
+            href={member.phone ? `tel:${member.phone}` : undefined}
+          />
+          <QuickAction
+            icon={MessageCircle}
+            label="WhatsApp"
+            iconClass="text-[#25D366]"
+            href={whatsappUrl ?? undefined}
+            external
+          />
+          <QuickAction
+            icon={CreditCard}
+            label="Card"
+            iconClass="text-blue-600"
+            href={member.idCardUrl ?? undefined}
+          />
+          <QuickAction
+            icon={Edit}
+            label="Edit"
+            iconClass="text-primary"
+            onClick={() => navigate(editPath)}
           />
         </div>
+      </Card>
 
-        <ImageLightbox
-          src={member.avatarUrl}
-          alt={member.name}
-          open={photoZoomOpen}
-          onOpenChange={setPhotoZoomOpen}
-        />
-        <div className="text-center">
-          <p className="text-xl font-semibold">
-            <span className="text-muted-foreground font-normal">#{member.memberId} – </span>
-            {member.name}
-          </p>
-          {memberMeta}
-        </div>
-        <div className="flex gap-3 justify-center">
-          {member.phone && (
-            <a href={`tel:${member.phone}`} className="flex flex-col items-center gap-1">
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors">
-                <PhoneCall className="h-5 w-5 text-green-500" />
-              </span>
-              <span className="text-[10px] text-muted-foreground">Call</span>
-            </a>
-          )}
-          {member.phone && (
-            <a
-              href={`https://wa.me/91${member.phone.replace(/\D/g, "")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center gap-1"
-            >
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors">
-                <MessageCircle className="h-5 w-5 text-[#25D366]" />
-              </span>
-              <span className="text-[10px] text-muted-foreground">WhatsApp</span>
-            </a>
-          )}
-          <button
-            type="button"
-            onClick={() => navigate(getTenantDashboardPath(`/members/${membershipId}/edit`))}
-            className="flex flex-col items-center gap-1"
-          >
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors">
-              <Edit className="h-5 w-5 text-primary" />
-            </span>
-            <span className="text-[10px] text-muted-foreground">Edit</span>
-          </button>
-          {canChangeStatus && (
-            <button
-              type="button"
-              onClick={handleToggleStatus}
-              disabled={statusLoading}
-              className="flex flex-col items-center gap-1 disabled:opacity-50"
-            >
-              <span
-                className={cn(
-                  "flex h-12 w-12 items-center justify-center rounded-full transition-colors",
-                  member.status === "ACTIVE"
-                    ? "bg-yellow-500/10 hover:bg-yellow-500/20"
-                    : "bg-green-500/10 hover:bg-green-500/20",
-                )}
-              >
-                {member.status === "ACTIVE" ? (
-                  <UserX className="h-5 w-5 text-yellow-500" />
-                ) : (
-                  <UserCheck className="h-5 w-5 text-green-500" />
-                )}
-              </span>
-              <span className="text-[10px] text-muted-foreground">
-                {member.status === "ACTIVE" ? "Deactivate" : "Activate"}
-              </span>
-            </button>
-          )}
-          {canDeleteMember && (
-            <button
-              type="button"
-              onClick={() => setDeleteConfirmOpen(true)}
-              disabled={deletingMember}
-              className="flex flex-col items-center gap-1 disabled:opacity-50"
-            >
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10 transition-colors hover:bg-red-500/20">
-                <Trash2 className="h-5 w-5 text-red-600" />
-              </span>
-              <span className="text-[10px] text-muted-foreground">Delete</span>
-            </button>
-          )}
-        </div>
-        {isMemberProfile && paymentReminderUrl && (
-          <a
-            href={paymentReminderUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={recordReminderSend}
-            className="flex items-center justify-center gap-2 rounded-lg bg-yellow-50 border border-yellow-200 px-4 py-3 text-sm font-medium text-yellow-800 hover:bg-yellow-100 transition-colors"
-          >
-            <AlertTriangle className="h-4 w-4" />
-            Payment overdue{lastExpiry ? ` since ${lastExpiry}` : ""} — Send Reminder via WhatsApp
-          </a>
-        )}
-      </div>
-
-      {/* ── Desktop header: AvatarCard + action buttons below ─────────────── */}
-      <div className="hidden sm:flex flex-col gap-4">
-        <div className="min-w-0">
-          <AvatarCard
-            name={member.name}
-            avatarUrl={member.avatarUrl}
-            gender={member.gender}
-            memberId={member.memberId}
-            className="min-w-0"
-            role={member.role}
-            dueDate={isMemberProfile ? member.dueDate : null}
-            isActive={member.status === "ACTIVE"}
-            avatarClassName="h-20 w-20 text-xl"
-          >
-            {memberMeta}
-          </AvatarCard>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {member.phone && (
-            <a href={`tel:${member.phone}`}>
-              <Button size="sm" variant="outline">
-                <PhoneCall className="h-4 w-4 mr-2 text-green-500" />
-                Call
-              </Button>
-            </a>
-          )}
-          {member.phone && (
-            <a
-              href={`https://wa.me/91${member.phone.replace(/\D/g, "")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button size="sm" variant="outline">
-                <MessageCircle className="h-4 w-4 mr-2 text-[#25D366]" />
-                WhatsApp
-              </Button>
-            </a>
-          )}
-          <Button size="sm" onClick={() => navigate(getTenantDashboardPath(`/members/${membershipId}/edit`))}>
-            <Edit className="h-4 w-4 mr-2" />
-            Edit
-          </Button>
-          {canChangeStatus && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleToggleStatus}
-              disabled={statusLoading}
-            >
-              {member.status === "ACTIVE" ? (
-                <>
-                  <UserX className="h-4 w-4 mr-2 text-yellow-500" />
-                  Deactivate
-                </>
-              ) : (
-                <>
-                  <UserCheck className="h-4 w-4 mr-2 text-green-500" />
-                  Activate
-                </>
-              )}
-            </Button>
-          )}
-          {canDeleteMember && (
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={() => setDeleteConfirmOpen(true)}
-              disabled={deletingMember}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </Button>
-          )}
-          {isMemberProfile && paymentReminderUrl && (
-            <a
-              href={paymentReminderUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={recordReminderSend}
-            >
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-yellow-300 bg-yellow-50 text-yellow-800 hover:bg-yellow-100"
-              >
-                <AlertTriangle className="h-4 w-4 mr-2" />
-                Send Reminder
-              </Button>
-            </a>
-          )}
-        </div>
-      </div>
-
-      {isMemberProfile && membershipId && (
-        <FreezeCard membershipId={membershipId} isStaff />
+      {/* The one thing that cannot wait, in the one place nobody scrolls past. */}
+      {isMemberProfile && paymentReminderUrl && (
+        <a
+          href={paymentReminderUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={recordReminderSend}
+          className="flex items-center gap-3 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm font-medium text-yellow-800 transition-colors hover:bg-yellow-100 dark:border-yellow-500/30 dark:bg-yellow-500/10 dark:text-yellow-300"
+        >
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <span className="min-w-0 flex-1">
+            Payment overdue{lastExpiry ? ` since ${lastExpiry}` : ""} — send a reminder
+          </span>
+          <MessageCircle className="h-4 w-4 shrink-0" />
+        </a>
       )}
 
-      {/* The card that opens the door. Beside the freeze card because both are
-          things the desk does to a membership rather than facts about it. */}
+      {/* ── Where this membership stands ─────────────────────────────────────
+          Three figures the desk acts on, replacing four tiles that counted
+          things — badges, plans — nobody opened this page to count. */}
+      {isMemberProfile && (
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <StatCard
+            icon={CalendarClock}
+            label={isDue ? "Membership expired" : "Membership valid to"}
+            value={validUntilDate ? shortDate(new Date(validUntilDate).toISOString()) : "—"}
+            subtext={validUntilDate ? undefined : "No paid term yet"}
+            color={isDue ? "text-red-600" : "text-emerald-600"}
+            onClick={() =>
+              paymentsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+          />
+          <StatCard
+            icon={CalendarDays}
+            label={`Attended · ${formatMonthLabel(calMonth).split(" ")[0]}`}
+            value={calLoading ? "…" : calTotal}
+            subtext={calTotal === 1 ? "day" : "days"}
+            onClick={() =>
+              document.getElementById("attendance")?.scrollIntoView({ behavior: "smooth" })
+            }
+          />
+          <StatCard
+            icon={CreditCard}
+            label="Payments"
+            value={member.payments.length}
+            subtext="on record"
+            className="col-span-2 lg:col-span-1"
+            onClick={() =>
+              paymentsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+          />
+        </div>
+      )}
+
+      {/* ── The record itself ──────────────────────────────────────────────── */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Profile</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+            {facts.map((fact) => (
+              <div key={fact.label} className="flex items-start gap-2.5">
+                <fact.icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                <div className="min-w-0">
+                  <dt className="text-xs text-muted-foreground">{fact.label}</dt>
+                  <dd className="truncate text-sm font-medium">{fact.value}</dd>
+                </div>
+              </div>
+            ))}
+          </dl>
+
+          {/* Badges, and the card that identifies them at the door. Both are
+              things this member holds, so they sit together under the facts
+              rather than competing with them in the header. */}
+          <div className="flex flex-wrap items-center gap-2 border-t pt-4">
+            {member.badges.map((badge) => (
+              <span
+                key={badge.id}
+                title={badge.name}
+                className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium"
+              >
+                <span
+                  className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                  style={{ backgroundColor: badge.color }}
+                >
+                  {(badge.icon ?? badge.name).charAt(0).toUpperCase()}
+                </span>
+                {badge.name}
+                {canManageBadges && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveBadge(badge.id)}
+                    className="ml-0.5 rounded-full text-muted-foreground transition-colors hover:text-destructive"
+                    title="Remove badge"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </span>
+            ))}
+
+            {canManageBadges && assignableBadges.length > 0 && !showBadgePicker && (
+              <button
+                type="button"
+                onClick={() => setShowBadgePicker(true)}
+                className="flex items-center gap-1 rounded-full border border-dashed px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+              >
+                <Plus className="h-3 w-3 shrink-0" />
+                Add badge
+              </button>
+            )}
+
+            {canManageBadges && showBadgePicker && assignableBadges.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <Select
+                  value={selectedBadgeId}
+                  onValueChange={(value) => setSelectedBadgeId(value ?? "")}
+                  disabled={loadingBadges}
+                >
+                  <SelectTrigger className="h-7 w-36 py-0 text-xs sm:w-44">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">{loadingBadges ? "Loading…" : "Choose badge…"}</SelectItem>
+                    {assignableBadges.map((badge) => (
+                      <SelectItem key={badge.id} value={badge.id}>
+                        {badge.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  size="sm"
+                  className="h-7 px-3 text-xs"
+                  onClick={handleAssignBadge}
+                  disabled={!selectedBadgeId}
+                >
+                  Assign
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowBadgePicker(false);
+                    setSelectedBadgeId("");
+                  }}
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                  title="Close"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                {badgeError && <p className="w-full text-xs text-destructive">{badgeError}</p>}
+              </div>
+            )}
+
+            {canGiftCoins && (
+              <button
+                type="button"
+                onClick={() => setGiftOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-500/20 dark:text-amber-400"
+              >
+                <Coins className="h-3.5 w-3.5 shrink-0" />
+                {coinBalance > 0 ? `${coinBalance} coins · give more` : "Give coins"}
+              </button>
+            )}
+
+            {member.idCardUrl && (
+              /* The card, not this page.
+
+                 A dashboard URL is no use to anybody without a login and the
+                 permission to read members, so sharing it would hand most
+                 recipients a sign-in screen. The card link is the member's
+                 own, works for whoever opens it, and is what the welcome
+                 message already sends — this is the same link, offered again
+                 when somebody at the desk needs to re-send it.
+
+                 What it exposes is deliberately narrow: a name, a number, a
+                 photo and the dates. Nothing more than the member would show
+                 at the front desk, which is the standard the card was built to. */
+              <ShareButton
+                url={member.idCardUrl}
+                title={`${member.name} — membership card`}
+                text={`Your membership card at ${currentMembership()?.tenantName ?? "the gym"}.`}
+                label="Send card"
+                size="sm"
+                className="h-auto rounded-full px-3 py-1 text-xs"
+              />
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── What the desk does to a membership ─────────────────────────────── */}
+      {isMemberProfile && membershipId && <FreezeCard membershipId={membershipId} isStaff />}
+
       {isMemberProfile && membershipId && (
         <MemberRfidCard
           membershipId={membershipId}
@@ -1057,142 +1107,35 @@ export default function MemberDetailPage() {
         />
       )}
 
-      <div
-        className={cn(
-          "grid grid-cols-2 gap-3 sm:gap-4",
-          isMemberProfile ? "lg:grid-cols-4" : "lg:grid-cols-2",
-        )}
-      >
-        {isMemberProfile && (
-          <Card
-            className="cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() =>
-              paymentsSectionRef.current?.scrollIntoView({
-                behavior: "smooth",
-                block: "start",
-              })
-            }
-          >
-            <CardContent className="px-4 pt-4 pb-4 sm:px-6 sm:pt-6">
-              <div className="flex items-center gap-3">
-                <CreditCard className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-2xl font-bold">{member.payments.length}</p>
-                  <p className="text-xs text-muted-foreground">Payments</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <Card>
-          <CardContent className="px-4 pt-4 pb-4 sm:px-6 sm:pt-6">
-            <div className="flex items-center gap-3">
-              <Award className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-2xl font-bold">{member.badges.length}</p>
-                <p className="text-xs text-muted-foreground">Badges</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {isMemberProfile && (
-          <Card>
-            <CardContent className="px-4 pt-4 pb-4 sm:px-6 sm:pt-6">
-              <div className="flex items-center gap-3">
-                <Dumbbell className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-2xl font-bold">{member.planAssignments.length}</p>
-                  <p className="text-xs text-muted-foreground">Workout Plans</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <Card>
-          <CardContent className="px-4 pt-4 pb-4 sm:px-6 sm:pt-6">
-            <div className="flex items-center gap-3">
-              <Clock className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-semibold">
-                  {member.shift ? member.shift.name : "Unassigned"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {member.shift
-                    ? formatShiftWindow(member.shift.startTime, member.shift.endTime)
-                    : "Shift"}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {isMemberProfile && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Dumbbell className="h-5 w-5" />
-              Workout Plans
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {member.planAssignments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No workout plans assigned.</p>
-            ) : (
-              <div className="space-y-2">
-                {member.planAssignments.map((pa) => (
-                  <div
-                    key={pa.id}
-                    className="flex items-center justify-between rounded-md border px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => navigate(`/workouts/${pa.plan.id}`)}
-                  >
-                    <div>
-                      <p className="font-medium">{pa.plan.title}</p>
-                      {pa.plan.description && (
-                        <p className="text-sm text-muted-foreground">{pa.plan.description}</p>
-                      )}
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      Assigned {formatDate(pa.assignedAt)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ── Attendance Calendar ─────────────────────────────────────────── */}
+      {/* ── Attendance ─────────────────────────────────────────────────────── */}
       {isMemberProfile && (
         <Card id="attendance">
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg flex items-center gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <CalendarDays className="h-5 w-5" />
                 Attendance
               </CardTitle>
-              <span className="text-sm text-muted-foreground font-medium">
-                {calTotal} day{calTotal !== 1 ? "s" : ""}
-              </span>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="sm" onClick={() => navigateMonth(-1)}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="min-w-28 text-center text-sm font-medium">
+                  {formatMonthLabel(calMonth)}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigateMonth(1)}
+                  disabled={calMonth >= getMonthStr(today)}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center justify-between pt-1">
-              <Button variant="ghost" size="sm" onClick={() => navigateMonth(-1)}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-sm font-medium">{formatMonthLabel(calMonth)}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigateMonth(1)}
-                disabled={calMonth >= getMonthStr(today)}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+            <CardDescription>
+              {calTotal} day{calTotal !== 1 ? "s" : ""} this month
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-3">
             {calLoading ? (
@@ -1219,8 +1162,10 @@ export default function MemberDetailPage() {
                     <div
                       key={d}
                       className={cn(
-                        "flex flex-col items-center justify-center rounded-md p-1 min-h-10 text-sm",
-                        present ? "bg-green-500 text-white font-medium" : "text-muted-foreground",
+                        "flex min-h-10 flex-col items-center justify-center rounded-md p-1 text-sm",
+                        present
+                          ? "bg-emerald-500 font-medium text-white"
+                          : "text-muted-foreground",
                         isToday && "ring-2 ring-primary",
                       )}
                     >
@@ -1233,7 +1178,7 @@ export default function MemberDetailPage() {
                     {WEEKDAYS.map((w) => (
                       <div
                         key={w}
-                        className="text-center text-xs font-medium text-muted-foreground py-1"
+                        className="py-1 text-center text-xs font-medium text-muted-foreground"
                       >
                         {w}
                       </div>
@@ -1247,70 +1192,23 @@ export default function MemberDetailPage() {
         </Card>
       )}
 
-      {/* What it has taken to collect from this member. */}
-      {isMemberProfile && canSeeMoney && reminders.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">
-              <Link
-                to={getTenantDashboardPath("/reminders")}
-                className="flex items-center gap-2 hover:underline"
-              >
-                <MessageCircle className="h-5 w-5" />
-                Reminders sent
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </Link>
-            </CardTitle>
-            <CardDescription>
-              {outstandingReminders > 0
-                ? `${outstandingReminders} still unanswered — the rest are linked to the payments that followed.`
-                : "All linked to the payments that followed them."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {reminders.slice(0, 10).map((reminder) => (
-              <Link
-                key={reminder.id}
-                to={getTenantDashboardPath(`/reminders/${reminder.id}`)}
-                className="-mx-2 flex items-start justify-between gap-3 rounded-md border-b px-2 py-2 last:border-0 hover:bg-muted/50"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-medium">
-                    {REMINDER_REASON_LABELS[reminder.reason] ?? reminder.reason}
-                    <span className="ml-2 text-xs font-normal text-muted-foreground">
-                      {reminder.channel === "WHATSAPP" ? whatsappSender(reminder) : "Push"}
-                    </span>
-                  </p>
-                  {reminder.message && (
-                    <p className="truncate text-xs text-muted-foreground">{reminder.message}</p>
-                  )}
-                </div>
-                <div className="shrink-0 text-right">
-                  <p className="text-xs text-muted-foreground">{formatDate(reminder.sentAt)}</p>
-                  {reminder.paymentId && (
-                    <p className="text-[10px] text-emerald-600">settled</p>
-                  )}
-                </div>
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      {/* ── Payments ───────────────────────────────────────────────────────── */}
       {isMemberProfile && (
         <Card ref={paymentsSectionRef}>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center justify-between gap-2">
-              <span className="flex items-center gap-2">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <CreditCard className="h-5 w-5" />
                 Payments
-              </span>
+              </CardTitle>
               <Link
                 to={`/payments/record/${membershipId}`}
-                className="ml-2 inline-flex items-center gap-1 text-sm text-secondary bg-primary rounded-sm px-2 py-1 hover:underline"
+                className="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
               >
-                Add <PlusCircle className="h-4 w-4" />
+                <PlusCircle className="h-4 w-4" />
+                Add
               </Link>
-            </CardTitle>
+            </div>
           </CardHeader>
           <CardContent>
             {member.payments.length === 0 ? (
@@ -1391,11 +1289,11 @@ export default function MemberDetailPage() {
                           <TableCell>
                             <PaymentStatusChip status={p.status} />
                           </TableCell>
-                          <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
+                          <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
                             {p.validFrom ? formatDate(p.validFrom) : "-"}
                             {p.validUntil ? ` → ${formatDate(p.validUntil)}` : ""}
                           </TableCell>
-                          <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
+                          <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
                             {formatDate(p.createdAt)}
                           </TableCell>
                         </TableRow>
@@ -1408,6 +1306,94 @@ export default function MemberDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* ── Workout plans ──────────────────────────────────────────────────── */}
+      {isMemberProfile && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Dumbbell className="h-5 w-5" />
+              Workout plans
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {member.planAssignments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No workout plans assigned.</p>
+            ) : (
+              <div className="space-y-2">
+                {member.planAssignments.map((pa) => (
+                  <div
+                    key={pa.id}
+                    className="flex cursor-pointer items-center justify-between gap-3 rounded-md border px-4 py-3 transition-colors hover:bg-muted/50"
+                    onClick={() => navigate(`/workouts/${pa.plan.id}`)}
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{pa.plan.title}</p>
+                      {pa.plan.description && (
+                        <p className="truncate text-sm text-muted-foreground">
+                          {pa.plan.description}
+                        </p>
+                      )}
+                    </div>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {formatDate(pa.assignedAt)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── What it has taken to collect from this member ──────────────────── */}
+      {isMemberProfile && canSeeMoney && reminders.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">
+              <Link
+                to={getTenantDashboardPath("/reminders")}
+                className="flex items-center gap-2 hover:underline"
+              >
+                <MessageCircle className="h-5 w-5" />
+                Reminders sent
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </Link>
+            </CardTitle>
+            <CardDescription>
+              {outstandingReminders > 0
+                ? `${outstandingReminders} still unanswered — the rest are linked to the payments that followed.`
+                : "All linked to the payments that followed them."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {reminders.slice(0, 10).map((reminder) => (
+              <Link
+                key={reminder.id}
+                to={getTenantDashboardPath(`/reminders/${reminder.id}`)}
+                className="-mx-2 flex items-start justify-between gap-3 rounded-md border-b px-2 py-2 last:border-0 hover:bg-muted/50"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">
+                    {REMINDER_REASON_LABELS[reminder.reason] ?? reminder.reason}
+                    <span className="ml-2 text-xs font-normal text-muted-foreground">
+                      {reminder.channel === "WHATSAPP" ? whatsappSender(reminder) : "Push"}
+                    </span>
+                  </p>
+                  {reminder.message && (
+                    <p className="truncate text-xs text-muted-foreground">{reminder.message}</p>
+                  )}
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="text-xs text-muted-foreground">{formatDate(reminder.sentAt)}</p>
+                  {reminder.paymentId && <p className="text-[10px] text-emerald-600">settled</p>}
+                </div>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       {canGiftCoins && (
         <GiftCoinsDialog
           membershipId={membershipId!}

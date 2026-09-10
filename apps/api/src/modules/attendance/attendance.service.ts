@@ -256,52 +256,6 @@ export const attendanceService = {
     };
   },
 
-  /** Admin/coach marks attendance for multiple members at once */
-/**
-   * Check somebody in from a scanned ID card.
-   *
-   * The desk's half of the QR story. The gym already posts a code members scan
-   * with their own phone; this is the other direction — one phone at the
-   * counter reading the card each member already carries, which is faster at a
-   * queue and works for members who never installed anything.
-   *
-   * The scanned value is a whole url, because that is what the card encodes and
-   * what a scanner hands back. Only the token is used, and only as a lookup:
-   * an unknown code is refused rather than guessed at.
-   */
-  async markByScannedCode(
-    tenantId: string,
-    actorMembershipId: string | null,
-    code: string,
-  ): Promise<CheckInResult<CheckInOutcome>> {
-    // A card url, or the bare token if somebody typed it. Anything after the
-    // last slash, minus any query string a scanner may have kept.
-    const token = code.trim().split(/[?#]/)[0]!.split("/").filter(Boolean).pop() ?? "";
-    if (!token) {
-      return { error: "That code could not be read.", status: 400 as const };
-    }
-
-    const tenant = await this.resolveTenantForCheckIn(tenantId);
-    if ("error" in tenant) return tenant;
-
-    const membership = await attendanceRepository.findMembershipByCardToken(
-      tenant.data.id,
-      token,
-    );
-    if (!membership) {
-      return { error: "That card does not belong to this gym.", status: 404 as const };
-    }
-
-    return {
-      data: await this.commitCheckIn(
-        tenant.data.id,
-        membership,
-        toDateOnly(undefined),
-        actorMembershipId,
-      ),
-    };
-  },
-
   /**
    * Mark a roomful of members at once.
    *

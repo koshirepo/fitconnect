@@ -1334,6 +1334,11 @@ model AttendanceDevice {
   lastSeenAt   DateTime?
   /// The last real punch, which is what says the door is being used.
   lastPunchAt  DateTime?
+  /// When the gym was last told this device had gone quiet.
+  ///
+  /// Cleared the moment the device speaks again, so one dead machine is one
+  /// notification rather than one a day until somebody walks over to it.
+  silenceAlertedAt DateTime?
   /// The device's own upload cursor, echoed back so it stops resending history.
   stamp        String?
   createdAt    DateTime        @default(now())

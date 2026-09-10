@@ -7,6 +7,7 @@
  */
 import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
+import { log } from "./logger";
 
 let _transporter: Transporter | undefined;
 
@@ -24,7 +25,7 @@ function getTransporter(): Transporter {
     const EMAIL_DEBUG = process.env.EMAIL_DEBUG === "true";
 
     if (!EMAIL_USER || !EMAIL_PASSWORD) {
-      console.warn("Email config missing EMAIL_USER or EMAIL_PASSWORD; SMTP will fail.");
+      log.warn("email.config.incomplete", { missing: "EMAIL_USER or EMAIL_PASSWORD" });
     }
 
     _transporter = nodemailer.createTransport({
@@ -355,12 +356,12 @@ async function verifyTransport() {
   if (!user || !pass) return;
   try {
     await getTransporter().verify();
-    console.info("Email transport verified.");
+    log.info("email.transport.verified");
   } catch (err) {
-    console.error("Email transport verification failed.", err);
+    log.error("email.transport.verify.failed", { error: err });
   }
 }
 
 if (process.env.EMAIL_VERIFY_ON_STARTUP === "true") {
-  verifyTransport().catch((err) => console.error("Email transport verify threw.", err));
+  verifyTransport().catch((err) => log.error("email.transport.verify.threw", { error: err }));
 }

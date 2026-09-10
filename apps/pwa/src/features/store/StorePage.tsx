@@ -52,7 +52,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { usePhoneDisplay } from "@/lib/use-phone-display";
-import { formatCurrency, formatDate, cn } from "@/lib/utils";
+import { formatCompactCurrency, formatCurrency, formatDate, cn } from "@/lib/utils";
 import type { StoreOrderRow } from "@/api/store";
 
 /** One line of a sale being rung up at the desk. */
@@ -331,7 +331,7 @@ export default function StorePage() {
         />
         <StatCard
           label="Stock value"
-          value={formatCurrency(stock.value)}
+          value={formatCompactCurrency(stock.value)}
           subtext={canManage ? "Manage products" : "At current prices"}
           icon={Boxes}
           {...(canManage ? { onClick: () => navigate("/dashboard/store/manage") } : {})}

@@ -9,6 +9,7 @@
 import type { Context, Next } from "hono";
 import { tooManyRequests, badRequest } from "../lib/response";
 import type { AppBindings } from "../types/app-context";
+import { log } from "../lib/logger";
 
 type AppContext = Context<AppBindings>;
 
@@ -120,7 +121,7 @@ export async function verifyTurnstile(c: AppContext, next: Next) {
   } catch {
     // Cloudflare being unreachable must not close the only way to join a gym.
     // Volume is still capped by the rate limit above.
-    console.error("[turnstile] verification unreachable; allowing request");
+    log.error("turnstile.verify.unreachable", { outcome: "allowed" });
   }
 
   return next();

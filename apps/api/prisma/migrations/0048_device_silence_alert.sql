@@ -1,0 +1,11 @@
+-- Say something when the machine on the wall stops reporting.
+--
+-- The devices page has always derived "online" from `lastSeenAt`, but derived
+-- state only helps somebody already looking at that page. A reader that dies on
+-- a Monday morning takes the gym's attendance with it, silently, until somebody
+-- wonders why the floor looks empty in the reports.
+--
+-- This column is the memory the daily check needs: which silences have already
+-- been reported. It is cleared the moment the device speaks again, so one dead
+-- machine is one notification rather than one every morning until it is fixed.
+ALTER TABLE "AttendanceDevice" ADD COLUMN "silenceAlertedAt" DATETIME;

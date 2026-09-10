@@ -1,5 +1,6 @@
 import { api } from "./client";
 import type {
+  MemberBirthday,
   Tenant,
   CreateTenantPayload,
   UpdateTenantPayload,
@@ -47,6 +48,7 @@ export const tenantsApi = {
     search?: string,
     status?: string,
     badge?: string,
+    occupation?: string,
   ) =>
     api.get<PaginatedResponse<{ members: TenantMember[] }>>(`/tenants/${tenantId}/members`, {
       params: {
@@ -56,8 +58,23 @@ export const tenantsApi = {
         ...(search ? { search } : {}),
         ...(status ? { status } : {}),
         ...(badge ? { badge } : {}),
+        ...(occupation ? { occupation } : {}),
       },
     }),
+
+  /**
+   * Whose birthday is coming up, inside a window of days.
+   *
+   * The greeting is sent by hand from the list, so this is deliberately a few
+   * days wide rather than "today": somebody has to be at the desk when it goes.
+   */
+  listBirthdays: (tenantId: string, days = 7, from?: string) =>
+    api.get<ApiResponse<{ birthdays: MemberBirthday[] }>>(
+      `/tenants/${tenantId}/members/birthdays`,
+      // `from` is this device's own date: the Worker's clock is UTC, and without
+      // it an Indian gym reads today's birthdays as tomorrow's until 5:30am.
+      { params: { days, ...(from ? { from } : {}) } },
+    ),
 
   listReferrals: (
     tenantId: string,
@@ -134,6 +151,13 @@ export const tenantsApi = {
           withPendingPayment: number;
           /** Active members whose term has run out and not been renewed. */
           pastDue: number;
+          /**
+           * What the gym's active members do for a living, commonest first.
+           *
+           * A null `id` is everyone nobody has asked yet — kept in the list
+           * rather than hidden, because it says how much of the rest to trust.
+           */
+          occupations: { id: string | null; name: string; icon: string | null; members: number }[];
         };
         finances: {
           revenueMonth: number;

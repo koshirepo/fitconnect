@@ -238,6 +238,28 @@ export interface MemberReferral {
   joinedAt: string;
 }
 
+/**
+ * A member whose birthday falls inside the window the desk is looking at.
+ *
+ * `inDays` is relative to that window rather than to the calendar, so a list
+ * running across new year still reads in order.
+ */
+export interface MemberBirthday {
+  id: string;
+  memberId: number;
+  userId: string;
+  name: string;
+  phone?: string | null;
+  email: string;
+  avatarUrl?: string | null;
+  gender?: Gender | null;
+  dateOfBirth: string;
+  /** 0 is today, 1 tomorrow. */
+  inDays: number;
+  /** The age they reach on this birthday, when it can be worked out. */
+  turning: number | null;
+}
+
 export interface MemberReferralLeader extends MemberReferral {
   referralCount: number;
   referrals: MemberReferral[];
@@ -1228,6 +1250,7 @@ export interface AssignBadgePayload {
 
 export type WhatsAppTemplateKey =
   | "new_member_welcome"
+  | "birthday_greeting"
   | "payment_reminder"
   | "pending_payment_reminder"
   | "payment_receipt"

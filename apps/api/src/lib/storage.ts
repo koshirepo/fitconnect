@@ -6,6 +6,7 @@
  * - Primary exports: uploadFile, UploadResult, deleteFileByUrl, cleanupPreviousAsset, publicAssetUrl, BackgroundTaskScheduler.
  */
 import { randomUUID } from "node:crypto";
+import { log } from "./logger";
 
 const FOLDER_PATTERN = /^[A-Za-z0-9_-]+$/u;
 const EXTENSION_PATTERN = /^[A-Za-z0-9]+$/u;
@@ -186,7 +187,8 @@ export async function cleanupPreviousAsset(
   }
 
   const cleanup = deleteFileByUrl(previousUrl, storage).catch((error) => {
-    console.error(`Failed to delete previous ${label}.`, {
+    log.error("storage.delete.failed", {
+      asset: label,
       previousUrl,
       nextUrl,
       error,

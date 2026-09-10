@@ -57,26 +57,6 @@ export function useCreateExpense() {
   );
 }
 
-export function useUpdateExpense() {
-  const tenantId = useCurrentTenantId();
-  return useTenantMutation(
-    async (
-      tid,
-      vars: {
-        expenseId: string;
-        data: Partial<{
-          label: string;
-          amount: number;
-          category: ExpenseCategory;
-          incurredOn: string;
-          note: string | null;
-        }>;
-      },
-    ) => unwrap(await financeApi.updateExpense(tid, vars.expenseId, vars.data)),
-    { invalidates: financeKeys(tenantId) },
-  );
-}
-
 export function useDeleteExpense() {
   const tenantId = useCurrentTenantId();
   return useTenantMutation(
@@ -168,14 +148,6 @@ export function useMySalary() {
   return useTenantQuery(
     (tenantId) => queryKeys.salary.mine(tenantId),
     async (tenantId) => unwrap(await salaryApi.mine(tenantId)),
-  );
-}
-
-export function useSalaryHistory(membershipId: string | undefined) {
-  return useTenantQuery(
-    (tenantId) => queryKeys.salary.history(tenantId, membershipId ?? "none"),
-    async (tenantId) => unwrap(await salaryApi.history(tenantId, membershipId!)),
-    { enabled: Boolean(membershipId) },
   );
 }
 

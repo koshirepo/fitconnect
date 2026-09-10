@@ -27,6 +27,7 @@ import type {
   CheckoutInput,
   VerifyCheckoutInput,
 } from "./payments.schema";
+import { log } from "../../lib/logger";
 
 export type CredentialSource = "TENANT" | "PLATFORM";
 
@@ -106,7 +107,7 @@ async function recordDelivery(input: {
       },
     });
   } catch (error) {
-    console.warn("Could not record a webhook delivery.", {
+    log.warn("gateway.webhook.record.failed", {
       tenantId: input.tenantId,
       outcome: input.outcome,
       reason: (error as Error)?.message,
@@ -649,7 +650,7 @@ export const gatewayService = {
       });
 
       if (!redeemed.ok) {
-        console.warn("Coupon redemption failed while opening a checkout.", {
+        log.warn("gateway.checkout.coupon.failed", {
           paymentId: payment.id,
           reason: redeemed.reason,
         });

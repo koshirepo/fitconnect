@@ -59,6 +59,7 @@ import {
 import type { TenantMember } from "@/types/api";
 import { usePendingMutations } from "@/lib/use-pending-mutations";
 import { usePhoneDisplay } from "@/lib/use-phone-display";
+import { useOccupations } from "@/api/queries/occupations";
 import { getTenantDashboardPath } from "@/lib/subdomain";
 import { GENDER_OPTIONS } from "@/lib/gender";
 import { getApiError } from "@/api/client";
@@ -163,6 +164,7 @@ export default function MembersPage() {
   const badgeFilter = searchParams.get("badge") ?? "";
   const genderFilter = searchParams.get("gender") ?? "";
   const shiftFilter = searchParams.get("shift") ?? "";
+  const occupationFilter = searchParams.get("occupation") ?? "";
   // Two half-open day windows, both arriving from the analytics screen: when a
   // member joined, and when a deactivated one was last touched — which is the
   // nearest thing to a leaving date either screen has.
@@ -229,6 +231,13 @@ export default function MembersPage() {
 
   const membersQuery = useAllMembers();
   const badgesQuery = useBadges();
+  // The platform's occupation list, for the filter. Cached for the hour by the
+  // hook, so opening the roster twice does not ask twice.
+  const occupationsQuery = useOccupations();
+  const occupations = React.useMemo(
+    () => occupationsQuery.data ?? [],
+    [occupationsQuery.data],
+  );
   const settingsQuery = useTenantSettings();
 
   const members = React.useMemo(() => membersQuery.data ?? [], [membersQuery.data]);
@@ -335,6 +344,7 @@ export default function MembersPage() {
       .filter((member) => {
         if (roleFilter && member.role !== roleFilter) return false;
         if (genderFilter && member.gender !== genderFilter) return false;
+        if (occupationFilter && member.occupationId !== occupationFilter) return false;
 
         // A window on when they joined, e.g. the people behind "new members
         // this month" on the analytics screen.
@@ -376,6 +386,7 @@ export default function MembersPage() {
     deactivatedFrom,
     deactivatedTo,
     genderFilter,
+    occupationFilter,
     hasDeactivatedWindow,
     hasJoinedWindow,
     joinedFrom,
@@ -417,7 +428,7 @@ export default function MembersPage() {
     total,
   } = useWindowedList(filteredAllMembers, {
     pageSize: 25,
-    resetKey: `${statusFilter}|${roleFilter}|${badgeFilter}|${genderFilter}|${shiftFilter}|${search}|${joinedFrom}|${joinedTo}|${deactivatedFrom}|${deactivatedTo}`,
+    resetKey: `${statusFilter}|${roleFilter}|${badgeFilter}|${genderFilter}|${occupationFilter}|${shiftFilter}|${search}|${joinedFrom}|${joinedTo}|${deactivatedFrom}|${deactivatedTo}`,
   });
 
   // Swiping moves along the same tab strip the taps use, so the two can never
@@ -439,6 +450,7 @@ export default function MembersPage() {
     roleParam !== "MEMBER",
     Boolean(badgeFilter),
     Boolean(genderFilter),
+    Boolean(occupationFilter),
     Boolean(shiftFilter),
     hasJoinedWindow,
     hasDeactivatedWindow,
@@ -448,6 +460,7 @@ export default function MembersPage() {
     statusFilter ||
       badgeFilter ||
       genderFilter ||
+      occupationFilter ||
       shiftFilter ||
       search.trim() ||
       hasJoinedWindow ||
@@ -622,6 +635,9 @@ export default function MembersPage() {
       roleFilter ? roleFilter.toLowerCase() : "",
       statusFilter ? statusFilter.toLowerCase() : "",
       genderFilter ? genderFilter.toLowerCase() : "",
+      occupationFilter
+        ? (occupations.find((occupation) => occupation.id === occupationFilter)?.name ?? "")
+        : "",
       badgeFilter ? badges.find((b) => b.id === badgeFilter)?.name : "",
       shiftFilter === UNASSIGNED_SHIFT
         ? "no-shift"
@@ -831,6 +847,32 @@ export default function MembersPage() {
                 </Select>
               ),
             },
+            ...(occupations.length > 0
+              ? [
+                  {
+                    id: "occupation",
+                    label: "Occupation",
+                    control: (
+                      <Select
+                        value={occupationFilter}
+                        onValueChange={(value) => updateParams({ occupation: value ?? "" })}
+                      >
+                        <SelectTrigger className="h-12 w-full rounded-lg">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">All Occupations</SelectItem>
+                          {occupations.map((occupation) => (
+                            <SelectItem key={occupation.id} value={occupation.id}>
+                              {occupation.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ),
+                  },
+                ]
+              : []),
             ...(shifts.length > 0
               ? [
                   {

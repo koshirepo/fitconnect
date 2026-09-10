@@ -18,6 +18,7 @@ import { useAdjacentRecord } from "@/lib/use-adjacent-record";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { usePaymentReminders } from "@/api/queries/reminders";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -25,9 +26,15 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DetailPageSkeleton } from "@/components/ui/skeleton";
 import { SwipePane } from "@/components/ui/swipe-pane";
 import { usePhoneDisplay } from "@/lib/use-phone-display";
-import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
+import { cn, formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import {
-  Calendar,
+  Menu,
+  MenuContent,
+  MenuItem,
+  MenuSeparator,
+  MenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   CheckCircle2,
   Clock,
   CreditCard,
@@ -35,6 +42,7 @@ import {
   Plus,
   Receipt,
   RefreshCw,
+  MoreVertical,
   Trash2,
   User,
   XCircle,
@@ -86,15 +94,6 @@ function statusBadgeVariant(status: PaymentStatus) {
     default:
       return "secondary" as const;
   }
-}
-
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between py-2">
-      <span className="text-muted-foreground text-sm">{label}</span>
-      <span className="text-sm text-right">{children}</span>
-    </div>
-  );
 }
 
 export default function PaymentDetailPage() {
@@ -271,125 +270,60 @@ export default function PaymentDetailPage() {
         ? `/members/${payment.collectedBy.id}`
         : null;
 
+  /** The colour the amount is printed in: what happened to this money. */
+  const amountColor =
+    payment.status === "COMPLETED"
+      ? "text-emerald-600 dark:text-emerald-400"
+      : payment.status === "PENDING"
+        ? "text-amber-600 dark:text-amber-400"
+        : "text-muted-foreground line-through";
+
+  /**
+   * The corrections an admin can make that nothing else on the page offers.
+   *
+   * A row marked failed against the wrong member, or completed by a mis-click,
+   * has to be correctable — and before this there was no action at all on a
+   * failed payment. Refund keeps its own confirmed button, and on a pending
+   * payment the two settle buttons already cover completed and failed.
+   */
+  const corrections = CORRECTABLE_STATUSES.filter(
+    (option) =>
+      option.value !== payment.status &&
+      option.value !== "REFUNDED" &&
+      !(payment.status === "PENDING" && quickActionStatuses.has(option.value)),
+  );
+
+  /** The facts under the amount, each only shown when there is one. */
+  const facts: { label: string; value: React.ReactNode }[] = [
+    ...(payment.paidAt ? [{ label: "Paid at", value: formatDateTime(payment.paidAt) }] : []),
+    { label: "Recorded", value: formatDateTime(payment.createdAt) },
+    ...(payment.validFrom || payment.validUntil
+      ? [
+          {
+            label: "Covers",
+            value: `${payment.validFrom ? formatDate(payment.validFrom) : "—"} → ${
+              payment.validUntil ? formatDate(payment.validUntil) : "—"
+            }`,
+          },
+        ]
+      : []),
+    ...(payment.subscription?.durationDays
+      ? [{ label: "Duration", value: `${payment.subscription.durationDays} days` }]
+      : []),
+    ...(payment.gateway
+      ? [{ label: "Paid by", value: payment.gateway === "RAZORPAY" ? "Online" : payment.gateway }]
+      : [{ label: "Paid by", value: "At the desk" }]),
+    ...(payment.note ? [{ label: "Note", value: payment.note }] : []),
+  ];
+
   return (
     <SwipePane
       paneKey={paymentId ?? "payment"}
       paneIndex={siblings.index}
       onNext={() => goToSibling(siblings.nextId)}
       onPrevious={() => goToSibling(siblings.previousId)}
-      className="space-y-5"
+      className="space-y-4 sm:space-y-5"
     >
-      {/* ── Header ─────────────────────────────────────────────────── */}
-      {/* Four buttons and a title do not share one row on a phone — the title
-          loses and ends up as an ellipsis. They stack instead, and sit side by
-          side again once there is width for both. */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="min-w-0 sm:flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="min-w-0 truncate text-xl font-bold tracking-tight">{title}</h1>
-            <Badge variant={statusBadgeVariant(payment.status)}>
-              {statusLabel[payment.status]}
-            </Badge>
-          </div>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">
-            {formatDateTime(payment.createdAt)}
-          </p>
-        </div>
-        {canSettle && (
-          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-            {isAdmin && !editing && (
-              <Button variant="outline" size="sm" onClick={startEditing}>
-                <Pencil className="h-4 w-4" />
-                <span className="hidden sm:inline">Edit</span>
-              </Button>
-            )}
-            {isAdmin && editing && (
-              <>
-                <Button variant="outline" size="sm" onClick={cancelEditing} disabled={saving}>
-                  Cancel
-                </Button>
-                <Button size="sm" onClick={handleSave} disabled={saving}>
-                  {saving ? "Saving…" : "Save"}
-                </Button>
-              </>
-            )}
-            {!editing && payment.status === "PENDING" && (
-              <>
-                <Button
-                  size="sm"
-                  onClick={() => handleStatusUpdate("COMPLETED")}
-                  disabled={updatingStatus}
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Completed</span>
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => handleStatusUpdate("FAILED")}
-                  disabled={updatingStatus}
-                >
-                  <XCircle className="h-4 w-4" />
-                  <span className="hidden sm:inline">Failed</span>
-                </Button>
-              </>
-            )}
-            {isAdmin && payment.status === "COMPLETED" && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setRefundConfirmOpen(true)}
-                disabled={updatingStatus}
-              >
-                <RefreshCw className="h-4 w-4" />
-                <span className="hidden sm:inline">Refund</span>
-              </Button>
-            )}
-            {/* An admin can move a payment to any status, not only forwards.
-                A row marked failed against the wrong member, or completed by
-                a mis-click, has to be correctable — and before this there was
-                no action at all on a failed payment.
-
-                Only the statuses nothing else on this row already offers:
-                the current one, refund (its own confirmed button above), and
-                on a pending payment the two quick actions beside this. */}
-            {isAdmin &&
-              !editing &&
-              CORRECTABLE_STATUSES.filter(
-                (option) =>
-                  option.value !== payment.status &&
-                  option.value !== "REFUNDED" &&
-                  !(payment.status === "PENDING" && quickActionStatuses.has(option.value)),
-              ).map((option) => (
-                <Button
-                  key={option.value}
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleStatusUpdate(option.value)}
-                  disabled={updatingStatus}
-                  title={`Mark ${option.label}`}
-                >
-                  <option.icon className="h-4 w-4" />
-                  <span className="hidden sm:inline">{option.label}</span>
-                </Button>
-              ))}
-            {isAdmin && !editing && (
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => setDeleteConfirmOpen(true)}
-                disabled={deleting}
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* ── Action buttons ─────────────────────────────────────────── */}
-
       <ConfirmDialog
         open={refundConfirmOpen}
         onOpenChange={setRefundConfirmOpen}
@@ -415,157 +349,235 @@ export default function PaymentDetailPage() {
         </p>
       )}
 
-      {/* ── Main info card ─────────────────────────────────────────── */}
+      {/* ── The money ────────────────────────────────────────────────────────
+          A receipt's first fact is the amount. It used to be the fourth row of
+          a label/value list inside a card, in the same type as "Note", while
+          the top of the page went to a title and a row of six small buttons. */}
+      <Card className="overflow-hidden py-0">
+        <div className="flex items-start justify-between gap-3 px-4 pb-4 pt-5 sm:px-6">
+          <div className="min-w-0">
+            <p className={cn("text-3xl font-bold tabular-nums sm:text-4xl", amountColor)}>
+              {formatCurrency(payment.amount)}
+            </p>
+            <p className="mt-1 truncate text-sm font-medium">{title}</p>
+            <p className="text-xs text-muted-foreground">
+              {payment.paidAt ? formatDateTime(payment.paidAt) : formatDateTime(payment.createdAt)}
+            </p>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <Badge variant={statusBadgeVariant(payment.status)}>
+              {statusLabel[payment.status]}
+            </Badge>
+
+            {/* Correcting, refunding and deleting a payment are rare and none
+                of them is reversible. They live behind one control rather than
+                as four look-alike buttons beside the ones used every day. */}
+            {isAdmin && !editing && (
+              <Menu>
+                <MenuTrigger
+                  className="flex size-9 items-center justify-center rounded-md border bg-background transition-colors hover:bg-accent"
+                  aria-label="More actions"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </MenuTrigger>
+                <MenuContent align="end">
+                  <MenuItem onClick={startEditing}>
+                    <Pencil className="h-4 w-4" />
+                    Edit details
+                  </MenuItem>
+                  {corrections.map((option) => (
+                    <MenuItem
+                      key={option.value}
+                      onClick={() => handleStatusUpdate(option.value)}
+                      disabled={updatingStatus}
+                    >
+                      <option.icon className="h-4 w-4" />
+                      Mark {option.label.toLowerCase()}
+                    </MenuItem>
+                  ))}
+                  {payment.status === "COMPLETED" && (
+                    <MenuItem
+                      onClick={() => setRefundConfirmOpen(true)}
+                      disabled={updatingStatus}
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Refund
+                    </MenuItem>
+                  )}
+                  <MenuSeparator />
+                  <MenuItem
+                    onClick={() => setDeleteConfirmOpen(true)}
+                    disabled={deleting}
+                    className="text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </MenuItem>
+                </MenuContent>
+              </Menu>
+            )}
+          </div>
+        </div>
+
+        {/* Who paid it. The member is the second question about a receipt and
+            was previously below the fold, under the dates. */}
+        {payment.member ? (
+          <button
+            type="button"
+            onClick={() => navigate(`/members/${payment.member!.id}`)}
+            className="flex w-full items-center gap-3 border-t px-4 py-3 text-left transition-colors hover:bg-muted/50 sm:px-6"
+          >
+            <AvatarCard
+              name={payment.member.name}
+              avatarUrl={payment.member.avatarUrl}
+              gender={payment.member.gender}
+              memberId={payment.member.memberId}
+              variant="sm"
+              dueDate={payment.member.dueDate}
+              isActive={payment.member.status ? payment.member.status === "ACTIVE" : undefined}
+            >
+              <p className="truncate text-xs text-muted-foreground">
+                {[payment.member.email, formatPhone(payment.member.phone, payment.member.userId)]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            </AvatarCard>
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 border-t px-4 py-3 text-sm text-muted-foreground sm:px-6">
+            <User className="h-4 w-4" />
+            Member unavailable
+          </div>
+        )}
+
+        {/* Settling is the one thing this page exists to do while a payment is
+            pending, so it is a full-width pair of buttons rather than two of
+            the six small ones it used to share a row with. */}
+        {canSettle && !editing && payment.status === "PENDING" && (
+          <div className="grid grid-cols-2 gap-2 border-t p-3 sm:px-6">
+            <Button onClick={() => handleStatusUpdate("COMPLETED")} disabled={updatingStatus}>
+              <CheckCircle2 className="h-4 w-4" />
+              Mark completed
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => handleStatusUpdate("FAILED")}
+              disabled={updatingStatus}
+            >
+              <XCircle className="h-4 w-4" />
+              Didn't arrive
+            </Button>
+          </div>
+        )}
+      </Card>
+
+      {/* ── The record ─────────────────────────────────────────────────────── */}
       <Card>
-        <CardContent className="p-4 divide-y divide-border">
-          {/* Payment details */}
-          <div className="pb-3">
-            <Row label="Amount">
-              {editing ? (
+        <CardContent className="p-4 sm:p-6">
+          {editing ? (
+            /* Editing is a form, not a table with inputs squeezed into its
+               right-hand column. Full-width fields, labels above them, and the
+               two buttons at the end where a form's buttons belong. */
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="payment-amount">Amount (₹)</Label>
                 <Input
+                  id="payment-amount"
                   type="number"
                   step="1"
                   min="1"
-                  className="w-28 text-right h-8"
                   value={editForm.amount}
                   onChange={(e) => setEditForm((f) => ({ ...f, amount: e.target.value }))}
                 />
-              ) : (
-                <span className="font-extrabold text-emerald-400">
-                  {formatCurrency(payment.amount)}
-                </span>
+              </div>
+
+              {!payment.subscription && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="payment-description">Description</Label>
+                  <Input
+                    id="payment-description"
+                    value={editForm.description}
+                    onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+                    maxLength={200}
+                  />
+                </div>
               )}
-            </Row>
-            <Row label={payment.subscription ? "Subscription" : "Description"}>
-              {editing && !payment.subscription ? (
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="payment-valid-from">Valid from</Label>
+                  <Input
+                    id="payment-valid-from"
+                    type="date"
+                    value={editForm.validFrom}
+                    onChange={(e) => setEditForm((f) => ({ ...f, validFrom: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="payment-valid-until">Valid until</Label>
+                  <Input
+                    id="payment-valid-until"
+                    type="date"
+                    value={editForm.validUntil}
+                    onChange={(e) => setEditForm((f) => ({ ...f, validUntil: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="payment-note">Note</Label>
                 <Input
-                  className="w-44 text-right h-8"
-                  value={editForm.description}
-                  onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
-                  maxLength={200}
-                />
-              ) : (
-                <span>{title}</span>
-              )}
-            </Row>
-            <Row label="Note">
-              {editing ? (
-                <Input
-                  className="w-44 text-right h-8"
+                  id="payment-note"
                   value={editForm.note}
                   onChange={(e) => setEditForm((f) => ({ ...f, note: e.target.value }))}
                   maxLength={500}
                   placeholder="Optional"
                 />
-              ) : (
-                <span className="text-right max-w-[60%]">{payment.note || "-"}</span>
-              )}
-            </Row>
-            <Row label="Paid At">{payment.paidAt ? formatDateTime(payment.paidAt) : "-"}</Row>
-          </div>
-
-          {/* Validity */}
-          {(payment.validFrom || payment.validUntil || payment.subscription?.durationDays) && (
-            <div className="pt-3 pb-3">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Validity
-                </span>
               </div>
-              <Row label="From">
-                {editing ? (
-                  <Input
-                    type="date"
-                    className="w-36 h-8"
-                    value={editForm.validFrom}
-                    onChange={(e) => setEditForm((f) => ({ ...f, validFrom: e.target.value }))}
-                  />
-                ) : (
-                  <span>{payment.validFrom ? formatDate(payment.validFrom) : "-"}</span>
-                )}
-              </Row>
-              <Row label="Until">
-                {editing ? (
-                  <Input
-                    type="date"
-                    className="w-36 h-8"
-                    value={editForm.validUntil}
-                    onChange={(e) => setEditForm((f) => ({ ...f, validUntil: e.target.value }))}
-                  />
-                ) : (
-                  <span>{payment.validUntil ? formatDate(payment.validUntil) : "-"}</span>
-                )}
-              </Row>
-              {payment.subscription?.durationDays && (
-                <Row label="Duration">{payment.subscription.durationDays} days</Row>
-              )}
+
+              <div className="flex justify-end gap-2 pt-1">
+                <Button variant="outline" onClick={cancelEditing} disabled={saving}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSave} disabled={saving}>
+                  {saving ? "Saving…" : "Save changes"}
+                </Button>
+              </div>
             </div>
-          )}
+          ) : (
+            <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+              {facts.map((fact) => (
+                <div key={fact.label} className="min-w-0">
+                  <dt className="text-xs text-muted-foreground">{fact.label}</dt>
+                  <dd className="text-sm font-medium break-words">{fact.value}</dd>
+                </div>
+              ))}
 
-          {/* Member */}
-          <div className="pt-3">
-            {payment.member ? (
-              <div
-                className="flex items-center gap-3 cursor-pointer rounded-lg -mx-2 px-2 py-2 hover:bg-muted/50 transition-colors"
-                onClick={() => navigate(`/members/${payment.member!.id}`)}
-              >
-                <AvatarCard
-                  name={payment.member.name}
-                  avatarUrl={payment.member.avatarUrl}
-                  gender={payment.member.gender}
-                  memberId={payment.member.memberId}
-                  variant="md"
-                  dueDate={payment.member.dueDate}
-                  isActive={
-                    payment.member.status
-                      ? payment.member.status === "ACTIVE"
-                      : undefined
-                  }
-                >
-                  <p className="text-xs text-muted-foreground">
-                    {[
-                      payment.member.email,
-                      formatPhone(payment.member.phone, payment.member.userId),
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
-                </AvatarCard>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
-                <User className="h-4 w-4" />
-                <span>Member unavailable</span>
-              </div>
-            )}
-          </div>
-
-          {/* Collected by */}
-          {payment.collectedBy && (
-            <div className="pt-3">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Collected by
-              </span>
-              <button
-                type="button"
-                className="mt-1 w-full rounded-lg text-left transition-colors hover:bg-muted/50"
-                onClick={() => {
-                  if (collectedByTarget) {
-                    navigate(collectedByTarget);
-                  }
-                }}
-              >
-                <AvatarCard
-                  name={payment.collectedBy.name}
-                  avatarUrl={payment.collectedBy.avatarUrl}
-                  gender={payment.collectedBy.gender}
-                  variant="sm"
-                >
-                  <p className="text-xs text-muted-foreground">{payment.collectedBy.email}</p>
-                </AvatarCard>
-              </button>
-            </div>
+              {payment.collectedBy && (
+                <div className="min-w-0 sm:col-span-2">
+                  <dt className="text-xs text-muted-foreground">Collected by</dt>
+                  <dd>
+                    <button
+                      type="button"
+                      className="-mx-2 mt-1 w-full rounded-lg px-2 text-left transition-colors hover:bg-muted/50"
+                      onClick={() => collectedByTarget && navigate(collectedByTarget)}
+                    >
+                      <AvatarCard
+                        name={payment.collectedBy.name}
+                        avatarUrl={payment.collectedBy.avatarUrl}
+                        gender={payment.collectedBy.gender}
+                        variant="sm"
+                      >
+                        <p className="truncate text-xs text-muted-foreground">
+                          {payment.collectedBy.email}
+                        </p>
+                      </AvatarCard>
+                    </button>
+                  </dd>
+                </div>
+              )}
+            </dl>
           )}
         </CardContent>
       </Card>
@@ -573,12 +585,12 @@ export default function PaymentDetailPage() {
       {/* The chase behind this payment, when there was one. */}
       {reminders.length > 0 && (
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-4 sm:p-6">
             <p className="text-sm font-medium">
               Collected after {reminders.length}{" "}
               {reminders.length === 1 ? "reminder" : "reminders"}
             </p>
-            <div className="mt-2 space-y-2">
+            <div className="mt-3 space-y-2">
               {reminders.map((reminder) => (
                 <div key={reminder.id} className="flex items-start justify-between gap-3 text-sm">
                   <div className="min-w-0">
@@ -606,15 +618,15 @@ export default function PaymentDetailPage() {
         </Card>
       )}
 
-      {/* ── Member's other payments ────────────────────────────────── */}
+      {/* ── This member's other receipts ───────────────────────────────────── */}
       {payment.member && (
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-4 sm:p-6">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-1.5">
-                <Receipt className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-semibold">
-                  Other Payments by {payment.member.name.split(" ")[0]}
+              <div className="flex min-w-0 items-center gap-1.5">
+                <Receipt className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <span className="truncate text-sm font-semibold">
+                  Other payments by {payment.member.name.split(" ")[0]}
                 </span>
               </div>
               {canRecordPayment && (
@@ -624,32 +636,33 @@ export default function PaymentDetailPage() {
                   onClick={() => navigate(`/payments/record/${payment.member!.id}`)}
                 >
                   <Plus className="h-4 w-4" />
-                  Add Payment
+                  Add
                 </Button>
               )}
             </div>
 
             {memberPaymentsLoading ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">Loading…</p>
+              <p className="py-4 text-center text-sm text-muted-foreground">Loading…</p>
             ) : memberPayments.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">
+              <p className="py-4 text-center text-sm text-muted-foreground">
                 No other payments found
               </p>
             ) : (
-              <div className="space-y-1">
+              <div className="divide-y">
                 {memberPayments.map((p) => (
-                  <div
+                  <button
                     key={p.id}
-                    className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
+                    type="button"
+                    className="-mx-2 flex w-[calc(100%+1rem)] cursor-pointer items-center justify-between gap-3 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-muted/50"
                     onClick={() => navigate(`/payments/${p.id}`)}
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">
+                      <p className="truncate text-sm font-medium">
                         {p.subscription?.title ?? p.description ?? "-"}
                       </p>
                       <p className="text-xs text-muted-foreground">{formatDate(p.createdAt)}</p>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex shrink-0 items-center gap-2">
                       <Badge variant={statusBadgeVariant(p.status)} className="text-xs">
                         {statusLabel[p.status]}
                       </Badge>
@@ -657,7 +670,7 @@ export default function PaymentDetailPage() {
                         {formatCurrency(p.amount)}
                       </span>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}

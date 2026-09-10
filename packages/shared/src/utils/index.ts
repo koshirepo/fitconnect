@@ -3,7 +3,7 @@
  *
  * - Contains framework-agnostic helpers for formatting money and dates, generating initials, and working with tenant slugs.
  * - Because these functions have no runtime dependencies on Hono or Prisma, they are safe to reuse in the API and any frontend client.
- * - Primary exports: formatCurrency, formatDate, formatDateTime, getInitials, isValidSlug, toSlug.
+ * - Primary exports: formatCurrency, formatCompactCurrency, formatDate, formatDateTime, getInitials, isValidSlug, toSlug.
  */
 // ─── Shared Utilities ─────────────────────────────────────────────────────────
 // Pure functions with no framework dependencies – safe for API and PWA.
@@ -15,6 +15,38 @@ export function formatCurrency(amount: number): string {
     currency: "INR",
     minimumFractionDigits: 0,
   }).format(amount);
+}
+
+/**
+ * The same amount, short enough for a stat tile on a phone.
+ *
+ * Two of these tiles sit side by side on a 375px screen, which leaves roughly
+ * eight characters for the figure — so "₹6,52,700" was being truncated to
+ * "₹6,52,7…", which is not a number at all. Anything from a lakh up is
+ * abbreviated the way the amount would be said out loud in India: 6.5 lakh,
+ * 1.2 crore. Below a lakh the exact figure already fits, and is kept.
+ *
+ * For reading rather than for arithmetic: the rounded form loses paise and
+ * hundreds, so screens that must reconcile — a ledger, an invoice, a payout —
+ * keep using `formatCurrency`, and a tile should carry the exact amount in a
+ * `title` for anyone who wants it.
+ */
+export function formatCompactCurrency(amount: number): string {
+  const sign = amount < 0 ? "-" : "";
+  const value = Math.abs(amount);
+
+  const CRORE = 10_000_000;
+  const LAKH = 100_000;
+
+  if (value >= CRORE) return `${sign}₹${trimZeros(value / CRORE)}Cr`;
+  if (value >= LAKH) return `${sign}₹${trimZeros(value / LAKH)}L`;
+
+  return formatCurrency(amount);
+}
+
+/** Two decimals at most, and none at all on a round number: 6.53, 1.2, 7. */
+function trimZeros(value: number): string {
+  return String(Number(value.toFixed(2)));
 }
 
 /** Format ISO date string to readable date */

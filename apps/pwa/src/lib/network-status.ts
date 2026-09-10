@@ -4,7 +4,7 @@
  * - `useOnlineStatus` answers online or offline. This answers *how* online, which is the question that matters on a gym floor: a phone showing full bars on a 2G fallback is online and will still take fifteen seconds to pull a roster.
  * - The one place it changes behaviour today is the fetch-everything loaders. The member roster and the payment ledger are downloaded whole so search and offline reads stay instant; on a slow link or with Data Saver on, that trade stops being worth it and the page falls back to a single page of rows.
  * - Chromium-only, and deliberately optimistic where it is missing: an unknown connection is treated as a good one, so Safari and Firefox behave exactly as they did before rather than being punished for not reporting.
- * - Primary exports: getNetworkQuality, isSlowConnection, useNetworkQuality.
+ * - Primary exports: getNetworkQuality, useNetworkQuality.
  */
 import * as React from "react";
 
@@ -62,11 +62,6 @@ function read(): NetworkQuality {
 /** A one-off read, for code outside React — the query loaders, mainly. */
 export function getNetworkQuality(): NetworkQuality {
   return read();
-}
-
-/** The single question most callers have. */
-export function isSlowConnection(): boolean {
-  return read().isSlow;
 }
 
 /** The same reading, kept current as the connection changes underfoot. */

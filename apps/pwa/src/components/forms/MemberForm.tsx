@@ -99,6 +99,15 @@ interface MemberFormProps {
    * of the signup options instead. Left unset, the form fetches it itself.
    */
   occupationOptions?: OccupationSummary[];
+  /**
+   * What this member's occupation is now, when they already have one.
+   *
+   * The picker offers only occupations still being offered, so a member
+   * holding one the platform has since retired would open the form showing
+   * "Choose an occupation…" — as if the field were empty. Passing the row
+   * keeps it visible and selected; it is never offered to anybody else.
+   */
+  currentOccupation?: OccupationSummary | null;
   onSubmit: (data: MemberFormData) => Promise<void> | void;
   onCancel: () => void;
   submitLabel?: string;
@@ -115,6 +124,7 @@ export default function MemberForm({
   requirePhoto = false,
   phoneReadOnly = false,
   occupationOptions,
+  currentOccupation,
   onSubmit,
   onCancel,
   submitLabel,
@@ -162,7 +172,11 @@ export default function MemberForm({
 
   // The platform's occupation list, and the chip a new member starts on.
   const occupationsQuery = useOccupations({ enabled: occupationOptions === undefined });
-  const occupations = occupationOptions ?? occupationsQuery.data ?? [];
+  const offered = occupationOptions ?? occupationsQuery.data ?? [];
+  const occupations =
+    currentOccupation && !offered.some((option) => option.id === currentOccupation.id)
+      ? [...offered, currentOccupation]
+      : offered;
 
   /**
    * A new member starts as a student, which is what most of them are.

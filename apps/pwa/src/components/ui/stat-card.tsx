@@ -8,6 +8,10 @@
  * - Sized to sit two-up on a phone. Every figure here is short — a count or an
  *   amount — so the tile scales its type down rather than its column count,
  *   which is what let four of these fill a phone screen before any content.
+ * - Money belongs in `formatCompactCurrency`: a tile is roughly eight
+ *   characters wide on a phone, which "₹6,52,700" does not fit. A long value
+ *   still steps down a type size here rather than truncating, and carries the
+ *   full text in its `title`.
  *
  * Primary exports: StatCard.
  */
@@ -83,11 +87,29 @@ export function StatCard({
             <p className="line-clamp-2 text-[11px] leading-tight text-muted-foreground sm:text-xs sm:text-balance">
               {label}
             </p>
-            <p className={cn("truncate text-lg font-bold tabular-nums sm:text-xl", color)}>
+            {/* A long figure steps down a size rather than losing its end.
+                "₹6,52,700" truncated to "₹6,52,7…" is not a number, and on a
+                375px screen two of these tiles share the width. Callers pass
+                money through `formatCompactCurrency`, which keeps most figures
+                short; this is what catches the rest. The full text is on the
+                element either way, for a long press or a hover. */}
+            <p
+              title={String(value)}
+              className={cn(
+                "truncate font-bold tabular-nums sm:text-xl",
+                String(value).length > 8 ? "text-base" : "text-lg",
+                color,
+              )}
+            >
               {value}
             </p>
+            {/* Two lines, like the label above: "past due · 15-day grace" is a
+                phrase, and cutting it at "past due · 15-day…" drops the word
+                that says what the number means. */}
             {subtext && (
-              <p className="truncate text-[10px] text-muted-foreground sm:text-xs">{subtext}</p>
+              <p className="line-clamp-2 text-[10px] leading-tight text-muted-foreground sm:text-xs">
+                {subtext}
+              </p>
             )}
           </div>
         </div>

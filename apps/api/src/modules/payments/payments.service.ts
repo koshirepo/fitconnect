@@ -24,6 +24,7 @@ import type {
   CreateSubscriptionInput,
   UpdateSubscriptionInput,
 } from "./payments.schema";
+import { log } from "../../lib/logger";
 
 type BackgroundTaskScheduler = (promise: Promise<unknown>) => void;
 
@@ -335,7 +336,7 @@ export const paymentService = {
       });
 
       if (!redeemed.ok) {
-        console.warn("Coupon redemption failed after payment.", {
+        log.warn("payment.coupon.failed", {
           paymentId: payment.id,
           reason: redeemed.reason,
         });

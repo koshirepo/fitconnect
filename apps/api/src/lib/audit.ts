@@ -8,6 +8,7 @@
 import type { AuditAction } from "@fitconnect/shared/types/enums";
 import type { InputJsonValue } from "../generated/prisma/internal/prismaNamespace";
 import { prisma } from "./prisma";
+import { log } from "./logger";
 
 type AuditInput = {
   action: AuditAction;
@@ -40,6 +41,6 @@ export const auditLog = async (input: AuditInput): Promise<void> => {
       },
     });
   } catch (err) {
-    console.error("[audit] Failed to write audit log:", err);
+    log.error("audit.write.failed", { error: err });
   }
 };

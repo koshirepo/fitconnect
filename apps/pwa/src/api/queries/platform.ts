@@ -3,7 +3,7 @@
  *
  * - These are not gym-scoped, so they use plain queries and `useAppMutation` rather than the tenant-aware helpers.
  * - The current gym's own profile (`useTenant`) lives here too, since the sidebar and settings read it by id rather than through a membership.
- * - Primary exports: useTenants, useTenant, useTenantAuditLogs, usePlatformAuditLogs, and the commerce admin hooks.
+ * - Primary exports: useTenants, usePlatformAuditLogs, and the commerce admin hooks.
  */
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { tenantsApi } from "@/api/tenants";
@@ -27,7 +27,6 @@ import {
   useAppInfiniteQuery,
   useAppMutation,
   useCurrentTenantId,
-  useTenantQuery,
 } from "./shared";
 
 // ─── Tenants ──────────────────────────────────────────────────────────────────
@@ -50,22 +49,6 @@ export function useTenantsInfinite(limit = 20, options: { enabled?: boolean } = 
       return { data: data.tenants, meta };
     },
     options,
-  );
-}
-
-export function useTenant(tenantId: string | null | undefined) {
-  return useQuery({
-    queryKey: queryKeys.tenants.detail(tenantId ?? "none"),
-    enabled: Boolean(tenantId),
-    queryFn: async () => unwrap(await tenantsApi.get(tenantId!)).tenant,
-  });
-}
-
-/** The gym the signed-in user is acting in. */
-export function useCurrentTenant() {
-  return useTenantQuery(
-    (tenantId) => queryKeys.tenants.detail(tenantId),
-    async (tenantId) => unwrap(await tenantsApi.get(tenantId)).tenant,
   );
 }
 
@@ -93,18 +76,6 @@ export function useUpdateTenantStatus() {
 }
 
 // ─── Audit ────────────────────────────────────────────────────────────────────
-
-export function useTenantAuditLogs(
-  filters: { page?: number; limit?: number } = {},
-  options: { enabled?: boolean } = {},
-) {
-  return useTenantQuery(
-    (tenantId) => queryKeys.audit.tenant(tenantId, filters),
-    async (tenantId) =>
-      unwrapPaginated(await auditApi.tenantLogs(tenantId, filters.page ?? 1, filters.limit ?? 50)),
-    { placeholderData: keepPreviousData, ...options },
-  );
-}
 
 export function usePlatformAuditLogs(
   filters: { page?: number; limit?: number; entity?: string; action?: string } = {},
@@ -248,14 +219,6 @@ export function useAdminOrder(orderId: string | undefined) {
   });
 }
 
-export function useMyOrders(page = 1, limit = 20) {
-  return useQuery({
-    queryKey: [...COMMERCE_KEY, "orders", "mine", page, limit],
-    placeholderData: keepPreviousData,
-    queryFn: async () => unwrapPaginated(await commerceApi.listMyOrders(page, limit)),
-  });
-}
-
 export function useCreateProduct() {
   return useAppMutation(
     async (payload: CreateProductPayload) => unwrap(await commerceApi.createProduct(payload)),
@@ -382,14 +345,6 @@ export function useWarehouses(includeInactive = true) {
   return useQuery({
     queryKey: [...WAREHOUSE_KEY, { includeInactive }],
     queryFn: async () => unwrap(await commerceApi.listWarehouses(includeInactive)).warehouses,
-  });
-}
-
-export function useWarehouse(warehouseId: string | undefined) {
-  return useQuery({
-    queryKey: [...WAREHOUSE_KEY, warehouseId ?? "none"],
-    enabled: Boolean(warehouseId),
-    queryFn: async () => unwrap(await commerceApi.getWarehouse(warehouseId!)),
   });
 }
 

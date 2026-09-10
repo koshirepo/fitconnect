@@ -200,32 +200,6 @@ export const attendanceController = {
     return okPaginated(c, data, { page, limit, total });
   },
 
-  /**
-   * POST /:tenantId/attendance/scan
-   *
-   * The desk reading a member's card, rather than a member reading the gym's
-   * poster. Same act, opposite direction, and far quicker at a queue.
-   */
-  async scan(c: AppContext) {
-    const tenantId = c.req.param("tenantId")!;
-    const body = (await c.req.json().catch(() => null)) as { code?: string } | null;
-
-    if (!body?.code?.trim()) {
-      return badRequest(c, "Nothing was scanned.");
-    }
-
-    const user = c.get("authUser");
-    const actor = await attendanceRepository.findMembershipByUserId(tenantId, user.id);
-
-    const result = await attendanceService.markByScannedCode(
-      tenantId,
-      actor?.id ?? null,
-      body.code,
-    );
-    if ("error" in result) return failWith(c, result);
-    return ok(c, result.data, 201);
-  },
-
   /** GET /:tenantId/attendance/summary/:membershipId */
   async summary(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;

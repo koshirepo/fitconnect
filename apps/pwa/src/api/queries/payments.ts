@@ -11,7 +11,6 @@ import { paymentsApi } from "@/api/payments";
 import { queryKeys } from "@/lib/query-keys";
 import { getNetworkQuality } from "@/lib/network-status";
 import type {
-  CreatePaymentPayload,
   CreateSubscriptionPayload,
   UpdateSubscriptionPayload,
   UpdatePaymentPayload,
@@ -192,14 +191,6 @@ export function useVerifyCheckout() {
 }
 
 // ─── Payment mutations ────────────────────────────────────────────────────────
-
-export function useCreatePayment() {
-  const tenantId = useCurrentTenantId();
-  return useTenantMutation(
-    async (id, payload: CreatePaymentPayload) => unwrap(await paymentsApi.create(id, payload)),
-    { invalidates: paymentWriteScope(tenantId) },
-  );
-}
 
 export function useUpdatePayment() {
   const tenantId = useCurrentTenantId();

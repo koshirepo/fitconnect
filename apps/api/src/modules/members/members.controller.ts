@@ -82,6 +82,7 @@ export const memberController = {
     const search = c.req.query("search");
     const statusFilter = c.req.query("status");
     const badgeId = c.req.query("badge");
+    const occupationId = c.req.query("occupation");
 
     const { data, total } = await memberService.listMembers(
       tenantId,
@@ -91,8 +92,29 @@ export const memberController = {
       search,
       statusFilter,
       badgeId,
+      occupationId,
     );
     return okPaginated(c, data, { page, limit, total });
+  },
+
+  /**
+   * Handle the `list birthdays` HTTP action for the members module.
+   * Read request state, delegate to the service layer, and translate outcomes into the shared API response shape.
+   */
+  async listBirthdays(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    // A week by default, and never more than a month: past that it stops being
+    // a list somebody acts on and becomes a calendar.
+    const requested = Number(c.req.query("days") ?? 7);
+    const days = Number.isFinite(requested) ? Math.min(Math.max(Math.trunc(requested), 1), 31) : 7;
+
+    // The caller's own date, so a gym five and a half hours ahead of UTC does
+    // not read today's birthdays as tomorrow's.
+    const from = c.req.query("from");
+
+    const result = await memberService.listBirthdays(tenantId, days, from);
+    c.header("Cache-Control", "private, max-age=300");
+    return ok(c, result.data);
   },
 
   /**

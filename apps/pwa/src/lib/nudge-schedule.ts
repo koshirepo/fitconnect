@@ -4,7 +4,7 @@
  * - The install and notification offers are worth repeating — someone who says "not now" on Tuesday may well install on Wednesday — but repeating them within a session is nagging. So each is allowed one appearance per calendar day, per device.
  * - Keyed on the local calendar date rather than a rolling 24 hours: a member who dismissed at 9pm should see it again the next evening, not be told at 9pm sharp. Day boundaries are also what a person means by "every day".
  * - `never` is the escape hatch behind "Don't ask again", so a member who has decided can be left alone without the app pretending to forget.
- * - Primary exports: shouldNudgeToday, snoozeNudgeForToday, silenceNudge, isNudgeSilenced.
+ * - Primary exports: shouldNudgeToday, snoozeNudgeForToday, silenceNudge.
  */
 
 const STORAGE_PREFIX = "fitconnect.nudge";
@@ -88,8 +88,4 @@ export function snoozeNudgeForToday(key: NudgeKey, now = new Date()) {
 /** Stop asking altogether, for a member who has made up their mind. */
 export function silenceNudge(key: NudgeKey) {
   write(key, "never");
-}
-
-export function isNudgeSilenced(key: NudgeKey) {
-  return read(key) === "never";
 }

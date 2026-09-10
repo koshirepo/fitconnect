@@ -3,7 +3,7 @@
  *
  * - The small set of helpers every domain hook file builds on: envelope unwrapping, tenant-scoped queries that disable themselves without a tenant, and mutations that invalidate the right cache keys.
  * - Axios stays the transport. Its interceptors already handle the bearer token, the tenant header, token refresh, the IndexedDB offline cache, and offline mutation queueing — react-query sits on top and owns dedupe, staleness, background refetch, and invalidation.
- * - Primary exports: unwrap, unwrapPaginated, useTenantQuery, useTenantMutation, useAppMutation, isOfflineResponse.
+ * - Primary exports: unwrap, unwrapPaginated, useTenantQuery, useTenantMutation, useAppMutation.
  */
 import {
   useInfiniteQuery,
@@ -33,14 +33,6 @@ export function unwrapPaginated<T>(
   response: AxiosResponse<PaginatedResponse<T>>,
 ): Paginated<T> {
   return { data: response.data.data, meta: response.data.meta };
-}
-
-/**
- * True when the axios offline interceptor served this response from IndexedDB
- * rather than the network, so a screen can say so instead of implying it is live.
- */
-export function isOfflineResponse(response: AxiosResponse): boolean {
-  return Boolean((response.headers as Record<string, unknown>)?.["x-offline-cache"]);
 }
 
 /** The gym the signed-in user is acting in, or null for platform-only sessions. */

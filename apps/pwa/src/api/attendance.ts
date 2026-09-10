@@ -63,20 +63,6 @@ export const attendanceApi = {
       }>
     >(`/tenants/${tenantId}/attendance/qr`, membershipId ? { membershipId } : {}),
 
-  /**
-   * Check somebody in from their scanned ID card.
-   *
-   * The whole scanned value is sent, not a parsed token: the card encodes a
-   * url, and deciding what part of it matters is the server's job.
-   */
-  scan: (tenantId: string, code: string) =>
-    api.post<
-      ApiResponse<{
-        attendance: AttendanceRecord;
-        member: CheckedInMember;
-      }>
-    >(`/tenants/${tenantId}/attendance/scan`, { code }),
-
   /** Admin/coach marks attendance for a specific member */
   markForMember: (tenantId: string, data: MarkAttendancePayload) =>
     api.post<ApiResponse<{ attendance: AttendanceRecord; member: CheckedInMember }>>(

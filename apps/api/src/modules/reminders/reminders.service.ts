@@ -14,6 +14,7 @@ import {
   type ReminderChannel,
   type ReminderReason,
 } from "./reminders.repository";
+import { log } from "../../lib/logger";
 
 type PushPayload = { title: string; body: string; url?: string };
 
@@ -81,7 +82,7 @@ export const reminderService = {
 
       return true;
     } catch (error) {
-      console.error("[reminder] push failed", {
+      log.error("reminder.push.failed", {
         membershipId: input.membershipId,
         reason: input.reason,
         detail: error instanceof Error ? error.message : String(error),
@@ -241,7 +242,7 @@ export const reminderService = {
     try {
       return await reminderRepository.linkToPayment(membershipId, paymentId);
     } catch (error) {
-      console.error("[reminder] linking to payment failed", {
+      log.error("reminder.link_payment.failed", {
         paymentId,
         detail: error instanceof Error ? error.message : String(error),
       });

@@ -12,6 +12,7 @@ import webPush from "web-push";
 import { config } from "../../config";
 import { pushRepository } from "./push.repository";
 import type { PushSubscribeInput } from "./push.schema";
+import { log } from "../../lib/logger";
 
 /**
  * Execute the `is configured` workflow for the push module.
@@ -139,7 +140,7 @@ export const pushService = {
 
       return await deliver(subs, payload);
     } catch (error) {
-      console.error("Admin push notification failed.", { tenantId, error });
+      log.error("push.admins.failed", { tenantId, error });
       return { sent: 0, total: 0 };
     }
   },
@@ -190,7 +191,7 @@ export const pushService = {
         url: payload.url ?? "/dashboard/my-salary",
       });
     } catch (err) {
-      console.error("[push] salary notification failed", err);
+      log.error("push.salary.failed", { error: err });
     }
   },
 

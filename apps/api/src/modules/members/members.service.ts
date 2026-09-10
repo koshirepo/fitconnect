@@ -34,6 +34,7 @@ import { couponService } from "../coupons/coupons.service";
 import { buildIdCardUrl, idCardService } from "../public/id-card.service";
 import { renderWhatsAppTemplate } from "@fitconnect/shared/whatsapp-templates";
 import { provisioningService } from "../attendance/provisioning.service";
+import { log } from "../../lib/logger";
 
 type ServiceError = { error: string; status?: 400 | 403 | 404 | 409 };
 type AddMemberResult = {
@@ -463,7 +464,7 @@ export const memberService = {
         });
 
         if (!redeemed.ok) {
-          console.warn("Coupon redemption failed after admission.", {
+          log.warn("member.admission.coupon.failed", {
             paymentId: discountedPayment.id,
             reason: redeemed.reason,
           });
@@ -574,7 +575,7 @@ Your membership card: ${idCardUrl}`
       } catch (error) {
         // A mail server having a bad day must not fail an admission that has
         // already been written.
-        console.error("Welcome email failed.", { membershipId: membership.id, error });
+        log.error("member.welcome.email.failed", { membershipId: membership.id, error });
       }
     };
 
@@ -624,6 +625,74 @@ Your membership card: ${idCardUrl}`
    * Execute the `list members` workflow for the members module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
+  /**
+   * Whose birthday falls in the next few days, oldest date first.
+   *
+   * A window rather than "today" because a gym reads its screen on a Monday and
+   * wants to know about Wednesday too — and because the greeting is sent by
+   * hand, so somebody has to be at the desk when it goes.
+   */
+  async listBirthdays(tenantId: string, days: number, from?: string) {
+    /**
+     * The day the window starts on, as the caller's calendar sees it.
+     *
+     * A Worker's clock is UTC, and an Indian gym opening the app at 5am is
+     * still on the previous UTC day — so a birthday today read as "tomorrow"
+     * for the first five and a half hours of every morning. The client sends
+     * its own date; the UTC day is only the fallback for a caller that does
+     * not.
+     */
+    const startsOn = /^\d{4}-\d{2}-\d{2}$/.test(from ?? "")
+      ? new Date(`${from}T00:00:00.000Z`)
+      : new Date();
+
+    const dayKeys: string[] = [];
+
+    for (let offset = 0; offset < days; offset += 1) {
+      const date = new Date(
+        Date.UTC(
+          startsOn.getUTCFullYear(),
+          startsOn.getUTCMonth(),
+          startsOn.getUTCDate() + offset,
+        ),
+      );
+      dayKeys.push(date.toISOString().slice(5, 10));
+    }
+
+    const rows = await memberRepository.listBirthdays(tenantId, dayKeys);
+
+    // Ordered by the window rather than by the calendar, so a list that runs
+    // across the end of December does not put 1 January first.
+    const position = new Map(dayKeys.map((key, index) => [key, index]));
+
+    return {
+      data: {
+        birthdays: rows
+          .map((row) => {
+            const born = new Date(row.dateOfBirth);
+            const turning = startsOn.getUTCFullYear() - born.getUTCFullYear();
+
+            return {
+              id: row.id,
+              memberId: Number(row.memberId),
+              userId: row.userId,
+              name: row.name,
+              phone: row.phone,
+              email: row.email,
+              avatarUrl: row.avatarUrl,
+              gender: row.gender,
+              dateOfBirth: row.dateOfBirth,
+              /** 0 is today, 1 tomorrow, and so on inside the window. */
+              inDays: position.get(row.day) ?? 0,
+              /** The age they reach on this birthday, when the year is known. */
+              turning: Number.isFinite(turning) && turning > 0 && turning < 130 ? turning : null,
+            };
+          })
+          .sort((a, b) => a.inDays - b.inDays || a.name.localeCompare(b.name)),
+      },
+    };
+  },
+
   async listMembers(
     tenantId: string,
     page: number,
@@ -632,6 +701,7 @@ Your membership card: ${idCardUrl}`
     search?: string,
     statusFilter?: string,
     badgeId?: string,
+    occupationId?: string,
   ) {
     const { members, total } = await memberRepository.listMembers(
       tenantId,
@@ -641,6 +711,7 @@ Your membership card: ${idCardUrl}`
       search,
       statusFilter,
       badgeId,
+      occupationId,
     );
     const now = new Date();
 

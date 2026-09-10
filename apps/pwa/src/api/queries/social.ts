@@ -11,11 +11,6 @@ import { socialApi, type CommentFeed } from "@/api/social";
 import { queryKeys } from "@/lib/query-keys";
 import { unwrap, useCurrentTenantId, useTenantMutation, useTenantQuery } from "./shared";
 
-/** Every reaction to the gym itself, as the prefix invalidation uses. */
-function socialRoot(tenantId: string | null | undefined) {
-  return ["social", tenantId ?? "none"];
-}
-
 // ─── Store products ──────────────────────────────────────────────────────────
 
 export function useProductComments(productId: string | undefined) {
@@ -88,59 +83,3 @@ export function useDeleteProductComment() {
 }
 
 // ─── The gym itself ──────────────────────────────────────────────────────────
-
-export function useTenantComments(options: { enabled?: boolean } = {}) {
-  return useTenantQuery(
-    (tenantId) => queryKeys.social.tenantComments(tenantId),
-    async (tenantId): Promise<CommentFeed> =>
-      (await socialApi.listTenantComments(tenantId)).data.data,
-    options,
-  );
-}
-
-export function useToggleTenantLike() {
-  const tenantId = useCurrentTenantId();
-  const queryClient = useQueryClient();
-  const key = queryKeys.social.tenantComments(tenantId ?? "none");
-
-  return useTenantMutation(
-    async (id, liked: boolean) =>
-      unwrap(liked ? await socialApi.likeTenant(id) : await socialApi.unlikeTenant(id)),
-    {
-      invalidates: [socialRoot(tenantId)],
-      onMutate: async (liked: boolean) => {
-        await queryClient.cancelQueries({ queryKey: key });
-        const previous = queryClient.getQueryData<CommentFeed>(key);
-
-        if (previous) {
-          queryClient.setQueryData<CommentFeed>(key, {
-            ...previous,
-            liked,
-            likeCount: Math.max(0, previous.likeCount + (liked ? 1 : -1)),
-          });
-        }
-
-        return { previous };
-      },
-      onError: (_error, _liked, context) => {
-        const restored = (context as { previous?: CommentFeed } | undefined)?.previous;
-        if (restored) queryClient.setQueryData(key, restored);
-      },
-    },
-  );
-}
-
-export function useAddTenantComment() {
-  const tenantId = useCurrentTenantId();
-  return useTenantMutation(async (id, body: string) => unwrap(await socialApi.addTenantComment(id, body)), {
-    invalidates: [socialRoot(tenantId)],
-  });
-}
-
-export function useDeleteTenantComment() {
-  const tenantId = useCurrentTenantId();
-  return useTenantMutation(
-    async (id, commentId: string) => unwrap(await socialApi.deleteTenantComment(id, commentId)),
-    { invalidates: [socialRoot(tenantId)] },
-  );
-}

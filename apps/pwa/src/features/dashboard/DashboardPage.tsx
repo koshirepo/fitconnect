@@ -1,7 +1,14 @@
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useAppNavigate } from "@/lib/use-app-navigate";
-import { useMembers, useMyProfile } from "@/api/queries/members";
+import { useMemberBirthdays, useMembers, useMyProfile } from "@/api/queries/members";
+import { useTenantSettings } from "@/api/queries/catalog";
+import { AvatarTile } from "@/components/ui/member-card";
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import {
+  getTenantWhatsAppTemplateBody,
+  renderWhatsAppTemplateBody,
+} from "@/lib/whatsapp-templates";
 import { useMyPayments, usePayments, usePaymentAnalytics } from "@/api/queries/payments";
 import { useWorkoutPlans } from "@/api/queries/catalog";
 import {
@@ -17,16 +24,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatCard } from "@/components/ui/stat-card";
 import { StatGridSkeleton } from "@/components/ui/skeleton";
-import { cn, formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
+import { cn, formatCompactCurrency, formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import { getTenantDashboardPath } from "@/lib/subdomain";
 import {
   Building2,
   AlertTriangle,
+  Cake,
   CalendarClock,
   CheckCircle2,
   Clock3,
   CreditCard,
   Dumbbell,
+  MessageCircle,
   PackageOpen,
   ScrollText,
   ShoppingBag,
@@ -140,6 +149,25 @@ export default function DashboardPage() {
     { page: 1, limit: 1 },
     { enabled: isTenantDashboard && canViewGymMembers },
   );
+
+  /**
+   * Whose birthday is coming up.
+   *
+   * A week ahead rather than today alone: the greeting goes by hand from this
+   * card, and somebody has to be at the desk when it does.
+   */
+  const birthdaysQuery = useMemberBirthdays(7, {
+    enabled: isTenantDashboard && canViewGymMembers,
+  });
+  const birthdays = birthdaysQuery.data ?? [];
+
+  // The gym's own wording for the greeting, or the app's default.
+  const settingsQuery = useTenantSettings({ enabled: isTenantDashboard && canViewGymMembers });
+  const birthdayTemplateBody = getTenantWhatsAppTemplateBody(
+    settingsQuery.data ?? null,
+    "birthday_greeting",
+  );
+  const gymName = membership?.tenantName ?? "the gym";
 
   const profile = profileQuery.data ?? null;
   const workoutPlans = workoutsQuery.data?.data.plans ?? [];
@@ -466,7 +494,7 @@ export default function DashboardPage() {
           <StatCard
             icon={Wallet}
             label="This month"
-            value={monthRevenue === null ? "—" : formatCurrency(monthRevenue)}
+            value={monthRevenue === null ? "—" : formatCompactCurrency(monthRevenue)}
             subtext="Collected so far"
             color="text-emerald-600"
             onClick={() => navigate("/finance")}
@@ -519,6 +547,73 @@ export default function DashboardPage() {
                 {subscriptionStatus.detail}
               </p>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Birthdays, while there are any. A card that says "nobody this week"
+          every week is a card people stop reading. */}
+      {canViewGymMembers && birthdays.length > 0 && (
+        <Card>
+          <CardHeader className="pb-1">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Cake className="size-4 shrink-0 text-pink-500" />
+              Birthdays this week
+            </CardTitle>
+            <CardDescription className="text-xs">
+              A message costs nothing and is remembered.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-0">
+            <ul className="divide-y divide-border/60">
+              {birthdays.map((person) => {
+                const greeting = buildWhatsAppUrl(
+                  person.phone,
+                  renderWhatsAppTemplateBody(birthdayTemplateBody, {
+                    memberName: person.name,
+                    gymName,
+                    age: person.turning ?? "",
+                  }),
+                );
+
+                return (
+                  <li key={person.id} className="flex items-center gap-3 px-4 py-2.5">
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/members/${person.id}`)}
+                      className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                    >
+                      <AvatarTile person={person} size="sm" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium">{person.name}</span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {person.inDays === 0
+                            ? "Today"
+                            : person.inDays === 1
+                              ? "Tomorrow"
+                              : // The year on a birthday is the year they were born,
+                                // which is not what "whose birthday is coming up"
+                                // is asking — so the day and month alone.
+                                formatDate(person.dateOfBirth).replace(/\s+\d{4}$/, "")}
+                          {person.turning ? ` · turning ${person.turning}` : ""}
+                        </span>
+                      </span>
+                    </button>
+                    {greeting && (
+                      <a
+                        href={greeting}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent"
+                      >
+                        <MessageCircle className="size-3.5 text-[#25D366]" />
+                        <span className="hidden sm:inline">Wish</span>
+                      </a>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
           </CardContent>
         </Card>
       )}

@@ -293,12 +293,3 @@ export async function upsertWebhook(
     { method: input.webhookId ? "PATCH" : "POST", body },
   );
 }
-
-/** What this account already has registered, for reconciling by url. */
-export async function listWebhooks(credentials: RazorpayCredentials) {
-  const response = await request<{ items?: RazorpayWebhook[] }>(
-    credentials,
-    "/webhooks",
-  );
-  return response.items ?? [];
-}

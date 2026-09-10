@@ -10,7 +10,6 @@ import { tenantsApi } from "@/api/tenants";
 import { loadAllTenantMembers } from "@/lib/tenant-members";
 import { queryKeys } from "@/lib/query-keys";
 import type {
-  AddMemberPayload,
   MemberDetail,
   TenantMember,
   UpdateMemberPayload,
@@ -32,6 +31,8 @@ export type MemberListFilters = {
   status?: string;
   search?: string;
   badgeId?: string;
+  /** A row id from the platform-wide occupation list. */
+  occupationId?: string;
 };
 
 /** Cache keys every member write should clear. */
@@ -56,9 +57,31 @@ export function useMembers(
           filters.search,
           filters.status,
           filters.badgeId,
+          filters.occupationId,
         ),
       ),
     { placeholderData: keepPreviousData, ...options },
+  );
+}
+
+/**
+ * Whose birthday falls in the next few days.
+ *
+ * Cached for the hour: the answer changes once a day, and every gym screen
+ * that shows it opens far more often than that.
+ */
+export function useMemberBirthdays(days = 7, options: { enabled?: boolean } = {}) {
+  // The device's own date, and part of the key: at midnight the key changes and
+  // the list is asked for again rather than being served yesterday's window.
+  const today = new Date();
+  const from = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(
+    today.getDate(),
+  ).padStart(2, "0")}`;
+
+  return useTenantQuery(
+    (tenantId) => [...queryKeys.members.list(tenantId, { birthdays: days, from }), "birthdays"],
+    async (tenantId) => unwrap(await tenantsApi.listBirthdays(tenantId, days, from)).birthdays,
+    { staleTime: 60 * 60 * 1000, ...options },
   );
 }
 
@@ -147,14 +170,6 @@ export function useMyProfile(options: { enabled?: boolean } = {}) {
 
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
-export function useAddMember() {
-  const tenantId = useCurrentTenantId();
-  return useTenantMutation(
-    async (id, payload: AddMemberPayload) => unwrap(await tenantsApi.addMember(id, payload)),
-    { invalidates: [memberScope(tenantId)] },
-  );
-}
-
 export function useUpdateMember() {
   const tenantId = useCurrentTenantId();
   return useTenantMutation(
@@ -189,12 +204,6 @@ export function useRemoveMember() {
       await tenantsApi.removeMember(id, membershipId);
     },
     { invalidates: [memberScope(tenantId)] },
-  );
-}
-
-export function useResetMemberPassword() {
-  return useTenantMutation(async (id, membershipId: string) =>
-    unwrap(await tenantsApi.resetMemberPassword(id, membershipId)),
   );
 }
 

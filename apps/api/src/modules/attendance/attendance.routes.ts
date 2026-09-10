@@ -40,20 +40,6 @@ attendanceRoutes.post(
 );
 
 // Marking attendance on behalf of a member is a staff capability
-/**
- * Checking somebody in from their scanned card.
- *
- * The same grant that marks attendance by hand, because that is what this is —
- * only the member is identified by a camera rather than by a name typed into a
- * picker.
- */
-attendanceRoutes.post(
-  "/:tenantId/attendance/scan",
-  authenticate,
-  requireTenantPermissions(Permission.ATTENDANCE_MARK),
-  attendanceController.scan,
-);
-
 attendanceRoutes.post(
   "/:tenantId/attendance/mark",
   authenticate,

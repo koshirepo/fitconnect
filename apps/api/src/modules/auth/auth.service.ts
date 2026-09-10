@@ -30,6 +30,7 @@ import type {
   ForgotPasswordInput,
   ResetPasswordInput,
 } from "./auth.schema";
+import { log } from "../../lib/logger";
 
 /**
  * Execute the `map membership` workflow for the auth module.
@@ -447,7 +448,7 @@ export const authService = {
     const sendResetEmail = emailService
       .sendPasswordResetEmail(user.email, user.name, resetUrl)
       .catch((err) => {
-        console.error("Password reset email failed.", err);
+        log.error("auth.password_reset.email.failed", { error: err });
       });
 
     if (scheduleBackgroundTask) {

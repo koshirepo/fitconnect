@@ -36,8 +36,24 @@ import { todoRoutes } from "./modules/todos/todos.routes";
 import { platformRoleRoutes, tenantRoleRoutes } from "./modules/roles/roles.routes";
 import { financeRoutes } from "./modules/finance/finance.routes";
 import { occupationRoutes } from "./modules/occupations/occupations.routes";
+import { log, withRequestContext } from "./lib/logger";
 
 const app = new Hono();
+
+/**
+ * One id for everything a single request writes.
+ *
+ * Cloudflare's own `cf-ray` is used where the platform supplied it, because
+ * that is the id support quotes back; a local run gets a generated one. Held in
+ * an `AsyncLocalStorage` by `withRequestContext`, so a service five calls deep
+ * logs the id without every function in between having to carry it, and echoed
+ * back on the response so a bug report can name the exact request.
+ */
+app.use("*", async (c, next) => {
+  const requestId = c.req.header("cf-ray") ?? crypto.randomUUID();
+  await withRequestContext(requestId, () => next());
+  c.header("x-request-id", requestId);
+});
 
 app.use("*", logger());
 
@@ -86,8 +102,7 @@ app.use("*", async (c, next) => {
    * a spike in `request_unauthenticated` means tokens expiring, which is the
    * app working.
    */
-  console.log({
-    event: status === 401 ? "request_unauthenticated" : "request_failed",
+  log.info(status === 401 ? "request.unauthenticated" : "request.failed", {
     status,
     method: c.req.method,
     route,
@@ -205,13 +220,11 @@ app.onError((err, c) => {
    * chart. The error class and message are what turn "597 errors" into
    * something with a cause — and the route is what says where to look.
    */
-  console.log({
-    event: "request_error",
-    error: err.constructor?.name ?? "Error",
-    message: err.message?.slice(0, 300),
+  log.error("request.error", {
     method: c.req.method,
     route: c.req.routePath ?? new URL(c.req.url).pathname,
     tenantId: c.req.param("tenantId") ?? undefined,
+    error: err,
   });
 
   if (
@@ -245,8 +258,6 @@ app.onError((err, c) => {
       "Referenced record not found. Please check your input.",
     );
   }
-
-  console.error("[unhandled]", err);
 
   /**
    * In development, say what threw.

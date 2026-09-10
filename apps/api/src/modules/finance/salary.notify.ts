@@ -12,6 +12,7 @@ import { pushService } from "../push/push.service";
 import { settingsRepository } from "../settings/settings.repository";
 import { renderWhatsAppTemplate } from "@fitconnect/shared/whatsapp-templates";
 import { formatCurrency } from "@fitconnect/shared";
+import { log } from "../../lib/logger";
 
 type StaffContact = {
   userId: string;
@@ -196,7 +197,7 @@ export async function sendSalaryNotice(
 
     return { whatsappText, phone: staff.phone };
   } catch (err) {
-    console.error("[salary] notification failed", err);
+    log.error("salary.notify.failed", { error: err });
     return { whatsappText: null, phone: staff.phone };
   }
 }

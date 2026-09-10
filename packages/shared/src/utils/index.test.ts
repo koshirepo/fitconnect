@@ -6,6 +6,7 @@
  */
 import { describe, expect, it } from "vitest";
 import {
+  formatCompactCurrency,
   formatCurrency,
   formatDate,
   formatDateTime,
@@ -13,6 +14,28 @@ import {
   isValidSlug,
   toSlug,
 } from "./index";
+
+describe("formatCompactCurrency", () => {
+  /** Below a lakh the exact figure already fits a tile, so it is kept. */
+  it("leaves small amounts exact", () => {
+    expect(formatCompactCurrency(39_975)).toBe("₹39,975");
+    expect(formatCompactCurrency(0)).toBe("₹0");
+  });
+
+  it("abbreviates lakhs", () => {
+    expect(formatCompactCurrency(652_700)).toBe("₹6.53L");
+    expect(formatCompactCurrency(100_000)).toBe("₹1L");
+  });
+
+  it("abbreviates crores", () => {
+    expect(formatCompactCurrency(12_450_000)).toBe("₹1.25Cr");
+    expect(formatCompactCurrency(10_000_000)).toBe("₹1Cr");
+  });
+
+  it("keeps the sign on a negative amount", () => {
+    expect(formatCompactCurrency(-652_700)).toBe("-₹6.53L");
+  });
+});
 
 describe("formatCurrency", () => {
   it("renders rupees with no decimal places", () => {

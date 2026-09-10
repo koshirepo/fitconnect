@@ -391,7 +391,7 @@ export default function PaymentsPage() {
     ].filter(Boolean);
 
     downloadCsv(
-      `${parts.join("-").replace(/s+/g, "-").toLowerCase()}.csv`,
+      `${parts.join("-").replace(/\s+/g, "-").toLowerCase()}.csv`,
       [
         "PaymentId",
         "MemberName",

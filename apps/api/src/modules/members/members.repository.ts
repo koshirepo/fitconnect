@@ -7,7 +7,9 @@
  */
 import { prisma } from "../../lib/prisma";
 import { idCardService } from "../public/id-card.service";
-import type { Prisma } from "../../generated/prisma/client";
+// A value import, not a type-only one: `Prisma.join` builds the IN list the
+// birthday query needs.
+import { Prisma } from "../../generated/prisma/client";
 import type { PlatformRole, TenantRole } from "@fitconnect/shared/types/enums";
 
 function isMemberIdConflict(error: unknown) {
@@ -328,6 +330,56 @@ export const memberRepository = {
    * Run the `list members` persistence operation for the members module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
+  /**
+   * Whose birthday falls inside the next few days.
+   *
+   * Raw SQL because the question is about a month and a day rather than a
+   * date: Prisma can compare whole timestamps, and a birthday is the one date
+   * in the app whose year is the part that does not matter. `strftime` on the
+   * stored UTC midnight gives "MM-DD", and the window is built as a set of
+   * those keys so it wraps across new year without arithmetic.
+   *
+   * Active memberships only — a lapsed member is not somebody the gym should
+   * be sending greetings to before they have been asked to come back.
+   */
+  listBirthdays(tenantId: string, dayKeys: string[]) {
+    if (dayKeys.length === 0) return Promise.resolve([]);
+
+    return prisma.$queryRaw<
+      {
+        id: string;
+        memberId: number;
+        userId: string;
+        name: string;
+        phone: string | null;
+        email: string;
+        avatarUrl: string | null;
+        gender: string | null;
+        dateOfBirth: string;
+        day: string;
+      }[]
+    >`
+      SELECT
+        m."id"            AS id,
+        m."memberId"      AS memberId,
+        u."id"            AS userId,
+        u."name"          AS name,
+        u."phone"         AS phone,
+        u."email"         AS email,
+        u."avatarUrl"     AS avatarUrl,
+        u."gender"        AS gender,
+        u."dateOfBirth"   AS dateOfBirth,
+        strftime('%m-%d', u."dateOfBirth") AS day
+      FROM "TenantMembership" m
+      JOIN "User" u ON u."id" = m."userId"
+      WHERE m."tenantId" = ${tenantId}
+        AND m."status" = 'ACTIVE'
+        AND u."dateOfBirth" IS NOT NULL
+        AND strftime('%m-%d', u."dateOfBirth") IN (${Prisma.join(dayKeys)})
+      ORDER BY day ASC, u."name" ASC
+    `;
+  },
+
   async listMembers(
     tenantId: string,
     page: number,
@@ -336,6 +388,7 @@ export const memberRepository = {
     search?: string,
     statusFilter?: string,
     badgeId?: string,
+    occupationId?: string,
   ) {
     const where: Prisma.TenantMembershipWhereInput = { tenantId };
 
@@ -366,6 +419,11 @@ export const memberRepository = {
     }
     if (badgeId) {
       where.badges = { some: { id: badgeId } };
+    }
+    if (occupationId) {
+      // Merged rather than assigned: the search above may already have put a
+      // `user` filter here, and overwriting it would quietly drop the search.
+      where.user = { ...(where.user as Prisma.UserWhereInput | undefined), occupationId };
     }
 
     const [members, total] = await Promise.all([
@@ -670,6 +728,38 @@ export const memberRepository = {
       }),
     ]);
 
+    // What the gym's members do for a living, which is the question the
+    // occupation list exists to answer. Active memberships only: the mix of
+    // people training here is a fact about now, not about everyone who ever
+    // signed up.
+    //
+    // One grouped statement rather than Prisma's `groupBy`, which cannot join:
+    // doing this through the query builder meant pulling every active user id
+    // into memory first, and a gym with two thousand members would have paid
+    // for that on every load of the analytics screen.
+    const occupationRows = await prisma.$queryRaw<
+      { id: string | null; name: string | null; icon: string | null; members: number | bigint }[]
+    >`
+      SELECT o."id" AS id, o."name" AS name, o."icon" AS icon, COUNT(*) AS members
+      FROM "TenantMembership" m
+      JOIN "User" u ON u."id" = m."userId"
+      LEFT JOIN "Occupation" o ON o."id" = u."occupationId"
+      WHERE m."tenantId" = ${tenantId}
+        AND m."status" = 'ACTIVE'
+      GROUP BY o."id"
+      ORDER BY members DESC, name ASC
+    `;
+
+    const occupations = occupationRows.map((row) => ({
+      id: row.id,
+      // A null row is everyone nobody has asked yet, which is worth showing
+      // rather than hiding — it is the number that says whether the rest of
+      // this breakdown can be trusted.
+      name: row.name ?? "Not recorded",
+      icon: row.icon,
+      members: Number(row.members),
+    }));
+
     return {
       total,
       active,
@@ -679,6 +769,7 @@ export const memberRepository = {
       joinedMonth,
       withPendingPayment,
       pastDue,
+      occupations,
     };
   },
 

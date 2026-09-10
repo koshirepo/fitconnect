@@ -3,7 +3,7 @@
  *
  * - Declares the Hono routes and middleware chain for tenant membership lifecycle, profile updates, reporting, and status management. This route set is mounted from `/tenants` in the application entrypoint.
  * - Keep routing and authorization wiring here, and delegate request handling to the companion controller instead of placing business logic in route callbacks.
- * - Relative endpoints declared in this file: POST /:tenantId/members, GET /:tenantId/members, GET /:tenantId/members/referrals, GET /:tenantId/members/:membershipId, GET /:tenantId/me, PATCH /:tenantId/me, PATCH /:tenantId/members/:membershipId, PATCH /:tenantId/members/:membershipId/role, POST /:tenantId/members/report, PATCH /:tenantId/members/:membershipId/status, DELETE /:tenantId/members/:membershipId, POST /:tenantId/members/:membershipId/reset-password.
+ * - Relative endpoints declared in this file: POST /:tenantId/members, GET /:tenantId/members, GET /:tenantId/members/birthdays, GET /:tenantId/members/referrals, GET /:tenantId/members/:membershipId, GET /:tenantId/me, PATCH /:tenantId/me, PATCH /:tenantId/members/:membershipId, PATCH /:tenantId/members/:membershipId/role, POST /:tenantId/members/report, PATCH /:tenantId/members/:membershipId/status, DELETE /:tenantId/members/:membershipId, POST /:tenantId/members/:membershipId/reset-password.
  * - Primary exports: memberRoutes.
  */
 import { Hono } from "hono";
@@ -31,6 +31,14 @@ memberRoutes.get(
   authenticate,
   requireTenantPermissions(Permission.MEMBERS_READ),
   memberController.listMembers,
+);
+
+// Before `/:membershipId`, or "birthdays" is read as a membership id.
+memberRoutes.get(
+  "/:tenantId/members/birthdays",
+  authenticate,
+  requireTenantPermissions(Permission.MEMBERS_READ),
+  memberController.listBirthdays,
 );
 
 memberRoutes.get(

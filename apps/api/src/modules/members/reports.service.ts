@@ -12,6 +12,7 @@ import { memberRepository } from "./members.repository";
 import { tenantRepository } from "../tenants/tenants.repository";
 import { reminderService } from "../reminders/reminders.service";
 import { provisioningService } from "../attendance/provisioning.service";
+import { log } from "../../lib/logger";
 
 type BackgroundTaskScheduler = (promise: Promise<unknown>) => void;
 
@@ -70,7 +71,7 @@ async function enforceOverdueMembershipsForTenant(
           overdueDays,
         )
         .catch((err) => {
-          console.error("Suspension email failed.", err);
+          log.error("report.suspension.email.failed", { error: err });
         }),
       // The last thing this member hears from the app. Forced past the usual
       // "is this membership active" guard precisely because it is not any more:
@@ -208,7 +209,7 @@ async function dispatchReportEmails(
           overdue: reportData.overdue,
         })
         .catch((err) => {
-          console.error("Report email failed.", err);
+          log.error("report.email.failed", { error: err });
         }),
     ),
   ).then(() => undefined);

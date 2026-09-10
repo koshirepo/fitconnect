@@ -7,6 +7,7 @@
  */
 import app from "./app";
 import { setD1 } from "./lib/prisma";
+import { log, withRequestContext } from "./lib/logger";
 
 const DAILY_TENANT_REPORT_CRON = "30 3 * * *";
 /**
@@ -55,7 +56,7 @@ export default {
     try {
       return await app.fetch(request, withBindingAliases(env), ctx);
     } catch (e: any) {
-      console.error("[worker-uncaught]", e?.message, e?.stack);
+      log.error("worker.uncaught", { error: e });
       return new Response(
         JSON.stringify({ success: false, error: { code: "WORKER_ERROR", message: e?.message } }),
         {
@@ -73,56 +74,74 @@ export default {
     applyStringBindingsToEnv(env);
     await setD1(env.DB);
 
-    try {
-      // Imported here rather than at module scope so the cron path pulls in the
-      // reporting code only when a schedule actually fires.
-      const { reportService } = await import("./modules/members/reports.service");
+    // A schedule has no request to borrow an id from, so it gets its own: every
+    // line one morning's run writes, including the background sends it hands to
+    // `waitUntil`, carries the same one.
+    return withRequestContext(`cron-${crypto.randomUUID()}`, async () => {
+      try {
+        // Imported here rather than at module scope so the cron path pulls in the
+        // reporting code only when a schedule actually fires.
+        const { reportService } = await import("./modules/members/reports.service");
 
-      if (controller.cron === DAILY_RENEWAL_REMINDER_CRON) {
-        const { renewalReminderService } = await import(
-          "./modules/members/renewal-reminders.service"
-        );
-        const result = await renewalReminderService.runScheduledRenewalReminders(
-          (promise) => ctx.waitUntil(promise),
-        );
+        if (controller.cron === DAILY_RENEWAL_REMINDER_CRON) {
+          const { renewalReminderService } = await import(
+            "./modules/members/renewal-reminders.service"
+          );
+          const result = await renewalReminderService.runScheduledRenewalReminders(
+            (promise) => ctx.waitUntil(promise),
+          );
 
-        console.info("[scheduled-renewal-reminders]", {
-          cron: controller.cron,
-          ...result.data,
-        });
-        return;
-      }
+          log.info("scheduled.renewal_reminders", {
+            cron: controller.cron,
+            ...result.data,
+          });
 
-      if (controller.cron === DAILY_TENANT_REPORT_CRON) {
-        // Coins first. Expiring them before the day's reporting means the
-        // outstanding-coin figure a gym reads is the one after the sweep, not a
-        // number that is already a day stale.
-        const { coinAdminService } = await import("./modules/coupons/coupons.service");
-        const expiry = await coinAdminService.expireStale();
-        if (expiry.data.expiredCoins > 0) {
-          console.info("[scheduled-coin-expiry]", expiry.data);
+          // Rides along on the same morning schedule: a gym reading its renewal
+          // nudges is a gym reading its notifications, which is exactly when
+          // "your attendance machine is off" should arrive.
+          const { deviceHealthService } = await import(
+            "./modules/attendance/device-health.service"
+          );
+          const devices = await deviceHealthService.runScheduledDeviceHealthChecks((promise) =>
+            ctx.waitUntil(promise),
+          );
+          if (devices.data.silentDevices > 0) {
+            log.info("scheduled.device_health", { cron: controller.cron, ...devices.data });
+          }
+          return;
         }
 
-        // Suspends everyone past their gym's grace period, then reports on it.
-        const result = await reportService.runScheduledTenantReports((promise) =>
-          ctx.waitUntil(promise),
-        );
+        if (controller.cron === DAILY_TENANT_REPORT_CRON) {
+          // Coins first. Expiring them before the day's reporting means the
+          // outstanding-coin figure a gym reads is the one after the sweep, not a
+          // number that is already a day stale.
+          const { coinAdminService } = await import("./modules/coupons/coupons.service");
+          const expiry = await coinAdminService.expireStale();
+          if (expiry.data.expiredCoins > 0) {
+            log.info("scheduled.coin_expiry", { cron: controller.cron, ...expiry.data });
+          }
 
-        console.info("[scheduled-tenant-reports]", {
-          cron: controller.cron,
-          ...result.data,
-        });
-        return;
+          // Suspends everyone past their gym's grace period, then reports on it.
+          const result = await reportService.runScheduledTenantReports((promise) =>
+            ctx.waitUntil(promise),
+          );
+
+          log.info("scheduled.tenant_reports", {
+            cron: controller.cron,
+            ...result.data,
+          });
+          return;
+        }
+
+        // Every configured cron is handled above, so this is a schedule nobody
+        // wrote a branch for. It used to fall through to overdue enforcement,
+        // which meant adding any third cron would silently start suspending
+        // members on it. An unrecognised schedule now does nothing and says so.
+        log.warn("scheduled.unknown_cron", { cron: controller.cron });
+      } catch (e: any) {
+        log.error("scheduled.error", { cron: controller.cron, error: e });
+        throw e;
       }
-
-      // Every configured cron is handled above, so this is a schedule nobody
-      // wrote a branch for. It used to fall through to overdue enforcement,
-      // which meant adding any third cron would silently start suspending
-      // members on it. An unrecognised schedule now does nothing and says so.
-      console.warn("[scheduled-unknown-cron]", { cron: controller.cron });
-    } catch (e: any) {
-      console.error("[scheduled-error]", { cron: controller.cron }, e?.message, e?.stack);
-      throw e;
-    }
+    });
   },
 };

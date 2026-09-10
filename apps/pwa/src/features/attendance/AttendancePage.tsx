@@ -1,12 +1,12 @@
 import { getMonthStr, parseMonth, formatMonthLabel } from "@/lib/month";
 import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
-import { ScanCheckIn } from "./ScanCheckIn";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
 import {
   useAttendanceByDateInfinite,
+  useAttendanceDevices,
   useMarkAllAttendance,
   useMemberAttendanceCalendar,
   useMemberAttendanceInfinite,
@@ -62,10 +62,21 @@ export default function AttendancePage() {
   const membershipId = membership?.id;
   // "Staff" here means whoever may see the whole gym's attendance, not a role name.
   const isStaff = can(Permission.ATTENDANCE_READ);
-  const canMarkAttendance = can(Permission.ATTENDANCE_MARK);
   const canDeleteAttendance = can(Permission.ATTENDANCE_DELETE);
   // The machines used to be their own sidebar entry. They belong to this page.
   const canManageDevices = can(Permission.ATTENDANCE_QR_MANAGE);
+
+  /**
+   * The machines, read only by somebody who could act on a dead one.
+   *
+   * A reader that stops reporting takes the gym's attendance with it and looks
+   * exactly like a quiet day. The nightly check emails nobody until morning,
+   * so the screen that shows attendance says it too, the moment it is opened.
+   */
+  const devicesQuery = useAttendanceDevices({ enabled: canManageDevices });
+  const offlineDevices = (devicesQuery.data ?? []).filter(
+    (device) => device.isActive && !device.online,
+  );
 
   const [date, setDate] = React.useState(() => {
     const d = new Date();
@@ -257,6 +268,27 @@ export default function AttendancePage() {
   return (
     <div className="space-y-6">
       {/* Header */}
+      {offlineDevices.length > 0 && (
+        <button
+          type="button"
+          onClick={() => navigate("/attendance/devices")}
+          className="flex w-full items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-left text-sm text-amber-900 transition-colors hover:bg-amber-100 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
+        >
+          <Radio className="h-4 w-4 shrink-0" />
+          <span className="min-w-0 flex-1">
+            <span className="font-medium">
+              {offlineDevices.length === 1
+                ? `${offlineDevices[0]!.name} is not reporting`
+                : `${offlineDevices.length} machines are not reporting`}
+            </span>
+            <span className="block text-xs opacity-80">
+              Attendance through {offlineDevices.length === 1 ? "it" : "them"} is not being
+              recorded. Tap to check the machines.
+            </span>
+          </span>
+        </button>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
@@ -328,11 +360,6 @@ export default function AttendancePage() {
       {error && (
         <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">{error}</div>
       )}
-
-      {/* The desk's own camera, above the poster members scan: at a queue this
-          is the faster of the two, and the one that works for members who never
-          installed anything. */}
-      {canMarkAttendance && <ScanCheckIn />}
 
       {isStaff && qrUrl && (
         <Card>

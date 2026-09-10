@@ -142,14 +142,6 @@ export function useBadgeAssignments(badgeId: string | null | undefined) {
   );
 }
 
-export function useMemberBadges(membershipId: string | undefined) {
-  return useTenantQuery(
-    (tenantId) => [...queryKeys.badges.list(tenantId), "member", membershipId ?? "none"],
-    async (tenantId) => unwrap(await badgesApi.memberBadges(tenantId, membershipId!)),
-    { enabled: Boolean(membershipId) },
-  );
-}
-
 /** One badge, for the edit page — a deep link has no list to read from. */
 export function useBadge(badgeId: string | undefined) {
   return useTenantQuery(
@@ -207,20 +199,6 @@ export function useUnassignBadge() {
 }
 
 // ─── Todos ────────────────────────────────────────────────────────────────────
-
-export function useTodos(
-  filters: { page?: number; limit?: number; status?: "ALL" | "OPEN" | "COMPLETED"; search?: string } = {},
-  options: { enabled?: boolean } = {},
-) {
-  return useTenantQuery(
-    (tenantId) => [...queryKeys.todos.list(tenantId), filters],
-    async (tenantId) =>
-      unwrapPaginated(
-        await todosApi.list(tenantId, filters.page ?? 1, filters.limit ?? 20, filters.status, filters.search),
-      ),
-    options,
-  );
-}
 
 /** Todos paged for the infinite-scroll list, re-keyed when the filters change. */
 export function useTodosInfinite(

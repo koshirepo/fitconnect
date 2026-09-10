@@ -13,7 +13,6 @@ vi.mock("./attendance.repository", () => ({
     findMembershipForCheckInByUserId: vi.fn(),
     findMembershipsForCheckIn: vi.fn(),
     findMembershipsByDevicePins: vi.fn(),
-    findMembershipByCardToken: vi.fn(),
     markAttendance: vi.fn(),
   },
 }));
@@ -89,13 +88,12 @@ function armLookups() {
   repo.findMembershipsByDevicePins.mockResolvedValue([
     { ...membership(), deviceUserPin: 7 },
   ] as never);
-  repo.findMembershipByCardToken.mockResolvedValue(membership() as never);
   repo.markAttendance.mockResolvedValue(attendanceRow() as never);
   freezes.endForAttendance.mockResolvedValue(null as never);
 }
 
 /**
- * The five doors, each invoked the way its route invokes it.
+ * The four doors, each invoked the way its route invokes it.
  *
  * A path's entry here says only how that path finds somebody — which is the
  * only thing that is allowed to differ between them.
@@ -109,11 +107,6 @@ const PATHS = [
     name: "the QR poster",
     run: () =>
       attendanceService.markQrAttendance("iron-house", "user_1", { membershipId: "mem_1" }),
-  },
-  {
-    name: "a scanned card",
-    run: () =>
-      attendanceService.markByScannedCode("gym_1", "staff_1", "https://gym.example/c/tok_abc"),
   },
   {
     name: "a staff mark",
@@ -195,7 +188,6 @@ describe("a membership that is not active", () => {
     const lapsed = membership({ status: "EXPIRED" });
     repo.findMembershipForCheckIn.mockResolvedValue(lapsed as never);
     repo.findMembershipForCheckInByUserId.mockResolvedValue(lapsed as never);
-    repo.findMembershipByCardToken.mockResolvedValue(lapsed as never);
     repo.findMembershipsForCheckIn.mockResolvedValue([lapsed] as never);
     repo.findMembershipsByDevicePins.mockResolvedValue([
       { ...lapsed, deviceUserPin: 7 },
@@ -305,17 +297,6 @@ describe("who is recorded as having marked it", () => {
     );
   });
 
-  it("is the staff member for a card scanned at the desk", async () => {
-    await attendanceService.markByScannedCode("gym_1", "staff_1", "https://gym.example/c/tok_abc");
-    expect(repo.markAttendance).toHaveBeenCalledWith(
-      "gym_1",
-      "mem_1",
-      expect.any(Date),
-      "staff_1",
-      undefined,
-    );
-  });
-
   it("is nobody for a punch on the wall device", async () => {
     await iclockService.recordPunches(DEVICE, [punch() as never]);
     expect(repo.markAttendance).toHaveBeenCalledWith(
@@ -352,25 +333,6 @@ describe("the same member on the same day", () => {
 });
 
 describe("refusals", () => {
-  it("turns away a scan of a card this gym does not own", async () => {
-    repo.findMembershipByCardToken.mockResolvedValue(null as never);
-    const result = (await attendanceService.markByScannedCode(
-      "gym_1",
-      "staff_1",
-      "https://gym.example/c/nope",
-    )) as { status: number };
-    expect(result.status).toBe(404);
-    expect(repo.markAttendance).not.toHaveBeenCalled();
-  });
-
-  it("turns away an empty scan without touching the database", async () => {
-    const result = (await attendanceService.markByScannedCode("gym_1", "staff_1", "   ")) as {
-      status: number;
-    };
-    expect(result.status).toBe(400);
-    expect(repo.findMembershipByCardToken).not.toHaveBeenCalled();
-  });
-
   it("tells somebody who is not a member of this gym that they are not", async () => {
     repo.findMembershipForCheckInByUserId.mockResolvedValue(null as never);
     const result = (await attendanceService.markAttendance("gym_1", "stranger", null, {}, true)) as {
