@@ -24,9 +24,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { downloadCsv } from "@/lib/csv";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
-import { describeWindow, withinDays } from "@/lib/day-window";
+import { dayKey, describeWindow, parseDay, withinDays } from "@/lib/day-window";
 import {
   Plus,
   CreditCard,
@@ -38,6 +46,7 @@ import {
   Clock,
   Wallet,
   RotateCcw,
+  SlidersHorizontal,
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { Payment } from "@/types/api";
@@ -94,15 +103,33 @@ export default function PaymentsPage() {
     amount: number;
   } | null>(null);
 
+  // The collector select and the date boxes live behind this on phones.
+  const [filterSheetOpen, setFilterSheetOpen] = React.useState(false);
+
   const statusFilter = searchParams.get("status") ?? "";
   const searchTerm = searchParams.get("search") ?? "";
   const collectedByFilter = searchParams.get("collectedBy") ?? "";
-  // A half-open day window on when the payment was recorded, arriving from a
-  // figure on the analytics screen. This page has no control that sets one —
-  // it is how a period there points at the rows it was adding up.
+  // A half-open day window on when the payment was recorded. An admin sets one
+  // with the date boxes below; it also arrives on the URL from a figure on the
+  // analytics screen, which is how a period there points at the rows it was
+  // adding up. `to` is exclusive either way.
   const recordedFrom = searchParams.get("from") ?? "";
   const recordedTo = searchParams.get("to") ?? "";
   const hasWindow = Boolean(recordedFrom || recordedTo);
+
+  // The boxes speak in the days a person picked, so the exclusive `to` reads
+  // back a day: otherwise choosing 30 Sep would show as 1 Oct in the box.
+  const recordedToInclusive = React.useMemo(() => {
+    const end = parseDay(recordedTo);
+    return end ? dayKey(new Date(end.getFullYear(), end.getMonth(), end.getDate() - 1)) : "";
+  }, [recordedTo]);
+
+  // A payment is only recorded when it happens, so a day past today can match
+  // nothing and the pickers refuse it. `from` stops at `to` as well, so the two
+  // cannot cross into a window that is empty by construction.
+  const todayKey = dayKey(new Date());
+  const recordedFromMax =
+    recordedToInclusive && recordedToInclusive < todayKey ? recordedToInclusive : todayKey;
 
   // Local box, URL 300ms behind it. Every keystroke used to re-filter the whole
   // ledger and push a history entry, so backspacing walked back through the
@@ -123,6 +150,29 @@ export default function PaymentsPage() {
       const next = new URLSearchParams(prev);
       if (value) next.set("status", value);
       else next.delete("status");
+      next.delete("page");
+      return next;
+    });
+  };
+
+  /**
+   * Set the recorded window from the two date boxes.
+   *
+   * The boxes hold inclusive days but the URL keeps `to` exclusive, so the day
+   * picked as the end is written as the day after it — which is what makes the
+   * picked day itself land in the list.
+   */
+  const setWindowEnd = (from: string, toInclusive: string) => {
+    const end = parseDay(toInclusive);
+    const exclusiveTo = end
+      ? dayKey(new Date(end.getFullYear(), end.getMonth(), end.getDate() + 1))
+      : "";
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (from) next.set("from", from);
+      else next.delete("from");
+      if (exclusiveTo) next.set("to", exclusiveTo);
+      else next.delete("to");
       next.delete("page");
       return next;
     });
@@ -326,6 +376,32 @@ export default function PaymentsPage() {
     return counts;
   }, [searchedPayments]);
 
+  // Whether the sheet has anything in it — the collector list is empty until a
+  // payment names one, so a coach can be left with no filters at all, and the
+  // button should not open an empty sheet when they are.
+  const hasFilterControls = collectors.length > 0 || isAdmin;
+
+  // What the Filters button counts: only what the sheet can express, the
+  // collector and the recorded dates. The tab strip and the search box are on
+  // screen already, so a badge for either would point at nothing hidden.
+  const activeFilterCount =
+    (collectors.length > 0 && collectedByFilter ? 1 : 0) + (isAdmin && hasWindow ? 1 : 0);
+
+  const hasActiveFilters = Boolean(statusFilter || searchTerm || collectedByFilter || hasWindow);
+
+  /** The whole ledger back: the tab, the search box, and the sheet. */
+  const clearFilters = () => {
+    window.clearTimeout(searchTimer.current);
+    setSearchInput("");
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      for (const key of ["status", "search", "collectedBy", "from", "to", "page"]) {
+        next.delete(key);
+      }
+      return next;
+    });
+  };
+
   const handleStatusUpdate = async (paymentId: string, status: PaymentStatus) => {
     try {
       await updatePaymentStatus.mutateAsync({ paymentId, status });
@@ -430,51 +506,174 @@ export default function PaymentsPage() {
 
       {/* Filters - admin and coaches */}
       {canViewAllPayments && (
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search by name, email, admission no, plan, or amount..."
-              value={searchInput}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full pl-10 pr-10 py-2 border border-input rounded-md bg-background text-sm"
-            />
-            {searchInput && (
-              <button
-                onClick={clearSearch}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="relative min-w-0 flex-1">
+              <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search by name, email, admission no, plan, or amount..."
+                value={searchInput}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="h-10 w-full rounded-md border border-input bg-background pr-10 pl-10 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50"
+              />
+              {searchInput && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Phones only: the collector and the dates live behind this. */}
+            {hasFilterControls && (
+              <Button
+                variant="outline"
+                className="relative h-10 w-10 shrink-0 rounded-md p-0 sm:hidden"
+                onClick={() => setFilterSheetOpen(true)}
+                aria-label={
+                  activeFilterCount > 0 ? `Filters (${activeFilterCount} applied)` : "Filters"
+                }
               >
-                <X className="h-4 w-4" />
-              </button>
+                <SlidersHorizontal className="h-4 w-4" />
+                {activeFilterCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-semibold text-primary-foreground">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </Button>
             )}
           </div>
 
-          {collectors.length > 0 && (
-            <Select
-              value={collectedByFilter}
-              onValueChange={(value) => setCollectedByFilter(value ?? "")}
-            >
-              <SelectTrigger className="h-10 w-full sm:w-56">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Collected by anyone</SelectItem>
-                {collectors.map((collector) => (
-                  <SelectItem key={collector.id} value={collector.id}>
-                    {collector.name}
-                  </SelectItem>
-                ))}
-                <SelectItem value={UNATTRIBUTED}>Not recorded</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
+          {/*
+            One definition of each control, rendered by both layouts below.
+            Writing the collector and the dates out twice — once inline, once in
+            the sheet — is how the two quietly stop agreeing about what a filter
+            does.
+          */}
+          {(() => {
+            const fields = [
+              ...(collectors.length > 0
+                ? [
+                    {
+                      id: "collectedBy",
+                      label: "Collected by",
+                      control: (
+                        <Select
+                          value={collectedByFilter}
+                          onValueChange={(value) => setCollectedByFilter(value ?? "")}
+                        >
+                          <SelectTrigger className="h-10 w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Collected by anyone</SelectItem>
+                            {collectors.map((collector) => (
+                              <SelectItem key={collector.id} value={collector.id}>
+                                {collector.name}
+                              </SelectItem>
+                            ))}
+                            <SelectItem value={UNATTRIBUTED}>Not recorded</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ),
+                    },
+                  ]
+                : []),
+              // Reading the ledger over a period is the admin grant that also
+              // opens export, where a coach only needs the latest rows. The
+              // window itself is not admin-only: analytics deep-links one in for
+              // anyone, and the chip below says so.
+              ...(isAdmin
+                ? [
+                    {
+                      id: "recorded",
+                      label: "Recorded dates",
+                      control: (
+                        <div className="flex items-center gap-2">
+                          {/* On phones the sheet's own label heads this, so the
+                              prefix would only say it twice. */}
+                          <span className="hidden shrink-0 text-xs font-medium text-muted-foreground sm:inline">
+                            Recorded
+                          </span>
+                          <input
+                            type="date"
+                            aria-label="Recorded from"
+                            value={recordedFrom}
+                            max={recordedFromMax}
+                            onChange={(e) => setWindowEnd(e.target.value, recordedToInclusive)}
+                            className="h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm"
+                          />
+                          <span className="shrink-0 text-xs text-muted-foreground">to</span>
+                          <input
+                            type="date"
+                            aria-label="Recorded to"
+                            value={recordedToInclusive}
+                            min={recordedFrom || undefined}
+                            max={todayKey}
+                            onChange={(e) => setWindowEnd(recordedFrom, e.target.value)}
+                            className="h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm"
+                          />
+                        </div>
+                      ),
+                    },
+                  ]
+                : []),
+            ];
+
+            if (fields.length === 0) return null;
+
+            return (
+              <>
+                {/* Wider screens keep them inline, one column each. */}
+                <div
+                  className="hidden w-full gap-3 sm:grid"
+                  style={{ gridTemplateColumns: `repeat(${fields.length}, minmax(0, 1fr))` }}
+                >
+                  {fields.map((field) => (
+                    <React.Fragment key={field.id}>{field.control}</React.Fragment>
+                  ))}
+                </div>
+
+                <Dialog open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
+                  <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                      <DialogTitle>Filters</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      {fields.map((field) => (
+                        <div key={field.id} className="space-y-2">
+                          <Label>{field.label}</Label>
+                          {field.control}
+                        </div>
+                      ))}
+                      <DialogFooter>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            clearFilters();
+                            setFilterSheetOpen(false);
+                          }}
+                          disabled={!hasActiveFilters}
+                        >
+                          Clear all
+                        </Button>
+                        <Button onClick={() => setFilterSheetOpen(false)}>Done</Button>
+                      </DialogFooter>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </>
+            );
+          })()}
         </div>
       )}
 
-      {/* A window came in on the URL, from a total on the analytics screen.
-          Nothing on this page can express one, so without a line saying so the
-          ledger would just look short. */}
+      {/* A window is on the URL — typed into the boxes above, or arriving from a
+          total on the analytics screen. Without a line saying so the ledger
+          would just look short. */}
       {hasWindow && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center rounded-full border bg-muted/50 px-3 py-1 text-xs font-medium">
@@ -554,7 +753,7 @@ export default function PaymentsPage() {
             icon={CreditCard}
             title="No payments found"
             description={
-              statusFilter || searchTerm || collectedByFilter || hasWindow
+              hasActiveFilters
                 ? "No payments match this filter."
                 : canViewAllPayments
                   ? "Record the first payment."

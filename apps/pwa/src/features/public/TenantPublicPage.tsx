@@ -149,31 +149,15 @@ export default function TenantPublicPage() {
               Active Gym Profile
             </BadgeUI>
 
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border bg-background/80 shadow-sm">
-                  {tenant.logoUrl ? (
-                    <img
-                      key={tenant.logoUrl}
-                      src={resolveAssetUrl(tenant.logoUrl) ?? tenant.logoUrl}
-                      alt={`${tenant.name} logo`}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <Building2 className="h-8 w-8 text-muted-foreground" />
-                  )}
-                </div>
-                <div className="space-y-3">
-                  <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
-                    {tenant.name}
-                  </h1>
-                  {tenant.description && (
-                    <p className="max-w-2xl text-base leading-relaxed text-muted-foreground">
-                      {tenant.description}
-                    </p>
-                  )}
-                </div>
-              </div>
+            <div className="space-y-3">
+              <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
+                {tenant.name}
+              </h1>
+              {tenant.description && (
+                <p className="max-w-2xl text-base leading-relaxed text-muted-foreground">
+                  {tenant.description}
+                </p>
+              )}
             </div>
 
             <div className="flex flex-wrap gap-2">
