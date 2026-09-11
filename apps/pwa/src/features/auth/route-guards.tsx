@@ -7,10 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, Building2 } from "lucide-react";
 import { usePermissions } from "./permission-gate";
 import type { Permission } from "@/lib/permissions";
-
-function isPlatformExpired(platformExpiresAt?: string | null) {
-  return Boolean(platformExpiresAt) && new Date(platformExpiresAt!).getTime() < Date.now();
-}
+// The same rule the API refuses writes by. Shared rather than written twice:
+// two copies is how the dashboard starts letting somebody in after the API has
+// stopped answering them.
+import { isPlatformExpired } from "@fitconnect/shared/utils";
 
 /** Redirects to /login if not authenticated */
 export function RequireAuth() {

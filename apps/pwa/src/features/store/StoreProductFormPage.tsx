@@ -12,6 +12,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { useParams } from "react-router-dom";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { getApiError } from "@/api/client";
+import { deriveVariantName, hasUsableAttributes } from "@fitconnect/shared/variant-name";
 import {
   useAddStoreVariant,
   useCreateStoreProduct,
@@ -27,21 +28,26 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { PhotoListInput } from "@/components/ui/photo-list-input";
+import { PRODUCT_IMAGE_ASPECT_RATIO } from "@/features/commerce/product-image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormPageSkeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { Plus, Trash2 } from "lucide-react";
 
-/** A variant being typed, before it becomes a payload. */
+/**
+ * A variant being typed, before it becomes a payload.
+ *
+ * No name: it is derived from the attributes, here for the preview and on the
+ * server for what is stored.
+ */
 type VariantDraft = {
-  name: string;
   price: string;
   stock: string;
   attributes: { key: string; value: string }[];
 };
 
 function emptyVariant(): VariantDraft {
-  return { name: "", price: "", stock: "0", attributes: [{ key: "", value: "" }] };
+  return { price: "", stock: "0", attributes: [{ key: "", value: "" }] };
 }
 
 /** Turn a draft into what the API takes, dropping half-typed attribute rows. */
@@ -54,10 +60,9 @@ function toPayload(draft: VariantDraft): StoreVariantPayload {
   }
 
   return {
-    name: draft.name.trim(),
     price: Number(draft.price) || 0,
     stock: Number(draft.stock) || 0,
-    ...(Object.keys(attributes).length > 0 ? { attributes } : {}),
+    attributes,
   };
 }
 
@@ -107,9 +112,11 @@ export default function StoreProductFormPage() {
   const handleCreate = async () => {
     setError("");
 
-    const payloads = variants.map(toPayload).filter((variant) => variant.name);
+    const payloads = variants
+      .map(toPayload)
+      .filter((variant) => hasUsableAttributes(variant.attributes));
     if (payloads.length === 0) {
-      setError("Add at least one variant — a flavour, a size, something to sell.");
+      setError("Add at least one variant, with an attribute that names it — a flavour, a size.");
       return;
     }
 
@@ -166,16 +173,17 @@ export default function StoreProductFormPage() {
   const handleAddVariant = async () => {
     if (!productId) return;
     const payload = toPayload(newVariant);
-    if (!payload.name) {
-      setError("Give the variant a name, like “Chocolate · 1kg”.");
+    if (!hasUsableAttributes(payload.attributes)) {
+      setError("Add an attribute first — it is what names the variant, like Flavour: Chocolate.");
       return;
     }
 
     setError("");
     try {
-      await addVariant.mutateAsync({ productId, payload });
+      const created = await addVariant.mutateAsync({ productId, payload });
       setNewVariant(emptyVariant());
-      toast.success(`${payload.name} added.`);
+      // The server's name, not the preview's, so the toast says what was saved.
+      toast.success(`${created.name} added.`);
     } catch (caught) {
       setError(getApiError(caught));
     }
@@ -293,7 +301,13 @@ export default function StoreProductFormPage() {
         <CardContent className="space-y-4">
           <div className="space-y-1.5">
             <Label>Photos</Label>
-            <PhotoListInput value={photos} onChange={setPhotos} max={8} />
+            <PhotoListInput
+                value={photos}
+                onChange={setPhotos}
+                max={8}
+                cropAspectRatio={PRODUCT_IMAGE_ASPECT_RATIO}
+                prompt="Add a product photo"
+              />
           </div>
 
           <div className="space-y-1.5">
@@ -444,6 +458,16 @@ function VariantFields({
   onChange: (next: VariantDraft) => void;
   onRemove?: () => void;
 }) {
+  // The same derivation the server will apply, from the same module, so the
+  // preview cannot promise a name the API would not store.
+  const previewName = deriveVariantName(
+    Object.fromEntries(
+      draft.attributes
+        .map((pair) => [pair.key.trim(), pair.value.trim()])
+        .filter(([key, value]) => key && value),
+    ),
+  );
+
   const setAttribute = (index: number, patch: { key?: string; value?: string }) => {
     onChange({
       ...draft,
@@ -453,15 +477,48 @@ function VariantFields({
 
   return (
     <div className="space-y-3 rounded-lg border p-3">
-      <div className="grid gap-3 sm:grid-cols-[1fr_120px_120px]">
-        <div className="space-y-1.5">
-          <Label>Variant name *</Label>
-          <Input
-            value={draft.name}
-            onChange={(e) => onChange({ ...draft, name: e.target.value })}
-            placeholder="Chocolate · 1kg"
-          />
-        </div>
+      {/* Attributes lead, because they are now the variant's identity rather
+          than extra detail hung off a name somebody typed. */}
+      <div className="space-y-2">
+        <Label className="text-xs text-muted-foreground">
+          What makes it different — flavour, size, colour
+        </Label>
+        {draft.attributes.map((pair, index) => (
+          <div key={index} className="grid grid-cols-2 gap-2">
+            <Input
+              value={pair.key}
+              onChange={(e) => setAttribute(index, { key: e.target.value })}
+              placeholder="Flavour"
+            />
+            <Input
+              value={pair.value}
+              onChange={(e) => setAttribute(index, { value: e.target.value })}
+              placeholder="Chocolate"
+            />
+          </div>
+        ))}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() =>
+            onChange({ ...draft, attributes: [...draft.attributes, { key: "", value: "" }] })
+          }
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Add attribute
+        </Button>
+      </div>
+
+      {/* What the buyer will see. Shown rather than typed, so there is no way
+          for the label on the shelf to disagree with the attributes. */}
+      <p className="text-xs text-muted-foreground">
+        {previewName
+          ? <>Will be listed as <span className="font-medium text-foreground">{previewName}</span></>
+          : "Add an attribute above — it is what names this variant."}
+      </p>
+
+      <div className="grid gap-3 sm:grid-cols-[1fr_120px]">
         <div className="space-y-1.5">
           <Label>Price *</Label>
           <Input
@@ -482,37 +539,6 @@ function VariantFields({
             onChange={(e) => onChange({ ...draft, stock: e.target.value })}
           />
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">
-          What makes it different — flavour, size, colour
-        </Label>
-        {draft.attributes.map((pair, index) => (
-          <div key={index} className="grid grid-cols-2 gap-2">
-            <Input
-              value={pair.key}
-              onChange={(e) => setAttribute(index, { key: e.target.value })}
-              placeholder="flavour"
-            />
-            <Input
-              value={pair.value}
-              onChange={(e) => setAttribute(index, { value: e.target.value })}
-              placeholder="Chocolate"
-            />
-          </div>
-        ))}
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() =>
-            onChange({ ...draft, attributes: [...draft.attributes, { key: "", value: "" }] })
-          }
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Add attribute
-        </Button>
       </div>
 
       {onRemove && (

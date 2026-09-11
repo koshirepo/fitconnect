@@ -29,9 +29,15 @@ export type StoreProductPayload = {
   variants: StoreVariantPayload[];
 };
 
+/**
+ * What a seller sends for one variant.
+ *
+ * No `name`: the API builds it from `attributes` and sends the result back on
+ * the created variant. A client that could name a variant could label the shelf
+ * differently from the order, which is the disagreement this shape prevents.
+ */
 export type StoreVariantPayload = {
-  name: string;
-  attributes?: Record<string, string>;
+  attributes: Record<string, string>;
   sku?: string;
   price: number;
   stock?: number;

@@ -47,15 +47,6 @@ const ORDER_STATUS_BY_SHIPMENT: Record<string, string> = {
 };
 
 /**
- * Execute the `to string list` workflow for the commerce module.
- * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
- */
-function toStringList(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return value.filter((item): item is string => typeof item === "string");
-}
-
-/**
  * Execute the `map product` workflow for the commerce module.
  * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
  */

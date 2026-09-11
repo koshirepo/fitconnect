@@ -3,7 +3,7 @@
  *
  * - Contains framework-agnostic helpers for formatting money and dates, generating initials, and working with tenant slugs.
  * - Because these functions have no runtime dependencies on Hono or Prisma, they are safe to reuse in the API and any frontend client.
- * - Primary exports: formatCurrency, formatCompactCurrency, formatDate, formatDateTime, getInitials, isValidSlug, toSlug.
+ * - Primary exports: formatCurrency, formatCompactCurrency, formatDate, formatDateTime, getInitials, isValidSlug, toSlug, isPlatformExpired, isYoutubeUrl.
  */
 // ─── Shared Utilities ─────────────────────────────────────────────────────────
 // Pure functions with no framework dependencies – safe for API and PWA.
@@ -85,4 +85,40 @@ export function toSlug(name: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
+}
+
+/**
+ * Whether a gym's platform access has run out.
+ *
+ * The same rule on both sides: the API refuses writes past this date, and the
+ * PWA bounces the dashboard to the billing notice. It lived in both, written
+ * twice, which is the arrangement where one side starts letting people in after
+ * the other has stopped — and nothing fails loudly when that happens.
+ *
+ * Takes whatever the caller holds: the API has a `Date` from Prisma, the PWA
+ * has the ISO string the API serialised it to.
+ */
+export function isPlatformExpired(platformExpiresAt?: Date | string | null): boolean {
+  if (!platformExpiresAt) return false;
+  const at =
+    platformExpiresAt instanceof Date ? platformExpiresAt : new Date(platformExpiresAt);
+  return !Number.isNaN(at.getTime()) && at.getTime() < Date.now();
+}
+
+/**
+ * Whether a URL points at YouTube.
+ *
+ * The gym store accepts a video link on a product, and this decides which ones.
+ * The server validates with it so a crafted request cannot embed anything it
+ * likes, and the form validates with it so somebody pasting a Vimeo link is
+ * told before they submit. Those two answers have to agree, so there is one.
+ */
+export function isYoutubeUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    const host = url.hostname.toLowerCase();
+    return host === "youtu.be" || host === "youtube.com" || host.endsWith(".youtube.com");
+  } catch {
+    return false;
+  }
 }

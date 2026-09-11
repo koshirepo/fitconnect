@@ -7,7 +7,6 @@
  */
 import type { Context } from "hono";
 import { attendanceService } from "./attendance.service";
-import { attendanceRepository } from "./attendance.repository";
 import { auditLog } from "../../lib/audit";
 import { parseBody } from "../../lib/http";
 import { parsePagination } from "../../lib/pagination";

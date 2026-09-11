@@ -21,7 +21,6 @@ import { provisioningService } from "../attendance/provisioning.service";
 import { paymentRepository } from "./payments.repository";
 import { couponService } from "../coupons/coupons.service";
 import { pushService } from "../push/push.service";
-import { referralRewardService } from "../members/referral-rewards.service";
 import type {
   UpdateGatewayInput,
   CheckoutInput,

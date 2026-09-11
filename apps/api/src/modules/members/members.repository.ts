@@ -10,7 +10,7 @@ import { idCardService } from "../public/id-card.service";
 // A value import, not a type-only one: `Prisma.join` builds the IN list the
 // birthday query needs.
 import { Prisma } from "../../generated/prisma/client";
-import type { PlatformRole, TenantRole } from "@fitconnect/shared/types/enums";
+import type { PlatformRole } from "@fitconnect/shared/types/enums";
 
 function isMemberIdConflict(error: unknown) {
   if (

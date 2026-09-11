@@ -136,10 +136,34 @@ export default function StorePage() {
 
   const counterTotal = lines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0);
 
+  /**
+   * Adding and removing say so.
+   *
+   * The till is worked standing up with a member waiting, often on a phone
+   * where the basket sits below the fold — so a tap that changed nothing
+   * visible read as a tap that had not registered, and the answer was to tap
+   * again. The toast is the receipt for the tap.
+   *
+   * The refusals matter most. An add blocked by stock, or a second tap on a
+   * line already holding the last unit, previously did nothing at all.
+   */
   const addLine = (product: StoreProduct, variant: StoreVariant) => {
+    const label = `${product.name} — ${variant.name}`;
+
+    if (variant.stock <= 0) {
+      toast.error(`${label} is out of stock.`);
+      return;
+    }
+
+    const existing = lines.find((line) => line.variantId === variant.id);
+    if (existing && existing.quantity >= variant.stock) {
+      toast.error(`Only ${variant.stock} of ${label} left.`);
+      return;
+    }
+
     setLines((prev) => {
-      const existing = prev.find((line) => line.variantId === variant.id);
-      if (existing) {
+      const current = prev.find((line) => line.variantId === variant.id);
+      if (current) {
         return prev.map((line) =>
           line.variantId === variant.id
             ? { ...line, quantity: Math.min(line.quantity + 1, variant.stock) }
@@ -150,23 +174,38 @@ export default function StorePage() {
         ...prev,
         {
           variantId: variant.id,
-          label: `${product.name} — ${variant.name}`,
+          label,
           unitPrice: variant.price,
           stock: variant.stock,
           quantity: 1,
         },
       ];
     });
+
+    toast.success(existing ? `${label} ×${existing.quantity + 1}.` : `${label} added.`);
   };
 
   const changeLine = (variantId: string, delta: number) => {
+    const line = lines.find((entry) => entry.variantId === variantId);
+    if (!line) return;
+
+    const quantity = Math.min(Math.max(line.quantity + delta, 0), line.stock);
+
+    if (quantity === line.quantity) {
+      // Capped rather than changed — the one case where the basket looks
+      // identical afterwards, so the tap has to account for itself.
+      toast.error(`Only ${line.stock} of ${line.label} in stock.`);
+      return;
+    }
+
     setLines((prev) =>
-      prev.flatMap((line) => {
-        if (line.variantId !== variantId) return [line];
-        const quantity = Math.min(Math.max(line.quantity + delta, 0), line.stock);
-        return quantity === 0 ? [] : [{ ...line, quantity }];
+      prev.flatMap((entry) => {
+        if (entry.variantId !== variantId) return [entry];
+        return quantity === 0 ? [] : [{ ...entry, quantity }];
       }),
     );
+
+    toast.success(quantity === 0 ? `${line.label} removed.` : `${line.label} ×${quantity}.`);
   };
 
   const resetSale = () => {

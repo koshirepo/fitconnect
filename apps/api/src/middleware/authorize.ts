@@ -5,7 +5,7 @@
  * - Keep authorization wiring here so route files stay declarative and authorization errors remain consistent.
  * - Primary exports: requirePermissions, requireTenantPermissions, requireAnyTenantPermission, resolveTenantPermissions.
  */
-import { PlatformRole, type TenantRole } from "@fitconnect/shared/types/enums";
+import { type TenantRole } from "@fitconnect/shared/types/enums";
 import {
   type Permission,
   isPlatformStaffRole,

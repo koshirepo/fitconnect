@@ -34,7 +34,8 @@
     "db:download": "node scripts/download-db.mjs production",
     "secrets:production": "node scripts/put-secrets.mjs production",
     "pretest": "node scripts/ensure-prisma-client.mjs",
-    "test": "vitest run"
+    "test": "vitest run",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@fitconnect/shared": "workspace:*",
@@ -56,6 +57,8 @@
     "prisma": "^7.5.0",
     "typescript": "^6.0.3",
     "wrangler": "^4.77.0",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "@fitconnect/eslint-config": "workspace:*",
+    "eslint": "^9.39.1"
   }
 }

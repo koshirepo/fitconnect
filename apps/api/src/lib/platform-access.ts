@@ -7,6 +7,7 @@
  * - The cache key is shared with `authorize` on purpose: both paths ask the same question about the same gym, and answering it twice per request would be two reads where the point of the cache is zero.
  * - Primary exports: PLATFORM_EXPIRED_MESSAGE, isPlatformExpired, tenantPlatformExpiresAt, isTenantPlatformExpired, isTenantSlugPlatformExpired.
  */
+import { isPlatformExpired } from "@fitconnect/shared/utils";
 import { prisma } from "./prisma";
 import { cached } from "./request-cache";
 
@@ -17,10 +18,15 @@ import { cached } from "./request-cache";
 export const PLATFORM_EXPIRED_MESSAGE =
   "Platform access is expired. Renew access to continue using the platform.";
 
-/** Null means no expiry was ever set, which is not the same as expired. */
-export function isPlatformExpired(platformExpiresAt?: Date | null): boolean {
-  return Boolean(platformExpiresAt) && platformExpiresAt!.getTime() < Date.now();
-}
+/**
+ * Null means no expiry was ever set, which is not the same as expired.
+ *
+ * Re-exported rather than defined here: the PWA asks the same question to
+ * decide whether to bounce the dashboard, and the two answers must agree. A
+ * second copy is how one side starts letting people in after the other has
+ * stopped, with nothing failing loudly in between.
+ */
+export { isPlatformExpired };
 
 /** The gym's expiry date, cached for the few seconds a burst of requests lasts. */
 export function tenantPlatformExpiresAt(tenantId: string): Promise<Date | null> {

@@ -9,7 +9,6 @@
  */
 
 /** Production. Staging is https://staging-express.delhivery.com — set DELHIVERY_BASE_URL. */
-const DEFAULT_BASE_URL = "https://track.delhivery.com";
 
 export class DelhiveryError extends Error {
   readonly status: number;

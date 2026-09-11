@@ -42,7 +42,6 @@ type AddMemberResult = {
   membership: { id: string; [key: string]: unknown };
   [key: string]: unknown;
 };
-const DEFAULT_OVERDUE_DAYS = 30;
 
 /**
  * A role key is valid for a gym when it is one of the built-in tenant roles or
@@ -1005,7 +1004,7 @@ Your membership card: ${idCardUrl}`
       userUpdate.passwordHash = await hashPassword(input.newPassword);
     }
 
-    let membershipUpdate: Record<string, unknown> = {};
+    const membershipUpdate: Record<string, unknown> = {};
     if (input.shiftId !== undefined) {
       if (input.shiftId === null) {
         membershipUpdate.shiftId = null;

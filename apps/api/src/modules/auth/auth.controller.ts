@@ -11,7 +11,6 @@ import { auditLog } from "../../lib/audit";
 import { parseBody } from "../../lib/http";
 import { ok, okMessage, conflict, unauthorized, forbidden, notFound, badRequest } from "../../lib/response";
 import {
-  bootstrapSchema,
   loginSchema,
   refreshTokenSchema,
   createPlatformUserSchema,

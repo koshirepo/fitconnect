@@ -13,17 +13,23 @@ import { uploadsApi } from "@/api/uploads";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { OptimizedImage } from "@/components/ui/optimized-image";
+import { PhotoCapture } from "@/components/ui/photo-capture";
 
 export function PhotoListInput({
   value,
   onChange,
   max = 8,
   disabled = false,
+  cropAspectRatio = 1,
+  prompt = "Add a photo",
 }: {
   value: string[];
   onChange: (next: string[]) => void;
   max?: number;
   disabled?: boolean;
+  /** Shape the crop is held to, so every photo in the list matches. */
+  cropAspectRatio?: number;
+  prompt?: string;
 }) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
@@ -69,23 +75,63 @@ export function PhotoListInput({
     onChange(next);
   };
 
+  /**
+   * One photo at a time, taken or uploaded, then cropped.
+   *
+   * The same control the member photo uses, minus the face check — a tub of
+   * protein has no face, and the crop is what stops a portrait-orientation
+   * phone photo sitting letterboxed beside a square one on the same shelf.
+   *
+   * `value={null}` always: this is a capture control, not a slot. Each photo it
+   * produces is uploaded and appended, and it resets for the next one.
+   */
+  const handleCaptured = async (file: File | null) => {
+    if (!file) return;
+    setError("");
+    setUploading(true);
+    try {
+      const response = await uploadsApi.uploadProductPhoto(file);
+      onChange([...value, response.data.data.url]);
+    } catch (caught) {
+      setError(getApiError(caught));
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-xs text-muted-foreground">
+          {value.length}/{max} · the first one is shown on the card
+        </span>
+        {/* Kept alongside the capture control rather than replaced by it:
+            cropping is one photo at a time by nature, and somebody adding six
+            shots of the same tub should not have to crop all six. */}
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           size="sm"
           disabled={disabled || uploading || room <= 0}
           onClick={() => inputRef.current?.click()}
         >
           <ImagePlus className="h-4 w-4" />
-          {uploading ? "Uploading…" : "Add photos"}
+          {uploading ? "Uploading…" : "Add several at once"}
         </Button>
-        <span className="text-xs text-muted-foreground">
-          {value.length}/{max} · the first one is shown on the card
-        </span>
       </div>
+
+      {room > 0 && (
+        <PhotoCapture
+          value={null}
+          onChange={(file) => void handleCaptured(file)}
+          // A product is not a person; the face check would refuse every photo.
+          requireFace={false}
+          cropAspectRatio={cropAspectRatio}
+          croppedFileName="product.jpg"
+          prompt={prompt}
+          disabled={disabled || uploading}
+        />
+      )}
 
       <input
         ref={inputRef}

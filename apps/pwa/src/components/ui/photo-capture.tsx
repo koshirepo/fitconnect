@@ -16,6 +16,8 @@ interface PhotoCaptureProps {
   cropOutputWidth?: number;
   cropOutputHeight?: number;
   croppedFileName?: string;
+  /** The line in the empty state. This control is not only for members. */
+  prompt?: string;
   disabled?: boolean;
   className?: string;
 }
@@ -32,6 +34,7 @@ export function PhotoCapture({
   cropOutputWidth,
   cropOutputHeight,
   croppedFileName = "avatar.jpg",
+  prompt = "Add a member photo",
   disabled,
   className,
 }: PhotoCaptureProps) {
@@ -523,7 +526,7 @@ export function PhotoCapture({
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
             <Camera className="h-8 w-8 text-muted-foreground" />
           </div>
-          <p className="text-sm text-muted-foreground">Add a member photo</p>
+          <p className="text-sm text-muted-foreground">{prompt}</p>
           <div className="flex gap-2">
             <Button
               type="button"

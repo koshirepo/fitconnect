@@ -10,7 +10,7 @@ import { reminderService } from "./reminders.service";
 import { reminderRepository } from "./reminders.repository";
 import { logReminderSchema } from "./reminders.schema";
 import { parseBody } from "../../lib/http";
-import { ok, notFound, badRequest, failWith } from "../../lib/response";
+import { ok, notFound, failWith } from "../../lib/response";
 import { prisma } from "../../lib/prisma";
 import type { AppBindings } from "../../types/app-context";
 

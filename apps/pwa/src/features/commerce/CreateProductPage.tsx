@@ -8,6 +8,7 @@ import {
   useUpdateProduct,
 } from "@/api/queries/platform";
 import { uploadsApi } from "@/api/uploads";
+import { isYoutubeUrl } from "@fitconnect/shared/utils";
 import { getApiError } from "@/api/client";
 import type { Product } from "@/types/api";
 import { Button } from "@/components/ui/button";
@@ -84,15 +85,6 @@ const emptyForm: ProductForm = {
   isActive: true,
 };
 
-function isYoutubeUrl(value: string) {
-  try {
-    const url = new URL(value);
-    const host = url.hostname.toLowerCase();
-    return host === "youtu.be" || host.endsWith("youtube.com");
-  } catch {
-    return false;
-  }
-}
 
 function toForm(product: Product): ProductForm {
   const videos = Array.isArray(product.videos) ? product.videos : [];

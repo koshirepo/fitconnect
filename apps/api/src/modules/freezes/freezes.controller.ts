@@ -10,7 +10,7 @@ import { freezeService } from "./freezes.service";
 import { createFreezeSchema, endFreezeSchema } from "./freezes.schema";
 import { auditLog } from "../../lib/audit";
 import { parseBody } from "../../lib/http";
-import { badRequest, failWith, forbidden, notFound, ok } from "../../lib/response";
+import { failWith, forbidden, notFound, ok } from "../../lib/response";
 import { can } from "../../lib/permissions";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { prisma } from "../../lib/prisma";

@@ -258,7 +258,7 @@ export const warehouseService = {
          * the failure only surfaced later, as a refused manifest.
          */
         const alreadyThere =
-          /already/i.test(detail ?? "") &&
+          /\balready\b/i.test(detail ?? "") &&
           !/does not exist|not found|matching query/i.test(detail ?? "");
         const saved = await warehouseRepository.markRegistered(
           warehouse.id,

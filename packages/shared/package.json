@@ -19,18 +19,22 @@
     "./whatsapp-templates": "./src/whatsapp-templates.ts",
     "./consent": "./src/consent.ts",
     "./store-pricing": "./src/store-pricing.ts",
-    "./profanity": "./src/profanity.ts"
+    "./profanity": "./src/profanity.ts",
+    "./variant-name": "./src/variant-name.ts"
   },
   "files": [
     "src"
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "lint": "eslint ."
   },
   "devDependencies": {
     "@fitconnect/tsconfig": "workspace:*",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "@fitconnect/eslint-config": "workspace:*",
+    "eslint": "^9.39.1"
   }
 }

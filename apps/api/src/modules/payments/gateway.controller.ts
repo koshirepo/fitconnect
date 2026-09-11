@@ -11,12 +11,7 @@ import { gatewayService } from "./gateway.service";
 import { auditLog } from "../../lib/audit";
 import { parseBody } from "../../lib/http";
 import {
-  badRequest,
   failWith,
-  conflict,
-  error,
-  forbidden,
-  notFound,
   ok,
 } from "../../lib/response";
 import {

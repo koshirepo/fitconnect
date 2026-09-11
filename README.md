@@ -8,8 +8,9 @@ FitConnect/
 │   ├── api/            @fitconnect/api  — Hono API on Cloudflare Workers (D1 + R2)
 │   └── pwa/            @fitconnect/pwa  — React + Vite PWA on Cloudflare Pages
 ├── packages/
-│   ├── shared/         @fitconnect/shared    — contracts every app depends on
-│   └── tsconfig/       @fitconnect/tsconfig  — shared TypeScript presets
+│   ├── shared/         @fitconnect/shared         — contracts every app depends on
+│   ├── tsconfig/       @fitconnect/tsconfig       — shared TypeScript presets
+│   └── eslint-config/  @fitconnect/eslint-config  — shared lint rules
 ├── package.json        workspace root scripts
 └── pnpm-workspace.yaml package list + allowed build scripts
 ```
@@ -21,6 +22,12 @@ agree on — the role/permission catalog, enums, domain models, API envelopes, a
 pure utilities. Before the split these files were byte-duplicated in both apps and
 had already drifted. Anything both sides must agree on belongs there; anything one
 runtime owns (Prisma queries, React components) stays in its app.
+
+`packages/eslint-config` holds the lint rules, for the same reason and after the
+same lesson: only the PWA had a config, so the API was never linted at all.
+Turning it on found a regex written with literal backspace characters where `\b`
+was meant — a test that had been silently matching nothing. `base` is what every
+workspace gets; `react` adds what only the PWA needs.
 
 `packages/tsconfig` holds the compiler presets so a new app inherits the same
 strictness instead of copying a config.

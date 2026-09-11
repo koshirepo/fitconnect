@@ -6,22 +6,13 @@
  * - Primary exports: createProductSchema, updateProductSchema, placeOrderSchema, serviceabilityQuerySchema, shippingQuoteSchema, cancelOrderSchema, createReturnSchema, decideReturnSchema, refundOrderSchema, verifyOrderPaymentSchema, updateOrderStatusSchema, RETURN_REASONS, CreateProductInput, UpdateProductInput, PlaceOrderInput, VerifyOrderPaymentInput, UpdateOrderStatusInput, ShippingQuoteInput, CancelOrderInput, CreateReturnInput, DecideReturnInput, RefundOrderInput.
  */
 import { z } from "zod";
+import { isYoutubeUrl } from "@fitconnect/shared/utils";
 import { cleanText } from "../../lib/clean-text";
 
 /**
  * Define or support the `is youtube url` validation contract for the commerce module.
  * Schema helpers keep input parsing rules colocated with the module that consumes them.
  */
-function isYoutubeUrl(value: string) {
-  try {
-    const url = new URL(value);
-    const host = url.hostname.toLowerCase();
-    return host === "youtu.be" || host.endsWith("youtube.com");
-  } catch {
-    return false;
-  }
-}
-
 const youtubeUrlSchema = z
   .string()
   .url()

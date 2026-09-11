@@ -16,7 +16,6 @@ import {
   okPaginated,
   conflict,
   notFound,
-  badRequest,
   forbidden,
   failWith,
 } from "../../lib/response";

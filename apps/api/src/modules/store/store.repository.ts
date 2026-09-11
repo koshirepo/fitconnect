@@ -6,6 +6,7 @@
  * - Stock changes go through `decrementStock`, which is conditional: it only succeeds while enough remains. That is what makes two people buying the last tub at the same moment safe, rather than the read-then-write a service layer would otherwise do.
  * - Primary exports: storeRepository.
  */
+import { deriveVariantName } from "@fitconnect/shared/variant-name";
 import { prisma } from "../../lib/prisma";
 import {
   catalogueRepository,
@@ -67,7 +68,9 @@ export const storeRepository = {
       variants: {
         create: variants.map((variant) => ({
           ...variant,
-          attributes: variant.attributes ?? {},
+          // Built here, never accepted from the request, so what is stored is
+          // always what the attributes say it is.
+          name: deriveVariantName(variant.attributes),
         })),
       },
     });
@@ -92,12 +95,20 @@ export const storeRepository = {
   addVariant(tenantId: string, productId: string, input: CreateVariantInput) {
     return catalogueRepository.addVariant(tenantCatalogue(tenantId), productId, {
       ...input,
-      attributes: input.attributes ?? {},
+      name: deriveVariantName(input.attributes),
     });
   },
 
+  /**
+   * Editing the attributes renames the variant, because the name *is* the
+   * attributes. An edit that leaves them alone leaves the name alone too —
+   * which is why the name is only recomputed when attributes were sent.
+   */
   updateVariant(tenantId: string, variantId: string, input: UpdateVariantInput) {
-    return catalogueRepository.updateVariant(tenantCatalogue(tenantId), variantId, input);
+    return catalogueRepository.updateVariant(tenantCatalogue(tenantId), variantId, {
+      ...input,
+      ...(input.attributes ? { name: deriveVariantName(input.attributes) } : {}),
+    });
   },
 
   deleteVariant(tenantId: string, variantId: string) {

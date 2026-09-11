@@ -7,6 +7,7 @@
  * - Primary exports: the schemas, and the inferred input types.
  */
 import { z } from "zod";
+import { hasUsableAttributes } from "@fitconnect/shared/variant-name";
 import { cleanText } from "../../lib/clean-text";
 
 /**
@@ -31,12 +32,30 @@ const attributes = z
   .record(z.string().min(1).max(40), z.string().min(1).max(60))
   .refine((value) => Object.keys(value).length <= 6, {
     message: "A variant may have at most 6 attributes.",
+  })
+  /**
+   * At least one, because these are what name the variant now.
+   *
+   * Checked here rather than at the call sites so the create path and the edit
+   * path refuse the same thing — an edit that cleared every attribute would
+   * otherwise leave a live variant with a blank name.
+   */
+  .refine((value) => hasUsableAttributes(value), {
+    message: "Add at least one attribute — it is what names the variant.",
   });
 
 export const createVariantSchema = z.object({
-  name: z.string().trim().min(1).max(120),
-  /** e.g. `{ "flavour": "Chocolate", "size": "1kg" }`. */
-  attributes: attributes.optional(),
+  /**
+   * What makes this variant different — and therefore what it is called.
+   *
+   * Required, and required to hold something: the name is derived from these
+   * values, so a variant with no attributes is a variant with no name, which a
+   * buyer could not tell from its siblings in a picker, a cart, or an order.
+   *
+   * There is deliberately no `name` field. It is built on the server from
+   * these, so the label on the shelf cannot drift from the label on the order.
+   */
+  attributes,
   sku: z.string().trim().max(60).optional(),
   price: z.number().int().min(0),
   stock: z.number().int().min(0).default(0),
