@@ -15,6 +15,7 @@ import {
   RazorpayError,
 } from "../../lib/razorpay";
 import { normalizeTenantHost } from "../../lib/tenant-host";
+import { resolveConsentText } from "@fitconnect/shared/consent";
 import {
   generateRefreshToken,
   refreshTokenExpiresAt,
@@ -51,7 +52,7 @@ export const signupService = {
     const tenant = await resolveTenant(host);
     if (!tenant) return { error: "Gym not found.", status: 404 as const };
 
-    const [plans, charges, shifts, occupations, credentials] = await Promise.all([
+    const [plans, charges, shifts, occupations, credentials, consentOverride] = await Promise.all([
       signupRepository.listSelectablePlans(tenant.id),
       signupRepository.listActiveCharges(tenant.id),
       signupRepository.listActiveShifts(tenant.id),
@@ -59,6 +60,7 @@ export const signupService = {
       // visitor has no session to read `/occupations` with.
       signupRepository.listOfferedOccupations(),
       gatewayService.resolveCredentials(tenant.id),
+      signupRepository.getConsentText(tenant.id),
     ]);
 
     return {
@@ -73,6 +75,14 @@ export const signupService = {
          * front desk rather than at a card screen.
          */
         onlinePaymentsEnabled: Boolean(credentials),
+        /**
+         * What this gym asks a joining member to accept.
+         *
+         * Sent resolved, so the form never has to decide between a gym's
+         * wording and the default — and so what is displayed is exactly what
+         * the server will snapshot when the signup arrives.
+         */
+        consentText: resolveConsentText(consentOverride),
       },
     };
   },
@@ -231,6 +241,16 @@ export const signupService = {
       });
     }
 
+    /**
+     * The wording as the server holds it, not as the browser reported it.
+     *
+     * The form sends only that the box was ticked. What gets recorded is read
+     * here, so a crafted request cannot file a membership against terms the
+     * gym never wrote — and so the snapshot is the same text the options
+     * endpoint just served.
+     */
+    const consentText = resolveConsentText(await signupRepository.getConsentText(tenant.id));
+
     const membership = await memberRepository.createMembership(
       tenant.id,
       user.id,
@@ -240,6 +260,8 @@ export const signupService = {
       // Inactive until the money lands. `reactivateIfPaidUp` flips this the
       // moment a settled payment carries the due date to today or beyond.
       "SUSPENDED",
+      // Nobody recorded it for them: they ticked the box themselves.
+      { text: consentText, recordedById: null },
     );
 
     /**

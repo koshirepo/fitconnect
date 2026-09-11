@@ -356,6 +356,12 @@ model TenantSettings {
   overdueDays       Int    @default(30) /// Days after subscription expiry to auto-inactivate member
   whatsappTemplates Json   @default("{}") /// Tenant-level WhatsApp template overrides keyed by message purpose
 
+  /// What a joining member must accept — health declaration, house rules,
+  /// waiver. The gym's own words: null falls back to the platform default in
+  /// `@fitconnect/shared/consent`, which exists so the box is never empty, not
+  /// because it fits any particular gym.
+  consentText       String?
+
   /// IANA zone the gym keeps its hours in. Storage stays UTC; this is what
   /// turns an instant into "6am", which is the only form a staffing or
   /// drop-off report can be read in. Distinct from AttendanceDevice.timezone,
@@ -372,6 +378,19 @@ model TenantSettings {
   /// default — means coins never expire, which is what every gym had before
   /// this existed.
   coinExpiryDays       Int @default(0)
+
+  /// The mailbox this gym's transactional email goes out from. Null on any of
+  /// these falls the whole gym back to the platform SMTP account in the Worker
+  /// environment — the same arrangement the payment gateway has below.
+  emailHost             String?
+  emailPort             Int?
+  emailSecure           Boolean?
+  emailUser             String?
+  /// Sealed with AES-GCM by `lib/secret-box`. Never leaves the API.
+  emailPassword         String?
+  /// The From header, e.g. `"Rudra Gym" <hello@rudragym.in>`. Null uses the
+  /// gym's name with the authenticating address.
+  emailFrom             String?
 
   /// Razorpay key id for this gym's own account. Null means online payments
   /// fall back to the platform account configured in the Worker environment.
@@ -432,6 +451,16 @@ model TenantMembership {
   /// What is printed on the card in the member's hand, kept so the desk can
   /// find them by it when the card stops working.
   rfidCardNumber         String?
+  /// When this member accepted the gym's terms. Null on memberships that
+  /// predate consent being asked for, which is not the same as a refusal.
+  consentAcceptedAt      DateTime?
+  /// The wording as it stood at that moment, copied rather than referenced —
+  /// a gym that revises its terms must still be able to say what this person
+  /// agreed to.
+  consentText            String?
+  /// Null when the member accepted it themselves on the public form; the staff
+  /// membership that confirmed it otherwise, usually from a paper signature.
+  consentRecordedById    String?
   joinedAt               DateTime                @default(now())
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt

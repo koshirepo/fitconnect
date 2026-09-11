@@ -152,6 +152,14 @@ pnpm run dev
 - `EMAIL_PASSWORD`
 - `EMAIL_FROM`
 - `EMAIL_VERIFY_ON_STARTUP`
+
+  The `EMAIL_*` set is the **platform fallback**. A gym that saves its own SMTP
+  credentials on Settings → Machines & messages sends from its own mailbox
+  instead, and one that has not falls back to these — the same arrangement the
+  payment gateway has. The gym's password is sealed with `CREDENTIALS_KEY`, so
+  without that key a gym can only clear its mailbox, not set one. Resolution
+  lives in `lib/mailer`; every template in `lib/email` goes through it.
+
 - `VAPID_PUBLIC_KEY`
 - `VAPID_PRIVATE_KEY`
 - `VAPID_EMAIL`

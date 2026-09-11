@@ -283,6 +283,19 @@ export const memberRepository = {
      * only comes alive once the money actually lands.
      */
     status?: "ACTIVE" | "SUSPENDED",
+    /**
+     * What this member agreed to, and who recorded it.
+     *
+     * Passed as one object rather than three more positional arguments, and
+     * written here rather than by each caller, because both ways of joining a
+     * gym come through this function — the public form and the front desk —
+     * and a consent record that exists on only one of those paths is worse
+     * than none: it looks complete and covers half the roster.
+     *
+     * `recordedById` is null when the member accepted it themselves and the
+     * staff membership when somebody confirmed it for them.
+     */
+    consent?: { text: string; recordedById: string | null },
   ) {
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const latestMember = await prisma.tenantMembership.findFirst({
@@ -301,6 +314,15 @@ export const memberRepository = {
             ...(shiftId ? { shiftId } : {}),
             ...(referredByMembershipId ? { referredByMembershipId } : {}),
             ...(status ? { status } : {}),
+            ...(consent
+              ? {
+                  consentAcceptedAt: new Date(),
+                  // The wording is copied, not referenced: the gym may revise
+                  // it tomorrow and this has to keep saying what was agreed.
+                  consentText: consent.text,
+                  consentRecordedById: consent.recordedById,
+                }
+              : {}),
             // Minted here so the welcome email and WhatsApp message can
             // carry the card link without a follow-up write.
             idCardToken: idCardService.mintToken(),

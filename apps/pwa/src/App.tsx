@@ -315,6 +315,10 @@ export default function App() {
             </Route>
             <Route element={<RequirePermission anyOf={[Permission.COUPONS_READ]} />}>
               <Route path="/dashboard/coupons" element={<CouponsPage />} />
+            </Route>
+            {/* The gym's own coin books, not a member's balance: what is owed
+                in total, who holds it, and every transaction behind it. */}
+            <Route element={<RequirePermission anyOf={[Permission.COUPONS_ANALYTICS_READ]} />}>
               <Route path="/dashboard/coins" element={<CoinAnalyticsPage />} />
             </Route>
             <Route
@@ -582,10 +586,17 @@ export default function App() {
                   </Route>
                   <Route element={<RequirePermission anyOf={[Permission.COUPONS_READ]} />}>
                     <Route path="/coupons" element={<CouponsPage />} />
-                    {/* Coins get their own page; coupon usage lives on the
-                        coupon list. Coupons mint coins, but so do referrals and
-                        staff gifts, so "what do we owe in coins" is a different
-                        question from "which discount code works". */}
+                  </Route>
+                  {/* Coins get their own page; coupon usage lives on the
+                      coupon list. Coupons mint coins, but so do referrals and
+                      staff gifts, so "what do we owe in coins" is a different
+                      question from "which discount code works".
+
+                      Behind the analytics grant rather than COUPONS_READ: this
+                      page is the gym's liability and every member's balance,
+                      and COUPONS_READ is held by every member so they can see
+                      the offers open to them. */}
+                  <Route element={<RequirePermission anyOf={[Permission.COUPONS_ANALYTICS_READ]} />}>
                     <Route path="/coins" element={<CoinAnalyticsPage />} />
                   </Route>
                   <Route

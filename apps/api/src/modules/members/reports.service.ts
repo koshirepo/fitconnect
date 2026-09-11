@@ -69,6 +69,7 @@ async function enforceOverdueMembershipsForTenant(
           member.user.name,
           gymName,
           overdueDays,
+          tenantId,
         )
         .catch((err) => {
           log.error("report.suspension.email.failed", { error: err });
@@ -190,6 +191,8 @@ async function buildTenantReportData(
  * Keep recipient fan-out isolated so both ad-hoc and scheduled report paths reuse the same email behavior.
  */
 async function dispatchReportEmails(
+  /** Whose mailbox the report leaves from. */
+  tenantId: string,
   recipients: { email: string; name?: string | null }[],
   gymName: string,
   reportData: Awaited<ReturnType<typeof buildTenantReportData>>["reportData"],
@@ -201,6 +204,7 @@ async function dispatchReportEmails(
     recipients.map((recipient) =>
       emailService
         .sendReportEmail({
+          tenantId,
           to: recipient.email,
           adminName: recipient.name ?? "Admin",
           gymName,
@@ -244,6 +248,7 @@ export const reportService = {
     // Send report email to admin in the background.
     if (adminUser?.email) {
       await dispatchReportEmails(
+        tenantId,
         [{ email: adminUser.email, name: adminUser.name }],
         gymName,
         reportData,
@@ -313,6 +318,7 @@ export const reportService = {
       });
 
       await dispatchReportEmails(
+        tenant.id,
         recipients,
         gymName,
         reportData,

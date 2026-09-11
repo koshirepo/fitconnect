@@ -183,6 +183,7 @@ export async function sendSalaryNotice(
     await Promise.allSettled([
       isRealEmail(staff.email)
         ? emailService.sendSalaryEmail({
+            tenantId,
             to: staff.email,
             staffName: staff.name,
             gymName,

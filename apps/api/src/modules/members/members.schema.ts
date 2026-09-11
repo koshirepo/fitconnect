@@ -51,6 +51,18 @@ export const addMemberSchema = z.object({
   couponCode: z.string().trim().min(1).max(40).optional(),
   shiftId: z.string().optional(),
   referredByMembershipId: z.string().optional(),
+  /**
+   * That this member accepted the gym's terms, confirmed by whoever is at the
+   * desk — usually because they signed the paper version.
+   *
+   * Optional rather than required, unlike the public form, and the difference
+   * is deliberate. This same endpoint creates coaches and admins, and it is
+   * called by scripts and imports that have no person in front of them; making
+   * it mandatory would block those with a box nobody can tick. What it buys is
+   * that a desk signup records consent the same way a self-signup does, so the
+   * roster does not end up half covered.
+   */
+  consentAccepted: z.boolean().optional(),
 });
 
 export const updateMemberRoleSchema = z.object({

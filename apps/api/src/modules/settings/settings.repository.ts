@@ -15,6 +15,8 @@ type SettingsRecord = {
   referralRefereeCoins?: number;
   /// Absent until migration 0049; the service falls back to the same default.
   timezone?: string;
+  /// Absent until migration 0050. Null means the gym uses the default wording.
+  consentText?: string | null;
 };
 
 type LegacySettingsRow = {
@@ -84,6 +86,24 @@ export const settingsRepository = {
 
   async supportsWhatsAppTemplates() {
     return hasWhatsAppTemplatesColumn();
+  },
+
+  /**
+   * The gym's joining terms, or null for the platform default.
+   *
+   * Read raw and guarded like the other post-migration columns, so a database
+   * that has not caught up records the default wording instead of failing the
+   * admission form somebody is standing at the desk filling in.
+   */
+  async getConsentText(tenantId: string): Promise<string | null> {
+    try {
+      const rows = await prisma.$queryRaw<{ consentText: string | null }[]>`
+        SELECT "consentText" FROM "TenantSettings" WHERE "tenantId" = ${tenantId} LIMIT 1
+      `;
+      return rows[0]?.consentText ?? null;
+    } catch {
+      return null;
+    }
   },
 
   /**

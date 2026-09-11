@@ -17,6 +17,7 @@
     "./utils": "./src/utils/index.ts",
     "./tenant-host": "./src/tenant-host.ts",
     "./whatsapp-templates": "./src/whatsapp-templates.ts",
+    "./consent": "./src/consent.ts",
     "./store-pricing": "./src/store-pricing.ts",
     "./profanity": "./src/profanity.ts"
   },

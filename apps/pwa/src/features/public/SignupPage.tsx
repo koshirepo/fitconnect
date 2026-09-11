@@ -19,6 +19,7 @@ import { resolveAssetUrl } from "@/lib/assets";
 import MemberForm, { type MemberFormData } from "@/components/forms/MemberForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ConsentNotice } from "@/components/ui/consent-notice";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FormPageSkeleton } from "@/components/ui/skeleton";
@@ -110,6 +111,13 @@ export default function SignupPage() {
    * again with the signup, where it is priced a second time and has to
    * agree — a browser can never name its own discount.
    */
+  /**
+   * Accepting the gym's terms. Required to join, so it gates both buttons
+   * rather than being validated after a failed round trip.
+   */
+  const [consentAccepted, setConsentAccepted] = React.useState(false);
+  const [consentInvalid, setConsentInvalid] = React.useState(false);
+
   const [couponCode, setCouponCode] = React.useState("");
   const [couponError, setCouponError] = React.useState("");
   const [checkingCoupon, setCheckingCoupon] = React.useState(false);
@@ -119,7 +127,10 @@ export default function SignupPage() {
 
   // Both join buttons close on the same conditions, so they share one answer.
   const joinDisabled =
-    submitting || !selectedPlan || (Boolean(TURNSTILE_SITE_KEY) && !turnstileToken);
+    submitting ||
+    !selectedPlan ||
+    !consentAccepted ||
+    (Boolean(TURNSTILE_SITE_KEY) && !turnstileToken);
 
   const applyCoupon = async () => {
     const code = couponCode.trim();
@@ -188,6 +199,10 @@ export default function SignupPage() {
 
   const handleJoin = async (paymentMode: "ONLINE" | "COUNTER" = "ONLINE") => {
     if (!memberData || !selectedPlan) return;
+    if (!consentAccepted) {
+      setConsentInvalid(true);
+      return;
+    }
     if (!memberData.photoFile) {
       // The form will not submit without one, so this is a guard rather than a
       // path anyone reaches by using the page normally.
@@ -211,6 +226,9 @@ export default function SignupPage() {
         ...(couponCode.trim() && discount > 0 ? { couponCode: couponCode.trim() } : {}),
         ...(memberData.shiftId ? { shiftId: memberData.shiftId } : {}),
         paymentMode,
+        // Only the fact. What was agreed to is read from the gym's settings
+        // server-side and snapshotted onto the membership there.
+        consentAccepted: true,
         ...(turnstileToken ? { "cf-turnstile-response": turnstileToken } : {}),
       });
 
@@ -601,6 +619,18 @@ export default function SignupPage() {
                   {error}
                 </div>
               )}
+
+              <ConsentNotice
+                className="mt-4"
+                text={options.consentText}
+                checked={consentAccepted}
+                invalid={consentInvalid}
+                disabled={submitting}
+                onChange={(next) => {
+                  setConsentAccepted(next);
+                  if (next) setConsentInvalid(false);
+                }}
+              />
 
               {TURNSTILE_SITE_KEY && (
                 <div className="mt-4 flex justify-center">

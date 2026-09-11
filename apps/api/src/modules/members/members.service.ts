@@ -21,6 +21,7 @@ import {
   type StorageOptions,
 } from "../../lib/storage";
 import { normalizeOptionalText } from "../../lib/text";
+import { resolveConsentText } from "@fitconnect/shared/consent";
 import type {
   AddMemberInput,
   UpdateMemberInput,
@@ -336,12 +337,32 @@ export const memberService = {
       return { error: "Referring member not found.", status: 404 as const };
     }
 
+    /**
+     * Consent, when the desk confirmed it.
+     *
+     * Recorded against the staff membership rather than the user id, matching
+     * every other "who on staff did this" column in the schema. The wording is
+     * read from settings here for the same reason the public path reads it
+     * there: what is filed has to be what the gym actually published, not
+     * something a request supplied.
+     */
+    const consent = input.consentAccepted
+      ? {
+          text: resolveConsentText(await settingsRepository.getConsentText(tenantId)),
+          recordedById: actorUserId
+            ? (await memberRepository.findMembershipByUserId(tenantId, actorUserId))?.id ?? null
+            : null,
+        }
+      : undefined;
+
     const membership = await memberRepository.createMembership(
       tenantId,
       user.id,
       input.role,
       input.shiftId,
       input.referredByMembershipId,
+      undefined,
+      consent,
     );
 
 
@@ -553,6 +574,9 @@ Your membership card: ${idCardUrl}`
       if (!welcomeEmailTo) return;
       try {
         await emailService.sendWelcomeEmail({
+          // From the gym's own mailbox when it has one, so a reply reaches
+          // the people the member just joined rather than the platform.
+          tenantId,
           to: welcomeEmailTo,
           memberName: input.name,
           gymName,

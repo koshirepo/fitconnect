@@ -5,47 +5,30 @@
  * - Password reset, welcome, suspension, and report emails all live here so outbound email behavior remains easy to audit and extend.
  * - Primary exports: emailService, WelcomeEmailPayload.
  */
-import nodemailer from "nodemailer";
-import type { Transporter } from "nodemailer";
 import { log } from "./logger";
-
-let _transporter: Transporter | undefined;
+import { mailerService } from "./mailer";
 
 /**
- * Utility helper for the email module that owns the `get transporter` step.
- * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
+ * Send one message from the right mailbox.
+ *
+ * Every template below ends here, so "whose address does this leave from" is
+ * decided in exactly one place. A gym id sends from that gym's own mailbox
+ * when it has one configured; anything else — including a password reset,
+ * which is requested by an address before anything knows which gym the person
+ * trains at — goes out from the platform account.
+ *
+ * Returns null rather than throwing when no mailbox is configured at all. The
+ * callers already treat email as best-effort: a welcome message that cannot be
+ * sent must not take down the admission that triggered it.
  */
-function getTransporter(): Transporter {
-  if (!_transporter) {
-    const EMAIL_HOST = process.env.EMAIL_HOST ?? "smtp.gmail.com";
-    const EMAIL_PORT = Number(process.env.EMAIL_PORT ?? 587);
-    const EMAIL_SECURE = process.env.EMAIL_SECURE === "true";
-    const EMAIL_USER = process.env.EMAIL_USER;
-    const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD;
-    const EMAIL_DEBUG = process.env.EMAIL_DEBUG === "true";
-
-    if (!EMAIL_USER || !EMAIL_PASSWORD) {
-      log.warn("email.config.incomplete", { missing: "EMAIL_USER or EMAIL_PASSWORD" });
-    }
-
-    _transporter = nodemailer.createTransport({
-      host: EMAIL_HOST,
-      port: EMAIL_PORT,
-      secure: EMAIL_SECURE,
-      auth: EMAIL_USER && EMAIL_PASSWORD ? { user: EMAIL_USER, pass: EMAIL_PASSWORD } : undefined,
-      logger: EMAIL_DEBUG,
-      debug: EMAIL_DEBUG,
-    });
+async function sendVia(tenantId: string | null | undefined, message: Record<string, unknown>) {
+  const mailer = await mailerService.resolve(tenantId);
+  if (!mailer) {
+    log.warn("email.send.skipped", { reason: "no mailbox configured", tenantId: tenantId ?? null });
+    return null;
   }
-  return _transporter;
-}
 
-/**
- * Utility helper for the email module that owns the `get from` step.
- * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
- */
-function getFrom(): string {
-  return process.env.EMAIL_FROM ?? '"Fit Connect" <noreply@fitconnect.app>';
+  return mailerService.transport(mailer).sendMail({ from: mailer.from, ...message });
 }
 
 /**
@@ -61,6 +44,8 @@ function formatAmountInr(amount: number) {
 }
 
 export interface WelcomeEmailPayload {
+  /** Whose mailbox this leaves from. Omitted falls back to the platform. */
+  tenantId?: string | null;
   to: string;
   memberName: string;
   gymName: string;
@@ -79,9 +64,8 @@ export const emailService = {
    * Utility helper for the email module that owns the `send password reset email` step.
    * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
    */
-  sendPasswordResetEmail(to: string, name: string, resetUrl: string) {
-    return getTransporter().sendMail({
-      from: getFrom(),
+  sendPasswordResetEmail(to: string, name: string, resetUrl: string, tenantId?: string | null) {
+    return sendVia(tenantId, {
       to,
       subject: "Reset your password - Fit Connect",
       html: `
@@ -123,8 +107,7 @@ export const emailService = {
       )
       .join("");
 
-    return getTransporter().sendMail({
-      from: getFrom(),
+    return sendVia(payload.tenantId, {
       to: payload.to,
       subject: `Welcome to ${payload.gymName} - Fit Connect`,
       html: `
@@ -192,9 +175,14 @@ export const emailService = {
    * Utility helper for the email module that owns the `send suspension email` step.
    * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
    */
-  sendSuspensionEmail(to: string, memberName: string, gymName: string, overdueDays: number) {
-    return getTransporter().sendMail({
-      from: getFrom(),
+  sendSuspensionEmail(
+    to: string,
+    memberName: string,
+    gymName: string,
+    overdueDays: number,
+    tenantId?: string | null,
+  ) {
+    return sendVia(tenantId, {
       to,
       subject: `Membership Suspended - ${gymName}`,
       html: `
@@ -220,6 +208,7 @@ export const emailService = {
    * where the month stands now.
    */
   sendSalaryEmail(payload: {
+    tenantId?: string | null;
     to: string;
     staffName: string;
     gymName: string;
@@ -238,8 +227,7 @@ export const emailService = {
       )
       .join("");
 
-    return getTransporter().sendMail({
-      from: getFrom(),
+    return sendVia(payload.tenantId, {
       to: payload.to,
       subject: payload.subject,
       html: `
@@ -261,6 +249,7 @@ export const emailService = {
    * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
    */
   sendReportEmail(payload: {
+    tenantId?: string | null;
     to: string;
     adminName: string;
     gymName: string;
@@ -299,8 +288,7 @@ export const emailService = {
             .join("")
         : `<tr><td colspan="2" style="padding:8px 12px;color:#16a34a;">No overdue suspensions today.</td></tr>`;
 
-    return getTransporter().sendMail({
-      from: getFrom(),
+    return sendVia(payload.tenantId, {
       to,
       subject: `Gym Report - ${gymName} - ${now}`,
       html: `
@@ -347,15 +335,18 @@ export const emailService = {
 };
 
 /**
- * Utility helper for the email module that owns the `verify transport` step.
- * Keeping this logic isolated avoids repeating the same parsing, formatting, mapping, or transport behavior elsewhere.
+ * Prove the platform mailbox works, at startup, when asked to.
+ *
+ * Only the platform's own account — a gym's credentials are checked from the
+ * settings screen, by the person typing them, which is the moment the answer
+ * is useful. Verifying every gym's mailbox on boot would open an SMTP
+ * connection per gym for an answer nobody is waiting for.
  */
 async function verifyTransport() {
-  const user = process.env.EMAIL_USER;
-  const pass = process.env.EMAIL_PASSWORD;
-  if (!user || !pass) return;
+  const mailer = await mailerService.resolve(null);
+  if (!mailer) return;
   try {
-    await getTransporter().verify();
+    await mailerService.transport(mailer).verify();
     log.info("email.transport.verified");
   } catch (err) {
     log.error("email.transport.verify.failed", { error: err });

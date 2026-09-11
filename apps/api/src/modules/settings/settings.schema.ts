@@ -7,6 +7,7 @@
  */
 import { z } from "zod";
 import { whatsappTemplateKeys } from "@fitconnect/shared/whatsapp-templates";
+import { CONSENT_MAX_LENGTH } from "@fitconnect/shared/consent";
 
 /** Whether the runtime recognises a zone name, which is the only real test. */
 function isKnownTimeZone(value: string) {
@@ -48,8 +49,43 @@ export const updateSettingsSchema = z.object({
     .max(64)
     .refine(isKnownTimeZone, "Not a recognised time zone")
     .optional(),
+  /**
+   * The gym's own joining terms.
+   *
+   * An empty string clears the override and puts the platform default back,
+   * which is what a gym that changed its mind about the wording means — never
+   * "ask joining members to agree to nothing".
+   */
+  consentText: z.string().max(CONSENT_MAX_LENGTH).optional(),
   whatsappTemplates: z.object(whatsappTemplateShape).optional(),
 });
+
+/**
+ * A gym's own outgoing mailbox.
+ *
+ * Every field is optional so the form can save a changed port without
+ * re-sending a password it never received back. An empty `host` is the clear
+ * signal, matching how an empty `keyId` clears the payment gateway.
+ */
+export const updateTenantEmailSchema = z
+  .object({
+    host: z.string().trim().max(200).optional(),
+    port: z.coerce.number().int().min(1).max(65535).optional(),
+    /** Implicit TLS, which is port 465. Port 587 upgrades with STARTTLS. */
+    secure: z.boolean().optional(),
+    user: z.string().trim().max(200).optional(),
+    password: z.string().min(1).max(400).optional(),
+    /**
+     * The From header. Accepts a bare address or a display name with one, which
+     * is what every gym will paste. Empty clears it back to the username.
+     */
+    from: z.string().trim().max(200).optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field is required.",
+  });
+
+export type UpdateTenantEmailInput = z.infer<typeof updateTenantEmailSchema>;
 
 export const createChargeSchema = z.object({
   name: z.string().min(2).max(120),

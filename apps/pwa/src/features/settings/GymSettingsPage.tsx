@@ -34,6 +34,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ReadAloudButton } from "@/components/ui/read-aloud-button";
+import { CONSENT_MAX_LENGTH, DEFAULT_CONSENT_TEXT } from "@fitconnect/shared/consent";
 import {
   Settings,
   Plus,
@@ -57,6 +59,7 @@ import { cn } from "@/lib/utils";
 import { useSearchParams } from "react-router-dom";
 import { FormPageSkeleton } from "@/components/ui/skeleton";
 import PaymentGatewayCard from "./PaymentGatewayCard";
+import EmailSenderCard from "./EmailSenderCard";
 
 /** The sections, in the order somebody is likely to want them. */
 const TABS = [
@@ -146,6 +149,9 @@ export default function GymSettingsPage() {
   // The zone the gym reads its own hours in. Storage stays UTC; this decides
   // what a report calls "today" and "6am".
   const [timezone, setTimezone] = React.useState("Asia/Kolkata");
+  // The gym's joining terms. Seeded from the resolved value, so a gym that
+  // has never written its own starts from the default rather than a blank box.
+  const [consentText, setConsentText] = React.useState("");
   // Zero means referral rewards are off, which is the default for a gym
   // that has never set them.
   const [referralRewardCoins, setReferralRewardCoins] = React.useState(0);
@@ -173,6 +179,7 @@ export default function GymSettingsPage() {
     if (settingsQuery.data) {
       setOverdueDays(settingsQuery.data.overdueDays);
       setTimezone(settingsQuery.data.timezone ?? "Asia/Kolkata");
+      setConsentText(settingsQuery.data.consentText ?? "");
       setReferralRewardCoins(settingsQuery.data.referralRewardCoins ?? 0);
       setReferralRefereeCoins(settingsQuery.data.referralRefereeCoins ?? 0);
     }
@@ -187,11 +194,13 @@ export default function GymSettingsPage() {
       const settings = await updateSettings.mutateAsync({
         overdueDays,
         timezone,
+        consentText,
         referralRewardCoins,
         referralRefereeCoins,
       });
       setOverdueDays(settings.overdueDays);
       setTimezone(settings.timezone ?? "Asia/Kolkata");
+      setConsentText(settings.consentText ?? "");
       setReferralRewardCoins(settings.referralRewardCoins ?? 0);
       setReferralRefereeCoins(settings.referralRefereeCoins ?? 0);
       setSuccessMsg("Settings saved successfully.");
@@ -475,6 +484,41 @@ export default function GymSettingsPage() {
                   </p>
                 </div>
               </div>
+
+              {/* Full width, below the grid: this is the only field on the
+                  page somebody actually writes prose into, and it reads badly
+                  in a half-width column next to a number input. */}
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Label htmlFor="consentText">Joining terms</Label>
+                  <ReadAloudButton text={consentText} label="Hear it" />
+                </div>
+                <Textarea
+                  id="consentText"
+                  rows={8}
+                  maxLength={CONSENT_MAX_LENGTH}
+                  value={consentText}
+                  onChange={(e) => setConsentText(e.target.value)}
+                  placeholder={DEFAULT_CONSENT_TEXT}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Shown to anyone joining, on the signup form and at the desk, with a box they
+                  must tick before the membership is created. What each member accepted is stored
+                  with their record as it was worded that day, so editing this never changes what
+                  somebody already agreed to.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Blank line between paragraphs. Members can have it read aloud. The wording the
+                  platform supplies is a starting point, not legal advice — put your own terms
+                  here, checked by someone qualified to check them.
+                </p>
+                {consentText.trim().length === 0 && (
+                  <p className="text-xs text-amber-600">
+                    Empty, so joining members are shown the platform's default wording.
+                  </p>
+                )}
+              </div>
+
               <Button type="submit" disabled={saving}>
                 {saving ? "Saving..." : "Save settings"}
               </Button>
@@ -761,6 +805,11 @@ export default function GymSettingsPage() {
             action="Manage messages"
             onClick={() => navigate("/settings/messages")}
           />
+
+          {/* WhatsApp is a link out because the templates are their own screen;
+              email is a form because it is one set of credentials. Both are
+              "how this gym reaches its members", so they sit together. */}
+          <EmailSenderCard />
         </div>
       )}
 

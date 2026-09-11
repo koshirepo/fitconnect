@@ -446,7 +446,9 @@ export const authService = {
     // Fire-and-forget keeps the endpoint latency predictable even if the SMTP
     // provider is slow or temporarily unavailable.
     const sendResetEmail = emailService
-      .sendPasswordResetEmail(user.email, user.name, resetUrl)
+      // From the gym the account belongs to, when that gym has its own mailbox.
+      // A platform user has no membership and falls back to the platform's.
+      .sendPasswordResetEmail(user.email, user.name, resetUrl, user.memberships[0]?.tenantId)
       .catch((err) => {
         log.error("auth.password_reset.email.failed", { error: err });
       });

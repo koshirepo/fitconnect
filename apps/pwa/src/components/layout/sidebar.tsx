@@ -186,7 +186,9 @@ const tenantNav: NavItem[] = [
     to: "/coins",
     label: "Coins",
     icon: Coins,
-    anyOf: [Permission.COUPONS_READ],
+    // The gym-wide figures, not a member's own balance — which is why this is
+    // not COUPONS_READ, a grant every member holds so they can browse offers.
+    anyOf: [Permission.COUPONS_ANALYTICS_READ],
   },
   {
     // The shop itself. Public, and the only place anybody buys anything.

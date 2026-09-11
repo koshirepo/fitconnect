@@ -37,6 +37,8 @@ import {
 } from "lucide-react";
 import { CardSkeleton } from "@/components/ui/skeleton";
 import MemberForm, { type MemberFormData } from "@/components/forms/MemberForm";
+import { ConsentNotice } from "@/components/ui/consent-notice";
+import { useTenantSettings } from "@/api/queries/catalog";
 
 export default function AddMemberPage() {
   const navigate = useAppNavigate();
@@ -52,6 +54,14 @@ export default function AddMemberPage() {
   // Step management: 1 = member details, 2 = subscription & charges
   const [step, setStep] = React.useState(1);
   const [memberData, setMemberData] = React.useState<MemberFormData | null>(null);
+
+  /**
+   * The desk confirming this member accepted the gym's terms, usually on the
+   * paper version. Required for a member, and not asked of a coach or an
+   * admin — a gym does not make its own staff sign a joining waiver.
+   */
+  const [consentAccepted, setConsentAccepted] = React.useState(false);
+  const [consentInvalid, setConsentInvalid] = React.useState(false);
 
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState("");
@@ -75,6 +85,9 @@ export default function AddMemberPage() {
   // Plans and charges are only needed once the form reaches step 2.
   const subscriptionsQuery = useSubscriptions(false, { enabled: step === 2 });
   const chargesQuery = useCharges({ enabled: step === 2 });
+  // The gym's own joining terms, shown at the desk so staff confirm against
+  // the same wording the member would have seen signing up themselves.
+  const settingsQuery = useTenantSettings({ enabled: step === 2 });
 
   const subscriptions = React.useMemo<Subscription[]>(
     () => subscriptionsQuery.data ?? [],
@@ -172,6 +185,9 @@ export default function AddMemberPage() {
 
   const payableTotal = Math.max(0, grandTotal - discount);
 
+  /** Staff roles are added, not admitted, so the box is only for members. */
+  const consentRequired = (memberData?.role ?? "MEMBER") === "MEMBER";
+
   const handleFinalSubmit = async () => {
     if (!currentTenantId || !memberData) return;
     setError("");
@@ -192,6 +208,7 @@ export default function AddMemberPage() {
         ...(memberData.referredByMembershipId
           ? { referredByMembershipId: memberData.referredByMembershipId }
           : {}),
+        ...(consentRequired ? { consentAccepted: true } : {}),
       };
 
       if (navigator.onLine) {
@@ -558,12 +575,31 @@ export default function AddMemberPage() {
                     </div>
                   )}
 
+                  {consentRequired && settingsQuery.data?.consentText && (
+                    <ConsentNotice
+                      className="mt-4"
+                      mode="staff"
+                      text={settingsQuery.data.consentText}
+                      checked={consentAccepted}
+                      invalid={consentInvalid}
+                      disabled={submitting}
+                      onChange={(next) => {
+                        setConsentAccepted(next);
+                        if (next) setConsentInvalid(false);
+                      }}
+                    />
+                  )}
+
                   <div className="mt-4 flex gap-3">
                     <Button variant="outline" onClick={() => setStep(1)}>
                       <ArrowLeft className="mr-1 h-4 w-4" />
                       Back
                     </Button>
-                    <Button onClick={handleFinalSubmit} disabled={submitting} className="flex-1">
+                    <Button
+                      onClick={handleFinalSubmit}
+                      disabled={submitting || (consentRequired && !consentAccepted)}
+                      className="flex-1"
+                    >
                       {submitting ? (
                         "Adding Member..."
                       ) : (

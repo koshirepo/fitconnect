@@ -8,6 +8,26 @@
 import { prisma } from "../../lib/prisma";
 
 export const signupRepository = {
+  /**
+   * The gym's joining terms, for the public form and for the record written
+   * when somebody accepts them.
+   *
+   * Read raw and guarded, the same way the timezone is: the column arrives
+   * with migration 0050 and this app has shipped ahead of its migrations
+   * before. A gym whose database has not caught up should be asking for the
+   * default wording, not failing its whole signup form.
+   */
+  async getConsentText(tenantId: string): Promise<string | null> {
+    try {
+      const rows = await prisma.$queryRaw<{ consentText: string | null }[]>`
+        SELECT "consentText" FROM "TenantSettings" WHERE "tenantId" = ${tenantId} LIMIT 1
+      `;
+      return rows[0]?.consentText ?? null;
+    } catch {
+      return null;
+    }
+  },
+
   /** The gym a visitor is standing in front of, by its subdomain slug. */
   findActiveTenantBySlug(slug: string) {
     return prisma.tenant.findFirst({

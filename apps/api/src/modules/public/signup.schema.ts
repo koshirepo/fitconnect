@@ -73,6 +73,20 @@ export const selfSignupSchema = z.object({
    * client keeps the behaviour it has always had.
    */
   paymentMode: z.enum(["ONLINE", "COUNTER"]).default("ONLINE"),
+  /**
+   * That the joining member accepted the gym's terms.
+   *
+   * `literal(true)` rather than a boolean: there is no such thing as a signup
+   * that declined, so `false` and "absent" are the same refusal and both have
+   * to fail here rather than write a membership with an empty consent record.
+   *
+   * Only the fact travels. The wording is read from the gym's settings on the
+   * server, so a crafted request cannot file a membership against terms the
+   * gym never published.
+   */
+  consentAccepted: z.literal(true, {
+    message: "The gym's terms have to be accepted to join.",
+  }),
 });
 
 /**

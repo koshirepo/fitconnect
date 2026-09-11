@@ -43,14 +43,14 @@ couponRoutes.post(
 couponRoutes.get(
   "/:tenantId/coupons/analytics",
   authenticate,
-  requireTenantPermissions(Permission.COUPONS_READ),
+  requireTenantPermissions(Permission.COUPONS_ANALYTICS_READ),
   couponController.couponOverview,
 );
 
 couponRoutes.get(
   "/:tenantId/coupons/activity",
   authenticate,
-  requireTenantPermissions(Permission.COUPONS_READ),
+  requireTenantPermissions(Permission.COUPONS_ANALYTICS_READ),
   couponController.couponActivity,
 );
 
@@ -59,21 +59,21 @@ couponRoutes.get(
 couponRoutes.get(
   "/:tenantId/coins/overview",
   authenticate,
-  requireTenantPermissions(Permission.COUPONS_READ),
+  requireTenantPermissions(Permission.COUPONS_ANALYTICS_READ),
   couponController.coinOverview,
 );
 
 couponRoutes.get(
   "/:tenantId/coins/holders",
   authenticate,
-  requireTenantPermissions(Permission.COUPONS_READ),
+  requireTenantPermissions(Permission.COUPONS_ANALYTICS_READ),
   couponController.coinHolders,
 );
 
 couponRoutes.get(
   "/:tenantId/coins/activity",
   authenticate,
-  requireTenantPermissions(Permission.COUPONS_READ),
+  requireTenantPermissions(Permission.COUPONS_ANALYTICS_READ),
   couponController.coinActivity,
 );
 

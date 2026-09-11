@@ -21,6 +21,7 @@ import type {
   UpdateBadgePayload,
   UpdateShiftPayload,
   UpdateTenantChargePayload,
+  UpdateTenantEmailPayload,
   UpdateTenantSettingsPayload,
   UpdateTodoPayload,
   UpdateWorkoutPlanPayload,
@@ -299,6 +300,34 @@ export function useTenantSettings(options: { enabled?: boolean } = {}) {
     async (tenantId) => unwrap(await settingsApi.getSettings(tenantId)).settings,
     options,
   );
+}
+
+/**
+ * The gym's own outgoing mailbox, and whether it is using one.
+ *
+ * Gated by the caller rather than here, the same way the gateway card gates
+ * itself: somebody without the permission should see no card, not a card that
+ * fetches and fails.
+ */
+export function useTenantEmail(options: { enabled?: boolean } = {}) {
+  return useTenantQuery(
+    (tenantId) => queryKeys.settings.email(tenantId),
+    async (tenantId) => unwrap(await settingsApi.getEmail(tenantId)).email,
+    options,
+  );
+}
+
+export function useUpdateTenantEmail() {
+  const tenantId = useCurrentTenantId();
+  return useTenantMutation(
+    async (id, payload: UpdateTenantEmailPayload) => unwrap(await settingsApi.updateEmail(id, payload)),
+    { invalidates: [queryKeys.settings.email(tenantId ?? "none")] },
+  );
+}
+
+/** Proves the mailbox answers. Changes nothing, so it invalidates nothing. */
+export function useTestTenantEmail() {
+  return useTenantMutation(async (id) => unwrap(await settingsApi.testEmail(id)));
 }
 
 export function useUpdateTenantSettings() {

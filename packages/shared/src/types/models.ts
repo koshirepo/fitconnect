@@ -311,6 +311,15 @@ export interface AddMemberPayload {
   couponCode?: string;
   shiftId?: string;
   referredByMembershipId?: string;
+  /**
+   * That the person at the desk confirmed this member accepted the gym's
+   * terms — usually on the paper version.
+   *
+   * Optional, unlike the public form: this endpoint also creates coaches and
+   * admins, and is used by imports where there is nobody to ask. Omitted
+   * simply records no consent rather than refusing the admission.
+   */
+  consentAccepted?: boolean;
 }
 
 export interface UpdateProfilePayload {
@@ -544,6 +553,44 @@ export interface Payment {
  * it in the browser — and the two `has*` flags say only whether a secret is on
  * file, never what it is.
  */
+/**
+ * Which mailbox a gym's transactional email leaves from.
+ *
+ * The same arrangement as the payment gateway below: a gym that saves its own
+ * SMTP credentials sends from its own address, and one that has not falls back
+ * to the platform's. The password is never part of this — `passwordSet` says
+ * whether one is on file, and that is all a screen is told.
+ */
+export interface TenantEmailConfig {
+  /** Whether this gym can send at all, from either mailbox. */
+  enabled: boolean;
+  /** TENANT when the gym sends from its own, PLATFORM when it falls back. */
+  source: "TENANT" | "PLATFORM" | null;
+  /** The address members would actually see. */
+  sendingFrom: string | null;
+  host: string | null;
+  port: number | null;
+  /** Implicit TLS (port 465). Null when the gym has saved nothing. */
+  secure: boolean | null;
+  user: string | null;
+  /** The gym's own From header, if it set one. */
+  from: string | null;
+  passwordSet: boolean;
+  /** False when the API has no CREDENTIALS_KEY and so cannot seal a password. */
+  canStoreSecrets: boolean;
+}
+
+export interface UpdateTenantEmailPayload {
+  /** Empty string clears the gym's mailbox back to the platform's. */
+  host?: string;
+  port?: number;
+  secure?: boolean;
+  user?: string;
+  /** Only ever sent, never returned. Omit to leave the saved one alone. */
+  password?: string;
+  from?: string;
+}
+
 export interface PaymentGatewayConfig {
   provider: "RAZORPAY";
   /** Whether an online payment can be taken right now, from either account. */
@@ -612,6 +659,12 @@ export interface SignupOptions {
   occupations: OccupationSummary[];
   /** False when the gym takes no cards yet — the signup then ends at the desk. */
   onlinePaymentsEnabled: boolean;
+  /**
+   * The terms this gym asks a joining member to accept, already resolved to
+   * the gym's own wording or the platform default. Always present: accepting
+   * them is required to join.
+   */
+  consentText: string;
 }
 
 export interface SelfSignupPayload {
@@ -645,6 +698,15 @@ export interface SelfSignupPayload {
    * no Turnstile secret configured, in which case the API does not check it.
    */
   "cf-turnstile-response"?: string;
+  /**
+   * That the joining member accepted the gym's terms. Required, and required
+   * to be true — the API refuses anything else.
+   *
+   * Only the fact is sent. The wording recorded against the membership is read
+   * from the gym's settings server-side, so it is always what the gym actually
+   * published rather than whatever a request claimed.
+   */
+  consentAccepted: true;
 }
 
 /**
@@ -1280,6 +1342,12 @@ export interface WhatsAppTemplate {
 export interface TenantSettings {
   overdueDays: number;
   /**
+   * The terms a joining member must accept, resolved to the gym's own wording
+   * or the platform default. Saving an empty string clears the override and
+   * puts the default back.
+   */
+  consentText?: string;
+  /**
    * IANA zone the gym keeps its hours in, e.g. "Asia/Kolkata". Every stored
    * timestamp is UTC; this is what a report renders them in, so that "busiest
    * hour" names an hour the staff would recognise.
@@ -1301,6 +1369,7 @@ export interface TenantSettings {
 export interface UpdateTenantSettingsPayload {
   overdueDays?: number;
   timezone?: string;
+  consentText?: string;
   referralRewardCoins?: number;
   referralRefereeCoins?: number;
   whatsappTemplates?: Partial<Record<WhatsAppTemplateKey, string>>;

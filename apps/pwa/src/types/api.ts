@@ -114,6 +114,8 @@ export type {
   MarkAllAttendancePayload,
   // Payment gateway
   PaymentGatewayConfig,
+  TenantEmailConfig,
+  UpdateTenantEmailPayload,
   UpdateGatewayPayload,
   CheckoutSession,
   VerifyCheckoutPayload,

@@ -129,6 +129,7 @@ export const queryKeys = {
   settings: {
     detail: (tenantId: string) => ["settings", tenantId] as const,
     charges: (tenantId: string) => ["settings", tenantId, "charges"] as const,
+    email: (tenantId: string) => ["settings", tenantId, "email"] as const,
   },
   audit: {
     tenant: (tenantId: string, params?: unknown) =>

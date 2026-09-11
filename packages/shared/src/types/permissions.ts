@@ -93,7 +93,21 @@ export const Permission = {
   MEMBERS_FREEZE_SELF: "members:freeze:self",
 
   // Coupons
+  /**
+   * Browse the offers available to you, and read your own coin balance.
+   * Held by every member, which is why it must not gate anything gym-wide.
+   */
   COUPONS_READ: "coupons:read",
+  /**
+   * The gym's coins and coupons in aggregate: what has been issued, what is
+   * still owed, who holds it, and every transaction behind those figures.
+   *
+   * Separate from `COUPONS_READ` for the same reason `PAYMENTS_ANALYTICS_READ`
+   * is separate from `PAYMENTS_READ` — one is what a member needs to use the
+   * feature, the other is the gym's own books and the balances of everybody
+   * else in the building.
+   */
+  COUPONS_ANALYTICS_READ: "coupons:analytics:read",
   COUPONS_CREATE: "coupons:create",
   COUPONS_UPDATE: "coupons:update",
   COUPONS_DELETE: "coupons:delete",
@@ -129,6 +143,10 @@ export const Permission = {
   // Tenant settings and charges
   SETTINGS_READ: "settings:read",
   SETTINGS_UPDATE: "settings:update",
+  /** See which mail account the gym sends from. Never reveals the password. */
+  SETTINGS_EMAIL_READ: "settings:email:read",
+  /** Replace the gym's own SMTP credentials, or clear them to fall back. */
+  SETTINGS_EMAIL_UPDATE: "settings:email:update",
   CHARGES_READ: "charges:read",
   CHARGES_CREATE: "charges:create",
   CHARGES_UPDATE: "charges:update",
@@ -308,6 +326,7 @@ const ADMIN_PERMISSIONS: Permission[] = [
   Permission.PAYMENTS_ANALYTICS_READ,
   Permission.PAYMENTS_GATEWAY_READ,
   Permission.PAYMENTS_GATEWAY_UPDATE,
+  Permission.COUPONS_ANALYTICS_READ,
   Permission.SUBSCRIPTIONS_CREATE,
   Permission.SUBSCRIPTIONS_UPDATE,
   Permission.SUBSCRIPTIONS_DELETE,
@@ -317,6 +336,8 @@ const ADMIN_PERMISSIONS: Permission[] = [
   Permission.BADGES_DELETE,
   Permission.BADGES_ASSIGN_RESTRICTED,
   Permission.SETTINGS_UPDATE,
+  Permission.SETTINGS_EMAIL_READ,
+  Permission.SETTINGS_EMAIL_UPDATE,
   Permission.CHARGES_CREATE,
   Permission.CHARGES_UPDATE,
   Permission.CHARGES_DELETE,
@@ -592,6 +613,7 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [Permission.PAYMENTS_CHECKOUT_SELF]: "Pay online for own membership",
   [Permission.PAYMENTS_GATEWAY_READ]: "View payment gateway setup",
   [Permission.PAYMENTS_GATEWAY_UPDATE]: "Change payment gateway keys",
+  [Permission.COUPONS_ANALYTICS_READ]: "View coin and coupon reports",
   [Permission.STORE_READ]: "Browse the gym store",
   [Permission.STORE_MANAGE]: "Manage store products and stock",
   [Permission.STORE_BUY_SELF]: "Buy from the gym store",
@@ -619,6 +641,8 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [Permission.TODOS_DELETE]: "Delete todos",
   [Permission.SETTINGS_READ]: "View gym settings",
   [Permission.SETTINGS_UPDATE]: "Edit gym settings",
+  [Permission.SETTINGS_EMAIL_READ]: "View email sending setup",
+  [Permission.SETTINGS_EMAIL_UPDATE]: "Change email sending credentials",
   [Permission.CHARGES_READ]: "View extra charges",
   [Permission.CHARGES_CREATE]: "Create extra charges",
   [Permission.CHARGES_UPDATE]: "Edit extra charges",
