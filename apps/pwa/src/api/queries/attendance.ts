@@ -74,6 +74,35 @@ export function useAttendanceCalendar(month: string, options: { enabled?: boolea
   );
 }
 
+/**
+ * Members who have stopped coming, at the chosen absence threshold.
+ *
+ * Kept a little stale on purpose: absence changes at most once a day, and the
+ * list is worked down over a morning rather than watched, so refetching it on
+ * every window focus would only cost the gym's largest table a scan.
+ */
+export function useAtRiskMembers(days: number, options: { enabled?: boolean } = {}) {
+  return useTenantQuery(
+    (tenantId) => queryKeys.attendance.atRisk(tenantId, days),
+    async (tenantId) => unwrap(await attendanceApi.atRisk(tenantId, days)),
+    { staleTime: 5 * 60_000, ...options },
+  );
+}
+
+/**
+ * Busy hours across the week.
+ *
+ * Held stale for longer than the at-risk list: it averages weeks of visits, so
+ * one more check-in cannot move it enough to be worth refetching for.
+ */
+export function useAttendanceHeatmap(weeks: number, options: { enabled?: boolean } = {}) {
+  return useTenantQuery(
+    (tenantId) => queryKeys.attendance.heatmap(tenantId, weeks),
+    async (tenantId) => unwrap(await attendanceApi.heatmap(tenantId, weeks)),
+    { staleTime: 15 * 60_000, ...options },
+  );
+}
+
 export function useMemberAttendanceCalendar(
   membershipId: string | undefined,
   month: string,

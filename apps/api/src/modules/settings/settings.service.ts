@@ -14,8 +14,12 @@ import type {
 import { getWhatsAppTemplates } from "@fitconnect/shared/whatsapp-templates";
 import { gatewayService } from "../payments/gateway.service";
 
+/** Where a gym is, when it has not said. Matches the column default. */
+const DEFAULT_TIMEZONE = "Asia/Kolkata";
+
 const DEFAULT_SETTINGS = {
   overdueDays: 30,
+  timezone: DEFAULT_TIMEZONE,
   referralRewardCoins: 0,
   referralRefereeCoins: 0,
   whatsappTemplates: getWhatsAppTemplates(),
@@ -40,6 +44,7 @@ export const settingsService = {
           ...(settings
             ? {
                 overdueDays: settings.overdueDays,
+                timezone: settings.timezone ?? DEFAULT_TIMEZONE,
                 referralRewardCoins: settings.referralRewardCoins,
                 referralRefereeCoins: settings.referralRefereeCoins,
                 whatsappTemplates: getWhatsAppTemplates(settings.whatsappTemplates),
@@ -72,6 +77,7 @@ export const settingsService = {
 
     const data: Record<string, unknown> = {};
     if (input.overdueDays !== undefined) data.overdueDays = input.overdueDays;
+    if (input.timezone !== undefined) data.timezone = input.timezone;
     if (input.referralRewardCoins !== undefined)
       data.referralRewardCoins = input.referralRewardCoins;
     if (input.referralRefereeCoins !== undefined)
@@ -85,6 +91,7 @@ export const settingsService = {
       data: {
         settings: {
           overdueDays: settings.overdueDays,
+          timezone: settings.timezone ?? DEFAULT_TIMEZONE,
           // Returned as well as saved: the settings screen seeds its inputs
           // from this response, and omitting them blanked the fields.
           referralRewardCoins: settings.referralRewardCoins ?? 0,

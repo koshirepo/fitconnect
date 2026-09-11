@@ -356,6 +356,13 @@ model TenantSettings {
   overdueDays       Int    @default(30) /// Days after subscription expiry to auto-inactivate member
   whatsappTemplates Json   @default("{}") /// Tenant-level WhatsApp template overrides keyed by message purpose
 
+  /// IANA zone the gym keeps its hours in. Storage stays UTC; this is what
+  /// turns an instant into "6am", which is the only form a staffing or
+  /// drop-off report can be read in. Distinct from AttendanceDevice.timezone,
+  /// which exists to interpret what a reader meant by its own wall clock — a
+  /// gym with no reader still has opening hours.
+  timezone          String @default("Asia/Kolkata")
+
   /// Coins the referrer earns when the member they brought in first pays for a
   /// subscription. Zero turns referral rewards off.
   referralRewardCoins  Int @default(0)
@@ -625,7 +632,12 @@ model PaymentReminder {
   /// PUSH or WHATSAPP. WhatsApp is recorded at the moment staff open the
   /// message; the app cannot know whether it was then sent or read.
   channel         String
-  /// Why it went out: RENEWAL_DUE, EXPIRED, PENDING_PAYMENT, or SUSPENDED.
+  /// Why it went out: RENEWAL_DUE, EXPIRED, PENDING_PAYMENT, SUSPENDED, or
+  /// ATTENDANCE_LAPSE — the one chase that is not about money yet, sent to
+  /// somebody who has stopped turning up while their term still has time on it.
+  /// It is recorded here with the rest because the thing staff need to know
+  /// before picking up the phone is the same either way: has anyone already
+  /// reached out this week.
   reason          String
   /// The message as it went out, for the history to show something concrete.
   message         String?

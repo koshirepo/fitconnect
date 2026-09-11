@@ -106,6 +106,10 @@ export type {
   // Attendance
   AttendanceRecord,
   AttendanceSummary,
+  AtRiskMember,
+  AtRiskSummary,
+  AttendanceHeatmap,
+  AttendanceHeatmapSummary,
   MarkAttendancePayload,
   MarkAllAttendancePayload,
   // Payment gateway

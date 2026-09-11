@@ -96,6 +96,10 @@ export const queryKeys = {
       ["attendance", tenantId, "member", membershipId] as const,
     calendar: (tenantId: string, month: string) =>
       ["attendance", tenantId, "calendar", month] as const,
+    atRisk: (tenantId: string, days: number) =>
+      ["attendance", tenantId, "at-risk", days] as const,
+    heatmap: (tenantId: string, weeks: number) =>
+      ["attendance", tenantId, "heatmap", weeks] as const,
   },
   workouts: {
     list: (tenantId: string) => ["workouts", tenantId] as const,

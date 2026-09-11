@@ -52,6 +52,8 @@ import {
   Clock3,
   Radio,
 } from "lucide-react";
+import { AtRiskPanel } from "./AtRiskPanel";
+import { AttendanceHeatmap } from "./AttendanceHeatmap";
 import type { AttendanceRecord } from "@/types/api";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -97,6 +99,13 @@ export default function AttendancePage() {
 
   // Bulk marking state
   const [showBulk, setShowBulk] = React.useState(false);
+
+  /**
+   * Which question this page is answering: who came today, or who has stopped
+   * coming at all. Two views of one table rather than two screens, because the
+   * second is only ever asked by somebody already looking at the first.
+   */
+  const [view, setView] = React.useState<"register" | "at-risk" | "hours">("register");
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = React.useState(false);
   const [memberSearch, setMemberSearch] = React.useState("");
@@ -341,8 +350,37 @@ export default function AttendancePage() {
         }
       />
 
-      {/* Date Picker */}
+      {/* Two views of the register, and the one nobody has been shown before
+          needs a count on it — "At risk" alone reads as a section that might be
+          empty, which is the one thing that would stop it being opened. */}
       {isStaff && (
+        <div className="flex gap-2 border-b">
+          {(
+            [
+              ["register", "Register"],
+              ["at-risk", "At risk"],
+              ["hours", "Busy hours"],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setView(key)}
+              className={cn(
+                "-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+                view === key
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Date Picker */}
+      {isStaff && view === "register" && (
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
           <Button variant="ghost" size="sm" onClick={() => shiftDate(-1)}>
             <ChevronLeft className="h-4 w-4" />
@@ -366,7 +404,7 @@ export default function AttendancePage() {
         <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">{error}</div>
       )}
 
-      {isStaff && qrUrl && (
+      {isStaff && view === "register" && qrUrl && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -525,8 +563,12 @@ export default function AttendancePage() {
         </Dialog>
       )}
 
+      {isStaff && view === "at-risk" && <AtRiskPanel />}
+
+      {isStaff && view === "hours" && <AttendanceHeatmap />}
+
       {/* Attendance List */}
-      {isStaff && (
+      {isStaff && view === "register" && (
         <>
           {loading ? (
             <div className="space-y-3">

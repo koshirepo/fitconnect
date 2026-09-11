@@ -10,7 +10,9 @@ import { z } from "zod";
 export const logReminderSchema = z.object({
   /** Only channels a person drives by hand; the cron writes its own rows. */
   channel: z.enum(["WHATSAPP"]).default("WHATSAPP"),
-  reason: z.enum(["RENEWAL_DUE", "EXPIRED", "PENDING_PAYMENT"]).default("PENDING_PAYMENT"),
+  reason: z
+    .enum(["RENEWAL_DUE", "EXPIRED", "PENDING_PAYMENT", "ATTENDANCE_LAPSE"])
+    .default("PENDING_PAYMENT"),
   message: z.string().trim().max(2000).optional(),
   /** The pending payment this message was chasing, when it was chasing one. */
   targetPaymentId: z.string().trim().optional(),

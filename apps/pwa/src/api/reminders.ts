@@ -9,7 +9,12 @@ import { api } from "./client";
 import type { ApiResponse } from "@/types/api";
 
 export type ReminderChannel = "PUSH" | "WHATSAPP";
-export type ReminderReason = "RENEWAL_DUE" | "EXPIRED" | "PENDING_PAYMENT" | "SUSPENDED";
+export type ReminderReason =
+  | "RENEWAL_DUE"
+  | "EXPIRED"
+  | "PENDING_PAYMENT"
+  | "SUSPENDED"
+  | "ATTENDANCE_LAPSE";
 
 export type PaymentReminder = {
   id: string;

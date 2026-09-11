@@ -13,6 +13,8 @@ import { parseBody } from "../../lib/http";
 import { parsePagination } from "../../lib/pagination";
 import { ok, okMessage, okPaginated, notFound, badRequest, failWith } from "../../lib/response";
 import {
+  atRiskQuerySchema,
+  heatmapQuerySchema,
   markAttendanceSchema,
   markAllAttendanceSchema,
   qrAttendanceSchema,
@@ -209,6 +211,37 @@ export const attendanceController = {
 
     const result = await attendanceService.summary(tenantId, membershipId, user.id, canReadAll);
     if ("error" in result) return failWith(c, result);
+    return ok(c, result.data);
+  },
+
+  /** GET /:tenantId/attendance/at-risk?days=21 — members who stopped coming */
+  async atRisk(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    const parsed = atRiskQuerySchema.safeParse({ days: c.req.query("days") ?? undefined });
+    if (!parsed.success) {
+      return badRequest(c, parsed.error.issues[0]?.message ?? "Invalid days");
+    }
+
+    const result = await attendanceService.atRisk(tenantId, parsed.data.days);
+    // Absence moves once a day at most, and this is a list staff work down
+    // rather than watch. A minute of cache costs nothing and spares the gym's
+    // largest table a scan per tab switch.
+    c.header("Cache-Control", "private, max-age=60");
+    return ok(c, result.data);
+  },
+
+  /** GET /:tenantId/attendance/heatmap?weeks=4 — busy hours across the week */
+  async heatmap(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+    const parsed = heatmapQuerySchema.safeParse({ weeks: c.req.query("weeks") ?? undefined });
+    if (!parsed.success) {
+      return badRequest(c, parsed.error.issues[0]?.message ?? "Invalid weeks");
+    }
+
+    const result = await attendanceService.heatmap(tenantId, parsed.data.weeks);
+    // A month of visits does not change shape between two tab switches, and
+    // this is the most expensive read on the page.
+    c.header("Cache-Control", "private, max-age=300");
     return ok(c, result.data);
   },
 

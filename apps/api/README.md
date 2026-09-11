@@ -118,6 +118,21 @@ pnpm run dev
 - `pnpm run seed:local`: rebuild and seed the local database
 - `pnpm run seed:remote`: migrate and seed the configured remote database
 - `pnpm run seed:remote:sql`: print the generated remote seed SQL without executing it
+- `pnpm run seed:attendance -- --tenant <slug> [--weeks 8]`: overlay realistic
+  check-ins on one gym — a morning and an evening rush, quiet middays, lighter
+  weekends, and members who drift away. The main seeder spreads attendance
+  evenly across the clock, which is fine for a register and leaves the busy-hours
+  chart flat and the at-risk list empty. Writes only rows prefixed `attseed_`
+  and clears that prefix first, so re-running resets its own data and leaves
+  every other check-in alone.
+- `pnpm run seed:freezes -- --tenant <slug> [--reset]`: turn on freeze budgets
+  for the gym's plans and write one freeze in each state the card distinguishes
+  — running today, booked for later, ended early with days returned, and run to
+  completion. Seeded plans ship with `freezeDays = 0`, which switches freezing
+  off entirely, so without this the freeze card renders nothing and the feature
+  looks unimplemented. Re-running gives back the days it charged before
+  recharging them, so terms do not drift. `--reset` also clears freezes it did
+  not write (destructive — real gyms' members arranged those).
 
 ## Environment And Bindings
 

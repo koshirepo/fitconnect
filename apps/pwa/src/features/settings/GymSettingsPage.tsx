@@ -143,6 +143,9 @@ export default function GymSettingsPage() {
 
   // Settings form
   const [overdueDays, setOverdueDays] = React.useState(30);
+  // The zone the gym reads its own hours in. Storage stays UTC; this decides
+  // what a report calls "today" and "6am".
+  const [timezone, setTimezone] = React.useState("Asia/Kolkata");
   // Zero means referral rewards are off, which is the default for a gym
   // that has never set them.
   const [referralRewardCoins, setReferralRewardCoins] = React.useState(0);
@@ -169,6 +172,7 @@ export default function GymSettingsPage() {
   React.useEffect(() => {
     if (settingsQuery.data) {
       setOverdueDays(settingsQuery.data.overdueDays);
+      setTimezone(settingsQuery.data.timezone ?? "Asia/Kolkata");
       setReferralRewardCoins(settingsQuery.data.referralRewardCoins ?? 0);
       setReferralRefereeCoins(settingsQuery.data.referralRefereeCoins ?? 0);
     }
@@ -182,10 +186,12 @@ export default function GymSettingsPage() {
     try {
       const settings = await updateSettings.mutateAsync({
         overdueDays,
+        timezone,
         referralRewardCoins,
         referralRefereeCoins,
       });
       setOverdueDays(settings.overdueDays);
+      setTimezone(settings.timezone ?? "Asia/Kolkata");
       setReferralRewardCoins(settings.referralRewardCoins ?? 0);
       setReferralRefereeCoins(settings.referralRefereeCoins ?? 0);
       setSuccessMsg("Settings saved successfully.");
@@ -422,6 +428,21 @@ export default function GymSettingsPage() {
                   />
                   <p className="text-xs text-muted-foreground">
                     Days after a subscription expires before the member is made inactive.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="timezone">Time zone</Label>
+                  <Input
+                    id="timezone"
+                    type="text"
+                    value={timezone}
+                    onChange={(e) => setTimezone(e.target.value)}
+                    placeholder="Asia/Kolkata"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    The zone your gym keeps its hours in, so reports count days the way you do.
+                    Attendance machines keep their own zone separately.
                   </p>
                 </div>
 

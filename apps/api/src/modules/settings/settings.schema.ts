@@ -8,6 +8,16 @@
 import { z } from "zod";
 import { whatsappTemplateKeys } from "@fitconnect/shared/whatsapp-templates";
 
+/** Whether the runtime recognises a zone name, which is the only real test. */
+function isKnownTimeZone(value: string) {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const whatsappTemplateShape = Object.fromEntries(
   whatsappTemplateKeys.map((key) => [key, z.string().trim().min(1).max(4000).optional()]),
 ) as Record<string, z.ZodOptional<z.ZodString>>;
@@ -25,6 +35,19 @@ export const updateSettingsSchema = z.object({
   coinExpiryDays: z.number().int().min(0).max(1825).optional(),
   /** Coins the referred member earns at the same moment. 0 is none. */
   referralRefereeCoins: z.number().int().min(0).max(100000).optional(),
+  /**
+   * The gym's IANA zone, checked against the runtime's own zone table rather
+   * than a pattern. "Asia/Kolkata" and "Asia/Kolkatta" are both plausible
+   * strings; only one of them is a zone, and a typo here silently moves every
+   * report by hours rather than failing where somebody would notice.
+   */
+  timezone: z
+    .string()
+    .trim()
+    .min(1)
+    .max(64)
+    .refine(isKnownTimeZone, "Not a recognised time zone")
+    .optional(),
   whatsappTemplates: z.object(whatsappTemplateShape).optional(),
 });
 

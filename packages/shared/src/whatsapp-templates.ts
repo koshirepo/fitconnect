@@ -19,6 +19,7 @@ export const whatsappTemplateKeys = [
   "new_member_welcome",
   "birthday_greeting",
   "payment_reminder",
+  "attendance_nudge",
   "pending_payment_reminder",
   "payment_receipt",
   "salary_payment",
@@ -69,6 +70,19 @@ This is a friendly reminder from *{{gymName}}* that your subscription has expire
 Please renew your membership at the earliest to continue enjoying uninterrupted access to the gym.
 
 Thank you.`,
+  },
+  attendance_nudge: {
+    label: "Attendance Nudge",
+    description:
+      "Opened from the at-risk list, for a member who has stopped turning up while their membership is still running.",
+    variables: ["memberName", "gymName", "absentDays"],
+    defaultBody: `Hi {{memberName}},
+
+We have not seen you at *{{gymName}}* for {{absentDays}} days and wanted to check in.
+
+Is everything alright? If something is getting in the way — timings, an injury, or your routine — tell us and we will help you work around it.
+
+Hope to see you back soon.`,
   },
   pending_payment_reminder: {
     label: "Pending Payment Reminder",

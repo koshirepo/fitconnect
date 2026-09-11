@@ -298,6 +298,157 @@ export const attendanceRepository = {
     return records;
   },
 
+  /**
+   * The zone the gym keeps its hours in.
+   *
+   * Read raw and guarded rather than through the model, because the column
+   * arrives with migration 0049 and this app has shipped ahead of its
+   * migrations before — settings.repository carries the same kind of guard for
+   * the same reason. A gym whose database has not caught up should get a report
+   * in the default zone, not a 500.
+   */
+  async getTenantTimezone(tenantId: string): Promise<{ timezone: string } | null> {
+    try {
+      const rows = await prisma.$queryRaw<{ timezone: string | null }[]>`
+        SELECT "timezone" FROM "TenantSettings" WHERE "tenantId" = ${tenantId} LIMIT 1
+      `;
+      const timezone = rows[0]?.timezone;
+      return timezone ? { timezone } : null;
+    } catch {
+      return null;
+    }
+  },
+
+  /**
+   * Members who have stopped coming, with the date they last did.
+   *
+   * One grouped statement rather than a read of every check-in: the answer is a
+   * single row per member and the table it comes from is the largest in the
+   * gym, so folding it in SQL is the difference between a handful of rows and a
+   * year of visits crossing the wire to be reduced in memory.
+   *
+   * A LEFT JOIN rather than an inner one, because the member who joined in
+   * March and never came back is the most at-risk person in the building and an
+   * inner join is exactly the shape that hides them.
+   *
+   * Three exclusions, each of which would otherwise fill the list with people
+   * staff cannot act on:
+   *
+   * - Anyone on an open freeze. Their absence was arranged with the desk; the
+   *   gym already knows and calling them looks like it does not.
+   * - Anyone who joined inside the window. A member of nine days cannot be
+   *   twenty-one days absent, and reporting them as such teaches staff to
+   *   distrust the list.
+   * - Anyone not ACTIVE, who is a different conversation than this one.
+   * - Staff. An admin or a coach holds a membership row like everybody else,
+   *   and most gyms never make them check in — so without this the top of the
+   *   list is the gym's own employees, reported as never having attended. A
+   *   list that opens with three false alarms does not get opened again.
+   */
+  async listAtRisk(tenantId: string, absentSince: Date, joinedBefore: Date) {
+    return prisma.$queryRaw<
+      {
+        membershipId: string;
+        memberId: number | bigint;
+        name: string;
+        phone: string | null;
+        avatarUrl: string | null;
+        // The adapter maps date columns back to `Date` before this returns —
+        // the `MAX()` included, which looks like it should stay text and does
+        // not. Typed loosely and normalised in the service, because that
+        // mapping is the adapter's decision to change, not a contract.
+        dueDate: Date | string | null;
+        joinedAt: Date | string;
+        lastVisitOn: Date | string | null;
+        lastNudgedAt: Date | string | null;
+      }[]
+    >`
+      SELECT
+        m."id"          AS membershipId,
+        m."memberId"    AS memberId,
+        u."name"        AS name,
+        u."phone"       AS phone,
+        u."avatarUrl"   AS avatarUrl,
+        m."dueDate"     AS dueDate,
+        m."joinedAt"    AS joinedAt,
+        MAX(a."date")   AS lastVisitOn,
+        -- When somebody last reached out about this same absence. Without it
+        -- three people at the desk message the same member on the same
+        -- morning, which reads to the member as a gym that is not paying
+        -- attention rather than one that is.
+        (
+          SELECT MAX(r."sentAt")
+          FROM "PaymentReminder" r
+          WHERE r."membershipId" = m."id" AND r."reason" = 'ATTENDANCE_LAPSE'
+        )               AS lastNudgedAt
+      FROM "TenantMembership" m
+      JOIN "User" u ON u."id" = m."userId"
+      LEFT JOIN "Attendance" a ON a."membershipId" = m."id"
+      WHERE m."tenantId" = ${tenantId}
+        AND m."status" = 'ACTIVE'
+        AND m."role" = 'MEMBER'
+        AND m."joinedAt" < ${joinedBefore}
+        AND NOT EXISTS (
+          SELECT 1 FROM "MembershipFreeze" f
+          WHERE f."membershipId" = m."id" AND f."endedOn" IS NULL
+        )
+      GROUP BY m."id"
+      HAVING lastVisitOn IS NULL OR lastVisitOn < ${absentSince}
+      ORDER BY lastVisitOn ASC
+    `;
+  },
+
+  /**
+   * When people actually walked in, counted per quarter-hour of UTC.
+   *
+   * Only self check-ins — `markedById IS NULL` — which is the whole reason this
+   * is a separate read rather than a `GROUP BY` over the register. A staff mark
+   * stamps `checkInAt` with the moment somebody pressed the button at the desk,
+   * not the moment the member arrived; the seed database has a visit marked at
+   * 23:15 local for exactly that reason. Feed those into an hourly chart and
+   * the gym grows a late-night rush it does not have.
+   *
+   * Aggregated in SQL to a fixed grid rather than read row by row: the result
+   * is at most a few thousand buckets whatever the size of the gym, where the
+   * rows behind it grow forever.
+   */
+  listCheckInBuckets(tenantId: string, from: Date, to: Date) {
+    return prisma.$queryRaw<
+      { hourKey: string; quarter: number | bigint; visits: number | bigint }[]
+    >`
+      SELECT
+        substr("checkInAt", 1, 13) AS hourKey,
+        CAST(substr("checkInAt", 15, 2) AS INTEGER) / 15 AS quarter,
+        COUNT(*) AS visits
+      FROM "Attendance"
+      WHERE "tenantId" = ${tenantId}
+        AND "markedById" IS NULL
+        AND "checkInAt" >= ${from}
+        AND "checkInAt" < ${to}
+      GROUP BY hourKey, quarter
+    `;
+  },
+
+  /**
+   * Visits in the same window that a member of staff recorded by hand.
+   *
+   * Reported alongside the chart rather than dropped silently. A gym that marks
+   * everybody at the desk gets an empty heatmap, and without this number the
+   * screen cannot tell them why — it would look like nobody came.
+   */
+  countManualMarks(tenantId: string, from: Date, to: Date) {
+    return prisma.attendance.count({
+      where: { tenantId, markedById: { not: null }, checkInAt: { gte: from, lt: to } },
+    });
+  },
+
+  /** Members whose term is paused right now, and so are absent on purpose. */
+  countActiveFreezes(tenantId: string) {
+    return prisma.membershipFreeze.count({
+      where: { tenantId, endedOn: null },
+    });
+  },
+
   /** Daily attendance dates for a single member in a month */
   async memberMonthlyDates(tenantId: string, membershipId: string, from: Date, to: Date) {
     const records = await prisma.attendance.findMany({

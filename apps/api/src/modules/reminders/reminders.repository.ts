@@ -16,8 +16,18 @@ export type ReminderChannel = "PUSH" | "WHATSAPP";
  * `RENEWAL_DUE` is the countdown before a term ends, `EXPIRED` is after it has,
  * `PENDING_PAYMENT` chases an unpaid row, and `SUSPENDED` is the last message a
  * member gets as their membership is deactivated.
+ *
+ * `ATTENDANCE_LAPSE` is the one that is not about money: somebody who has
+ * stopped turning up while their term still has time left on it. It is filed
+ * with the rest because the question staff ask before reaching out is the same
+ * whatever the reason — has anybody already contacted this member this week.
  */
-export type ReminderReason = "RENEWAL_DUE" | "EXPIRED" | "PENDING_PAYMENT" | "SUSPENDED";
+export type ReminderReason =
+  | "RENEWAL_DUE"
+  | "EXPIRED"
+  | "PENDING_PAYMENT"
+  | "SUSPENDED"
+  | "ATTENDANCE_LAPSE";
 
 export const reminderRepository = {
   /** Record one reminder. Never throws away the send it describes. */

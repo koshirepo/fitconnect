@@ -7,6 +7,8 @@
  */
 import { attendanceRepository } from "./attendance.repository";
 import { freezeService } from "../freezes/freezes.service";
+import { daysBetween, toDay, toDayString, zoneDayStart, zoneToday } from "../../lib/timezone";
+import { buildHeatmapGrid } from "./attendance.heatmap";
 import type {
   MarkAttendanceInput,
   MarkAllAttendanceInput,
@@ -22,6 +24,14 @@ function toDateOnly(dateStr?: string): Date {
   const now = new Date();
   return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 }
+
+/**
+ * Where a gym is, when it has not said.
+ *
+ * Matches the column default and the zone every reader ships with, so a gym
+ * that never opened the settings screen reads the same as one that did.
+ */
+const DEFAULT_TIMEZONE = "Asia/Kolkata";
 
 /** A refusal from any check-in path, carrying the status the route should send. */
 export type CheckInFailure = { error: string; status: 400 | 403 | 404 };
@@ -433,6 +443,132 @@ export const attendanceService = {
         month,
         dates: dates.map((d) => d.toISOString().slice(0, 10)),
         total: dates.length,
+      },
+    };
+  },
+
+  /**
+   * Members who have stopped coming while their membership is still running.
+   *
+   * The gym already gets told when money is due. Nobody is told when somebody
+   * quietly stops turning up, which happens weeks earlier and is the thing that
+   * decides whether the renewal gets paid at all. This is that list.
+   *
+   * Counted in the gym's own days, not UTC ones: at 04:00 in India the UTC day
+   * is still yesterday, so a UTC-based threshold would report every absence one
+   * day short for the first five and a half hours of every morning.
+   *
+   * `dueDate` rides along because absence alone does not say how urgent
+   * somebody is. Absent three weeks with a renewal on Friday is today's phone
+   * call; the same absence with eight months paid up is a different one.
+   */
+  async atRisk(tenantId: string, thresholdDays: number) {
+    const settings = await attendanceRepository.getTenantTimezone(tenantId);
+    const timezone = settings?.timezone ?? DEFAULT_TIMEZONE;
+
+    const today = zoneToday(timezone);
+    const absentSince = new Date(today);
+    absentSince.setUTCDate(absentSince.getUTCDate() - thresholdDays);
+
+    const [rows, frozen] = await Promise.all([
+      attendanceRepository.listAtRisk(tenantId, absentSince, absentSince),
+      attendanceRepository.countActiveFreezes(tenantId),
+    ]);
+
+    const members = rows.map((row) => {
+      // The driver decides the shape it hands dates back in and does not hand
+      // every column back in the same one — `toDayString` is what makes that
+      // not this layer's problem. `memberId` gets `Number` for the same class
+      // of reason: an integer column can arrive as a bigint, which serialises
+      // to nothing at all.
+      const lastVisit = toDay(row.lastVisitOn);
+      const due = toDay(row.dueDate);
+
+      return {
+        membershipId: row.membershipId,
+        memberId: Number(row.memberId),
+        name: row.name,
+        phone: row.phone,
+        avatarUrl: row.avatarUrl,
+        lastVisitOn: toDayString(row.lastVisitOn),
+        absentDays: lastVisit ? daysBetween(lastVisit, today) : null,
+        dueDate: toDayString(row.dueDate),
+        daysToDue: due ? daysBetween(today, due) : null,
+        joinedAt: toDayString(row.joinedAt),
+        lastNudgedOn: toDayString(row.lastNudgedAt),
+      };
+    });
+
+    return {
+      data: {
+        members,
+        summary: {
+          thresholdDays,
+          total: members.length,
+          // The subset worth calling first: still absent, and the money is
+          // about to be decided one way or the other.
+          dueSoon: members.filter((m) => m.daysToDue !== null && m.daysToDue <= 14).length,
+          frozen,
+          timezone,
+        },
+      },
+    };
+  },
+
+  /**
+   * When the floor is busy, as a week of local hours.
+   *
+   * The staffing question the register cannot answer: it says how many came on
+   * a given day, never at what time, so a gym rosters its desk and its coaches
+   * on memory. Four weeks is the default window — long enough that one holiday
+   * or one washed-out Tuesday does not set the shape, short enough to still
+   * describe how the gym runs now.
+   *
+   * Counts self check-ins only. What that leaves out is returned beside it, so
+   * a gym that marks attendance by hand is told why its chart is empty instead
+   * of being shown an empty floor.
+   */
+  async heatmap(tenantId: string, weeks: number) {
+    const settings = await attendanceRepository.getTenantTimezone(tenantId);
+    const timezone = settings?.timezone ?? DEFAULT_TIMEZONE;
+
+    // Whole local days, ending at the end of today. Built from the instant
+    // local midnight fell at rather than from the midnight-UTC day stamp: for
+    // India those are five and a half hours apart, which would slide every
+    // window edge into the previous evening.
+    const startOfToday = zoneDayStart(timezone);
+    const to = new Date(startOfToday.getTime() + 86_400_000);
+    const from = new Date(to.getTime() - weeks * 7 * 86_400_000);
+
+    const [buckets, manualMarks] = await Promise.all([
+      attendanceRepository.listCheckInBuckets(tenantId, from, to),
+      attendanceRepository.countManualMarks(tenantId, from, to),
+    ]);
+
+    const { grid, total, busiestHour, busiestDay, unplaced } = buildHeatmapGrid(
+      buckets.map((bucket) => ({
+        hourKey: bucket.hourKey,
+        quarter: Number(bucket.quarter),
+        visits: Number(bucket.visits),
+      })),
+      timezone,
+    );
+
+    return {
+      data: {
+        grid,
+        summary: {
+          weeks,
+          total,
+          busiestHour,
+          busiestDay,
+          /** Staff-marked visits left out, because their clock is the desk's. */
+          manualMarks,
+          unplaced,
+          timezone,
+          from: from.toISOString(),
+          to: to.toISOString(),
+        },
       },
     };
   },

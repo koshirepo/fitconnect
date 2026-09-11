@@ -3,7 +3,7 @@
  *
  * - Declares the Hono routes and middleware chain for member check-ins, staff attendance marking, summaries, and calendar views. This route set is mounted from `/tenants` in the application entrypoint.
  * - Keep routing and authorization wiring here, and delegate request handling to the companion controller instead of placing business logic in route callbacks.
- * - Relative endpoints declared in this file: GET /:tenantId/attendance/qr/members, POST /:tenantId/attendance/qr, POST /:tenantId/attendance, POST /:tenantId/attendance/mark, POST /:tenantId/attendance/mark-all, DELETE /:tenantId/attendance/:membershipId/:date, GET /:tenantId/attendance, GET /:tenantId/attendance/member/:membershipId, GET /:tenantId/attendance/summary/:membershipId, GET /:tenantId/attendance/calendar, GET /:tenantId/attendance/member/:membershipId/calendar.
+ * - Relative endpoints declared in this file: GET /:tenantId/attendance/qr/members, POST /:tenantId/attendance/qr, POST /:tenantId/attendance, POST /:tenantId/attendance/mark, POST /:tenantId/attendance/mark-all, GET /:tenantId/attendance/at-risk, GET /:tenantId/attendance/heatmap, DELETE /:tenantId/attendance/:membershipId/:date, GET /:tenantId/attendance, GET /:tenantId/attendance/member/:membershipId, GET /:tenantId/attendance/summary/:membershipId, GET /:tenantId/attendance/calendar, GET /:tenantId/attendance/member/:membershipId/calendar.
  * - Primary exports: attendanceRoutes.
  */
 import { Hono } from "hono";
@@ -67,6 +67,24 @@ attendanceRoutes.get(
   authenticate,
   requireTenantPermissions(Permission.ATTENDANCE_READ),
   attendanceController.listByDate,
+);
+
+// Who has stopped coming. Behind plain attendance reading rather than a right
+// of its own: it is the register asked a different question, and every answer
+// in it is already visible to whoever can open the register.
+attendanceRoutes.get(
+  "/:tenantId/attendance/at-risk",
+  authenticate,
+  requireTenantPermissions(Permission.ATTENDANCE_READ),
+  attendanceController.atRisk,
+);
+
+// When the floor is busy. Same right as the register it is computed from.
+attendanceRoutes.get(
+  "/:tenantId/attendance/heatmap",
+  authenticate,
+  requireTenantPermissions(Permission.ATTENDANCE_READ),
+  attendanceController.heatmap,
 );
 
 // Member history and summaries: staff may read anyone, members only themselves

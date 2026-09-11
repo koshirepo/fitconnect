@@ -1259,6 +1259,7 @@ export type WhatsAppTemplateKey =
   | "new_member_welcome"
   | "birthday_greeting"
   | "payment_reminder"
+  | "attendance_nudge"
   | "pending_payment_reminder"
   | "payment_receipt"
   | "salary_payment"
@@ -1278,6 +1279,12 @@ export interface WhatsAppTemplate {
 
 export interface TenantSettings {
   overdueDays: number;
+  /**
+   * IANA zone the gym keeps its hours in, e.g. "Asia/Kolkata". Every stored
+   * timestamp is UTC; this is what a report renders them in, so that "busiest
+   * hour" names an hour the staff would recognise.
+   */
+  timezone?: string;
   /** Coins the referrer earns on a referee's first subscription. 0 is off. */
   referralRewardCoins?: number;
   /** Coins the referred member earns at the same moment. */
@@ -1293,6 +1300,7 @@ export interface TenantSettings {
 
 export interface UpdateTenantSettingsPayload {
   overdueDays?: number;
+  timezone?: string;
   referralRewardCoins?: number;
   referralRefereeCoins?: number;
   whatsappTemplates?: Partial<Record<WhatsAppTemplateKey, string>>;
@@ -1376,6 +1384,80 @@ export interface AttendanceRecord {
 export interface AttendanceSummary {
   thisMonth: number;
   thisWeek: number;
+}
+
+/**
+ * A member who has stopped turning up while their membership is still running.
+ *
+ * The renewal date says when the money is at stake; `absentDays` says whether
+ * it is already lost. Both travel together because the call the desk makes
+ * depends on the pair — somebody absent three weeks who renews on Friday is a
+ * phone call today, and the same absence with eight months paid up is not.
+ */
+export interface AtRiskMember {
+  membershipId: string;
+  memberId: number;
+  name: string;
+  phone?: string | null;
+  avatarUrl?: string | null;
+  /** Last check-in, or null for a member who has never been recorded present. */
+  lastVisitOn: string | null;
+  /** Days since that visit, counted from the gym's own today. */
+  absentDays: number | null;
+  /** When their current term runs out, if they are on one. */
+  dueDate?: string | null;
+  /** Days until that date. Negative once it has passed. */
+  daysToDue: number | null;
+  joinedAt: string;
+  /**
+   * When somebody last messaged this member about the absence, so the desk can
+   * see a chase is already in flight rather than making it twice.
+   */
+  lastNudgedOn: string | null;
+}
+
+export interface AtRiskSummary {
+  /** The absence threshold this list was built with. */
+  thresholdDays: number;
+  /** Members past it. */
+  total: number;
+  /** Of those, how many also renew within the next fortnight. */
+  dueSoon: number;
+  /** Excluded from the list because their term is deliberately paused. */
+  frozen: number;
+  timezone: string;
+}
+
+/**
+ * When the floor is busy, as a week of local hours.
+ *
+ * Self check-ins only. A staff mark records when somebody at the desk pressed
+ * the button, not when the member walked in, so counting those would invent
+ * whatever hour the desk does its paperwork in. `manualMarks` says how many
+ * were left out for that reason — a gym that marks everybody by hand needs to
+ * be told why its chart is empty.
+ */
+export interface AttendanceHeatmap {
+  /** `[day][hour]` visit counts. Day 0 is Monday, hour 0 is local midnight. */
+  grid: number[][];
+  summary: AttendanceHeatmapSummary;
+}
+
+export interface AttendanceHeatmapSummary {
+  weeks: number;
+  /** Self check-ins placed on the grid. */
+  total: number;
+  /** Local hour with the most visits, or null when there are none. */
+  busiestHour: number | null;
+  /** Day 0–6 with the most visits, or null when there are none. */
+  busiestDay: number | null;
+  /** Staff-marked visits in the window, excluded from the grid. */
+  manualMarks: number;
+  /** Visits that could not be placed because the zone was unreadable. */
+  unplaced: number;
+  timezone: string;
+  from: string;
+  to: string;
 }
 
 export interface MarkAttendancePayload {

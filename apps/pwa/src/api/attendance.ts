@@ -3,6 +3,9 @@ import type {
   AttendanceDevice,
   CreateAttendanceDevicePayload,
   UpdateAttendanceDevicePayload,
+  AtRiskMember,
+  AtRiskSummary,
+  AttendanceHeatmap,
   AttendanceRecord,
   AttendanceSummary,
   MarkAttendancePayload,
@@ -102,6 +105,19 @@ export const attendanceApi = {
     api.get<ApiResponse<AttendanceSummary>>(
       `/tenants/${tenantId}/attendance/summary/${membershipId}`,
     ),
+
+  /** Members who have stopped coming while still on an active membership */
+  atRisk: (tenantId: string, days: number) =>
+    api.get<ApiResponse<{ members: AtRiskMember[]; summary: AtRiskSummary }>>(
+      `/tenants/${tenantId}/attendance/at-risk`,
+      { params: { days } },
+    ),
+
+  /** Busy hours across a week, from self check-ins only */
+  heatmap: (tenantId: string, weeks: number) =>
+    api.get<ApiResponse<AttendanceHeatmap>>(`/tenants/${tenantId}/attendance/heatmap`, {
+      params: { weeks },
+    }),
 
   /** Calendar: daily counts for a month */
   calendarMonth: (tenantId: string, month: string) =>

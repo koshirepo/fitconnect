@@ -12,6 +12,7 @@ import { prisma } from "../../lib/prisma";
 import { attendanceRepository } from "./attendance.repository";
 import { attendanceService } from "./attendance.service";
 import { log } from "../../lib/logger";
+import { zoneOffsetMinutes } from "../../lib/timezone";
 
 /**
  * Seconds between a device's command polls.
@@ -97,40 +98,6 @@ export function toUtc(localTimestamp: string, timezone: string): Date | null {
   if (offsetMinutes === null) return null;
 
   return new Date(asIfUtc - offsetMinutes * 60_000);
-}
-
-/** Minutes a zone is ahead of UTC at a given instant, or null if unknown. */
-function zoneOffsetMinutes(at: Date, timezone: string): number | null {
-  try {
-    const formatter = new Intl.DateTimeFormat("en-US", {
-      timeZone: timezone,
-      hour12: false,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-
-    const parts = Object.fromEntries(
-      formatter.formatToParts(at).map((part) => [part.type, part.value]),
-    );
-
-    const asZone = Date.UTC(
-      Number(parts.year),
-      Number(parts.month) - 1,
-      Number(parts.day),
-      Number(parts.hour === "24" ? "0" : parts.hour),
-      Number(parts.minute),
-      Number(parts.second),
-    );
-
-    return Math.round((asZone - at.getTime()) / 60_000);
-  } catch {
-    // An unknown zone is a configuration error, not something to guess around.
-    return null;
-  }
 }
 
 /**

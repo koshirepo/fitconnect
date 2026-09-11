@@ -13,6 +13,8 @@ type SettingsRecord = {
   /// Absent on rows read through the legacy path, which predates them.
   referralRewardCoins?: number;
   referralRefereeCoins?: number;
+  /// Absent until migration 0049; the service falls back to the same default.
+  timezone?: string;
 };
 
 type LegacySettingsRow = {
