@@ -3,9 +3,9 @@
  *
  * - Lifted out of `PublicStorePage`'s component state so a product page can change it too. It used to live only on the storefront, which is why every other screen could offer nothing better than a link back with `?add=`: the basket did not exist anywhere they could reach.
  * - Keyed per gym. A member browsing two gyms on the same device has two baskets, and mixing them would build an order no single counter can hand over.
+ * - Two baskets per gym, kept apart. The shop's is a shopper's cart: it survives a reload and a closed tab, like the platform shop's, because somebody who dropped their phone mid-shop should not start again. The counter's is a sale in progress at the desk: it lives in session storage, so it survives moving around the app and a reload but is gone once the app is closed — a basket rung up for yesterday's walk-in must not be waiting for whoever opens the till next. A coach who also shops never finds one in the other.
  * - Lines carry the product name, variant name and price they were added at, because the basket drawer renders without re-fetching a catalogue. Stock rides along so the stepper can stop at it.
- * - Survives a reload, like the platform shop's cart. Somebody who dropped their phone mid-shop should not start again.
- * - Primary exports: BasketEntry, readBasket, writeBasket, setBasketQuantity, clearBasket, basketTotalQuantity.
+ * - Primary exports: BasketEntry, BasketScope, readBasket, writeBasket, setBasketQuantity, clearBasket, basketTotalQuantity.
  */
 
 export type BasketEntry = {
@@ -19,9 +19,19 @@ export type BasketEntry = {
   photo?: string;
 };
 
-/** One key per gym, so two gyms on one device do not share a counter. */
-function storageKey(tenantId: string) {
-  return `fitconnect-store-basket-v1:${tenantId}`;
+/** Which basket: the shopper's at `/shop`, or the sale being rung up at the counter. */
+export type BasketScope = "shop" | "counter";
+
+/** One key per gym and basket, so two gyms on one device do not share a counter. */
+function storageKey(tenantId: string, scope: BasketScope) {
+  return scope === "counter"
+    ? `fitconnect-store-counter-v1:${tenantId}`
+    : `fitconnect-store-basket-v1:${tenantId}`;
+}
+
+/** Where a basket is kept. See the file header for why the two differ. */
+function storageFor(scope: BasketScope) {
+  return scope === "counter" ? window.sessionStorage : window.localStorage;
 }
 
 function sanitize(value: unknown): BasketEntry[] {
@@ -52,23 +62,32 @@ function sanitize(value: unknown): BasketEntry[] {
   return [...byVariant.values()];
 }
 
-export function readBasket(tenantId: string | null | undefined): BasketEntry[] {
+export function readBasket(
+  tenantId: string | null | undefined,
+  scope: BasketScope = "shop",
+): BasketEntry[] {
   if (typeof window === "undefined" || !tenantId) return [];
   try {
-    const raw = window.localStorage.getItem(storageKey(tenantId));
+    const raw = storageFor(scope).getItem(storageKey(tenantId, scope));
     return raw ? sanitize(JSON.parse(raw)) : [];
   } catch {
     return [];
   }
 }
 
-export function writeBasket(tenantId: string | null | undefined, entries: BasketEntry[]) {
+export function writeBasket(
+  tenantId: string | null | undefined,
+  entries: BasketEntry[],
+  scope: BasketScope = "shop",
+) {
   if (typeof window === "undefined" || !tenantId) return entries;
   const sanitized = sanitize(entries);
 
   try {
-    if (sanitized.length === 0) window.localStorage.removeItem(storageKey(tenantId));
-    else window.localStorage.setItem(storageKey(tenantId), JSON.stringify(sanitized));
+    const storage = storageFor(scope);
+    const key = storageKey(tenantId, scope);
+    if (sanitized.length === 0) storage.removeItem(key);
+    else storage.setItem(key, JSON.stringify(sanitized));
   } catch {
     // A private window with storage blocked still gets a working basket for
     // this page; it just will not survive the reload.
@@ -88,8 +107,9 @@ export function setBasketQuantity(
   tenantId: string | null | undefined,
   line: Omit<BasketEntry, "quantity">,
   quantity: number,
+  scope: BasketScope = "shop",
 ): BasketEntry[] {
-  const current = readBasket(tenantId);
+  const current = readBasket(tenantId, scope);
   const wanted = Math.min(Math.max(Math.floor(quantity), 0), line.stock);
 
   const next =
@@ -101,11 +121,11 @@ export function setBasketQuantity(
           )
         : [...current, { ...line, quantity: wanted }];
 
-  return writeBasket(tenantId, next);
+  return writeBasket(tenantId, next, scope);
 }
 
-export function clearBasket(tenantId: string | null | undefined) {
-  return writeBasket(tenantId, []);
+export function clearBasket(tenantId: string | null | undefined, scope: BasketScope = "shop") {
+  return writeBasket(tenantId, [], scope);
 }
 
 export function basketTotalQuantity(entries: BasketEntry[]) {

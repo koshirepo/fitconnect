@@ -39,7 +39,13 @@ export type StoreProductPayload = {
 export type StoreVariantPayload = {
   attributes: Record<string, string>;
   sku?: string;
+  /** What a buyer pays. */
   price: number;
+  /**
+   * What the gym pays its supplier, for profit reporting. Null clears it and
+   * omitting it leaves it alone. Never shown to a member.
+   */
+  costPrice?: number | null;
   stock?: number;
   isActive?: boolean;
 };

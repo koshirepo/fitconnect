@@ -3,6 +3,7 @@
  *
  * - A product is named once and sold as variants, so this edits both together: the supplement and its flavours and sizes, or the gloves and their sizes and colours.
  * - Creating requires at least one variant, because a product with nothing sellable is a page a member can reach and not buy from. Editing an existing product manages its variants one at a time, since each carries its own stock that a bulk replace would quietly discard.
+ * - Each variant has two prices: what a buyer pays, and what the gym paid for it. The second is optional and only ever shown to staff; it is what the books use to report profit. Repricing either only affects sales from then on — every past order line kept its own copy of both.
  * - Photos upload as they are chosen rather than on save, so a rejected form does not lose the six images somebody just picked. The long description is markdown, matching how a gym already writes its own profile.
  * - Attributes are free-form pairs. Supplements and accessories do not share axes, and a gym may invent its own — "Strength", "Pack size" — so the form asks for names rather than offering a fixed list.
  * - Primary exports: StoreProductFormPage.
@@ -13,6 +14,7 @@ import { useParams } from "react-router-dom";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { getApiError } from "@/api/client";
 import { deriveVariantName, hasUsableAttributes } from "@fitconnect/shared/variant-name";
+import type { StoreVariant } from "@fitconnect/shared/types/models";
 import {
   useAddStoreVariant,
   useCreateStoreProduct,
@@ -32,6 +34,7 @@ import { PRODUCT_IMAGE_ASPECT_RATIO } from "@/features/commerce/product-image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormPageSkeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
+import { cn } from "@/lib/utils";
 import { Plus, Trash2 } from "lucide-react";
 
 /**
@@ -42,12 +45,19 @@ import { Plus, Trash2 } from "lucide-react";
  */
 type VariantDraft = {
   price: string;
+  /** Blank means not recorded, which is not the same as zero. */
+  costPrice: string;
   stock: string;
   attributes: { key: string; value: string }[];
 };
 
 function emptyVariant(): VariantDraft {
-  return { price: "", stock: "0", attributes: [{ key: "", value: "" }] };
+  return { price: "", costPrice: "", stock: "0", attributes: [{ key: "", value: "" }] };
+}
+
+/** A typed purchase price, or null when the box is blank. */
+function parseCost(value: string) {
+  return value.trim() === "" ? null : Number(value) || 0;
 }
 
 /** Turn a draft into what the API takes, dropping half-typed attribute rows. */
@@ -59,11 +69,33 @@ function toPayload(draft: VariantDraft): StoreVariantPayload {
     if (key && value) attributes[key] = value;
   }
 
+  const costPrice = parseCost(draft.costPrice);
+
   return {
     price: Number(draft.price) || 0,
+    // Left out rather than sent as zero: a blank box means "not known yet", and
+    // zero would tell the books the gym got it free.
+    ...(costPrice !== null ? { costPrice } : {}),
     stock: Number(draft.stock) || 0,
     attributes,
   };
+}
+
+/**
+ * What one sale of a variant leaves the gym, in words.
+ *
+ * Null until both prices are there, because a margin against a missing cost
+ * would read as all profit.
+ */
+function marginText(price: number, cost: number | null | undefined) {
+  if (cost === null || cost === undefined || price <= 0) return null;
+
+  const margin = price - cost;
+  const percent = Math.round((margin / price) * 1000) / 10;
+
+  return margin >= 0
+    ? `₹${margin} profit per unit · ${percent}%`
+    : `Selling ₹${-margin} below cost`;
 }
 
 /** Offered in the category field; a gym may type anything else. */
@@ -186,6 +218,23 @@ export default function StoreProductFormPage() {
       toast.success(`${created.name} added.`);
     } catch (caught) {
       setError(getApiError(caught));
+    }
+  };
+
+  /** Reprice a variant. True when it saved, so the row knows to close. */
+  const handleSaveVariantPrices = async (
+    variantId: string,
+    variantName: string,
+    payload: { price: number; costPrice: number | null },
+  ) => {
+    setError("");
+    try {
+      await updateVariant.mutateAsync({ variantId, payload });
+      toast.success(`${variantName} repriced. Past sales keep the prices they sold at.`);
+      return true;
+    } catch (caught) {
+      setError(getApiError(caught));
+      return false;
     }
   };
 
@@ -381,43 +430,27 @@ export default function StoreProductFormPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle>Variants</CardTitle>
+            <p className="text-xs text-muted-foreground">
+              A price change applies to sales from now on. Past orders keep the selling and
+              purchase price they had on the day, so last month's profit stays as it was.
+            </p>
           </CardHeader>
           <CardContent className="space-y-3">
             {product.variants.map((variant) => (
-              <div
+              <ExistingVariantRow
                 key={variant.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border px-3 py-2"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-medium">{variant.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    ₹{variant.price} · {variant.stock} in stock
-                    {!variant.isActive && " · retired"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      updateVariant.mutateAsync({
-                        variantId: variant.id,
-                        payload: { isActive: !variant.isActive },
-                      })
-                    }
-                  >
-                    {variant.isActive ? "Retire" : "Restore"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleRemoveVariant(variant.id, variant.name)}
-                    aria-label={`Delete ${variant.name}`}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </div>
+                variant={variant}
+                onSavePrices={(payload) =>
+                  handleSaveVariantPrices(variant.id, variant.name, payload)
+                }
+                onToggleActive={() =>
+                  updateVariant.mutateAsync({
+                    variantId: variant.id,
+                    payload: { isActive: !variant.isActive },
+                  })
+                }
+                onDelete={() => handleRemoveVariant(variant.id, variant.name)}
+              />
             ))}
 
             <div className="space-y-3 border-t pt-4">
@@ -448,7 +481,133 @@ export default function StoreProductFormPage() {
   );
 }
 
-/** The fields that make one variant: its name, price, stock, and axes. */
+/**
+ * A variant that already exists, repriceable in place.
+ *
+ * Only what it sells for and what it costs are editable here. Its attributes
+ * name it, and stock moves through adjustments so two people counting one shelf
+ * cannot overwrite each other. Saving changes the next sale and nothing before
+ * it: every order line kept its own copy of both prices.
+ */
+function ExistingVariantRow({
+  variant,
+  onSavePrices,
+  onToggleActive,
+  onDelete,
+}: {
+  variant: StoreVariant;
+  onSavePrices: (payload: { price: number; costPrice: number | null }) => Promise<boolean>;
+  onToggleActive: () => void;
+  onDelete: () => void;
+}) {
+  const [editing, setEditing] = React.useState(false);
+  const [price, setPrice] = React.useState("");
+  const [cost, setCost] = React.useState("");
+  const [saving, setSaving] = React.useState(false);
+
+  const startEditing = () => {
+    setPrice(String(variant.price));
+    setCost(variant.costPrice == null ? "" : String(variant.costPrice));
+    setEditing(true);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    const saved = await onSavePrices({ price: Number(price) || 0, costPrice: parseCost(cost) });
+    setSaving(false);
+    if (saved) setEditing(false);
+  };
+
+  const margin = marginText(variant.price, variant.costPrice);
+  const draftMargin = marginText(Number(price) || 0, parseCost(cost));
+
+  return (
+    <div className="space-y-3 rounded-lg border px-3 py-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-medium">{variant.name}</p>
+          <p className="text-xs text-muted-foreground">
+            ₹{variant.price}
+            {variant.costPrice != null ? ` · cost ₹${variant.costPrice}` : " · cost not set"}
+            {` · ${variant.stock} in stock`}
+            {!variant.isActive && " · retired"}
+          </p>
+          {margin && (
+            <p
+              className={cn(
+                "text-xs",
+                variant.costPrice != null && variant.costPrice > variant.price
+                  ? "text-destructive"
+                  : "text-emerald-600",
+              )}
+            >
+              {margin}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={editing ? () => setEditing(false) : startEditing}
+          >
+            {editing ? "Cancel" : "Edit prices"}
+          </Button>
+          <Button variant="outline" size="sm" onClick={onToggleActive}>
+            {variant.isActive ? "Retire" : "Restore"}
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onDelete}
+            aria-label={`Delete ${variant.name}`}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+
+      {editing && (
+        <div className="space-y-3 border-t pt-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor={`price-${variant.id}`}>Selling price *</Label>
+              <Input
+                id={`price-${variant.id}`}
+                type="number"
+                min={0}
+                step={1}
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor={`cost-${variant.id}`}>Purchase price</Label>
+              <Input
+                id={`cost-${variant.id}`}
+                type="number"
+                min={0}
+                step={1}
+                value={cost}
+                onChange={(e) => setCost(e.target.value)}
+                placeholder="Not set"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {draftMargin ? `${draftMargin}. ` : ""}
+            Applies to sales from now on.
+          </p>
+          <Button size="sm" onClick={save} disabled={saving || price.trim() === ""}>
+            {saving ? "Saving…" : "Save prices"}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** The fields that make one variant: its axes, both prices, and stock. */
 function VariantFields({
   draft,
   onChange,
@@ -467,6 +626,8 @@ function VariantFields({
         .filter(([key, value]) => key && value),
     ),
   );
+
+  const margin = marginText(Number(draft.price) || 0, parseCost(draft.costPrice));
 
   const setAttribute = (index: number, patch: { key?: string; value?: string }) => {
     onChange({
@@ -518,15 +679,26 @@ function VariantFields({
           : "Add an attribute above — it is what names this variant."}
       </p>
 
-      <div className="grid gap-3 sm:grid-cols-[1fr_120px]">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-[1fr_1fr_120px]">
         <div className="space-y-1.5">
-          <Label>Price *</Label>
+          <Label>Selling price *</Label>
           <Input
             type="number"
             min={0}
             step={1}
             value={draft.price}
             onChange={(e) => onChange({ ...draft, price: e.target.value })}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Purchase price</Label>
+          <Input
+            type="number"
+            min={0}
+            step={1}
+            value={draft.costPrice}
+            onChange={(e) => onChange({ ...draft, costPrice: e.target.value })}
+            placeholder="Not set"
           />
         </div>
         <div className="space-y-1.5">
@@ -540,6 +712,12 @@ function VariantFields({
           />
         </div>
       </div>
+
+      {/* Staff-only, and optional: leaving it blank records the sale's cost as
+          unknown rather than as free. */}
+      <p className="text-xs text-muted-foreground">
+        {margin ?? "Purchase price is what you pay your supplier. Only staff see it."}
+      </p>
 
       {onRemove && (
         <Button type="button" variant="ghost" size="sm" onClick={onRemove}>

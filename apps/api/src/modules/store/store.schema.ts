@@ -58,6 +58,14 @@ export const createVariantSchema = z.object({
   attributes,
   sku: z.string().trim().max(60).optional(),
   price: z.number().int().min(0),
+  /**
+   * What the gym pays its supplier for one.
+   *
+   * Optional, because plenty of gyms will not have the invoice to hand, and
+   * nullable so an edit can clear a figure typed by mistake. Only ever used for
+   * the gym's own profit reporting; it is never sent to a member or a visitor.
+   */
+  costPrice: z.number().int().min(0).nullable().optional(),
   stock: z.number().int().min(0).default(0),
   isActive: z.boolean().default(true),
 });

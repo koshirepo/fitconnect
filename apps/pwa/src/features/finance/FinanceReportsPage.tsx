@@ -385,6 +385,7 @@ export default function FinanceReportsPage() {
   const revenueMix = analytics?.revenueMix ?? {
     subscriptions: zeroBucket,
     charges: zeroBucket,
+    store: zeroBucket,
     other: zeroBucket,
   };
   const coinsOutstanding = analytics?.coinsOutstanding ?? 0;
@@ -405,6 +406,14 @@ export default function FinanceReportsPage() {
           revenue: revenueMix.charges.revenue,
           count: revenueMix.charges.count,
           color: COLORS.blue,
+        },
+        // Member and walk-in sales together: the shop, read apart from dues.
+        {
+          label: "Store sales",
+          revenue: revenueMix.store?.revenue ?? 0,
+          count: revenueMix.store?.count ?? 0,
+          color: COLORS.purple,
+          noun: "sale",
         },
         {
           label: "Other",
@@ -603,7 +612,7 @@ export default function FinanceReportsPage() {
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {row.count} {row.count === 1 ? "payment" : "payments"}
+                        {row.count} {row.count === 1 ? (row.noun ?? "payment") : `${row.noun ?? "payment"}s`}
                       </p>
                     </div>
                   ))

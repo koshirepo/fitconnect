@@ -211,6 +211,8 @@ export const paymentsApi = {
           revenueMix: {
             subscriptions: { revenue: number; count: number };
             charges: { revenue: number; count: number };
+            /** Member and guest store sales. Absent from an API that predates it. */
+            store?: { revenue: number; count: number };
             other: { revenue: number; count: number };
           };
         };

@@ -48,7 +48,12 @@ export const storeController = {
 
   async getProduct(c: AppContext) {
     const tenantId = c.req.param("tenantId")!;
-    const result = await storeService.getProduct(tenantId, c.req.param("productId")!);
+    // Same rule as the list: purchase prices follow the caller's permissions.
+    const result = await storeService.getProduct(
+      tenantId,
+      c.req.param("productId")!,
+      canManage(c),
+    );
     if ("error" in result) return notFound(c, result.error!);
 
     return ok(c, result.data);

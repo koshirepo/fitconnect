@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { CardsGridSkeleton } from "@/components/ui/skeleton";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   Menu,
@@ -143,8 +144,28 @@ export default function StoreManagePage() {
           {products.map((product) => (
             <Card key={product.id} className={product.isActive ? undefined : "opacity-70"}>
               <CardHeader className="pb-3">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
+                <div className="flex items-start justify-between gap-3">
+                  {/* The photo first: a shelf is recognised by its labels long
+                      before anyone reads a product name. Tapping it opens the
+                      edit form, which is where photos are changed. */}
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/dashboard/store/manage/${product.id}/edit`)}
+                    aria-label={`Edit ${product.name}`}
+                    className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/40"
+                  >
+                    {product.photos?.[0] ? (
+                      <OptimizedImage
+                        src={product.photos[0]!}
+                        alt={product.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <Package className="h-6 w-6 text-muted-foreground opacity-50" />
+                    )}
+                  </button>
+
+                  <div className="min-w-0 flex-1">
                     <CardTitle className="flex flex-wrap items-center gap-2">
                       {product.name}
                       <Badge variant="secondary" className="text-xs">
@@ -225,7 +246,11 @@ export default function StoreManagePage() {
                         )}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {formatCurrency(variant.price)} ·{" "}
+                        {formatCurrency(variant.price)}
+                        {/* What it costs beside what it sells for, so a margin
+                            gone thin after a supplier's price rise shows here. */}
+                        {variant.costPrice != null && ` · cost ${formatCurrency(variant.costPrice)}`}
+                        {" · "}
                         <span className={variant.stock === 0 ? "text-destructive" : undefined}>
                           {variant.stock} in stock
                         </span>

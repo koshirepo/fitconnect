@@ -32,6 +32,7 @@ export function StorefrontToolbar({
   sort,
   stickyTop,
   className,
+  containerClassName,
 }: {
   search: string;
   onSearchChange: (value: string) => void;
@@ -39,8 +40,12 @@ export function StorefrontToolbar({
   categories: CategoryChip[];
   activeCategory: string;
   onCategoryChange: (value: string) => void;
-  /** The cart control itself: a count on the shop, a running total in a gym. */
-  cart: React.ReactNode;
+  /**
+   * The cart control itself: a count on the shop, a running total in a gym.
+   * Omitted where the page keeps its one cart button elsewhere — the counter's
+   * is the main action in its page header.
+   */
+  cart?: React.ReactNode;
   /** Anything between the search box and the cart — a product count, My Orders. */
   actions?: React.ReactNode;
   /** A sort control on the right of the chip row, where the surface offers one. */
@@ -48,13 +53,19 @@ export function StorefrontToolbar({
   /** Height of the site header above this bar, in px. */
   stickyTop: number;
   className?: string;
+  /**
+   * The inner width and padding. A storefront page centres its bar the way it
+   * centres its grid; inside the dashboard, where the page already has its own
+   * padding, the counter lines the bar up with that instead.
+   */
+  containerClassName?: string;
 }) {
   return (
     <div
       className={cn("sticky z-30 border-b bg-background/95 backdrop-blur", className)}
       style={{ top: stickyTop }}
     >
-      <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+      <div className={cn("mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8", containerClassName)}>
         <div className="flex items-center gap-3">
           <div className="relative min-w-0 flex-1 sm:max-w-md">
             <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -68,7 +79,7 @@ export function StorefrontToolbar({
           </div>
 
           {actions && <div className="ml-auto flex items-center gap-2">{actions}</div>}
-          <div className={cn("shrink-0", !actions && "ml-auto")}>{cart}</div>
+          {cart && <div className={cn("shrink-0", !actions && "ml-auto")}>{cart}</div>}
         </div>
 
         {/* Chips scroll sideways on a phone rather than stacking into a wall of

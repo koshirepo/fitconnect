@@ -919,6 +919,10 @@ export const paymentService = {
     ]);
 
     const monthIncome = income.payments + income.guestStoreSales;
+    const mix = (bucket: { amount: number; count: number }) => ({
+      revenue: bucket.amount,
+      count: bucket.count,
+    });
 
     return {
       data: {
@@ -929,6 +933,16 @@ export const paymentService = {
             totalRevenue: monthIncome,
             guestRevenue: income.guestStoreSales,
             guestCount: income.guestStoreCount,
+          },
+          // The mix follows the books for the same reason the month total does.
+          // Store sales are their own bucket, guests included, so memberships
+          // and the shop can be read apart and the four still add up to the
+          // month's revenue.
+          revenueMix: {
+            subscriptions: mix(income.bySource.subscriptions),
+            charges: mix(income.bySource.charges),
+            store: mix(income.bySource.store),
+            other: mix(income.bySource.other),
           },
         },
       },

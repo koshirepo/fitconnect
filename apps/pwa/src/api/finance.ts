@@ -23,6 +23,48 @@ export type ExpenseCategory =
 export type SalaryComponentKind = "BONUS" | "INCENTIVE" | "BENEFIT" | "DEDUCTION";
 export type SalaryPaymentMethod = "CASH" | "BANK" | "UPI" | "OTHER";
 
+/** Money in from one source during the month. */
+export type IncomeBucket = { amount: number; count: number };
+
+/** One variant's month in the store. Line figures, before basket discounts. */
+export type StoreProductProfit = {
+  variantId: string;
+  productName: string;
+  variantName: string;
+  units: number;
+  sales: number;
+  /** What the units that had a purchase price on record cost the gym. */
+  cost: number;
+  /** Null when some units sold with no purchase price on record. */
+  profit: number | null;
+  uncostedUnits: number;
+};
+
+/**
+ * What the store made, as opposed to what it took.
+ *
+ * Every figure is read from the order lines, which kept the selling and
+ * purchase price each sale had on the day — repricing a product later leaves
+ * a past month exactly as it was.
+ */
+export type StoreProfitSummary = {
+  orders: number;
+  units: number;
+  /** At list price, before coupons and coins. */
+  grossSales: number;
+  /** Coupons and coins together. */
+  discounts: number;
+  /** What buyers paid. The same figure as `income.bySource.store.amount`. */
+  netSales: number;
+  cost: number;
+  /** Net sales less cost, leaving out the sales that had no cost recorded. */
+  profit: number;
+  marginPercent: number | null;
+  uncostedSales: number;
+  uncostedUnits: number;
+  products: StoreProductProfit[];
+};
+
 export type FinanceSummary = {
   month: string;
   income: {
@@ -31,7 +73,19 @@ export type FinanceSummary = {
     memberPaymentCount: number;
     guestStoreSales: number;
     guestStoreCount: number;
+    /**
+     * The same total, by what paid for it. Store includes guest sales.
+     * Optional because an API deployed before the split does not send it.
+     */
+    bySource?: {
+      subscriptions: IncomeBucket;
+      charges: IncomeBucket;
+      store: IncomeBucket;
+      other: IncomeBucket;
+    };
   };
+  /** Optional for the same reason as `income.bySource`. */
+  store?: StoreProfitSummary;
   expenses: {
     total: number;
     byCategory: { category: ExpenseCategory; amount: number }[];

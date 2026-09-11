@@ -3,6 +3,7 @@
  *
  * - Prisma queries for the gym's books: expenses, the recurring templates they are posted from, and the income figures the summary is built out of.
  * - Income deliberately reads two sources and not three. A member's store order already writes a `Payment` row — see `StoreOrder.paymentId` — so summing payments and orders together would count every member sale twice. Only guest orders, which write no payment, are added on top.
+ * - Store profit reads the order lines, where the selling and purchase price were copied at the moment of sale. Nothing here reads a variant's current prices, so repricing a product never rewrites a closed month.
  * - Month bounds are half-open: `>= first of the month` and `< first of the next`. An inclusive upper bound built from "last day of month" silently drops anything recorded during that final day.
  * - Primary exports: financeRepository, monthRange.
  */
@@ -178,22 +179,50 @@ export const financeRepository = {
   },
 
   /**
-   * What the gym took in during a month.
+   * What the gym took in during a month, and what it was paid for.
    *
    * `payments` covers memberships, admission charges and member store orders
    * alike, because all three write a Payment row. `guestStoreSales` picks up the
    * counter sales to people who are not members, which are the only completed
    * orders with no payment behind them.
+   *
+   * `bySource` splits the same money by what each payment row points at: a
+   * plan, then a charge, then a store order, in that order of precedence. The
+   * store bucket adds the guest sales back in, because to an owner it is one
+   * shop whoever bought. `other` is whatever points at none of them — a manual
+   * entry — and is taken as the remainder, so the four always add back up to the
+   * total rather than drifting from it.
    */
   async incomeTotals(tenantId: string, month: string) {
     const { from, to } = monthRange(month);
+    const settledInMonth = {
+      tenantId,
+      status: PaymentStatus.COMPLETED,
+      paidAt: { gte: from, lt: to },
+    };
 
-    const [payments, guestOrders] = await Promise.all([
+    const [payments, subscriptions, charges, memberStore, guestOrders] = await Promise.all([
+      prisma.payment.aggregate({
+        where: settledInMonth,
+        _sum: { amount: true },
+        _count: true,
+      }),
+      prisma.payment.aggregate({
+        where: { ...settledInMonth, subscriptionId: { not: null } },
+        _sum: { amount: true },
+        _count: true,
+      }),
+      prisma.payment.aggregate({
+        where: { ...settledInMonth, subscriptionId: null, chargeId: { not: null } },
+        _sum: { amount: true },
+        _count: true,
+      }),
       prisma.payment.aggregate({
         where: {
-          tenantId,
-          status: PaymentStatus.COMPLETED,
-          paidAt: { gte: from, lt: to },
+          ...settledInMonth,
+          subscriptionId: null,
+          chargeId: null,
+          storeOrder: { isNot: null },
         },
         _sum: { amount: true },
         _count: true,
@@ -210,11 +239,71 @@ export const financeRepository = {
       }),
     ]);
 
+    const paymentTotal = payments._sum.amount ?? 0;
+    const guestTotal = guestOrders._sum.totalAmount ?? 0;
+    const subscription = { amount: subscriptions._sum.amount ?? 0, count: subscriptions._count };
+    const charge = { amount: charges._sum.amount ?? 0, count: charges._count };
+    const memberSales = { amount: memberStore._sum.amount ?? 0, count: memberStore._count };
+
     return {
-      payments: payments._sum.amount ?? 0,
+      payments: paymentTotal,
       paymentCount: payments._count,
-      guestStoreSales: guestOrders._sum.totalAmount ?? 0,
+      guestStoreSales: guestTotal,
       guestStoreCount: guestOrders._count,
+      bySource: {
+        subscriptions: subscription,
+        charges: charge,
+        store: {
+          amount: memberSales.amount + guestTotal,
+          count: memberSales.count + guestOrders._count,
+        },
+        other: {
+          amount: paymentTotal - subscription.amount - charge.amount - memberSales.amount,
+          count: payments._count - subscription.count - charge.count - memberSales.count,
+        },
+      },
     };
+  },
+
+  /**
+   * Every store order that brought money in during a month, with its lines.
+   *
+   * The same two halves `incomeTotals` counts, on the same dates: a member's
+   * order by when its payment settled, a guest's by when the order was written.
+   * Anything else would let the store's profit and the store's revenue describe
+   * different sets of sales.
+   *
+   * Price and cost come from the lines, where both were frozen at the moment of
+   * sale — never from the variant, whose prices today say nothing about what
+   * last month's stock sold for or cost.
+   */
+  storeSales(tenantId: string, month: string) {
+    const { from, to } = monthRange(month);
+
+    return prisma.storeOrder.findMany({
+      where: {
+        tenantId,
+        OR: [
+          { paymentId: null, status: "COMPLETED", createdAt: { gte: from, lt: to } },
+          { payment: { status: PaymentStatus.COMPLETED, paidAt: { gte: from, lt: to } } },
+        ],
+      },
+      select: {
+        subtotalAmount: true,
+        discountAmount: true,
+        coinsRedeemed: true,
+        totalAmount: true,
+        items: {
+          select: {
+            variantId: true,
+            productName: true,
+            variantName: true,
+            quantity: true,
+            lineTotal: true,
+            lineCost: true,
+          },
+        },
+      },
+    });
   },
 };

@@ -127,7 +127,12 @@ export const storeRepository = {
     return catalogueRepository.releaseStock(tenantCatalogue(tenantId), variantId, quantity);
   },
 
-  /** The variants a basket names, with what they cost and what they earn. */
+  /**
+   * The variants a basket names, with what they cost and what they earn.
+   *
+   * `costPrice` rides along so the sale can freeze it onto the order line. It is
+   * read on the server only; nothing a sale sends back carries it.
+   */
   findVariantsForSale(tenantId: string, variantIds: string[]) {
     return prisma.productVariant.findMany({
       where: {
@@ -140,9 +145,33 @@ export const storeRepository = {
         name: true,
         attributes: true,
         price: true,
+        costPrice: true,
         stock: true,
         product: { select: { id: true, name: true, coinsGranted: true } },
       },
     });
+  },
+
+  /**
+   * What the gym pays for its variants, keyed by variant id. For staff only.
+   *
+   * Deliberately not part of the shared catalogue select: that shape also feeds
+   * the member storefront and the public one, and a purchase price is the gym's
+   * own business. Scoped through the product's tenant like every other read here.
+   */
+  async findVariantCosts(
+    tenantId: string,
+    scope: { productId?: string | undefined; variantId?: string | undefined } = {},
+  ) {
+    const rows = await prisma.productVariant.findMany({
+      where: {
+        product: { tenantId },
+        ...(scope.productId ? { productId: scope.productId } : {}),
+        ...(scope.variantId ? { id: scope.variantId } : {}),
+      },
+      select: { id: true, costPrice: true },
+    });
+
+    return new Map(rows.map((row) => [row.id, row.costPrice]));
   },
 };

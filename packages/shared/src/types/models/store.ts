@@ -65,6 +65,11 @@ export interface StoreVariant {
   attributes: Record<string, string>;
   sku?: string | null;
   price: number;
+  /**
+   * What the gym pays for one. Present only in replies to staff who manage the
+   * store — a member or a visitor never receives it. Null when not recorded.
+   */
+  costPrice?: number | null;
   stock: number;
   isActive: boolean;
 }

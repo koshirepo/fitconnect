@@ -9,7 +9,7 @@
  */
 import * as React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Coins, Plus, ShoppingCart, Store, X } from "lucide-react";
+import { Plus, Store } from "lucide-react";
 
 import { publicApi } from "@/api/public";
 import {
@@ -34,38 +34,25 @@ import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { ProductCard } from "@/components/catalog/product-card";
+import { BasketDrawer } from "@/components/catalog/basket-drawer";
 import { CartLine, CartSummary } from "@/components/catalog/cart-line";
 import { FulfilmentBadge } from "@/components/catalog/fulfilment-badge";
 import { ProductGrid, StorefrontToolbar } from "@/components/catalog/storefront-toolbar";
 import { readBasket, writeBasket, type BasketEntry } from "./basket";
+import {
+  ALL_CATEGORIES,
+  categoryChipsFor,
+  filterAndSort,
+  fromPrice,
+  totalStock,
+} from "./storefront";
+import { CoinsBadge, StoreCartButton, StoreSortSelect } from "./storefront-controls";
 import { CardsGridSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useToast } from "@/components/ui/toast";
 import { formatCurrency } from "@/lib/utils";
 import { ShoppingBag } from "lucide-react";
 import type { StoreProduct, StoreVariant } from "@fitconnect/shared/types/models";
-
-/** One chosen variant, held with enough detail to draw the basket. */
-
-/** The "All" chip, which is every catalogue's first filter. */
-const ALL_CATEGORIES = "";
-
-const SORTS = [
-  { value: "popular", label: "Popularity" },
-  { value: "price-asc", label: "Price — low to high" },
-  { value: "price-desc", label: "Price — high to low" },
-  { value: "name", label: "Name" },
-] as const;
-
-/** The cheapest live variant, which is the figure a card leads with. */
-function fromPrice(product: StoreProduct) {
-  const prices = product.variants.filter((v) => v.isActive).map((v) => v.price);
-  return prices.length ? Math.min(...prices) : 0;
-}
-
-function totalStock(product: StoreProduct) {
-  return product.variants.reduce((sum, variant) => sum + variant.stock, 0);
-}
 
 export default function PublicStorePage() {
   const navigate = useNavigate();
@@ -93,23 +80,8 @@ export default function PublicStorePage() {
   const [category, setCategory] = React.useState<string>(ALL_CATEGORIES);
   const [sort, setSort] = React.useState<string>("popular");
 
-  // Derived from what the gym actually sells, like the platform shop's. The
-  // list used to be a fixed pair of Supplements and Accessories, which meant a
-  // gym selling apparel had nowhere to file it and a gym selling only
-  // supplements showed an empty Accessories chip.
-  const categoryChips = React.useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const product of products) {
-      counts.set(product.category, (counts.get(product.category) ?? 0) + 1);
-    }
-
-    return [
-      { value: ALL_CATEGORIES, label: "All", count: products.length },
-      ...[...counts.entries()]
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([name, count]) => ({ value: name, label: name, count })),
-    ];
-  }, [products]);
+  // Derived from what the gym actually sells, the same way the counter does.
+  const categoryChips = React.useMemo(() => categoryChipsFor(products), [products]);
 
   const [tenantId, setTenantId] = React.useState<string | null>(null);
   const [basket, setBasket] = React.useState<BasketEntry[]>([]);
@@ -280,23 +252,10 @@ export default function PublicStorePage() {
     );
   };
 
-  const visible = React.useMemo(() => {
-    const term = search.trim().toLowerCase();
-
-    const filtered = products.filter((product) => {
-      if (category && product.category !== category) return false;
-      if (!term) return true;
-      return `${product.name} ${product.description ?? ""}`.toLowerCase().includes(term);
-    });
-
-    const sorted = [...filtered];
-    if (sort === "price-asc") sorted.sort((a, b) => fromPrice(a) - fromPrice(b));
-    else if (sort === "price-desc") sorted.sort((a, b) => fromPrice(b) - fromPrice(a));
-    else if (sort === "name") sorted.sort((a, b) => a.name.localeCompare(b.name));
-    else sorted.sort((a, b) => b.likeCount - a.likeCount);
-
-    return sorted;
-  }, [products, search, category, sort]);
+  const visible = React.useMemo(
+    () => filterAndSort(products, { search, category, sort }),
+    [products, search, category, sort],
+  );
 
   const itemCount = basket.reduce((sum, entry) => sum + entry.quantity, 0);
   const subtotal = basket.reduce((sum, entry) => sum + entry.unitPrice * entry.quantity, 0);
@@ -517,41 +476,9 @@ export default function PublicStorePage() {
         activeCategory={category}
         onCategoryChange={setCategory}
         cart={
-          <Button
-            variant={itemCount > 0 ? "default" : "outline"}
-            onClick={() => setBasketOpen(true)}
-            aria-label={`Basket, ${itemCount} item${itemCount === 1 ? "" : "s"}`}
-          >
-            <ShoppingCart className="h-4 w-4" />
-            {/* The running total, not just a count. What somebody wants to know
-                before opening a basket is what it will cost, and on a phone the
-                word "Cart" is the least useful thing in the button. */}
-            <span className="hidden sm:inline">
-              {itemCount > 0 ? formatCurrency(subtotal) : "Cart"}
-            </span>
-            {itemCount > 0 && (
-              <span className="ml-1 rounded-full bg-background/25 px-1.5 text-xs font-semibold">
-                {itemCount}
-              </span>
-            )}
-          </Button>
+          <StoreCartButton count={itemCount} total={subtotal} onClick={() => setBasketOpen(true)} />
         }
-        sort={
-          <>
-            <span className="hidden text-xs text-muted-foreground sm:inline">Sort by</span>
-            <select
-              value={sort}
-              onChange={(event) => setSort(event.target.value)}
-              className="h-8 rounded-md border border-input bg-background px-2 text-sm outline-none"
-            >
-              {SORTS.map((entry) => (
-                <option key={entry.value} value={entry.value}>
-                  {entry.label}
-                </option>
-              ))}
-            </select>
-          </>
-        }
+        sort={<StoreSortSelect value={sort} onChange={setSort} />}
       />
 
       <div className="mx-auto max-w-7xl space-y-4 px-4 py-8 sm:px-6 lg:px-8">
@@ -601,11 +528,7 @@ export default function PublicStorePage() {
                   onOpen={() => navigate(`/shop/products/${product.id}`)}
                   emptyIcon={<ShoppingBag className="h-8 w-8" />}
                   topRight={
-                    product.coinsGranted > 0 ? (
-                      <span className="flex items-center gap-1 rounded-full bg-background/90 px-2 py-0.5 text-[10px] font-semibold shadow-sm backdrop-blur">
-                        <Coins className="h-3 w-3" />+{product.coinsGranted}
-                      </span>
-                    ) : undefined
+                    product.coinsGranted > 0 ? <CoinsBadge coins={product.coinsGranted} /> : undefined
                   }
                   price={price}
                   priceSuffix={product.variants.length > 1 ? "onwards" : undefined}
@@ -639,168 +562,154 @@ export default function PublicStorePage() {
       </div>
 
       {/* ── Basket ─────────────────────────────────────────────────────────── */}
-      {basketOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end">
-          <button
-            aria-label="Close basket"
-            className="flex-1 bg-black/40"
-            onClick={() => setBasketOpen(false)}
-          />
-          <aside className="flex w-full max-w-md flex-col bg-background shadow-xl">
-            <header className="flex items-center justify-between border-b border-border px-4 py-3">
-              <h2 className="text-base font-semibold">
-                Your basket{itemCount > 0 ? ` (${itemCount})` : ""}
-              </h2>
-              <Button variant="ghost" size="icon-sm" onClick={() => setBasketOpen(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </header>
-
-            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
-              {basket.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">Nothing here yet.</p>
-              ) : (
-                basket.map((entry) => (
-                  <CartLine
-                    key={entry.variantId}
-                    name={entry.productName}
-                    subtitle={entry.variantName}
-                    photo={entry.photo}
-                    price={formatCurrency(entry.unitPrice * entry.quantity)}
-                    meta={<FulfilmentBadge fulfilment="PICKUP" className="mt-1" />}
-                    quantity={entry.quantity}
-                    canIncrease={entry.quantity < entry.stock}
-                    onDecrease={() => changeQuantity(entry.variantId, -1)}
-                    onIncrease={() => changeQuantity(entry.variantId, 1)}
-                  />
-                ))
-              )}
-
-              {basket.length > 0 && asMember && (
-                <div className="space-y-3 rounded-lg border border-dashed border-border p-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="store-coupon">Coupon code</Label>
-                    <Input
-                      id="store-coupon"
-                      value={couponCode}
-                      onChange={(event) => setCouponCode(event.target.value)}
-                      placeholder="Optional"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="store-coins">Coins to spend</Label>
-                    <Input
-                      id="store-coins"
-                      type="number"
-                      min={0}
-                      value={coinsToSpend}
-                      onChange={(event) => setCoinsToSpend(event.target.value)}
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {basket.length > 0 && !asMember && (
-                <div className="space-y-3 rounded-lg border border-dashed border-border p-3">
+      <BasketDrawer
+        open={basketOpen}
+        onClose={() => setBasketOpen(false)}
+        title="Your basket"
+        count={itemCount}
+        footer={
+          basket.length > 0 ? (
+            <>
+              <CartSummary
+                rows={[{ label: "Subtotal", value: formatCurrency(subtotal), strong: true }]}
+                footnote={
+                  asMember
+                    ? "A coupon or coins come off at the next step, and only when paying online."
+                    : undefined
+                }
+              />
+              {asMember ? (
+                <div className="space-y-2">
+                  <Button className="w-full" disabled={placing} onClick={payAsMember}>
+                    {placing ? "Working…" : "Pay online now"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    disabled={placing}
+                    onClick={payAtStoreAsMember}
+                  >
+                    <Store className="h-4 w-4" />
+                    Pay at the store
+                  </Button>
                   {!keyboard.open && (
-                    <p className="text-xs text-muted-foreground">
-                      Everything is collected from the gym. Pay now or at the counter — either way
-                      we need a name and number to hand it to.
+                    <p className="text-center text-xs text-muted-foreground">
+                      Paying at the store holds nothing back for you until a coach hands it over,
+                      so anything low on stock is safer bought now.
                     </p>
                   )}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="buyer-name">Your name</Label>
-                    <Input
-                      id="buyer-name"
-                      value={buyerName}
-                      onChange={(event) => setBuyerName(event.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="buyer-phone">Phone</Label>
-                    <PhoneInput
-                      id="buyer-phone"
-                      value={buyerPhone}
-                      onChange={(event) => setBuyerPhone(event.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="buyer-email">Email (optional)</Label>
-                    <Input
-                      id="buyer-email"
-                      type="email"
-                      value={buyerEmail}
-                      onChange={(event) => setBuyerEmail(event.target.value)}
-                    />
-                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Button
+                    className="w-full"
+                    disabled={placing || !guestDetailsValid}
+                    onClick={payAsGuest}
+                  >
+                    {placing ? "Working…" : "Pay online now"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    disabled={placing || !guestDetailsValid}
+                    onClick={reserveAsGuest}
+                  >
+                    <Store className="h-4 w-4" />
+                    Reserve and pay at the store
+                  </Button>
+                  {!keyboard.open && (
+                    <p className="text-center text-xs text-muted-foreground">
+                      {guestDetailsValid
+                        ? "Reserving holds nothing back until a coach hands it over, so anything low on stock is safer bought now."
+                        : "Add your name and phone number above to continue."}
+                    </p>
+                  )}
                 </div>
               )}
-            </div>
+            </>
+          ) : undefined
+        }
+      >
+        {basket.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">Nothing here yet.</p>
+        ) : (
+          basket.map((entry) => (
+            <CartLine
+              key={entry.variantId}
+              name={entry.productName}
+              subtitle={entry.variantName}
+              photo={entry.photo}
+              price={formatCurrency(entry.unitPrice * entry.quantity)}
+              meta={<FulfilmentBadge fulfilment="PICKUP" className="mt-1" />}
+              quantity={entry.quantity}
+              canIncrease={entry.quantity < entry.stock}
+              onDecrease={() => changeQuantity(entry.variantId, -1)}
+              onIncrease={() => changeQuantity(entry.variantId, 1)}
+            />
+          ))
+        )}
 
-            {basket.length > 0 && (
-              <footer className="space-y-3 border-t border-border p-4">
-                <CartSummary
-                  rows={[{ label: "Subtotal", value: formatCurrency(subtotal), strong: true }]}
-                  footnote={
-                    asMember
-                      ? "A coupon or coins come off at the next step, and only when paying online."
-                      : undefined
-                  }
-                />
-                {asMember ? (
-                  <div className="space-y-2">
-                    <Button className="w-full" disabled={placing} onClick={payAsMember}>
-                      {placing ? "Working…" : "Pay online now"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      disabled={placing}
-                      onClick={payAtStoreAsMember}
-                    >
-                      <Store className="h-4 w-4" />
-                      Pay at the store
-                    </Button>
-                    {!keyboard.open && (
-                      <p className="text-center text-xs text-muted-foreground">
-                        Paying at the store holds nothing back for you until a coach hands it over,
-                        so anything low on stock is safer bought now.
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Button
-                      className="w-full"
-                      disabled={placing || !guestDetailsValid}
-                      onClick={payAsGuest}
-                    >
-                      {placing ? "Working…" : "Pay online now"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      disabled={placing || !guestDetailsValid}
-                      onClick={reserveAsGuest}
-                    >
-                      <Store className="h-4 w-4" />
-                      Reserve and pay at the store
-                    </Button>
-                    {!keyboard.open && (
-                      <p className="text-center text-xs text-muted-foreground">
-                        {guestDetailsValid
-                          ? "Reserving holds nothing back until a coach hands it over, so anything low on stock is safer bought now."
-                          : "Add your name and phone number above to continue."}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </footer>
+        {basket.length > 0 && asMember && (
+          <div className="space-y-3 rounded-lg border border-dashed border-border p-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="store-coupon">Coupon code</Label>
+              <Input
+                id="store-coupon"
+                value={couponCode}
+                onChange={(event) => setCouponCode(event.target.value)}
+                placeholder="Optional"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="store-coins">Coins to spend</Label>
+              <Input
+                id="store-coins"
+                type="number"
+                min={0}
+                value={coinsToSpend}
+                onChange={(event) => setCoinsToSpend(event.target.value)}
+                placeholder="0"
+              />
+            </div>
+          </div>
+        )}
+
+        {basket.length > 0 && !asMember && (
+          <div className="space-y-3 rounded-lg border border-dashed border-border p-3">
+            {!keyboard.open && (
+              <p className="text-xs text-muted-foreground">
+                Everything is collected from the gym. Pay now or at the counter — either way we
+                need a name and number to hand it to.
+              </p>
             )}
-          </aside>
-        </div>
-      )}
+            <div className="space-y-1.5">
+              <Label htmlFor="buyer-name">Your name</Label>
+              <Input
+                id="buyer-name"
+                value={buyerName}
+                onChange={(event) => setBuyerName(event.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="buyer-phone">Phone</Label>
+              <PhoneInput
+                id="buyer-phone"
+                value={buyerPhone}
+                onChange={(event) => setBuyerPhone(event.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="buyer-email">Email (optional)</Label>
+              <Input
+                id="buyer-email"
+                type="email"
+                value={buyerEmail}
+                onChange={(event) => setBuyerEmail(event.target.value)}
+              />
+            </div>
+          </div>
+        )}
+      </BasketDrawer>
     </div>
   );
 }

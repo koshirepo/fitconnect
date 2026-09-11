@@ -19,6 +19,7 @@
     "seed:remote": "pnpm run db:migrate:remote && node scripts/ensure-prisma-client.mjs seed-remote",
     "seed:remote:sql": "node scripts/ensure-prisma-client.mjs seed-remote --no-execute",
     "seed:store": "node scripts/seed-store.mjs",
+    "seed:store-sales": "node scripts/seed-store-sales.mjs",
     "seed:shipping": "node scripts/seed-shipping.mjs",
     "seed:attendance": "node scripts/seed-attendance.mjs",
     "seed:freezes": "node scripts/seed-freezes.mjs",

@@ -986,7 +986,16 @@ model ProductVariant {
   /// Free-form because supplements and accessories do not share axes.
   attributes Json    @default("{}")
   sku        String?
+  /// What a buyer pays for one, today.
   price      Int
+  /// What the seller pays its supplier for one, today. Null until somebody
+  /// records it, which is not the same as free: profit is not reported for a
+  /// sale whose cost was never known.
+  ///
+  /// Neither this nor `price` is read to report on a past sale. Both are copied
+  /// onto the order line at the moment of sale, so a supplier raising their rate
+  /// next month cannot rewrite the margin on last month's tubs.
+  costPrice  Int?
   stock      Int     @default(0)
   isActive   Boolean @default(true)
 
@@ -1622,6 +1631,12 @@ model StoreOrderItem {
   quantity  Int
   unitPrice Int
   lineTotal Int
+  /// The variant's `costPrice` as it stood when this sold, and that times the
+  /// quantity. Frozen for the same reason the names are: a later change to what
+  /// the gym pays must not rewrite the profit on a sale already made. Null when
+  /// no cost was recorded at the time — reported as unknown, never as zero.
+  unitCost  Int?
+  lineCost  Int?
 
   createdAt DateTime @default(now())
 

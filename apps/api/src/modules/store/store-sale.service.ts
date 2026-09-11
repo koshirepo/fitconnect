@@ -4,6 +4,7 @@
  * - Takes money for a basket, whether the till or a card takes it: prices it, claims the stock, writes the ledger row, spends and grants coins, and records the order.
  * - Both channels share `priceForSale`, `claimStock`, `createOrderRecord`, and `writeCoinEntries`, so a counter sale and an online one can never charge or credit differently for the same basket.
  * - Stock is claimed before anything is charged, and each claim is a conditional decrement rather than a read followed by a write. Two people buying the last tub at once cannot both succeed, and a basket that fails halfway puts back what it already took.
+ * - Every order line freezes the selling price and the purchase price as they stood at the sale (`orderLines`), so repricing a product later — or a supplier repricing it to the gym — cannot rewrite a past sale's revenue or profit.
  * - Pricing is recomputed here from the database, never taken from the request. A client that could name its own total could buy a ₹5,000 tub for a rupee — the rule the subscription checkout already follows.
  * - Primary exports: storeSaleService, storeCheckoutService.
  */
@@ -28,6 +29,8 @@ type ResolvedLine = BasketLine & {
   productName: string;
   variantName: string;
   attributes: unknown;
+  /** What the gym paid for one, as it stands now. Null when never recorded. */
+  unitCost: number | null;
 };
 
 type PricedSale = {
@@ -71,6 +74,7 @@ async function resolveLines(
       productName: variant.product.name,
       variantName: variant.name,
       attributes: variant.attributes,
+      unitCost: variant.costPrice,
     });
   }
 
@@ -224,7 +228,30 @@ async function releaseStock(tenantId: string, lines: { variantId: string; quanti
 
 // ─── Writes ───────────────────────────────────────────────────────────────────
 
-/** Record the order and its lines, with the names and attributes frozen. */
+/**
+ * The order lines for a basket, with everything that can change later frozen.
+ *
+ * Selling price, purchase price, names and attributes are all copied from the
+ * catalogue as it stands at this moment. Reports read these, never the variant,
+ * so a gym repricing a product — or a supplier repricing it to the gym — leaves
+ * every past sale's revenue and profit exactly as they were. Every channel
+ * builds its lines here, so none of them can forget the cost.
+ */
+function orderLines(lines: ResolvedLine[]) {
+  return lines.map((line) => ({
+    variantId: line.variantId,
+    productName: line.productName,
+    variantName: line.variantName,
+    attributes: line.attributes as object,
+    quantity: line.quantity,
+    unitPrice: line.unitPrice,
+    lineTotal: line.unitPrice * line.quantity,
+    unitCost: line.unitCost,
+    lineCost: line.unitCost === null ? null : line.unitCost * line.quantity,
+  }));
+}
+
+/** Record the order and its lines, with prices, names and attributes frozen. */
 function createOrderRecord(input: {
   tenantId: string;
   membershipId: string;
@@ -251,17 +278,7 @@ function createOrderRecord(input: {
       coinsEarned: priced.coinsEarned,
       paymentId: input.paymentId,
       ...(input.note ? { note: input.note } : {}),
-      items: {
-        create: input.priced.lines.map((line) => ({
-          variantId: line.variantId,
-          productName: line.productName,
-          variantName: line.variantName,
-          attributes: line.attributes as object,
-          quantity: line.quantity,
-          unitPrice: line.unitPrice,
-          lineTotal: line.unitPrice * line.quantity,
-        })),
-      },
+      items: { create: orderLines(input.priced.lines) },
     },
     select: { id: true, totalAmount: true, coinsEarned: true, coinsRedeemed: true },
   });
@@ -698,17 +715,7 @@ export const storeGuestService = {
         // itself waits until the money is actually taken.
         coinsEarned: priced.priced.coinsEarned,
         ...(input.note ? { note: input.note } : {}),
-        items: {
-          create: priced.lines.map((line) => ({
-            variantId: line.variantId,
-            productName: line.productName,
-            variantName: line.variantName,
-            attributes: line.attributes as object,
-            quantity: line.quantity,
-            unitPrice: line.unitPrice,
-            lineTotal: line.unitPrice * line.quantity,
-          })),
-        },
+        items: { create: orderLines(priced.lines) },
       },
       select: { id: true, createdAt: true },
     });
@@ -846,17 +853,7 @@ export const storeGuestService = {
           // nothing is recorded as owed.
           coinsEarned: 0,
           ...(input.note ? { note: input.note } : {}),
-          items: {
-            create: priced.lines.map((line) => ({
-              variantId: line.variantId,
-              productName: line.productName,
-              variantName: line.variantName,
-              attributes: line.attributes as object,
-              quantity: line.quantity,
-              unitPrice: line.unitPrice,
-              lineTotal: line.unitPrice * line.quantity,
-            })),
-          },
+          items: { create: orderLines(priced.lines) },
         },
         select: { id: true },
       });
@@ -1003,17 +1000,7 @@ export const storeGuestService = {
           coinsEarned: 0,
           gateway: "RAZORPAY",
           ...(input.note ? { note: input.note } : {}),
-          items: {
-            create: priced.lines.map((line) => ({
-              variantId: line.variantId,
-              productName: line.productName,
-              variantName: line.variantName,
-              attributes: line.attributes as object,
-              quantity: line.quantity,
-              unitPrice: line.unitPrice,
-              lineTotal: line.unitPrice * line.quantity,
-            })),
-          },
+          items: { create: orderLines(priced.lines) },
         },
         select: { id: true },
       });

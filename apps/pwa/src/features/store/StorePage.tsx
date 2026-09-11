@@ -4,6 +4,7 @@
  * - Not a shop. Members and visitors buy on the public storefront at `/shop`; this is where staff work the other side of it — reservations to hand over, money to take, stock to correct. That split is why this screen needs `STORE_SELL` or `STORE_MANAGE` rather than the browse grant every member holds.
  * - The queue leads, because it is the thing with people waiting on it. A reservation holds no stock: it was written when somebody chose a basket, and nothing moves until Complete is pressed here. That is also why completing can fail — the last tub can be sold from under a reservation — and why the row stays pending when it does.
  * - Completing a member's reservation writes the payment row too, so store revenue reaches the finance page through the same ledger as memberships and charges, and grants the coins the basket promised. A guest reservation has no membership to hang either off.
+ * - Selling from scratch is `CounterSale`: the shop's own grid, always on the page for staff who sell. Its cart belongs to this page through `useCounterCart`, so the one cart button is Sell at counter in the header — it shows what is in the cart and opens it to take the payment.
  * - Primary exports: StorePage.
  */
 import * as React from "react";
@@ -13,13 +14,9 @@ import {
   Check,
   ClipboardList,
   Coins,
-  Minus,
   Package,
   Phone,
-  Plus,
   Settings,
-  ShoppingCart,
-  Trash2,
   X,
 } from "lucide-react";
 
@@ -30,18 +27,12 @@ import { useAppNavigate } from "@/lib/use-app-navigate";
 import {
   useCompleteStoreOrder,
   useRejectStoreOrder,
-  useSellAtCounter,
-  useSellToGuest,
   useStoreOrders,
   useStoreProducts,
 } from "@/api/queries/store";
-import { useAllMembers } from "@/api/queries/members";
-import MemberSelector from "@/components/ui/memberSelector";
-import { Input } from "@/components/ui/input";
-import { PhoneInput } from "@/components/ui/phone-input";
-import { Label } from "@/components/ui/label";
-import { StoreVariantPicker } from "./StoreVariantPicker";
-import type { TenantMember, StoreProduct, StoreVariant } from "@fitconnect/shared/types/models";
+import { CounterSale } from "./CounterSale";
+import { StoreCartButton } from "./storefront-controls";
+import { useCounterCart } from "./use-counter-cart";
 import { getApiError } from "@/api/client";
 import { haptics } from "@/lib/haptics";
 import { Button } from "@/components/ui/button";
@@ -55,15 +46,6 @@ import { useToast } from "@/components/ui/toast";
 import { usePhoneDisplay } from "@/lib/use-phone-display";
 import { formatCompactCurrency, formatCurrency, formatDate, cn } from "@/lib/utils";
 import type { StoreOrderRow } from "@/api/store";
-
-/** One line of a sale being rung up at the desk. */
-type CounterLine = {
-  variantId: string;
-  label: string;
-  unitPrice: number;
-  stock: number;
-  quantity: number;
-};
 
 const TABS = [
   { value: "PENDING", label: "To hand over" },
@@ -113,164 +95,10 @@ export default function StorePage() {
 
   const completeOrder = useCompleteStoreOrder();
   const rejectOrder = useRejectStoreOrder();
-  const sellAtCounter = useSellAtCounter();
-  const sellToGuest = useSellToGuest();
 
-  // The roster is only fetched when a sale is actually being rung up: this
-  // screen is opened many times a day to hand orders over, and almost never to
-  // sell from scratch.
-  const [sellOpen, setSellOpen] = React.useState(false);
-  const membersQuery = useAllMembers({ enabled: sellOpen && canSell });
-  const members = React.useMemo(() => membersQuery.data ?? [], [membersQuery.data]);
-
-  // Who is at the counter. A walk-in buying a shaker should not have to join
-  // the gym first, so the till takes either.
-  const [buyerKind, setBuyerKind] = React.useState<"MEMBER" | "GUEST">("MEMBER");
-  const [buyer, setBuyer] = React.useState<TenantMember | null>(null);
-  const [guestName, setGuestName] = React.useState("");
-  const [guestPhone, setGuestPhone] = React.useState("");
-  const [lines, setLines] = React.useState<CounterLine[]>([]);
-  const [couponCode, setCouponCode] = React.useState("");
-  const [coinsToSpend, setCoinsToSpend] = React.useState("");
-  const [selling, setSelling] = React.useState(false);
-
-  const counterTotal = lines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0);
-
-  /**
-   * Adding and removing say so.
-   *
-   * The till is worked standing up with a member waiting, often on a phone
-   * where the basket sits below the fold — so a tap that changed nothing
-   * visible read as a tap that had not registered, and the answer was to tap
-   * again. The toast is the receipt for the tap.
-   *
-   * The refusals matter most. An add blocked by stock, or a second tap on a
-   * line already holding the last unit, previously did nothing at all.
-   */
-  const addLine = (product: StoreProduct, variant: StoreVariant) => {
-    const label = `${product.name} — ${variant.name}`;
-
-    if (variant.stock <= 0) {
-      toast.error(`${label} is out of stock.`);
-      return;
-    }
-
-    const existing = lines.find((line) => line.variantId === variant.id);
-    if (existing && existing.quantity >= variant.stock) {
-      toast.error(`Only ${variant.stock} of ${label} left.`);
-      return;
-    }
-
-    setLines((prev) => {
-      const current = prev.find((line) => line.variantId === variant.id);
-      if (current) {
-        return prev.map((line) =>
-          line.variantId === variant.id
-            ? { ...line, quantity: Math.min(line.quantity + 1, variant.stock) }
-            : line,
-        );
-      }
-      return [
-        ...prev,
-        {
-          variantId: variant.id,
-          label,
-          unitPrice: variant.price,
-          stock: variant.stock,
-          quantity: 1,
-        },
-      ];
-    });
-
-    toast.success(existing ? `${label} ×${existing.quantity + 1}.` : `${label} added.`);
-  };
-
-  const changeLine = (variantId: string, delta: number) => {
-    const line = lines.find((entry) => entry.variantId === variantId);
-    if (!line) return;
-
-    const quantity = Math.min(Math.max(line.quantity + delta, 0), line.stock);
-
-    if (quantity === line.quantity) {
-      // Capped rather than changed — the one case where the basket looks
-      // identical afterwards, so the tap has to account for itself.
-      toast.error(`Only ${line.stock} of ${line.label} in stock.`);
-      return;
-    }
-
-    setLines((prev) =>
-      prev.flatMap((entry) => {
-        if (entry.variantId !== variantId) return [entry];
-        return quantity === 0 ? [] : [{ ...entry, quantity }];
-      }),
-    );
-
-    toast.success(quantity === 0 ? `${line.label} removed.` : `${line.label} ×${quantity}.`);
-  };
-
-  const resetSale = () => {
-    setBuyer(null);
-    setGuestName("");
-    setGuestPhone("");
-    setLines([]);
-    setCouponCode("");
-    setCoinsToSpend("");
-  };
-
-  const sellable =
-    lines.length > 0 &&
-    (buyerKind === "MEMBER"
-      ? Boolean(buyer)
-      : guestName.trim().length >= 2 && guestPhone.trim().length >= 10);
-
-  /**
-   * Ring a basket through for a member standing at the desk.
-   *
-   * Completes immediately: the money is in the till, so there is nothing to
-   * settle later. Pricing, the coupon, and the coins are all the API's own —
-   * this screen sends variant ids and quantities and nothing else.
-   */
-  const handleSell = async () => {
-    if (!sellable) return;
-    setSelling(true);
-
-    const items = lines.map((line) => ({
-      variantId: line.variantId,
-      quantity: line.quantity,
-    }));
-
-    try {
-      if (buyerKind === "GUEST") {
-        const sale = await sellToGuest.mutateAsync({
-          items,
-          buyerName: guestName.trim(),
-          buyerPhone: guestPhone.trim(),
-        });
-        toast.success(`Sold for ${formatCurrency(sale.total)}.`);
-      } else {
-        const sale = await sellAtCounter.mutateAsync({
-          membershipId: buyer!.id,
-          items,
-          ...(couponCode.trim() ? { couponCode: couponCode.trim() } : {}),
-          ...(coinsToSpend ? { coinsToSpend: Number(coinsToSpend) } : {}),
-        });
-        toast.success(
-          sale.coinsEarned > 0
-            ? `Sold for ${formatCurrency(sale.total)}. ${sale.coinsEarned} coins earned.`
-            : `Sold for ${formatCurrency(sale.total)}.`,
-        );
-      }
-
-      haptics.payment();
-      resetSale();
-      setSellOpen(false);
-    } catch (caught) {
-      haptics.failure();
-      toast.error(getApiError(caught));
-    } finally {
-      setSelling(false);
-    }
-  };
+  // The counter's cart lives here rather than in `CounterSale`, so its one
+  // button can be this page's main action, in the header.
+  const counter = useCounterCart(products);
 
   /** Stock worth watching: what is gone, and what is nearly gone. */
   const stock = React.useMemo(() => {
@@ -329,13 +157,17 @@ export default function StorePage() {
                       as before. */}
             <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
               {canSell && (
-                <Button
+                // The only cart button on the page. Products go in from the
+                // grid below; this opens the cart to finish the sale.
+                <StoreCartButton
                   className="col-span-2 sm:col-span-1"
-                  onClick={() => setSellOpen((open) => !open)}
-                >
-                  <ShoppingCart className="h-4 w-4" />
-                  {sellOpen ? "Close sale" : "Sell at counter"}
-                </Button>
+                  variant="default"
+                  text="Sell at counter"
+                  label="Counter cart"
+                  count={counter.itemCount}
+                  total={counter.subtotal}
+                  onClick={() => counter.setOpen(true)}
+                />
               )}
               <Button variant="outline" onClick={() => navigateRaw("/dashboard/store")}>
                 <Package className="h-4 w-4" />
@@ -391,177 +223,6 @@ export default function StorePage() {
         />
       </div>
 
-      {sellOpen && canSell && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>Sell at the counter</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* A counter sale is complete the moment it is made — the money is
-                in the till — so it needs the member up front rather than as an
-                afterthought: the coins and any coupon are theirs. */}
-            <div className="space-y-2">
-              <Label>Buyer</Label>
-              <div className="flex gap-2">
-                {(["MEMBER", "GUEST"] as const).map((kind) => (
-                  <button
-                    key={kind}
-                    onClick={() => setBuyerKind(kind)}
-                    className={cn(
-                      "rounded-full border px-3 py-1.5 text-sm transition-colors",
-                      buyerKind === kind
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-background hover:bg-muted",
-                    )}
-                  >
-                    {kind === "MEMBER" ? "Member" : "Walk-in"}
-                  </button>
-                ))}
-              </div>
-
-              {buyerKind === "MEMBER" ? (
-                <MemberSelector
-                  members={members}
-                  selectedMember={buyer}
-                  onSelect={setBuyer}
-                  placeholder={membersQuery.isPending ? "Loading members…" : "Choose the buyer"}
-                  title="Who is buying?"
-                />
-              ) : (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="guest-name">Name</Label>
-                    <Input
-                      id="guest-name"
-                      value={guestName}
-                      onChange={(event) => setGuestName(event.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="guest-phone">Phone</Label>
-                    <PhoneInput
-                      id="guest-phone"
-                      value={guestPhone}
-                      onChange={(event) => setGuestPhone(event.target.value)}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label>Items</Label>
-              {lines.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Pick from the catalogue below.</p>
-              ) : (
-                <div className="space-y-2">
-                  {lines.map((line) => (
-                    <div
-                      key={line.variantId}
-                      /* Stacked on a phone. Side by side, the stepper and the
-                         price are fixed-width and the name is what gives, so a
-                         375px screen showed "BCAA Recove…" — the flavour and
-                         size, which is the part that says which tub is being
-                         rung up, were the first thing cut. */
-                      className="flex flex-col gap-2 rounded-lg border border-border p-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
-                    >
-                      <span className="min-w-0 text-sm sm:truncate">{line.label}</span>
-                      <div className="flex shrink-0 items-center justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="icon-xs"
-                          onClick={() => changeLine(line.variantId, -1)}
-                          aria-label="One fewer"
-                        >
-                          {line.quantity === 1 ? (
-                            <Trash2 className="h-3 w-3" />
-                          ) : (
-                            <Minus className="h-3 w-3" />
-                          )}
-                        </Button>
-                        <span className="w-5 text-center text-sm">{line.quantity}</span>
-                        <Button
-                          variant="outline"
-                          size="icon-xs"
-                          disabled={line.quantity >= line.stock}
-                          onClick={() => changeLine(line.variantId, 1)}
-                          aria-label="One more"
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                        <span className="ml-auto w-20 text-right text-sm font-medium tabular-nums sm:ml-0">
-                          {formatCurrency(line.unitPrice * line.quantity)}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div
-              className={cn(
-                "grid gap-3 sm:grid-cols-2",
-                // Both hang off a membership, so a walk-in gets neither.
-                buyerKind === "GUEST" && "hidden",
-              )}
-            >
-              <div className="space-y-1.5">
-                <Label htmlFor="counter-coupon">Coupon code</Label>
-                <Input
-                  id="counter-coupon"
-                  value={couponCode}
-                  onChange={(event) => setCouponCode(event.target.value)}
-                  placeholder="Optional"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="counter-coins">Coins to spend</Label>
-                <Input
-                  id="counter-coins"
-                  type="number"
-                  min={0}
-                  value={coinsToSpend}
-                  onChange={(event) => setCoinsToSpend(event.target.value)}
-                  placeholder="0"
-                />
-              </div>
-            </div>
-
-            {/* The one action on this card that takes money. On a phone it gets
-                the full width rather than sharing a wrapped row with Clear,
-                which put a destructive-ish button and the pay button at the
-                same size under a thumb. */}
-            <div className="flex flex-col gap-3 border-t border-border pt-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Before any coupon or coins</p>
-                <p className="text-lg font-bold tabular-nums">{formatCurrency(counterTotal)}</p>
-              </div>
-              <div className="flex flex-col-reverse gap-2 sm:flex-row">
-                <Button variant="ghost" onClick={resetSale} disabled={selling}>
-                  Clear
-                </Button>
-                <Button onClick={handleSell} disabled={selling || !sellable}>
-                  <Check className="h-4 w-4" />
-                  {selling ? "Selling…" : "Take payment"}
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid gap-3 border-t border-border pt-4 sm:grid-cols-2 lg:grid-cols-3">
-              {products.map((product) => (
-                <StoreVariantPicker
-                  key={product.id}
-                  product={product}
-                  canBuy
-                  onAdd={(variant) => addLine(product, variant)}
-                />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {stockView && (
         <Card>
           <CardHeader className="flex-row items-center justify-between pb-3">
@@ -603,6 +264,12 @@ export default function StorePage() {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* The shop's own grid, always here for staff who sell, so a sale starts
+          with a tap on a product rather than a button to open a panel first. */}
+      {canSell && (
+        <CounterSale products={products} loading={productsQuery.isPending} cart={counter} />
       )}
 
       <div className="flex gap-2 overflow-x-auto">

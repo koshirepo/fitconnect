@@ -48,15 +48,6 @@ function sumGateway(
   return { revenue, count };
 }
 
-/** One bucket of the subscription/charge revenue split, zeroed when absent. */
-function pickMix(
-  rows: { kind: string; revenue: number | bigint; count: number | bigint }[],
-  kind: string,
-) {
-  const row = rows.find((r) => r.kind === kind);
-  return { revenue: Number(row?.revenue ?? 0), count: Number(row?.count ?? 0) };
-}
-
 const subscriptionBadgeSelect = {
   id: true,
   name: true,
@@ -1173,7 +1164,6 @@ export const paymentRepository = {
       collectionMonth,
       coinBalance,
       activeFreezes,
-      mixMonth,
       guestSales,
     ] = await Promise.all([
       // Today's stats
@@ -1272,23 +1262,6 @@ export const paymentRepository = {
       prisma.coinLedgerEntry.aggregate({ where: { tenantId }, _sum: { amount: true } }),
       // Terms paused right now, which is revenue already collected but not yet run out.
       prisma.membershipFreeze.count({ where: { tenantId, endedOn: null } }),
-      // Membership dues versus one-off charges, which bill on different rhythms.
-      prisma.$queryRaw<{ kind: string; revenue: number | bigint; count: number | bigint }[]>`
-        SELECT
-          CASE
-            WHEN "subscriptionId" IS NOT NULL THEN 'SUBSCRIPTION'
-            WHEN "chargeId" IS NOT NULL THEN 'CHARGE'
-            ELSE 'OTHER'
-          END AS kind,
-          COALESCE(SUM("amount"), 0) AS revenue,
-          COUNT(*) AS count
-        FROM "Payment"
-        WHERE "tenantId" = ${tenantId}
-          AND "status" = 'COMPLETED'
-          AND "createdAt" >= ${startOfMonth}
-          AND "createdAt" < ${endOfMonth}
-        GROUP BY kind
-      `,
       // Completed store orders with no membership: the walk-ins and visitors
       // whose money the payment ledger structurally cannot hold. Small by
       // nature — one row per guest sale — so it is read whole and bucketed in
@@ -1406,12 +1379,8 @@ export const paymentRepository = {
       // Coins outstanding across the gym, and terms currently paused.
       coinsOutstanding: coinBalance._sum.amount ?? 0,
       activeFreezes,
-
-      revenueMix: {
-        subscriptions: pickMix(mixMonth, "SUBSCRIPTION"),
-        charges: pickMix(mixMonth, "CHARGE"),
-        other: pickMix(mixMonth, "OTHER"),
-      },
+      // No revenue mix here: the payments service takes it from the books, on
+      // the same dates as the month total, with store sales as their own bucket.
     };
   },
 };

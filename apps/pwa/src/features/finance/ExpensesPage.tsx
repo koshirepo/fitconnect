@@ -42,6 +42,7 @@ import { MonthNav } from "@/components/ui/month-nav";
 import { useToast } from "@/components/ui/toast";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
+import { IncomeBySourceCard, StoreProfitCard } from "./IncomeBreakdown";
 import {
   BadgeIndianRupee,
   ChevronRight,
@@ -328,6 +329,15 @@ export default function ExpensesPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Money in by what paid for it, and what the store made. Both come
+              from the same summary as the tiles above, so the figures agree. */}
+          {summary && (summary.income.bySource || summary.store) && (
+            <div className="grid gap-2.5 sm:gap-3 lg:grid-cols-2">
+              <IncomeBySourceCard income={summary.income} />
+              {summary.store && <StoreProfitCard store={summary.store} />}
+            </div>
+          )}
 
           {/* Fixed monthly costs */}
           <Card>
