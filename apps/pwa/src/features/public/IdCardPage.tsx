@@ -7,6 +7,8 @@
  * - The QR opens this member's record in the gym's dashboard — `/dashboard/members/:membershipId` on the gym's own host — so a phone at the desk goes from a card in somebody's hand to their full record. It is not a check-in code: members are checked in at the gym's machine, and scanning records nothing.
  * - Whoever scans it still has to be signed in with `members:read:detail`; a stranger who finds a dropped card gets a login screen, not a member's history.
  * - Colour is derived from the gym's own, not picked per element: one brand hex becomes a gradient, a deep shade, and two tints by rotating hue and lightness, so a card is colourful in the gym's colours rather than in this file's. A gym that has chosen nothing gets the app's orange rather than grey.
+ * - The top of the card is reserved for the lanyard slot. The blanks these print on are punched, and a punch takes the plastic with it — so the header gradient runs through that band and nothing else does. The preview draws the slot as a dashed outline that printing leaves behind.
+ * - Nothing on the card states standing. A card is punched once and carried for a year; "ACTIVE" pressed into plastic goes on saying so after the membership has stopped being true. The QR is the live answer, and the saved PNG drops the expiry for the same reason.
  * - Primary exports: IdCardPage.
  */
 import * as React from "react";
@@ -27,6 +29,40 @@ const CARD_WIDTH = 640;
 const CARD_HEIGHT = 1010;
 /** Exported at 2× so the PNG stays sharp when printed or zoomed. */
 const EXPORT_SCALE = 2;
+
+/**
+ * The card is CR80, printed portrait — 54mm across by 85.6mm down.
+ *
+ * Everything below is authored in millimetres and converted, because the one
+ * thing on this card that has to line up with a physical object is measured in
+ * millimetres by whoever punches it.
+ */
+const MM_X = CARD_WIDTH / 54;
+const MM_Y = CARD_HEIGHT / 85.6;
+
+/**
+ * The lanyard slot, and the space it has to be given.
+ *
+ * The blanks these are printed on are punched with a slot at the top so they
+ * can hang from a clip, and a slot punch takes the plastic with it — anything
+ * drawn there is not "behind the hole", it is gone, and what is left is a torn
+ * half of it. So the top of the card is reserved: the header gradient still
+ * runs full bleed through it (colour is no loss when the plastic goes), but no
+ * logo, no name, no glyph is placed above `PUNCH_SAFE_Y`.
+ *
+ * The measurements are the common slot punch — a 12mm × 3mm slot set 3mm down
+ * from the edge — plus 3mm of clearance under it, which is what keeps a
+ * slightly-off punch from clipping the first line of type.
+ */
+const SLOT = {
+  width: 12 * MM_X,
+  height: 3 * MM_Y,
+  top: 3 * MM_Y,
+  clearance: 3 * MM_Y,
+};
+const SLOT_X = (CARD_WIDTH - SLOT.width) / 2;
+/** No card content sits above this line. */
+const PUNCH_SAFE_Y = Math.round(SLOT.top + SLOT.height + SLOT.clearance);
 
 /**
  * The card's colour when a gym has not chosen one.
@@ -64,6 +100,19 @@ function escapeXml(value: string) {
 /** Trim to fit the card rather than letting a long name run off the edge. */
 function fit(value: string, max: number) {
   return value.length > max ? `${value.slice(0, max - 1)}…` : value;
+}
+
+/**
+ * Roughly how wide a run of bold text will be.
+ *
+ * SVG cannot lay one thing out after another — every element is placed by
+ * coordinate — so putting the role badge beside the member's number means
+ * knowing where that number ends. Bold Inter digits run a little under
+ * two-thirds of their size, and the one caller clamps the result, so an
+ * estimate is enough where measuring would mean rendering first.
+ */
+function boldWidth(text: string, fontSize: number) {
+  return text.length * 0.62 * fontSize;
 }
 
 /** Padding either side of a footer line, and the width that leaves it. */
@@ -254,6 +303,21 @@ function palette(brandHex: string) {
   };
 }
 
+/** Relative luminance, the way WCAG defines it. */
+function luminance(hex: string) {
+  const [r, g, b] = channels(hex).map((channel) => {
+    const c = channel / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+}
+
+/** How far two colours stand apart, 1 (identical) to 21 (black on white). */
+function contrast(a: string, b: string) {
+  const [lighter, darker] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (lighter! + 0.05) / (darker! + 0.05);
+}
+
 /**
  * Text that stays readable on a given background.
  *
@@ -261,12 +325,37 @@ function palette(brandHex: string) {
  * nobody can read. Relative luminance decides it rather than a guess.
  */
 function readableOn(hex: string) {
-  const [r, g, b] = channels(hex).map((channel) => {
-    const c = channel / 255;
-    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  });
-  const luminance = 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
-  return luminance > 0.45 ? INK : "#ffffff";
+  return luminance(hex) > 0.45 ? INK : "#ffffff";
+}
+
+/**
+ * The gym's colour, dark enough to be written *with*.
+ *
+ * `readableOn` answers the other half of this question — what to set on top of
+ * the brand — but the card also writes the brand itself onto white: the member
+ * number, the initials behind a missing photo, the role glyph. A gym that
+ * picked a pale yellow got a member number nobody could read, on the one field
+ * of the card somebody squints at across a desk.
+ *
+ * Only lightness moves. Hue and saturation are the gym's, so a pale yellow
+ * becomes a dark gold rather than a grey — still recognisably their colour,
+ * and now legible. A brand already dark enough is returned untouched.
+ *
+ * The target is 4.5:1, which is the ordinary-text threshold; the initials are
+ * enormous and drawn at partial opacity, so they are held to the large-text
+ * 3:1 instead and reach it with room to spare.
+ */
+function inkFrom(brandHex: string, against = "#ffffff", min = 4.5) {
+  const base = hexToHsl(brandHex);
+
+  // Two-hundredths of lightness a step: fine enough that the result never
+  // overshoots into near-black, coarse enough to settle in a few dozen passes.
+  for (let l = base.l; l > 0; l -= 0.02) {
+    const candidate = hslToHex({ ...base, l });
+    if (contrast(candidate, against) >= min) return candidate;
+  }
+
+  return INK;
 }
 
 // ─── Card ────────────────────────────────────────────────────────────────────
@@ -318,12 +407,36 @@ function roleBadge(cx: number, cy: number, role: string, ink: string, fill: stri
   </g>`;
 }
 
+const LABEL_SIZE = 23;
+const LABEL_TRACKING = 1.4;
+
 function label(x: number, y: number, text: string) {
-  return `<text x="${x}" y="${y}" font-family="${FONT}" font-size="23" font-weight="600" letter-spacing="1.4" fill="${SUBTLE}">${escapeXml(text)}</text>`;
+  return `<text x="${x}" y="${y}" font-family="${FONT}" font-size="${LABEL_SIZE}" font-weight="600" letter-spacing="${LABEL_TRACKING}" fill="${SUBTLE}">${escapeXml(text)}</text>`;
 }
 
-function value(x: number, y: number, text: string) {
-  return `<text x="${x}" y="${y}" text-anchor="end" font-family="${FONT}" font-size="29" font-weight="700" fill="${INK}">${escapeXml(text)}</text>`;
+/** How far a label reaches, so the value beside it knows what room is left. */
+function labelWidth(text: string) {
+  return text.length * (0.6 * LABEL_SIZE + LABEL_TRACKING);
+}
+
+/**
+ * A detail row's value, right-aligned and sized to the room it has.
+ *
+ * "Evening · 17:00–20:00" is three facts in one line, and the fixed
+ * sixteen-character cap this used to take cut two of them off — the card said
+ * "Evening · 17:00…", which is worse than useless to somebody checking whether
+ * a member is here in their own shift. So the size steps down before anything
+ * is cut, and `textLength` holds the rare line that still overruns, which is a
+ * little condensing rather than a lost closing time.
+ */
+function value(x: number, y: number, text: string, available: number) {
+  const size = text.length > 22 ? 24 : text.length > 18 ? 26 : 29;
+  const squeeze =
+    boldWidth(text, size) > available
+      ? ` textLength="${Math.round(available)}" lengthAdjust="spacingAndGlyphs"`
+      : "";
+
+  return `<text x="${x}" y="${y}" text-anchor="end" font-family="${FONT}" font-size="${size}" font-weight="700" fill="${INK}"${squeeze}>${escapeXml(text)}</text>`;
 }
 
 /** One row of the detail strip: a label on the left, its value on the right. */
@@ -352,10 +465,10 @@ function buildCardSvg(
   const c = palette(brand);
   const onBrand = readableOn(brand);
   const onDeep = readableOn(c.deep);
-
-  const active = member.status === "ACTIVE";
-  const statusInk = active ? "#047857" : "#b45309";
-  const statusFill = active ? "#ecfdf5" : "#fffbeb";
+  /** The brand as ink: everything the card writes in the gym's colour on white. */
+  const brandInk = inkFrom(brand);
+  /** The same, held to the large-text threshold — the initials are 108px. */
+  const brandInkLarge = inkFrom(brand, c.tint, 3);
 
   const initials = member.name
     .split(" ")
@@ -366,25 +479,50 @@ function buildCardSvg(
 
   // Geometry. Named rather than inlined because the photo, its ring, and its
   // clip path have to agree, and three loose numbers drift apart.
-  const PHOTO = { x: 44, y: 240, size: 184 };
+  const PHOTO = { x: 44, y: 278, size: 176 };
   const RIGHT = PHOTO.x + PHOTO.size + 30;
-  const HEADER_H = 200;
-  const FOOTER_H = 118;
+  /**
+   * The header is deep because the top of it belongs to the slot punch, not to
+   * the design: its content starts below `PUNCH_SAFE_Y`, and the band is sized
+   * to hold the gym's block underneath that rather than to a round number.
+   */
+  const HEADER_H = 248;
+  /**
+   * The footer band, deep enough to sit its type inside real margins.
+   *
+   * It used to leave 12px under "POWERED BY FITCONNECT" — on plastic, against a
+   * rounded corner, that reads as type falling off the edge. The band now holds
+   * 20px clear above the address and 20px below the last line, and the height
+   * it took came off the gaps further up rather than off the card.
+   */
+  const FOOTER_H = 124;
+  const FOOTER_PAD = 20;
   const FOOTER_Y = CARD_HEIGHT - FOOTER_H;
+  /** The detail strip's frame. Its height is measured further down, once the
+   *  rows that go in it are known. */
+  const PANEL = { x: 44, y: 478, w: 552, padY: 22, rowH: 64 };
 
   const photoBlock = photo
     ? `<image href="${photo}" x="${PHOTO.x}" y="${PHOTO.y}" width="${PHOTO.size}" height="${PHOTO.size}"
              preserveAspectRatio="xMidYMid slice" clip-path="url(#photoClip)" />`
     : `<rect x="${PHOTO.x}" y="${PHOTO.y}" width="${PHOTO.size}" height="${PHOTO.size}" rx="18" fill="${c.tint}" />
        <text x="${PHOTO.x + PHOTO.size / 2}" y="${PHOTO.y + PHOTO.size / 2 + 26}" text-anchor="middle"
-             font-family="${FONT}" font-size="108" font-weight="700" fill="${brand}" opacity="0.55">${escapeXml(initials)}</text>`;
+             font-family="${FONT}" font-size="108" font-weight="700" fill="${brandInkLarge}" opacity="0.65">${escapeXml(initials)}</text>`;
 
+  /**
+   * The gym's logo, sitting directly on the gradient.
+   *
+   * It used to be set on a white rounded plate. That plate read as a border
+   * drawn around somebody else's mark, and a logo already designed to be seen
+   * does not need one — so the mark goes straight onto the header, a little
+   * larger for the room the plate gave back.
+   */
+  const LOGO = { x: 40, y: PUNCH_SAFE_Y, size: 88 };
   const logoBlock = logo
-    ? `<rect x="36" y="48" width="92" height="92" rx="22" fill="#ffffff" opacity="0.94" />
-       <image href="${logo}" x="42" y="54" width="80" height="80"
+    ? `<image href="${logo}" x="${LOGO.x}" y="${LOGO.y}" width="${LOGO.size}" height="${LOGO.size}"
              preserveAspectRatio="xMidYMid slice" clip-path="url(#logoClip)" />`
     : "";
-  const headerTextX = logo ? 148 : 40;
+  const headerTextX = logo ? LOGO.x + LOGO.size + 20 : 40;
 
   const shiftLine = member.shift
     ? `${member.shift.name} · ${member.shift.startTime}–${member.shift.endTime}`
@@ -400,28 +538,55 @@ function buildCardSvg(
   const nameSize = member.name.length > 18 ? 29 : member.name.length > 14 ? 32 : 37;
   const nameMax = nameSize === 37 ? 15 : nameSize === 32 ? 18 : 23;
 
+  /**
+   * The number and the role, sitting together on one line.
+   *
+   * The badge follows the number rather than being parked at the right margin,
+   * so the two read as one fact about this person instead of as a glyph left
+   * over in the corner. A gym numbering its members in the tens of thousands
+   * pushes the badge along until it reaches the margin, where it stops.
+   */
+  // The number carries no "Member #" in front of it: the header already says
+  // what this card is, and the word was taking a third of the row from the two
+  // things on it that differ between one card and the next. Standing is not
+  // printed at all — a card is punched once and carried for a year, and
+  // "ACTIVE" pressed into plastic keeps saying so long after the membership
+  // has stopped being. Whoever needs to know scans the code.
+  const ID_SIZE = 34;
+  const idLine = `#${member.memberId}`;
+  const roleCx = Math.min(
+    RIGHT + boldWidth(idLine, ID_SIZE) + 46,
+    PANEL.x + PANEL.w - 24,
+  );
+
   // The strip of facts. The expiry is dropped from the saved copy, and the
   // rows below simply close up — which is why the panel is measured rather
   // than drawn at a fixed height.
   const rows: DetailRow[] = [
     { label: "MEMBER SINCE", value: formatDate(member.joinedAt) },
     ...(includeValidUntil ? [{ label: "VALID UNTIL", value: formatDate(member.validUntil) }] : []),
-    { label: "SHIFT", value: fit(shiftLine, 16) },
+    // A last-resort cap only. `value` shrinks and condenses first, so this
+    // catches a gym that named a shift a sentence, not an ordinary one.
+    { label: "SHIFT", value: fit(shiftLine, 30) },
   ];
 
-  const PANEL = { x: 44, y: 452, w: 552, padY: 24, rowH: 68 };
   const panelH = PANEL.padY * 2 + (rows.length - 1) * PANEL.rowH + 12;
   const panelBottom = PANEL.y + panelH;
 
   const detailRows = rows
     .map((row, index) => {
       const y = PANEL.y + PANEL.padY + 12 + index * PANEL.rowH;
+      const left = PANEL.x + 28;
+      const right = PANEL.x + PANEL.w - 28;
+      // What the value has to itself: the rest of the row after the label,
+      // less a gap so the two never touch.
+      const available = right - (left + labelWidth(row.label)) - 20;
       const rule =
         index < rows.length - 1
-          ? `<line x1="${PANEL.x + 28}" y1="${y + 30}" x2="${PANEL.x + PANEL.w - 28}" y2="${y + 30}" stroke="${c.tintEdge}" stroke-width="1.5" />`
+          ? `<line x1="${left}" y1="${y + 30}" x2="${right}" y2="${y + 30}" stroke="${c.tintEdge}" stroke-width="1.5" />`
           : "";
-      return `${label(PANEL.x + 28, y, row.label)}
-    ${value(PANEL.x + PANEL.w - 28, y, row.value)}
+      return `${label(left, y, row.label)}
+    ${value(right, y, row.value, available)}
     ${rule}`;
     })
     .join("\n    ");
@@ -435,11 +600,11 @@ function buildCardSvg(
    * others — and the notches bitten out of the edges say "tear here" without a
    * word of instruction.
    */
-  const perforationY = panelBottom + 34;
+  const perforationY = panelBottom + 28;
   const stubMid = (perforationY + FOOTER_Y) / 2;
 
   const qr = qrPath(qrData);
-  const QR = { size: 156, x: 40 };
+  const QR = { size: 148, x: 40 };
   const qrY = stubMid - QR.size / 2;
   const qrScale = QR.size / qr.count;
 
@@ -453,12 +618,14 @@ function buildCardSvg(
   // photographed, and the number on it was the gym's own contact detail rather
   // than anything the holder needs.
   const addressLines = wrap(gym.address ?? gym.name, ADDRESS_MAX_CHARS, 2);
-  const addressTop = FOOTER_Y + (addressLines.length > 1 ? 36 : 54);
+  // The cap height of the first line clears the band's top margin; a single
+  // line drops to sit centred over the rule instead of floating above it.
+  const addressTop = FOOTER_Y + FOOTER_PAD + (addressLines.length > 1 ? 18 : 36);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${CARD_WIDTH}" height="${CARD_HEIGHT}" viewBox="0 0 ${CARD_WIDTH} ${CARD_HEIGHT}">
   <defs>
     <clipPath id="photoClip"><rect x="${PHOTO.x}" y="${PHOTO.y}" width="${PHOTO.size}" height="${PHOTO.size}" rx="18" /></clipPath>
-    <clipPath id="logoClip"><rect x="42" y="54" width="80" height="80" rx="18" /></clipPath>
+    <clipPath id="logoClip"><rect x="${LOGO.x}" y="${LOGO.y}" width="${LOGO.size}" height="${LOGO.size}" rx="18" /></clipPath>
     <clipPath id="cardClip"><rect width="${CARD_WIDTH}" height="${CARD_HEIGHT}" rx="28" /></clipPath>
 
     <linearGradient id="headerFill" x1="0" y1="0" x2="1" y2="1">
@@ -496,13 +663,14 @@ function buildCardSvg(
          and very low contrast: the gym's name is set over this and has to stay
          first. -->
     <circle cx="588" cy="26" r="128" fill="#ffffff" opacity="0.10" />
-    <circle cx="512" cy="200" r="86" fill="#ffffff" opacity="0.07" />
+    <circle cx="512" cy="${HEADER_H}" r="86" fill="#ffffff" opacity="0.07" />
     <path d="M 380 0 L 640 0 L 640 ${HEADER_H} L 236 ${HEADER_H} Z" fill="#ffffff" opacity="0.05" />
 
+    <!-- Everything from here down clears the slot punch. -->
     ${logoBlock}
-    <text x="${headerTextX}" y="92" font-family="${FONT}" font-size="47" font-weight="700" fill="${onBrand}">${escapeXml(fit(gym.name, 18))}</text>
-    <text x="${headerTextX}" y="130" font-family="${FONT}" font-size="21" font-weight="700" letter-spacing="3.2" fill="${onBrand}" opacity="0.8">MEMBERSHIP CARD</text>
-    <text x="${headerTextX}" y="162" font-family="${FONT}" font-size="21" fill="${onBrand}" opacity="0.62">${escapeXml(webAddress)}</text>
+    <text x="${headerTextX}" y="${PUNCH_SAFE_Y + 44}" font-family="${FONT}" font-size="47" font-weight="700" fill="${onBrand}">${escapeXml(fit(gym.name, 18))}</text>
+    <text x="${headerTextX}" y="${PUNCH_SAFE_Y + 82}" font-family="${FONT}" font-size="21" font-weight="700" letter-spacing="3.2" fill="${onBrand}" opacity="0.8">MEMBERSHIP CARD</text>
+    <text x="${headerTextX}" y="${PUNCH_SAFE_Y + 114}" font-family="${FONT}" font-size="21" fill="${onBrand}" opacity="0.62">${escapeXml(webAddress)}</text>
 
     <!-- The rule that carries the whole palette across the card -->
     <rect y="${HEADER_H}" width="${CARD_WIDTH}" height="7" fill="url(#ruleFill)" />
@@ -512,15 +680,10 @@ function buildCardSvg(
     <rect x="${PHOTO.x - 2}" y="${PHOTO.y - 2}" width="${PHOTO.size + 4}" height="${PHOTO.size + 4}" rx="20"
           fill="none" stroke="url(#ringFill)" stroke-width="4" />
 
-    <!-- Who this is -->
-    <text x="${RIGHT}" y="${PHOTO.y + 50}" font-family="${FONT}" font-size="${nameSize}" font-weight="700" fill="${INK}">${escapeXml(fit(member.name, nameMax))}</text>
-    <text x="${RIGHT}" y="${PHOTO.y + 90}" font-family="${FONT}" font-size="32" font-weight="700" fill="${brand}">Member #${member.memberId}</text>
-
-    <!-- Standing and role, on one line: are they in good standing, and what
-         are they here as. -->
-    <rect x="${RIGHT}" y="${PHOTO.y + 112}" width="152" height="44" rx="22" fill="${statusFill}" stroke="${statusInk}" stroke-opacity="0.3" />
-    <text x="${RIGHT + 76}" y="${PHOTO.y + 141}" text-anchor="middle" font-family="${FONT}" font-size="23" font-weight="700" letter-spacing="1.2" fill="${statusInk}">${active ? "ACTIVE" : "INACTIVE"}</text>
-    ${roleBadge(RIGHT + 190, PHOTO.y + 134, member.role, brand, c.tint)}
+    <!-- Who this is: the name, then the number and the role on one line -->
+    <text x="${RIGHT}" y="${PHOTO.y + 70}" font-family="${FONT}" font-size="${nameSize}" font-weight="700" fill="${INK}">${escapeXml(fit(member.name, nameMax))}</text>
+    <text x="${RIGHT}" y="${PHOTO.y + 134}" font-family="${FONT}" font-size="${ID_SIZE}" font-weight="700" fill="${brandInk}">${escapeXml(idLine)}</text>
+    ${roleBadge(roleCx, PHOTO.y + 123, member.role, brandInk, c.tint)}
 
     <!-- What it entitles them to, on a wash of the gym's colour -->
     <rect x="${PANEL.x}" y="${PANEL.y}" width="${PANEL.w}" height="${panelH}" rx="20" fill="${c.tint}" stroke="${c.tintEdge}" stroke-width="2" />
@@ -539,7 +702,7 @@ function buildCardSvg(
       <path d="${qr.path}" fill="${INK}" shape-rendering="crispEdges" />
     </g>
 
-    <text x="${QR.x + QR.size + 30}" y="${stubMid - 26}" font-family="${FONT}" font-size="33" font-weight="700" fill="${INK}">Scan for member details</text>
+    <text x="${QR.x + QR.size + 30}" y="${stubMid - 26}" font-family="${FONT}" font-size="31" font-weight="700" fill="${INK}">Scan for member details</text>
     <text x="${QR.x + QR.size + 30}" y="${stubMid + 16}" font-family="${FONT}" font-size="23" fill="${SUBTLE}">Opens this member's record.</text>
     <text x="${QR.x + QR.size + 30}" y="${stubMid + 48}" font-family="${FONT}" font-size="23" fill="${SUBTLE}">Staff sign-in required.</text>
 
@@ -555,7 +718,7 @@ function buildCardSvg(
       .join("")}
 
     <line x1="232" y1="${FOOTER_Y + 82}" x2="408" y2="${FOOTER_Y + 82}" stroke="${onDeep}" stroke-opacity="0.25" stroke-width="1.5" />
-    <text x="320" y="${FOOTER_Y + 106}" text-anchor="middle" font-family="${FONT}" font-size="18" font-weight="600" letter-spacing="2.4" fill="${onDeep}" opacity="0.7">POWERED BY FITCONNECT</text>
+    <text x="320" y="${CARD_HEIGHT - FOOTER_PAD}" text-anchor="middle" font-family="${FONT}" font-size="18" font-weight="600" letter-spacing="2.4" fill="${onDeep}" opacity="0.7">POWERED BY FITCONNECT</text>
   </g>
 </svg>`;
 }
@@ -717,13 +880,35 @@ export default function IdCardPage() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col items-center gap-6 p-4 py-8">
-      {/* `id-card-print` is what the print stylesheet keeps: on paper this is
-          the only thing on the page, at exactly CR80 size. */}
-      <img
-        src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`}
-        alt={`Membership card for ${card.member.name} at ${card.gym.name}`}
-        className="id-card-print w-full rounded-2xl border shadow-lg"
-      />
+      <div className="relative w-full">
+        {/* `id-card-print` is what the print stylesheet keeps: on paper this is
+            the only thing on the page, at exactly CR80 size. */}
+        <img
+          src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`}
+          alt={`Membership card for ${card.member.name} at ${card.gym.name}`}
+          className="id-card-print w-full rounded-2xl border shadow-lg"
+        />
+
+        {/*
+          Where the punch goes, drawn on the screen and nowhere else.
+
+          The blanks arrive already slotted, so this is not something the
+          printer lays down — it is a ruler held over the preview, so whoever
+          is about to feed a card can see that the artwork clears the hole
+          before they spend one. It is outside `.id-card-print`, which is the
+          whole of what printing keeps.
+         */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute rounded-full border-2 border-dashed border-white/70 bg-slate-900/15"
+          style={{
+            left: `${(SLOT_X / CARD_WIDTH) * 100}%`,
+            width: `${(SLOT.width / CARD_WIDTH) * 100}%`,
+            top: `${(SLOT.top / CARD_HEIGHT) * 100}%`,
+            height: `${(SLOT.height / CARD_HEIGHT) * 100}%`,
+          }}
+        />
+      </div>
 
       <div className="flex w-full flex-col gap-2">
         {/*
@@ -757,6 +942,10 @@ export default function IdCardPage() {
       <p className="text-center text-xs text-muted-foreground">
         This card always shows your current membership details, and the code on it is how the desk
         checks you in. Keep the link — it stays the same when you renew.
+      </p>
+      <p className="text-center text-xs text-muted-foreground">
+        The dashed outline marks the lanyard slot on a punched blank. It is a guide only and is not
+        printed.
       </p>
     </div>
   );
