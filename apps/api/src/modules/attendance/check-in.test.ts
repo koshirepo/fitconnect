@@ -13,7 +13,8 @@ vi.mock("./attendance.repository", () => ({
     findMembershipForCheckInByUserId: vi.fn(),
     findMembershipsForCheckIn: vi.fn(),
     findMembershipsByDevicePins: vi.fn(),
-    markAttendance: vi.fn(),
+    findActiveShifts: vi.fn(),
+    recordPunch: vi.fn(),
   },
 }));
 
@@ -41,6 +42,7 @@ function tenant(overrides: Record<string, unknown> = {}) {
     slug: "iron-house",
     logoUrl: null,
     platformExpiresAt: null,
+    timezone: "Asia/Kolkata",
     ...overrides,
   };
 }
@@ -57,12 +59,15 @@ function membership(overrides: Record<string, unknown> = {}) {
   };
 }
 
-/** The row the repository hands back after an upsert. */
+/** The session the repository hands back after recording a punch. */
 function attendanceRow() {
   return {
     id: "att_1",
     date: new Date("2026-09-03T00:00:00.000Z"),
     checkInAt: new Date("2026-09-03T09:15:00.000Z"),
+    checkOutAt: null,
+    shiftId: null,
+    shiftKey: "none",
     note: null,
   };
 }
@@ -88,7 +93,13 @@ function armLookups() {
   repo.findMembershipsByDevicePins.mockResolvedValue([
     { ...membership(), deviceUserPin: 7 },
   ] as never);
-  repo.markAttendance.mockResolvedValue(attendanceRow() as never);
+  // No shifts defined: every punch resolves to a shiftless visit, which is what
+  // these tests are about — the doors, not the windows.
+  repo.findActiveShifts.mockResolvedValue([] as never);
+  repo.recordPunch.mockResolvedValue({
+    session: attendanceRow(),
+    direction: "CHECKED_IN",
+  } as never);
   freezes.endForAttendance.mockResolvedValue(null as never);
 }
 
@@ -137,7 +148,7 @@ beforeEach(() => {
 describe("every path records the visit", () => {
   it.each(PATHS)("$name writes exactly one attendance row", async ({ run }) => {
     await run();
-    expect(repo.markAttendance).toHaveBeenCalledTimes(1);
+    expect(repo.recordPunch).toHaveBeenCalledTimes(1);
   });
 
   /**
@@ -161,7 +172,7 @@ describe("a gym past its platform expiry", () => {
   /** It used to guard the QR route alone, which made it trivially bypassable. */
   it.each(PATHS)("$name records nothing", async ({ run }) => {
     await run();
-    expect(repo.markAttendance).not.toHaveBeenCalled();
+    expect(repo.recordPunch).not.toHaveBeenCalled();
   });
 
   it.each(PATHS.filter((path) => path.name !== "the RFID machine"))(
@@ -200,7 +211,7 @@ describe("a membership that is not active", () => {
    */
   it.each(PATHS)("$name still records the visit", async ({ run }) => {
     await run();
-    expect(repo.markAttendance).toHaveBeenCalledTimes(1);
+    expect(repo.recordPunch).toHaveBeenCalledTimes(1);
   });
 
   it.each(
@@ -234,7 +245,7 @@ describe("marking a whole room", () => {
       membershipIds: ["mem_from_another_gym"],
     });
 
-    expect(repo.markAttendance).not.toHaveBeenCalled();
+    expect(repo.recordPunch).not.toHaveBeenCalled();
   });
 
   it("resolves the gym once, not once per member", async () => {
@@ -249,7 +260,7 @@ describe("marking a whole room", () => {
     });
 
     expect(repo.findTenantByLookup).toHaveBeenCalledTimes(1);
-    expect(repo.markAttendance).toHaveBeenCalledTimes(3);
+    expect(repo.recordPunch).toHaveBeenCalledTimes(3);
   });
 });
 
@@ -260,23 +271,25 @@ describe("who is recorded as having marked it", () => {
    */
   it("is nobody for a self check-in", async () => {
     await attendanceService.markAttendance("gym_1", "user_1", null, {}, true);
-    expect(repo.markAttendance).toHaveBeenCalledWith(
-      "gym_1",
-      "mem_1",
-      expect.any(Date),
-      null,
-      undefined,
+    expect(repo.recordPunch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: "gym_1",
+        membershipId: "mem_1",
+        markedById: null,
+        note: undefined,
+      }),
     );
   });
 
   it("is nobody for the QR poster", async () => {
     await attendanceService.markQrAttendance("iron-house", "user_1", { membershipId: "mem_1" });
-    expect(repo.markAttendance).toHaveBeenCalledWith(
-      "gym_1",
-      "mem_1",
-      expect.any(Date),
-      null,
-      undefined,
+    expect(repo.recordPunch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: "gym_1",
+        membershipId: "mem_1",
+        markedById: null,
+        note: undefined,
+      }),
     );
   });
 
@@ -288,23 +301,25 @@ describe("who is recorded as having marked it", () => {
       { membershipId: "mem_1" },
       false,
     );
-    expect(repo.markAttendance).toHaveBeenCalledWith(
-      "gym_1",
-      "mem_1",
-      expect.any(Date),
-      "staff_1",
-      undefined,
+    expect(repo.recordPunch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: "gym_1",
+        membershipId: "mem_1",
+        markedById: "staff_1",
+        note: undefined,
+      }),
     );
   });
 
   it("is nobody for a punch on the wall device", async () => {
     await iclockService.recordPunches(DEVICE, [punch() as never]);
-    expect(repo.markAttendance).toHaveBeenCalledWith(
-      "gym_1",
-      "mem_1",
-      expect.any(Date),
-      null,
-      expect.stringContaining("RFID"),
+    expect(repo.recordPunch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: "gym_1",
+        membershipId: "mem_1",
+        markedById: null,
+        note: expect.stringContaining("RFID"),
+      }),
     );
   });
 });
@@ -323,11 +338,11 @@ describe("the same member on the same day", () => {
 
       await path.run();
 
-      const call = repo.markAttendance.mock.calls[0]!;
-      expect([call[0], call[1]], `${path.name} addressed a different row`).toEqual([
-        "gym_1",
-        "mem_1",
-      ]);
+      const [call] = repo.recordPunch.mock.calls[0]!;
+      expect(
+        [call.tenantId, call.membershipId],
+        `${path.name} addressed a different row`,
+      ).toEqual(["gym_1", "mem_1"]);
     }
   });
 });
@@ -346,7 +361,7 @@ describe("refusals", () => {
       status: number;
     };
     expect(result.status).toBe(400);
-    expect(repo.markAttendance).not.toHaveBeenCalled();
+    expect(repo.recordPunch).not.toHaveBeenCalled();
   });
 
   it("reports a gym that does not exist as not found", async () => {
@@ -363,7 +378,7 @@ describe("a card the gym has not enrolled", () => {
     repo.findMembershipsByDevicePins.mockResolvedValue([] as never);
     const result = await iclockService.recordPunches(DEVICE, [punch() as never]);
     expect(result).toMatchObject({ marked: 0, unmapped: 1 });
-    expect(repo.markAttendance).not.toHaveBeenCalled();
+    expect(repo.recordPunch).not.toHaveBeenCalled();
   });
 
   it("does not stop the rest of the batch from being recorded", async () => {
@@ -384,6 +399,6 @@ describe("a card the gym has not enrolled", () => {
       punch({ timestamp: "not-a-date" }) as never,
     ]);
     expect(result).toMatchObject({ marked: 0, unreadable: 1 });
-    expect(repo.markAttendance).not.toHaveBeenCalled();
+    expect(repo.recordPunch).not.toHaveBeenCalled();
   });
 });

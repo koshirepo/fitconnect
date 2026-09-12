@@ -104,7 +104,7 @@ export function ExercisePickerDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3">
+        <div className="min-w-0 space-y-3">
           <div className="relative">
             <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -117,7 +117,7 @@ export function ExercisePickerDialog({
             />
           </div>
 
-          <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1">
+          <div className="-mx-1 flex min-w-0 items-center gap-2 overflow-x-auto px-1 pb-1">
             <MuscleChip label="All" active={!muscleGroup} onClick={() => setMuscleGroup("")} />
             {groups.map((group) => (
               <MuscleChip
@@ -129,7 +129,7 @@ export function ExercisePickerDialog({
             ))}
           </div>
 
-          <div className="max-h-[45vh] min-h-[12rem] space-y-2 overflow-y-auto pr-1">
+          <div className="max-h-[45vh] min-h-[12rem] min-w-0 space-y-2 overflow-y-auto pr-1">
             {listQuery.isPending ? (
               <div className="flex justify-center py-8">
                 <Spinner />

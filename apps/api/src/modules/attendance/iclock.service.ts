@@ -101,24 +101,14 @@ export function toUtc(localTimestamp: string, timezone: string): Date | null {
 }
 
 /**
- * The calendar day a punch belongs to, from the wall clock that produced it.
+ * The day a punch is filed under is no longer the date the device printed.
  *
- * Taken from the local date the device reported rather than from the UTC
- * instant, because those are not the same day and the gym means the local one.
- * A member walking in at 04:30 on the 3rd in India is 23:00 on the 2nd in UTC:
- * converting first and truncating after files that visit under the previous
- * day, and an early-morning gym would have every dawn session on the wrong
- * date. The instant is still computed — it is what says when they arrived — but
- * the day comes from the date the device printed.
+ * It used to be, and for a gym with one daytime shift the two agree. They stop
+ * agreeing the moment a shift crosses midnight: a 01:00 punch on a 22:00–02:00
+ * shift belongs to the evening that started it, not to the date on the clock,
+ * and taking the printed date would split one night's work across two days.
+ * `resolvePunchShift` decides it from the instant and the gym's shifts instead.
  */
-function localDay(localTimestamp: string): Date | null {
-  const match = localTimestamp.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (!match) return null;
-
-  return new Date(
-    Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])),
-  );
-}
 
 export const iclockService = {
   /**
@@ -206,10 +196,11 @@ export const iclockService = {
         received: punches.length,
       });
       await this.touch(device.id);
-      return { marked: 0, unmapped: 0, unreadable: 0, received: punches.length };
+      return { marked: 0, checkedOut: 0, unmapped: 0, unreadable: 0, received: punches.length };
     }
 
     let marked = 0;
+    let checkedOut = 0;
     let unmapped = 0;
     let unreadable = 0;
 
@@ -225,6 +216,17 @@ export const iclockService = {
     );
     const byPin = new Map(members.map((member) => [member.deviceUserPin, member]));
 
+    /**
+     * The device's own zone, not the gym's.
+     *
+     * A reader reports the wall clock it is set to, and where the two disagree
+     * the machine on the wall is the one that produced these timestamps.
+     */
+    const context = await attendanceService.checkInContext(
+      { ...tenant.data, timezone: device.timezone },
+      null,
+    );
+
     for (const punch of punches) {
       const membership = byPin.get(Number(punch.pin));
       if (!membership) {
@@ -234,8 +236,8 @@ export const iclockService = {
         continue;
       }
 
-      const day = localDay(punch.timestamp);
-      if (!day) {
+      const at = toUtc(punch.timestamp, device.timezone);
+      if (!at) {
         unreadable += 1;
         continue;
       }
@@ -245,19 +247,23 @@ export const iclockService = {
       //
       // Routed through the shared check-in path rather than straight at the
       // repository, so a punch ends a freeze exactly as every other way of
-      // recording the same visit does.
-      await attendanceService.commitCheckIn(
+      // recording the same visit does — and so the first tap of a shift opens
+      // a session while the last one closes it.
+      const outcome = await attendanceService.commitCheckIn(
         tenant.data.id,
         membership,
-        day,
+        at,
         null,
         `RFID · ${device.timezone === "Asia/Kolkata" ? punch.timestamp : `${punch.timestamp} ${device.timezone}`}`,
+        context,
       );
-      marked += 1;
+
+      if (outcome.direction === "CHECKED_OUT") checkedOut += 1;
+      else if (outcome.direction === "CHECKED_IN") marked += 1;
     }
 
-    await this.touch(device.id, marked > 0);
+    await this.touch(device.id, marked > 0 || checkedOut > 0);
 
-    return { marked, unmapped, unreadable, received: punches.length };
+    return { marked, checkedOut, unmapped, unreadable, received: punches.length };
   },
 };

@@ -28,7 +28,37 @@ const MEMBER_CHECK_IN_SELECT = {
   memberId: true,
   status: true,
   userId: true,
+  // The shift they are rostered on, which settles which window a punch that
+  // two shifts could claim belongs to.
+  shiftId: true,
   user: { select: { id: true, name: true, avatarUrl: true } },
+} as const;
+
+/**
+ * The shortest gap that counts as leaving rather than arriving twice.
+ *
+ * A reader often sees one card twice in a second or two, and without this the
+ * second read would close the session the first opened and report a visit
+ * lasting moments.
+ */
+const MIN_SESSION_MS = 60_000;
+
+/** Everything a caller needs to describe one session back to somebody. */
+const ATTENDANCE_SESSION_SELECT = {
+  id: true,
+  date: true,
+  checkInAt: true,
+  checkOutAt: true,
+  shiftId: true,
+  shiftKey: true,
+  note: true,
+  member: {
+    select: {
+      id: true,
+      memberId: true,
+      user: { select: { id: true, name: true } },
+    },
+  },
 } as const;
 
 export const attendanceRepository = {
@@ -38,40 +68,138 @@ export const attendanceRepository = {
         OR: [{ id: tenantIdOrSlug }, { slug: tenantIdOrSlug }],
         status: "ACTIVE",
       },
-      select: { id: true, name: true, slug: true, logoUrl: true, platformExpiresAt: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        logoUrl: true,
+        platformExpiresAt: true,
+        // Shift windows are local wall-clock times, so every check-in needs to
+        // know what the clock in this gym said.
+        timezone: true,
+      },
+    });
+  },
+
+  /** The shift windows a punch can be matched against. */
+  findActiveShifts(tenantId: string) {
+    return prisma.shift.findMany({
+      where: { tenantId, isActive: true },
+      select: { id: true, name: true, startTime: true, endTime: true },
+      orderBy: { startTime: "asc" },
     });
   },
 
   /**
-   * Run the `mark attendance` persistence operation for the attendance module.
-   * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
+   * Record one tap against a member's session for a shift.
+   *
+   * The first tap of a shift opens the session and every later one moves the
+   * check-out forward — "first tap in, last tap out" — which is what lets a
+   * reader that cannot say which direction it meant still produce a correct
+   * pair. A replayed punch writes the same values it wrote before, so a device
+   * re-sending a batch changes nothing.
+   *
+   * Returns what the tap turned out to be, because the caller has something to
+   * say about it: a screen at the desk, and a line in the log.
    */
-  markAttendance(
-    tenantId: string,
-    membershipId: string,
-    date: Date,
-    markedById?: string | null,
-    note?: string,
-  ) {
-    return prisma.attendance.upsert({
+  async recordPunch(input: {
+    tenantId: string;
+    membershipId: string;
+    /** The shift day, which for an overnight shift is the day it began. */
+    day: Date;
+    shiftKey: string;
+    shiftId: string | null;
+    at: Date;
+    markedById?: string | null;
+    note?: string;
+  }) {
+    const { tenantId, membershipId, day, shiftKey, shiftId, at } = input;
+
+    const session = await prisma.attendance.upsert({
       where: {
-        tenantId_membershipId_date: { tenantId, membershipId, date },
+        tenantId_membershipId_date_shiftKey: { tenantId, membershipId, date: day, shiftKey },
       },
-      create: { tenantId, membershipId, date, markedById: markedById ?? null, note },
+      create: {
+        tenantId,
+        membershipId,
+        date: day,
+        shiftKey,
+        shiftId,
+        checkInAt: at,
+        markedById: input.markedById ?? null,
+        note: input.note,
+      },
       update: {},
-      select: {
-        id: true,
-        date: true,
-        checkInAt: true,
-        note: true,
-        member: {
-          select: {
-            id: true,
-            memberId: true,
-            user: { select: { id: true, name: true } },
-          },
-        },
+      select: ATTENDANCE_SESSION_SELECT,
+    });
+
+    // The tap that opened the session — or that same tap arriving again.
+    if (at.getTime() === session.checkInAt.getTime()) {
+      return { session, direction: "CHECKED_IN" as const };
+    }
+
+    /**
+     * A batch can arrive out of order, and a device that was offline sends the
+     * oldest punches last. A tap earlier than the one on record is the real
+     * arrival, so it takes the check-in and what was there becomes the
+     * check-out — otherwise the session would start at the wrong end.
+     */
+    if (at.getTime() < session.checkInAt.getTime()) {
+      const corrected = await prisma.attendance.update({
+        where: { id: session.id },
+        data: { checkInAt: at, checkOutAt: session.checkOutAt ?? session.checkInAt },
+        select: ATTENDANCE_SESSION_SELECT,
+      });
+
+      return { session: corrected, direction: "CHECKED_IN" as const };
+    }
+
+    // Two reads of one card a moment apart are one arrival, not a visit that
+    // lasted four seconds.
+    if (at.getTime() - session.checkInAt.getTime() < MIN_SESSION_MS) {
+      return { session, direction: "IGNORED" as const };
+    }
+
+    const closed = await prisma.attendance.update({
+      where: { id: session.id },
+      // No longer abandoned, if a sweep had already given up on it.
+      data: { checkOutAt: at, closedAutomatically: false },
+      select: ATTENDANCE_SESSION_SELECT,
+    });
+
+    return { session: closed, direction: "CHECKED_OUT" as const };
+  },
+
+  /**
+   * Give up on sessions nobody ever closed.
+   *
+   * `checkOutAt` is deliberately left null. Stamping one — the shift's end, the
+   * moment the sweep ran — would be indistinguishable from a real check-out the
+   * next time anybody read the row, and an hours report would bill it. The flag
+   * says "this was never closed", which is the true thing and the useful one.
+   *
+   * Only ever moves a session forwards: a later tap that does arrive clears the
+   * flag and records the real time, because `recordPunch` sets it back.
+   */
+  async closeAbandonedSessions(before: Date) {
+    const result = await prisma.attendance.updateMany({
+      where: {
+        checkOutAt: null,
+        closedAutomatically: false,
+        checkInAt: { lt: before },
       },
+      data: { closedAutomatically: true },
+    });
+
+    return result.count;
+  },
+
+  /** Who is inside right now: a session opened and not yet closed. */
+  listOpenSessions(tenantId: string) {
+    return prisma.attendance.findMany({
+      where: { tenantId, checkOutAt: null, closedAutomatically: false },
+      orderBy: { checkInAt: "asc" },
+      select: ATTENDANCE_SESSION_SELECT,
     });
   },
 
@@ -110,6 +238,9 @@ export const attendanceRepository = {
           id: true,
           date: true,
           checkInAt: true,
+          checkOutAt: true,
+          shiftId: true,
+          closedAutomatically: true,
           note: true,
           member: {
             select: {
@@ -147,6 +278,9 @@ export const attendanceRepository = {
           id: true,
           date: true,
           checkInAt: true,
+          checkOutAt: true,
+          shiftId: true,
+          closedAutomatically: true,
           note: true,
           markedBy: {
             select: {
@@ -285,6 +419,7 @@ export const attendanceRepository = {
         // The clock time of the punch, not just the day it fell on — the
         // calendar lists who came, and when is half of that.
         checkInAt: true,
+        checkOutAt: true,
         member: {
           select: {
             id: true,

@@ -8,8 +8,14 @@
 import { shiftRepository } from "./shifts.repository";
 import type { CreateShiftInput, UpdateShiftInput } from "./shifts.schema";
 
-const SHIFT_TIME_RANGE_ERROR = "End time must be later than start time.";
-const hasValidTimeRange = (startTime: string, endTime: string) => startTime < endTime;
+const SHIFT_TIME_RANGE_ERROR = "Start and end time cannot be the same.";
+
+/**
+ * An end before the start means the shift runs past midnight — "22:00"–"02:00"
+ * is four hours of night, not an invalid range. Equal times are the only pair
+ * that says nothing, so they are the only pair refused.
+ */
+const hasValidTimeRange = (startTime: string, endTime: string) => startTime !== endTime;
 
 export const shiftService = {
   async create(tenantId: string, input: CreateShiftInput) {

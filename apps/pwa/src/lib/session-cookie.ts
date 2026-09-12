@@ -1,17 +1,17 @@
 /**
  * Documentation: The session, shared across the app host and every gym subdomain.
  *
- * - One account, several addresses. `fitconnect.co.in` and `rudra.fitconnect.co.in` are separate origins, so a session held in `localStorage` on one is invisible to the other — which is why a signed-in member browsing the platform's exercise library was still offered "Sign In". A cookie scoped to the domain both share is readable from either, so the session lives here and `localStorage` keeps only the cached user.
+ * - One account, several addresses. `fitconnect.co.in` and `rudra.fitconnect.co.in` are separate origins, so a session held in `localStorage` on one is invisible to the other — which is why a signed-in member browsing the platform's exercise library was still offered "Sign In". A cookie scoped to the domain both share is readable from either.
  * - This is storage, not transport. The API is served from another domain entirely, so this cookie is never sent to it and nothing here widens what the API accepts; requests still carry a bearer token in a header. It exists so two pages of the same app can see one session.
- * - Tokens only, deliberately. A cookie is capped at about 4KB and a user object with its permission list is not small — whoever adopts this session asks the API who they are.
- * - The cookie is the truth about whether somebody is signed in. Signing out clears it, and the next load of any other host finds nothing and signs out too; a per-origin copy in `localStorage` would otherwise quietly resurrect a session the user had just ended.
+ * - Only the refresh token, never the access token. A cookie is capped at about 4KB and an access token is a signed JWT carrying claims — big enough to push the pair over that limit, at which point the browser drops the write silently and nothing here would know. The refresh token is a short opaque string, and the client already knows how to trade one for an access token: the 401 interceptor does it on every expiry.
+ * - Every write is read back before it is believed. A cookie can be refused for reasons this code cannot see — size, a host that will not take the domain, storage turned off — and a caller that assumed success would be free to discard the copy it still had.
  * - Primary exports: readSharedSession, writeSharedSession, clearSharedSession.
  */
 import { getRootHostname, hostSupportsTenantSubdomains } from "./subdomain";
 
-/** What is actually shared: enough to prove who you are, and nothing else. */
+/** What is shared: enough to obtain a session, and nothing else. */
 export interface SharedSession {
-  accessToken: string;
+  /** Opaque and short. Traded for an access token by the usual refresh call. */
   refreshToken: string;
   /** The gym the session was last acting in, so a reload lands in the same place. */
   tenantId?: string | null;
@@ -34,7 +34,7 @@ const MAX_AGE_SECONDS = 604800;
  * The registrable root, so every gym subdomain and the app host see the same
  * cookie. Where the host cannot carry a subdomain at all — an IP address, or a
  * bare local host — there is nothing to share with, and the attribute is left
- * off so the cookie stays host-only rather than being rejected outright.
+ * off so the cookie stays host-only rather than being refused outright.
  */
 function cookieDomain(): string | null {
   if (typeof window === "undefined") return null;
@@ -44,8 +44,7 @@ function cookieDomain(): string | null {
   return root || null;
 }
 
-function cookieSuffix() {
-  const domain = cookieDomain();
+function cookieSuffix(domain: string | null) {
   const secure = typeof window !== "undefined" && window.location.protocol === "https:";
 
   return [
@@ -75,34 +74,53 @@ export function readSharedSession(): SharedSession | null {
 
     // A cookie somebody hand-edited, or one written by an older build, is not
     // a session. Treated as absent rather than trusted into the store.
-    if (!parsed?.accessToken || !parsed?.refreshToken) return null;
+    if (!parsed?.refreshToken) return null;
 
-    return {
-      accessToken: parsed.accessToken,
-      refreshToken: parsed.refreshToken,
-      tenantId: parsed.tenantId ?? null,
-    };
+    return { refreshToken: parsed.refreshToken, tenantId: parsed.tenantId ?? null };
   } catch {
     return null;
   }
 }
 
-export function writeSharedSession(session: SharedSession) {
-  if (typeof document === "undefined") return;
+/**
+ * Share a session, and say whether it actually landed.
+ *
+ * The read-back is the point. A silent refusal that the caller took for
+ * success is how a working session gets thrown away in favour of one that was
+ * never stored — so this reports what is true rather than what was attempted.
+ *
+ * Falls back to a host-only cookie if the domain-scoped one is refused: that
+ * still survives a reload on this address, which is worth more than nothing
+ * even though it does not reach the other hosts.
+ */
+export function writeSharedSession(session: SharedSession): boolean {
+  if (typeof document === "undefined") return false;
 
   const value = encodeURIComponent(JSON.stringify(session));
-  document.cookie = `${COOKIE_NAME}=${value}; max-age=${MAX_AGE_SECONDS}; ${cookieSuffix()}`;
+  const domain = cookieDomain();
+
+  document.cookie = `${COOKIE_NAME}=${value}; max-age=${MAX_AGE_SECONDS}; ${cookieSuffix(domain)}`;
+  if (readSharedSession()?.refreshToken === session.refreshToken) return true;
+
+  if (domain) {
+    document.cookie = `${COOKIE_NAME}=${value}; max-age=${MAX_AGE_SECONDS}; ${cookieSuffix(null)}`;
+    if (readSharedSession()?.refreshToken === session.refreshToken) return true;
+  }
+
+  return false;
 }
 
 /**
  * End the session everywhere.
  *
- * The same domain and path the cookie was written with: a delete that differs
- * in either attribute writes a second, empty cookie and leaves the real one
- * in place — which reads, from every other host, as a sign-out that did not
- * happen.
+ * Cleared at both scopes, because a write may have fallen back to a host-only
+ * cookie: deleting only the domain-scoped one would leave the other in place,
+ * which reads as a sign-out that did not happen.
  */
 export function clearSharedSession() {
   if (typeof document === "undefined") return;
-  document.cookie = `${COOKIE_NAME}=; max-age=0; ${cookieSuffix()}`;
+
+  const domain = cookieDomain();
+  document.cookie = `${COOKIE_NAME}=; max-age=0; ${cookieSuffix(domain)}`;
+  if (domain) document.cookie = `${COOKIE_NAME}=; max-age=0; ${cookieSuffix(null)}`;
 }

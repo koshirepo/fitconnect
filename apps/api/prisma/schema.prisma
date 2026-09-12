@@ -247,6 +247,14 @@ model Tenant {
   logoUrl           String?
   address           String?
   estd              DateTime?
+  /// The zone the gym's own clock runs in.
+  ///
+  /// Shift windows are written as local wall-clock times ("05:00"–"10:00"), so
+  /// deciding which shift a check-in belongs to means knowing what the clock on
+  /// the wall said. A device reports its own zone with its punches; the desk,
+  /// the QR poster and self check-in have no such thing, and without this they
+  /// would resolve an Indian morning against UTC and land on the shift before.
+  timezone          String            @default("Asia/Kolkata")
   status            String            @default("ACTIVE")
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
@@ -537,11 +545,15 @@ model Shift {
   name        String
   description String?
   startTime   String /// 24-hour local time, e.g. "06:00"
-  endTime     String /// 24-hour local time, e.g. "10:00"
+  /// 24-hour local time, e.g. "10:00". A value at or before `startTime` means
+  /// the shift crosses midnight: "22:00"–"02:00" is a four-hour night shift,
+  /// not an invalid range.
+  endTime     String
   isActive    Boolean            @default(true)
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
   members     TenantMembership[]
+  attendances Attendance[]
 
   @@unique([tenantId, name])
   @@index([tenantId, isActive])
@@ -1535,15 +1547,41 @@ model Attendance {
   member       TenantMembership  @relation(fields: [membershipId], references: [id], onDelete: Cascade)
   markedById   String? /// NULL = self check-in, otherwise the admin/coach who marked
   markedBy     TenantMembership? @relation("AttendanceMarkedBy", fields: [markedById], references: [id])
-  date         DateTime /// The calendar day (no time component)
+  /// The shift day: the local date the shift window *started*, with no time
+  /// component. Not the calendar date of the punch — a 01:00 punch on a
+  /// 22:00–02:00 shift belongs to the shift that began the previous evening,
+  /// and filing it under the new date would split one night's session in two.
+  date         DateTime
+  /// The first tap of the session.
   checkInAt    DateTime          @default(now())
+  /// The last tap of the session. Null while somebody is still inside, and on
+  /// a session nobody ever closed — see `closedAutomatically`.
+  checkOutAt   DateTime?
+  shiftId      String?
+  shift        Shift?            @relation(fields: [shiftId], references: [id], onDelete: SetNull)
+  /// The shift this session belongs to, as a non-null discriminator.
+  ///
+  /// `shiftId` cannot carry the unique key: SQLite treats NULLs as distinct,
+  /// so every out-of-hours punch would open a new row instead of updating the
+  /// session it belongs to. This holds the shift id, or "none" outside every
+  /// window, and it keeps its value if the shift itself is later deleted.
+  shiftKey     String            @default("none")
+  /// Set when the night's sweep closed a session nobody checked out of.
+  /// `checkOutAt` deliberately stays null — inventing a leaving time would be
+  /// indistinguishable from a real one, and hours reports would bill it.
+  closedAutomatically Boolean    @default(false)
   note         String?
   createdAt    DateTime          @default(now())
 
-  @@unique([tenantId, membershipId, date])
+  /// One session per member per shift per day. A replayed punch rewrites the
+  /// same row rather than opening a second one, which is what keeps a device
+  /// re-sending a batch idempotent.
+  @@unique([tenantId, membershipId, date, shiftKey])
   @@index([tenantId])
   @@index([membershipId])
   @@index([date])
+  /// Finding who is still inside.
+  @@index([membershipId, checkOutAt])
 }
 
 model AuditLog {

@@ -16,6 +16,9 @@ export const GYM_PATH_SEGMENTS = new Set([
   "referrals",
   "todos",
   "workouts",
+  // The platform's library, but on a gym address it is read from inside the
+  // dashboard like everything else — so a link to it needs the same prefix.
+  "exercises",
   "payments",
   "subscriptions",
   "attendance",

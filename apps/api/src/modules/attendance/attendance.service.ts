@@ -9,6 +9,7 @@ import { attendanceRepository } from "./attendance.repository";
 import { freezeService } from "../freezes/freezes.service";
 import { daysBetween, toDay, toDayString, zoneDayStart, zoneToday } from "../../lib/timezone";
 import { buildHeatmapGrid } from "./attendance.heatmap";
+import { resolvePunchShift, type ShiftWindow } from "./shift-window";
 import type {
   MarkAttendanceInput,
   MarkAllAttendanceInput,
@@ -33,6 +34,14 @@ function toDateOnly(dateStr?: string): Date {
  */
 const DEFAULT_TIMEZONE = "Asia/Kolkata";
 
+/**
+ * How long a session may stay open before it is treated as abandoned.
+ *
+ * Eighteen hours clears the longest shift a gym plausibly runs while still
+ * catching the same night's forgotten check-outs on the next morning's sweep.
+ */
+const ABANDONED_AFTER_MS = 18 * 60 * 60 * 1000;
+
 /** A refusal from any check-in path, carrying the status the route should send. */
 export type CheckInFailure = { error: string; status: 400 | 403 | 404 };
 
@@ -45,6 +54,25 @@ export type CheckInTenant = {
   slug: string;
   logoUrl: string | null;
   platformExpiresAt: Date | null;
+  /** The zone the gym's clock runs in, which shift windows are written in. */
+  timezone: string;
+};
+
+/**
+ * What a check-in needs to know about the gym beyond the member in front of it.
+ *
+ * Passed in rather than fetched per member, because marking a roomful would
+ * otherwise re-read the same shifts once for every person in it.
+ */
+export type CheckInContext = {
+  timezone: string;
+  shifts: ShiftWindow[];
+  /**
+   * A day the desk named explicitly, for marking somebody present in the past.
+   * There is no wall clock to read a shift off a week ago, so a visit recorded
+   * this way is filed on that day with no shift.
+   */
+  forDate?: Date | null;
 };
 
 /** How a member is identified to `commitCheckIn`, whichever path found them. */
@@ -52,6 +80,8 @@ export type CheckInMembership = {
   id: string;
   memberId: number;
   status: string;
+  /** The shift they are rostered on, which breaks ties between windows. */
+  shiftId?: string | null;
   user: { name: string; avatarUrl: string | null };
 };
 
@@ -61,11 +91,21 @@ export type CheckInOutcome = {
     id: string;
     date: Date;
     checkInAt: Date;
+    checkOutAt: Date | null;
+    shiftId: string | null;
     note: string | null;
     membershipId: string;
     memberId: number;
     memberName: string;
   };
+  /**
+   * What this tap turned out to be.
+   *
+   * `IGNORED` is a second read of the same card moments after the first — a
+   * real event that changed nothing, and worth saying so rather than reporting
+   * a check-out that did not happen.
+   */
+  direction: "CHECKED_IN" | "CHECKED_OUT" | "IGNORED";
   member: {
     id: string;
     memberId: number;
@@ -112,33 +152,90 @@ export const attendanceService = {
    * that day, refunding the unused days, so attending cannot quietly earn
    * somebody free time on a paused membership.
    */
+  /**
+   * The gym's clock and its shift windows, read once for a check-in.
+   *
+   * Every path already holds the tenant it resolved, so this only fetches the
+   * shifts — and marking a roomful builds it once instead of per person.
+   */
+  async checkInContext(
+    tenant: CheckInTenant,
+    forDate?: Date | null,
+  ): Promise<CheckInContext> {
+    const shifts = await attendanceRepository.findActiveShifts(tenant.id);
+
+    return {
+      timezone: tenant.timezone || DEFAULT_TIMEZONE,
+      shifts,
+      forDate: forDate ?? null,
+    };
+  },
+
   async commitCheckIn(
     tenantId: string,
     membership: CheckInMembership,
-    date: Date,
+    at: Date,
     markedById: string | null,
     note?: string,
+    context?: CheckInContext,
   ): Promise<CheckInOutcome> {
-    const record = (await attendanceRepository.markAttendance(
+    const ctx =
+      context ??
+      (await this.checkInContext({
+        id: tenantId,
+        name: "",
+        slug: "",
+        logoUrl: null,
+        platformExpiresAt: null,
+        timezone: DEFAULT_TIMEZONE,
+      }));
+
+    const resolved = resolvePunchShift(at, ctx.timezone, ctx.shifts, membership.shiftId ?? null);
+
+    let day = resolved.day;
+    let shiftId = resolved.shift?.id ?? null;
+    let shiftKey = resolved.shiftKey;
+
+    /**
+     * A day named by the desk wins over the one the clock implies.
+     *
+     * Marking somebody present last Tuesday is not a tap: there is no wall
+     * clock to read a shift off, so it is filed on the day it was meant for
+     * with no shift rather than being attributed to whichever window happened
+     * to be open when the button was pressed.
+     */
+    if (ctx.forDate && ctx.forDate.getTime() !== zoneToday(ctx.timezone, at).getTime()) {
+      day = ctx.forDate;
+      shiftId = null;
+      shiftKey = "none";
+    }
+
+    const { session, direction } = await attendanceRepository.recordPunch({
       tenantId,
-      membership.id,
-      date,
+      membershipId: membership.id,
+      day,
+      shiftKey,
+      shiftId,
+      at,
       markedById,
       note,
-    )) as any;
+    });
 
-    await freezeService.endForAttendance(tenantId, membership.id, date);
+    await freezeService.endForAttendance(tenantId, membership.id, day);
 
     return {
       attendance: {
-        id: record.id,
-        date: record.date,
-        checkInAt: record.checkInAt,
-        note: record.note,
+        id: session.id,
+        date: session.date,
+        checkInAt: session.checkInAt,
+        checkOutAt: session.checkOutAt,
+        shiftId: session.shiftId,
+        note: session.note,
         membershipId: membership.id,
         memberId: membership.memberId,
         memberName: membership.user.name,
       },
+      direction,
       member: {
         id: membership.id,
         memberId: membership.memberId,
@@ -170,7 +267,14 @@ export const attendanceService = {
     if (!membership) return { error: "Member not found.", status: 404 as const };
 
     return {
-      data: await this.commitCheckIn(tenant.data.id, membership, date, markedById, note),
+      data: await this.commitCheckIn(
+        tenant.data.id,
+        membership,
+        new Date(),
+        markedById,
+        note,
+        await this.checkInContext(tenant.data, date),
+      ),
     };
   },
 
@@ -220,6 +324,9 @@ export const attendanceService = {
       data: {
         attendance: result.data.attendance,
         member: result.data.member,
+        // Carried through so the poster can say "checked out" rather than
+        // reporting every tap as an arrival.
+        direction: result.data.direction,
         tenant: tenant.data,
         mode: "self" as const,
       },
@@ -259,9 +366,10 @@ export const attendanceService = {
       data: await this.commitCheckIn(
         tenant.data.id,
         membership,
-        date,
+        new Date(),
         isSelf ? null : actorMembershipId,
         input.note,
+        await this.checkInContext(tenant.data, date),
       ),
     };
   },
@@ -289,6 +397,9 @@ export const attendanceService = {
     // One lookup for the room, then the same commit each of them would have got
     // individually. Resolving the gym and the member per id would turn marking
     // a class into a few hundred queries.
+    // Read once for the room rather than once per person in it.
+    const context = await this.checkInContext(tenant.data, date);
+
     const memberships = await attendanceRepository.findMembershipsForCheckIn(
       tenant.data.id,
       input.membershipIds,
@@ -305,7 +416,14 @@ export const attendanceService = {
         continue;
       }
       try {
-        await this.commitCheckIn(tenant.data.id, membership, date, actorMembershipId);
+        await this.commitCheckIn(
+          tenant.data.id,
+          membership,
+          new Date(),
+          actorMembershipId,
+          undefined,
+          context,
+        );
         marked += 1;
       } catch {
         // One member's row failing should not cost the rest of the room theirs.
@@ -314,6 +432,21 @@ export const attendanceService = {
     }
 
     return { data: { marked, total: input.membershipIds.length, failed } };
+  },
+
+  /**
+   * Close out sessions nobody checked out of.
+   *
+   * Judged on age rather than on each shift's own end, because the two agree
+   * where it matters and the simpler rule cannot be wrong about a shift that
+   * was edited or deleted after the fact: a session still open the better part
+   * of a day later was not closed, whatever window it belonged to.
+   */
+  async closeAbandonedSessions(now: Date = new Date()) {
+    const before = new Date(now.getTime() - ABANDONED_AFTER_MS);
+    const closed = await attendanceRepository.closeAbandonedSessions(before);
+
+    return { data: { closed } };
   },
 
   /** Remove attendance record (admin/coach only) */
@@ -336,6 +469,9 @@ export const attendanceService = {
           id: r.id,
           date: r.date,
           checkInAt: r.checkInAt,
+          checkOutAt: r.checkOutAt,
+          shiftId: r.shiftId,
+          closedAutomatically: r.closedAutomatically,
           note: r.note,
           membershipId: r.member.id,
           memberId: r.member.memberId,
@@ -376,6 +512,9 @@ export const attendanceService = {
           id: r.id,
           date: r.date,
           checkInAt: r.checkInAt,
+          checkOutAt: r.checkOutAt,
+          shiftId: r.shiftId,
+          closedAutomatically: r.closedAutomatically,
           note: r.note,
           markedBy: r.markedBy ? { id: r.markedBy.id, name: r.markedBy.user.name } : null,
         })),
@@ -591,6 +730,8 @@ export const attendanceService = {
           name: string;
           avatarUrl: string | null;
           checkInAt: Date;
+          /** Null while they are still inside, or were never checked out. */
+          checkOutAt: Date | null;
         }[];
       }
     > = {};
@@ -604,6 +745,7 @@ export const attendanceService = {
         name: r.member.user.name,
         avatarUrl: r.member.user.avatarUrl ?? null,
         checkInAt: r.checkInAt,
+        checkOutAt: r.checkOutAt ?? null,
       });
     }
 

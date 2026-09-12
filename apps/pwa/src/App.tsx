@@ -10,7 +10,7 @@ import {
   RedirectIfAuth,
 } from "@/features/auth/route-guards";
 import { AppLayout } from "@/components/layout/app-layout";
-import { PublicLayout } from "@/components/layout/public-layout";
+import { PublicLayout, PublicPageContainer } from "@/components/layout/public-layout";
 import { ErrorBoundary, PageSuspense } from "@/components/error-boundary";
 import { UpdatePrompt } from "@/components/ui/update-prompt";
 import { OfflineBanner } from "@/components/ui/offline-banner";
@@ -298,6 +298,14 @@ export default function App() {
             <Route element={<RequirePermission anyOf={[Permission.WORKOUTS_UPDATE]} />}>
               <Route path="/dashboard/workouts/:planId/edit" element={<WorkoutFormPage />} />
             </Route>
+            {/* The platform's library, read by every gym. Missing here until
+                now, so the sidebar's own Exercises link — rewritten to
+                /dashboard/exercises on a gym address — matched nothing and
+                dropped the user on the gym's public home page. */}
+            <Route element={<RequirePermission anyOf={[Permission.WORKOUTS_READ]} />}>
+              <Route path="/dashboard/exercises" element={<ExerciseLibraryPage />} />
+              <Route path="/dashboard/exercises/:slug" element={<ExerciseDetailPage />} />
+            </Route>
             <Route element={<RequirePermission anyOf={[Permission.TODOS_READ]} />}>
               <Route path="/dashboard/todos" element={<TodosPage />} />
             </Route>
@@ -505,8 +513,13 @@ export default function App() {
                     platform rather than to a gym, and somebody looking up how a
                     lift is done should not have to join one first. Signed in,
                     the same pages gain the like button and the comment box. */}
-                <Route path="/exercises" element={<ExerciseLibraryPage />} />
-                <Route path="/exercises/:slug" element={<ExerciseDetailPage />} />
+                {/* These two were written for the dashboard, where the layout
+                    supplies the padding. Out here nothing does, so they get
+                    the same gutter every other public page draws for itself. */}
+                <Route element={<PublicPageContainer />}>
+                  <Route path="/exercises" element={<ExerciseLibraryPage />} />
+                  <Route path="/exercises/:slug" element={<ExerciseDetailPage />} />
+                </Route>
                 <Route path="/about" element={<AboutUsPage />} />
                 <Route path="/contact" element={<ContactUsPage />} />
               </Route>

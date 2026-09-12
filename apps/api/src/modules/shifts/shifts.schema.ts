@@ -8,7 +8,16 @@
 import { z } from "zod";
 
 const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
-const hasValidTimeRange = (startTime: string, endTime: string) => startTime < endTime;
+
+/**
+ * A window with a length.
+ *
+ * An `endTime` before `startTime` is not a mistake: it means the shift crosses
+ * midnight, so "22:00"–"02:00" is a four-hour night shift. Only equal times are
+ * refused — that describes either nothing or a whole day, and there is no way
+ * to tell which was meant.
+ */
+const hasValidTimeRange = (startTime: string, endTime: string) => startTime !== endTime;
 
 export const createShiftSchema = z
   .object({
@@ -19,7 +28,7 @@ export const createShiftSchema = z
     isActive: z.boolean().default(true),
   })
   .refine((data) => hasValidTimeRange(data.startTime, data.endTime), {
-    message: "End time must be later than start time.",
+    message: "Start and end time cannot be the same.",
     path: ["endTime"],
   });
 

@@ -48,8 +48,22 @@ export interface UpdateTodoPayload {
 
 export interface AttendanceRecord {
   id: string;
+  /**
+   * The shift day. For a shift that runs past midnight this is the date the
+   * shift *started*, not the date on the clock when the punch happened.
+   */
   date: string;
+  /** The first tap of the session. */
   checkInAt: string;
+  /**
+   * The last tap. Null while somebody is still inside — and also on a session
+   * nobody ever closed, which `closedAutomatically` is what distinguishes.
+   */
+  checkOutAt?: string | null;
+  /** The shift the session belongs to, absent for a visit outside every one. */
+  shiftId?: string | null;
+  /** True when the nightly sweep gave up on an unclosed session. */
+  closedAutomatically?: boolean;
   note?: string | null;
   membershipId?: string;
   memberId?: number;

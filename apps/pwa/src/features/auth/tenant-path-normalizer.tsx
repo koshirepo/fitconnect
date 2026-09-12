@@ -21,6 +21,7 @@ const GYM_PATH_SEGMENTS = new Set([
   "referrals",
   "todos",
   "workouts",
+  "exercises",
   "payments",
   "subscriptions",
   "coupons",

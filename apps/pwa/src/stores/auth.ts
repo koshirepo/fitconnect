@@ -9,9 +9,40 @@ import {
   clearSharedSession,
   readSharedSession,
   writeSharedSession,
-  type SharedSession,
 } from "@/lib/session-cookie";
 import type { PlatformRole, TenantRole } from "@fitconnect/shared/types/enums";
+
+/**
+ * Whether the shared cookie has ever been written successfully on this origin.
+ *
+ * It is what lets a missing cookie be read correctly. Gone after it worked
+ * means somebody signed out on another host; never having worked at all — a
+ * browser refusing the write, storage turned off — must not be mistaken for
+ * that, or every reload would sign the user out.
+ */
+const SHARED_FLAG = "gms-session-shared";
+
+function markShared(shared: boolean) {
+  try {
+    if (shared) window.localStorage.setItem(SHARED_FLAG, "1");
+    else window.localStorage.removeItem(SHARED_FLAG);
+  } catch {
+    // Storage refused. Nothing to remember, and nothing worth failing over.
+  }
+}
+
+function wasShared() {
+  try {
+    return window.localStorage.getItem(SHARED_FLAG) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/** Publish the session for the other hosts, recording whether it landed. */
+function shareSession(refreshToken: string, tenantId: string | null) {
+  markShared(writeSharedSession({ refreshToken, tenantId }));
+}
 
 interface AuthState {
   // State
@@ -100,15 +131,6 @@ export const useAuthStore = create<AuthState>()(
           const { data: resp } = await authApi.login(email, password);
           const { accessToken, refreshToken, user } = resp.data;
 
-          // Written where every host of this app can read it, not just this
-          // origin: somebody signing in on a gym address is then signed in on
-          // the platform's public pages too.
-          writeSharedSession({
-            accessToken,
-            refreshToken,
-            tenantId: user.membership?.tenantId ?? null,
-          });
-
           set({
             user,
             accessToken,
@@ -117,6 +139,10 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isLoading: false,
           });
+
+          // And where the app's other hosts can see it, so a member signing in
+          // on a gym address is signed in on the platform's pages too.
+          shareSession(refreshToken, user.membership?.tenantId ?? null);
         } catch (err) {
           set({ isLoading: false });
           throw err;
@@ -128,12 +154,6 @@ export const useAuthStore = create<AuthState>()(
         try {
           const { accessToken, refreshToken, user } = await signInWithPasskey();
 
-          writeSharedSession({
-            accessToken,
-            refreshToken,
-            tenantId: user.membership?.tenantId ?? null,
-          });
-
           set({
             user,
             accessToken,
@@ -142,6 +162,8 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isLoading: false,
           });
+
+          shareSession(refreshToken, user.membership?.tenantId ?? null);
         } catch (err) {
           set({ isLoading: false });
           throw err;
@@ -154,10 +176,9 @@ export const useAuthStore = create<AuthState>()(
           authApi.logout(rt).catch(() => {});
         }
 
-        // Ends the session on every host, not only this one. Without it the
-        // other address keeps a working copy and signs the user straight back
-        // in the next time they open it.
+        // Ends the session on every host, not only this one.
         clearSharedSession();
+        markShared(false);
 
         set({
           user: null,
@@ -178,17 +199,13 @@ export const useAuthStore = create<AuthState>()(
        * believe in — every guard read the flag, so the member was bounced
        * back out to log in with a password they had never chosen.
        *
-       * Also where a refreshed pair lands, which is why it writes the shared
-       * cookie: otherwise the other hosts keep a refresh token this one has
-       * already spent.
+       * Also where a refreshed pair lands, which is why it republishes the
+       * cookie: refresh tokens rotate, and the other hosts must not be left
+       * holding one this host has already spent.
        */
       setTokens: (accessToken: string, refreshToken: string) => {
-        writeSharedSession({
-          accessToken,
-          refreshToken,
-          tenantId: get().currentTenantId,
-        });
         set({ accessToken, refreshToken, isAuthenticated: true });
+        shareSession(refreshToken, get().currentTenantId);
       },
 
       fetchMe: async () => {
@@ -217,72 +234,71 @@ export const useAuthStore = create<AuthState>()(
     {
       name: "gms-auth",
       /**
-       * The cache, not the session.
+       * The session stays here as well as in the shared cookie.
        *
-       * Tokens and the signed-in flag live in the shared cookie, which every
-       * host of this app can read; a second copy per origin is exactly what
-       * let a sign-out on one address leave a working session on another. The
-       * user is still kept here so a reload paints a name and an avatar before
-       * `fetchMe` answers.
+       * Deliberately belt and braces. A cookie can be refused for reasons this
+       * code cannot see, and an earlier version of this store moved the tokens
+       * out of `localStorage` on the assumption the cookie had taken them —
+       * when it had not, the only copy was gone and the next reload was a
+       * sign-out. The cookie is what the *other* hosts read; this is what this
+       * one falls back to.
        */
       partialize: (state) => ({
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
         currentTenantId: state.currentTenantId,
         user: state.user,
+        isAuthenticated: state.isAuthenticated,
       }),
     },
   ),
 );
 
-/** Tokens left behind by the build that persisted them per origin. */
-function readLegacyTokens(): SharedSession | null {
-  if (typeof window === "undefined") return null;
-
-  try {
-    const raw = window.localStorage.getItem("gms-auth");
-    if (!raw) return null;
-
-    const parsed = JSON.parse(raw) as {
-      state?: {
-        accessToken?: string | null;
-        refreshToken?: string | null;
-        currentTenantId?: string | null;
-      };
-    };
-
-    const state = parsed.state;
-    if (!state?.accessToken || !state?.refreshToken) return null;
-
-    return {
-      accessToken: state.accessToken,
-      refreshToken: state.refreshToken,
-      tenantId: state.currentTenantId ?? null,
-    };
-  } catch {
-    return null;
-  }
-}
-
 /**
- * Settle who is signed in, before anything renders.
+ * Reconcile this origin's session with the one shared across the app's hosts.
  *
- * Three cases, once at startup:
- * - a shared cookie exists, so this host adopts it — which is how somebody
- *   signed in on a gym address arrives on the platform's public pages already
- *   signed in;
- * - no cookie, but this origin still holds tokens from the build that kept
- *   them in `localStorage`, so they are promoted to the cookie and the upgrade
- *   signs nobody out;
- * - neither, so this origin is signed out including anything it had cached —
- *   the cookie is the truth, and a stale cache must not outvote it.
+ * Runs once, before the first render, because a guard reading the store first
+ * would bounce a signed-in user to the login page before this could correct it.
  *
- * Called before the first render rather than from an effect: a guard running
- * first would read `isAuthenticated: false` and bounce a signed-in user to the
- * login page before this could correct it.
+ * Three cases:
+ * - the cookie has a session, so this host adopts it — which is how somebody
+ *   signed in on a gym address arrives on the platform's pages already signed
+ *   in. A refresh token different from this origin's means it was started or
+ *   rotated elsewhere, so the local access token is stale and dropped; the
+ *   401 interceptor trades the refresh token for a fresh one on first use;
+ * - no cookie but a session here, which means either that the cookie was
+ *   cleared by a sign-out on another host (only believable if sharing has ever
+ *   worked on this origin) or that this session predates sharing, in which
+ *   case it is published now;
+ * - neither, and there is nothing to do.
  */
 export function initSharedSession() {
-  const session = readSharedSession() ?? readLegacyTokens();
+  const state = useAuthStore.getState();
+  const shared = readSharedSession();
 
-  if (!session) {
+  if (shared) {
+    const rotated = state.refreshToken !== shared.refreshToken;
+
+    useAuthStore.setState({
+      refreshToken: shared.refreshToken,
+      ...(rotated ? { accessToken: null } : {}),
+      ...(shared.tenantId ? { currentTenantId: shared.tenantId } : {}),
+      isAuthenticated: true,
+    });
+    markShared(true);
+    return;
+  }
+
+  if (!state.refreshToken) {
+    markShared(false);
+    return;
+  }
+
+  if (wasShared()) {
+    // Sharing worked here before and the cookie is gone: signed out elsewhere.
+    // Cleared locally without calling the API — the token may simply have
+    // aged out, and there is nothing left to revoke that revoking would fix.
+    markShared(false);
     useAuthStore.setState({
       user: null,
       accessToken: null,
@@ -293,15 +309,6 @@ export function initSharedSession() {
     return;
   }
 
-  // A legacy session exists only in `localStorage`; writing it back is what
-  // moves it to where the other hosts can see it. Re-writing one already read
-  // from the cookie is harmless and refreshes its expiry.
-  writeSharedSession(session);
-
-  useAuthStore.setState({
-    accessToken: session.accessToken,
-    refreshToken: session.refreshToken,
-    ...(session.tenantId ? { currentTenantId: session.tenantId } : {}),
-    isAuthenticated: true,
-  });
+  // A session from before this origin ever shared one. Publish it.
+  shareSession(state.refreshToken, state.currentTenantId);
 }

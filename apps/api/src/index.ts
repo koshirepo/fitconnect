@@ -121,6 +121,25 @@ export default {
             log.info("scheduled.coin_expiry", { cron: controller.cron, ...expiry.data });
           }
 
+          /**
+           * Sessions nobody checked out of, from yesterday and before.
+           *
+           * Flagged rather than given an invented leaving time: a manufactured
+           * check-out reads exactly like a real one, and anything counting
+           * hours would bill it. By this hour every shift of the previous day
+           * has ended, including one that ran past midnight.
+           */
+          const { attendanceService } = await import(
+            "./modules/attendance/attendance.service"
+          );
+          const abandoned = await attendanceService.closeAbandonedSessions();
+          if (abandoned.data.closed > 0) {
+            log.info("scheduled.attendance_abandoned", {
+              cron: controller.cron,
+              ...abandoned.data,
+            });
+          }
+
           // Suspends everyone past their gym's grace period, then reports on it.
           const result = await reportService.runScheduledTenantReports((promise) =>
             ctx.waitUntil(promise),

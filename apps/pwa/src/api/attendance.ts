@@ -134,6 +134,7 @@ export const attendanceApi = {
               name: string;
               avatarUrl: string | null;
               checkInAt: string;
+              checkOutAt: string | null;
             }[];
           }
         >;
