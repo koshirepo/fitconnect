@@ -8,10 +8,8 @@ import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
 import { useTenantRoleMatrix } from "@/api/queries/roles";
 import { useQueryClient } from "@tanstack/react-query";
-import { coveredDays } from "@/lib/coverage-days";
 import {
   useMember,
-  useMembershipCoverage,
   useRemoveMember,
   useUpdateMember,
   useUpdateMemberRole,
@@ -36,6 +34,7 @@ import { useCoinBalance } from "@/api/queries/coupons";
 import { FreezeCard } from "@/components/ui/freeze-card";
 import { MembershipGapsCard } from "./MembershipGaps";
 import { MemberRfidCard } from "@/features/members/MemberRfidCard";
+import { CoverageCalendar } from "@/components/members/coverage-calendar";
 import { SwipePane } from "@/components/ui/swipe-pane";
 import { useToast } from "@/components/ui/toast";
 import { formatShiftLabel } from "@/lib/shifts";
@@ -141,8 +140,6 @@ const REMINDER_REASON_LABELS: Record<string, string> = {
 function whatsappSender(reminder: { actor?: { user: { name: string } } | null }) {
   return reminder.actor ? `WhatsApp · ${reminder.actor.user.name}` : "WhatsApp";
 }
-
-const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 /**
  * A date short enough for a stat tile: "24 Sep 26".
@@ -330,25 +327,10 @@ export default function MemberDetailPage() {
   const calendarQuery = useMemberAttendanceCalendar(membershipId, calMonth, {
     enabled: isMemberProfile,
   });
-  const calDates = React.useMemo(
-    () => new Set(calendarQuery.data?.dates ?? []),
-    [calendarQuery.data],
-  );
-
-  /**
-   * The days a paid term was running, drawn behind the attendance.
-   *
-   * The same terms the gaps card lists and the start-date picker shades, from
-   * the same call — one answer about when this member was covered, so no two
-   * screens can shade the same week differently.
-   */
-  const coverageQuery = useMembershipCoverage(membershipId);
-  const coveredDaySet = React.useMemo(
-    () => coveredDays(coverageQuery.data?.terms ?? []),
-    [coverageQuery.data],
-  );
+  // Only the month's count is read here; the grid itself is `CoverageCalendar`,
+  // which fetches the same month under the same cache key — so this is one
+  // request serving both the heading and the days below it.
   const calTotal = calendarQuery.data?.total ?? 0;
-  const calLoading = calendarQuery.isLoading;
 
   const handleToggleStatus = async () => {
     if (!membershipId || !member) return;
@@ -1203,89 +1185,10 @@ export default function MemberDetailPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-3">
-            {calLoading ? (
-              <div className="flex justify-center py-6">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-              </div>
-            ) : (
-              (() => {
-                const first = parseMonth(calMonth);
-                const daysInMonth = new Date(
-                  first.getFullYear(),
-                  first.getMonth() + 1,
-                  0,
-                ).getDate();
-                const startDay = (first.getDay() + 6) % 7; // 0=Mon
-                const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-                const cells: React.ReactNode[] = [];
-                for (let i = 0; i < startDay; i++) cells.push(<div key={`e-${i}`} />);
-                for (let d = 1; d <= daysInMonth; d++) {
-                  const dateStr = `${calMonth}-${String(d).padStart(2, "0")}`;
-                  const present = calDates.has(dateStr);
-                  const isToday = dateStr === todayStr;
-                  /**
-                   * Whether the gym was being paid for this day.
-                   *
-                   * The pair is the point. A day they trained on and were paid
-                   * up for is the ordinary case and stays green; a day they
-                   * trained on with no term behind it is amber, because that is
-                   * somebody using the gym for free and it is invisible on a
-                   * calendar that only knows who turned up.
-                   */
-                  const covered = coveredDaySet.has(dateStr);
-                  cells.push(
-                    <div
-                      key={d}
-                      title={`${covered ? "Covered" : "No cover"}${present ? " · attended" : ""}`}
-                      className={cn(
-                        "flex min-h-10 flex-col items-center justify-center rounded-md p-1 text-sm",
-                        present && covered && "bg-emerald-500 font-medium text-white",
-                        present && !covered && "bg-amber-500 font-medium text-white",
-                        // Not here, but paid up: a faint wash, so a term reads
-                        // as a block behind the days they actually came.
-                        !present && covered && "bg-emerald-500/10 text-muted-foreground",
-                        !present && !covered && "text-muted-foreground",
-                        isToday && "ring-2 ring-primary",
-                      )}
-                    >
-                      {d}
-                    </div>,
-                  );
-                }
-                return (
-                  <>
-                    <div className="grid grid-cols-7 gap-1">
-                      {WEEKDAYS.map((w) => (
-                        <div
-                          key={w}
-                          className="py-1 text-center text-xs font-medium text-muted-foreground"
-                        >
-                          {w}
-                        </div>
-                      ))}
-                      {cells}
-                    </div>
-
-                    {/* Four states in three colours needs saying out loud. The
-                        amber one is the reason the cover is drawn here at all. */}
-                    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t pt-2 text-[11px] text-muted-foreground">
-                      <span className="flex items-center gap-1.5">
-                        <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" />
-                        Attended
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <span className="h-2.5 w-2.5 rounded-sm bg-amber-500" />
-                        Attended, no paid term
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500/20" />
-                        Covered, did not come
-                      </span>
-                    </div>
-                  </>
-                );
-              })()
-            )}
+            {/* The same grid the record-payment screen draws when the desk
+                picks a start date. One component, so a member's month cannot
+                look like two different months a click apart. */}
+            <CoverageCalendar membershipId={membershipId!} month={calMonth} />
           </CardContent>
         </Card>
       )}
