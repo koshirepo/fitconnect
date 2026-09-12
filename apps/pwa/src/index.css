@@ -353,4 +353,20 @@
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+
+  /*
+     Reversed, for a dye-sublimation transfer.
+
+     The sheet is pressed face down, so what it carries comes out mirrored on
+     the mug or the panel — which means the sheet itself has to be mirrored for
+     the finished thing to read correctly. Without it the name is backwards and
+     the QR code will not scan.
+
+     `scaleX(-1)` flips about the element's own centre, and the element is
+     already pinned to the page corner at exactly card size, so the flip stays
+     inside the same box and the printed geometry does not move.
+  */
+  .id-card-print.id-card-mirror {
+    transform: scaleX(-1) !important;
+  }
 }

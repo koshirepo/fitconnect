@@ -20,7 +20,8 @@ import { qrPath } from "@/lib/qr";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/spinner";
-import { AlertCircle, Download, Printer, RefreshCw } from "lucide-react";
+import { AlertCircle, Download, FlipHorizontal, Printer, RefreshCw } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { MemberIdCard } from "@/types/api";
 import { useSeo } from "@/lib/seo";
 
@@ -772,6 +773,23 @@ export default function IdCardPage() {
   const autoPrint = searchParams.get("print") === "1";
   const printed = React.useRef(false);
 
+  /**
+   * Print the card back to front, for sublimation.
+   *
+   * A dye-sublimation transfer is pressed face down: whatever is on the paper
+   * ends up reversed on the mug, the slate, the aluminium sheet. So the sheet
+   * has to carry a mirror image for the finished thing to read the right way
+   * round — and a card printed the ordinary way gives you a name nobody can
+   * read and a QR code no phone will scan.
+   *
+   * State rather than a CSS class toggled inline, because the flip has to be in
+   * the DOM before the dialog takes its snapshot. `?print=1&mirror=1` does the
+   * same thing without a click, for a desk that has wired the button up itself.
+   */
+  const [mirrored, setMirrored] = React.useState(searchParams.get("mirror") === "1");
+  /** Set while a click is waiting for the mirrored render to land. */
+  const pendingPrint = React.useRef(false);
+
   React.useEffect(() => {
     if (!autoPrint || !svg || printed.current) return;
     printed.current = true;
@@ -781,6 +799,31 @@ export default function IdCardPage() {
     const frame = window.requestAnimationFrame(() => window.print());
     return () => window.cancelAnimationFrame(frame);
   }, [autoPrint, svg]);
+
+  /**
+   * Print once the flip has actually been applied.
+   *
+   * Calling `window.print()` in the same tick as the state change would hand
+   * the dialog the card as it was — unmirrored — because React has not
+   * re-rendered yet. This waits for the paint that carries the transform.
+   */
+  React.useEffect(() => {
+    if (!pendingPrint.current) return;
+    pendingPrint.current = false;
+
+    const frame = window.requestAnimationFrame(() => window.print());
+    return () => window.cancelAnimationFrame(frame);
+  }, [mirrored]);
+
+  /** Print as-is, or reversed for a transfer sheet. */
+  const print = (asMirror: boolean) => {
+    if (asMirror === mirrored) {
+      window.print();
+      return;
+    }
+    pendingPrint.current = true;
+    setMirrored(asMirror);
+  };
 
   const load = React.useCallback(async () => {
     if (!token) return;
@@ -812,7 +855,14 @@ export default function IdCardPage() {
     void load();
   }, [load]);
 
-  const handleDownload = async () => {
+  /**
+   * Save the card as a PNG, optionally reversed for a transfer sheet.
+   *
+   * The mirror is applied to the canvas rather than to the SVG, so the artwork
+   * itself is never rewritten: one drawing, flipped at the last step, which
+   * means the mirrored file and the ordinary one cannot drift apart.
+   */
+  const handleDownload = async (asMirror = false) => {
     if (!svg || !card) return;
     setDownloading(true);
 
@@ -839,6 +889,12 @@ export default function IdCardPage() {
       canvas.height = CARD_HEIGHT * EXPORT_SCALE;
       const context = canvas.getContext("2d");
       if (!context) throw new Error("Canvas unavailable");
+      if (asMirror) {
+        // Flip the axis, then draw from the far edge back: the card fills the
+        // same canvas, reversed, with no change to its size or position.
+        context.translate(canvas.width, 0);
+        context.scale(-1, 1);
+      }
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(url);
 
@@ -847,7 +903,11 @@ export default function IdCardPage() {
 
       const link = document.createElement("a");
       link.href = URL.createObjectURL(png);
-      link.download = `${card.gym.slug}-member-${card.member.memberId}.png`;
+      // Named so the two cannot be confused in a downloads folder — pressing
+      // the wrong one wastes a sheet and a blank.
+      link.download = `${card.gym.slug}-member-${card.member.memberId}${
+        asMirror ? "-mirrored" : ""
+      }.png`;
       link.click();
       URL.revokeObjectURL(link.href);
     } catch {
@@ -883,10 +943,18 @@ export default function IdCardPage() {
       <div className="relative w-full">
         {/* `id-card-print` is what the print stylesheet keeps: on paper this is
             the only thing on the page, at exactly CR80 size. */}
+        {/* Mirrored on screen too, not only on paper: somebody about to spend a
+            transfer sheet should be able to see that it is reversed before the
+            dialog opens, rather than after the press. */}
         <img
           src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`}
-          alt={`Membership card for ${card.member.name} at ${card.gym.name}`}
-          className="id-card-print w-full rounded-2xl border shadow-lg"
+          alt={`Membership card for ${card.member.name} at ${card.gym.name}${
+            mirrored ? ", mirrored for a sublimation transfer" : ""
+          }`}
+          className={cn(
+            "id-card-print w-full rounded-2xl border shadow-lg",
+            mirrored && "id-card-mirror",
+          )}
         />
 
         {/*
@@ -920,18 +988,36 @@ export default function IdCardPage() {
           so the only thing to get right at the printer is portrait orientation
           with scaling off.
          */}
-        <Button onClick={() => window.print()} className="w-full">
+        <Button onClick={() => print(false)} className="w-full">
           <Printer className="mr-2 h-4 w-4" />
           Print card
         </Button>
+        {/* The transfer-sheet variant. Its own button rather than a checkbox
+            beside the first: both are one click, and a setting that has to be
+            ticked before printing is a setting somebody forgets to untick. */}
+        <Button variant="outline" onClick={() => print(true)} className="w-full">
+          <FlipHorizontal className="mr-2 h-4 w-4" />
+          Print mirrored (for sublimation)
+        </Button>
         <Button
           variant="outline"
-          onClick={handleDownload}
+          onClick={() => void handleDownload(false)}
           disabled={downloading}
           className="w-full"
         >
           <Download className="mr-2 h-4 w-4" />
           {downloading ? "Preparing…" : "Download card"}
+        </Button>
+        {/* The same card reversed, for anyone who prints through a driver or a
+            RIP rather than the browser. Saved as `…-mirrored.png`. */}
+        <Button
+          variant="outline"
+          onClick={() => void handleDownload(true)}
+          disabled={downloading}
+          className="w-full"
+        >
+          <FlipHorizontal className="mr-2 h-4 w-4" />
+          {downloading ? "Preparing…" : "Download mirrored"}
         </Button>
         <Button variant="outline" onClick={() => void load()} className="w-full">
           <RefreshCw className="mr-2 h-4 w-4" />
