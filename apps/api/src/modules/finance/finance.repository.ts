@@ -10,6 +10,7 @@
 import { prisma } from "../../lib/prisma";
 import { monthRange } from "../../lib/month";
 import { PaymentStatus } from "@fitconnect/shared/types/enums";
+import { storeSaleSelect, storeSaleWindow } from "../store/store-summary";
 import type {
   CreateExpenseInput,
   CreateRecurringExpenseInput,
@@ -245,23 +246,41 @@ export const financeRepository = {
     const charge = { amount: charges._sum.amount ?? 0, count: charges._count };
     const memberSales = { amount: memberStore._sum.amount ?? 0, count: memberStore._count };
 
+    // Whatever points at no plan, no charge and no order: a manual entry. Taken
+    // as the remainder so the buckets always add back up to the ledger total
+    // rather than drifting from it.
+    const other = {
+      amount: paymentTotal - subscription.amount - charge.amount - memberSales.amount,
+      count: payments._count - subscription.count - charge.count - memberSales.count,
+    };
+
+    const store = {
+      amount: memberSales.amount + guestTotal,
+      count: memberSales.count + guestOrders._count,
+    };
+
+    /**
+     * The membership business on its own: everything the shop is not.
+     *
+     * The books used to report one income figure with product sales folded into
+     * it, so a gym that sold ₹80,000 of supplements looked like it had signed
+     * ₹80,000 of memberships. These two never add together again. The shop
+     * reports its own revenue, and reaches the bottom line through its profit
+     * rather than its takings — a ₹1,000 tub bought for ₹900 earned the gym
+     * ₹100, and saying it earned ₹1,000 was never true.
+     */
+    const membership = {
+      amount: subscription.amount + charge.amount + other.amount,
+      count: subscription.count + charge.count + other.count,
+    };
+
     return {
       payments: paymentTotal,
       paymentCount: payments._count,
       guestStoreSales: guestTotal,
       guestStoreCount: guestOrders._count,
-      bySource: {
-        subscriptions: subscription,
-        charges: charge,
-        store: {
-          amount: memberSales.amount + guestTotal,
-          count: memberSales.count + guestOrders._count,
-        },
-        other: {
-          amount: paymentTotal - subscription.amount - charge.amount - memberSales.amount,
-          count: payments._count - subscription.count - charge.count - memberSales.count,
-        },
-      },
+      membership,
+      bySource: { subscriptions: subscription, charges: charge, store, other },
     };
   },
 
@@ -281,29 +300,8 @@ export const financeRepository = {
     const { from, to } = monthRange(month);
 
     return prisma.storeOrder.findMany({
-      where: {
-        tenantId,
-        OR: [
-          { paymentId: null, status: "COMPLETED", createdAt: { gte: from, lt: to } },
-          { payment: { status: PaymentStatus.COMPLETED, paidAt: { gte: from, lt: to } } },
-        ],
-      },
-      select: {
-        subtotalAmount: true,
-        discountAmount: true,
-        coinsRedeemed: true,
-        totalAmount: true,
-        items: {
-          select: {
-            variantId: true,
-            productName: true,
-            variantName: true,
-            quantity: true,
-            lineTotal: true,
-            lineCost: true,
-          },
-        },
-      },
+      where: storeSaleWindow(tenantId, from, to),
+      select: storeSaleSelect,
     });
   },
 };

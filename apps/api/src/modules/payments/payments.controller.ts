@@ -29,6 +29,7 @@ import {
   updateSubscriptionSchema,
 } from "./payments.schema";
 import { can } from "../../lib/permissions";
+import { PAYMENT_SOURCES, type PaymentSource } from "@fitconnect/shared/types/enums";
 import { monthSchema } from "../finance/finance.schema";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import type { AppBindings } from "../../types/app-context";
@@ -47,6 +48,21 @@ export const paymentController = {
     const search = c.req.query("search");
     const membershipId = c.req.query("membershipId");
 
+    /**
+     * Which of the gym's businesses to list.
+     *
+     * `?source=STORE` or `?source=SUBSCRIPTION,CHARGE`. Anything unrecognised is
+     * dropped rather than rejected, and an empty result after filtering means
+     * the caller asked only for names that do not exist — which reads the whole
+     * ledger, the behaviour every existing caller already relies on.
+     */
+    const sources = (c.req.query("source") ?? "")
+      .split(",")
+      .map((value) => value.trim().toUpperCase())
+      .filter((value): value is PaymentSource =>
+        (PAYMENT_SOURCES as string[]).includes(value),
+      );
+
     const { data, total } = await paymentService.listPayments(
       tenantId,
       page,
@@ -54,6 +70,7 @@ export const paymentController = {
       statusFilter,
       search,
       membershipId,
+      sources,
     );
     return okPaginated(c, data, { page, limit, total });
   },

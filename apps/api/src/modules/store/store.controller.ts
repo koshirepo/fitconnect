@@ -28,6 +28,9 @@ import { parseBody } from "../../lib/http";
 import { badRequest, conflict, forbidden, notFound, ok } from "../../lib/response";
 import { paymentRepository } from "../payments/payments.repository";
 import type { AppBindings } from "../../types/app-context";
+import { storeAnalyticsService } from "./store-analytics.service";
+import { monthSchema } from "../finance/finance.schema";
+import { currentMonth } from "../../lib/month";
 
 type AppContext = Context<AppBindings>;
 
@@ -415,6 +418,30 @@ export const storeCheckoutController = {
     const result = await storeCheckoutService.cancel(tenantId, membership.id, orderId);
     if ("error" in result) return notFound(c, result.error!);
 
+    return ok(c, result.data);
+  },
+};
+
+/**
+ * The shop's own analytics, kept apart from the payments screen.
+ *
+ * Behind `STORE_MANAGE` rather than `STORE_ORDERS_READ`: a coach who fulfils
+ * orders needs to see the orders, not what the gym pays its supplier. Purchase
+ * prices and margin are the owner's business.
+ */
+export const storeAnalyticsController = {
+  async summary(c: AppContext) {
+    const tenantId = c.req.param("tenantId")!;
+
+    // A malformed month lands on the current one rather than on an error. This
+    // is a reporting screen, and the payments analytics screen already treats a
+    // mangled query string the same way.
+    const requested = c.req.query("month");
+    const month = monthSchema.safeParse(requested).success
+      ? requested!
+      : currentMonth();
+
+    const result = await storeAnalyticsService.summary(tenantId, month);
     return ok(c, result.data);
   },
 };

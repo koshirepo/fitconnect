@@ -15,6 +15,7 @@ import { storeRepository } from "./store.repository";
 import { couponService, findCoupon } from "../coupons/coupons.service";
 import { gatewayService } from "../payments/gateway.service";
 import { paymentRepository } from "../payments/payments.repository";
+import { PaymentSource } from "@fitconnect/shared/types/enums";
 import type {
   CounterSaleInput,
   StoreCheckoutInput,
@@ -367,6 +368,7 @@ export const storeSaleService = {
     const payment = await paymentRepository.createPayment({
       tenantId,
       membershipId: input.membershipId,
+      source: PaymentSource.STORE,
       description: "Gym store purchase",
       status: "COMPLETED",
       amount: priced.priced.total,
@@ -427,6 +429,7 @@ export const storeCheckoutService = {
       const payment = await paymentRepository.createPayment({
         tenantId,
         membershipId,
+        source: PaymentSource.STORE,
         description: "Gym store purchase",
         status: "COMPLETED",
         amount: 0,
@@ -468,6 +471,7 @@ export const storeCheckoutService = {
       const payment = await paymentRepository.createPayment({
         tenantId,
         membershipId,
+        source: PaymentSource.STORE,
         description: "Gym store purchase",
         status: "PENDING",
         amount: priced.priced.total,
@@ -779,6 +783,7 @@ export const storeGuestService = {
       const payment = await paymentRepository.createPayment({
         tenantId,
         membershipId: order.membershipId,
+        source: PaymentSource.STORE,
         description: "Gym store purchase",
         status: "COMPLETED",
         amount: order.totalAmount,

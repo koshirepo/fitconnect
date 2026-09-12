@@ -3,7 +3,7 @@
  *
  * - Declares the routing and authorization for a gym's own catalogue. Mounted under `/tenants` in the application entrypoint.
  * - Reading needs `STORE_READ`, which every member holds — the storefront is the point. Every write needs `STORE_MANAGE`, which only admins hold, so a member cannot reprice what they are about to buy.
- * - Relative endpoints declared in this file: GET /:tenantId/store/products, GET /:tenantId/store/products/:productId, POST /:tenantId/store/products, PATCH /:tenantId/store/products/:productId, DELETE /:tenantId/store/products/:productId, POST /:tenantId/store/products/:productId/variants, PATCH /:tenantId/store/variants/:variantId, DELETE /:tenantId/store/variants/:variantId, POST /:tenantId/store/variants/:variantId/stock.
+ * - Relative endpoints declared in this file: GET /:tenantId/store/products, GET /:tenantId/store/products/:productId, POST /:tenantId/store/products, PATCH /:tenantId/store/products/:productId, DELETE /:tenantId/store/products/:productId, POST /:tenantId/store/products/:productId/variants, PATCH /:tenantId/store/variants/:variantId, DELETE /:tenantId/store/variants/:variantId, POST /:tenantId/store/variants/:variantId/stock, GET /:tenantId/store/analytics.
  * - Primary exports: storeRoutes.
  */
 import { Hono } from "hono";
@@ -12,6 +12,7 @@ import { authenticate } from "../../middleware/authenticate";
 import { idempotency } from "../../middleware/idempotency";
 import { requireAnyTenantPermission, requireTenantPermissions } from "../../middleware/authorize";
 import {
+  storeAnalyticsController,
   storeCheckoutController,
   storeController,
   storeSaleController,
@@ -179,4 +180,17 @@ storeRoutes.post(
   authenticate,
   requireTenantPermissions(Permission.STORE_BUY_SELF),
   storeCheckoutController.cancel,
+);
+
+/**
+ * What the shop made this month, and what it cost.
+ *
+ * `STORE_MANAGE`, not the grant that reads orders: this reports purchase prices
+ * and margin, which is the owner's business rather than the desk's.
+ */
+storeRoutes.get(
+  "/:tenantId/store/analytics",
+  authenticate,
+  requireTenantPermissions(Permission.STORE_MANAGE),
+  storeAnalyticsController.summary,
 );

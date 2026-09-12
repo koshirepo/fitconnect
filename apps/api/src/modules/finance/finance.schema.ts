@@ -29,6 +29,21 @@ export const EXPENSE_CATEGORIES = [
   "MAINTENANCE",
   "MARKETING",
   "SUPPLIES",
+  /**
+   * Goods bought to sell on: the shop's stock.
+   *
+   * Its own category because it is the one expense that must *not* hit the
+   * month's bottom line. What the gym paid for the tubs it actually sold is
+   * already taken out as cost of goods, through store profit; counting the
+   * supplier invoice here as well would subtract the same money twice. And
+   * stock bought but not yet sold is not a cost at all yet — it is a shelf full
+   * of inventory, which becomes a cost on the day somebody buys it.
+   *
+   * So a gym still records what it spent with its supplier, and still sees it,
+   * but `operating` leaves it out. Before this existed the natural place to put
+   * it was SUPPLIES, which does hit the bottom line — hence the split.
+   */
+  "STOCK",
   "TAX",
   "OTHER",
 ] as const;

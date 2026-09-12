@@ -23,6 +23,21 @@ import { unwrap, useCurrentTenantId, useTenantMutation, useTenantQuery } from ".
  * `includeInactive` is only honoured for a caller who may manage the store; the
  * API decides that, not this hook.
  */
+/**
+ * What the shop made in a month, and what it cost.
+ *
+ * Under the same `["store", tenantId]` prefix as the catalogue, so ringing up a
+ * sale refreshes the month's figures without this page having to know a sale
+ * happened.
+ */
+export function useStoreAnalytics(month: string, options: { enabled?: boolean } = {}) {
+  return useTenantQuery(
+    (tenantId) => queryKeys.store.analytics(tenantId, month),
+    async (tenantId) => unwrap(await storeApi.analytics(tenantId, month)),
+    options,
+  );
+}
+
 export function useStoreProducts(
   params: { category?: string; includeInactive?: boolean } = {},
   options: { enabled?: boolean } = {},

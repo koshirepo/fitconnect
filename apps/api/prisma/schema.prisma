@@ -598,6 +598,18 @@ model Payment {
   subscription        Subscription?     @relation(fields: [subscriptionId], references: [id])
   chargeId            String?
   charge              TenantCharge?     @relation(fields: [chargeId], references: [id])
+  /// What this money was for: "SUBSCRIPTION" | "CHARGE" | "STORE" | "OTHER".
+  ///
+  /// A gym sells two unrelated things through this one ledger — time in the gym,
+  /// and things off a shelf — and until this column existed the only way to tell
+  /// them apart was to follow `subscriptionId`, then `chargeId`, then the
+  /// `storeOrder` back-relation, in that order. Every reader that needed the
+  /// distinction re-derived it, and the payments list could not filter on it at
+  /// all because the last step is a join.
+  ///
+  /// Written from that same precedence, so it never disagrees with the
+  /// relations; stored so the ledger can be read one business at a time.
+  source              String            @default("OTHER")
   description         String? /// Label for charge payments, e.g. "Admission Fee"
   /// What this cost before any coupon or coins. Null on rows written before
   /// coupons existed, and on rows where nothing was taken off.
@@ -656,6 +668,8 @@ model Payment {
   /// one gym newest-first.
   @@index([tenantId, status])
   @@index([tenantId, createdAt])
+  /// The payments screen, which reads one business at a time and newest first.
+  @@index([tenantId, source, createdAt])
 }
 
 /// One chase for money: a push the cron sent, or a WhatsApp message a member of

@@ -32,6 +32,7 @@ import { genderMeta } from "@/lib/gender";
 import { useAdjacentRecord } from "@/lib/use-adjacent-record";
 import { useCoinBalance } from "@/api/queries/coupons";
 import { FreezeCard } from "@/components/ui/freeze-card";
+import { MembershipGapsCard } from "./MembershipGaps";
 import { MemberRfidCard } from "@/features/members/MemberRfidCard";
 import { SwipePane } from "@/components/ui/swipe-pane";
 import { useToast } from "@/components/ui/toast";
@@ -1118,6 +1119,11 @@ export default function MemberDetailPage() {
 
       {/* ── What the desk does to a membership ─────────────────────────────── */}
       {isMemberProfile && membershipId && <FreezeCard membershipId={membershipId} isStaff />}
+
+      {/* Whether this person keeps their membership running, or lets it lapse a
+          few days between every term on purpose. Only for members: staff have
+          no terms to leave gaps between. */}
+      {isMemberProfile && membershipId && <MembershipGapsCard membershipId={membershipId} />}
 
       {/* Every role, not only members. Admins and coaches walk through the same
           door and are on the same readers — and a gym that pays staff by hours

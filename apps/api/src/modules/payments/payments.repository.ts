@@ -6,8 +6,10 @@
  * - Primary exports: paymentRepository.
  */
 import { prisma } from "../../lib/prisma";
+import { Prisma } from "../../generated/prisma/client";
 import { monthRange } from "../../lib/month";
-import type { PaymentStatus } from "@fitconnect/shared/types/enums";
+import { MEMBERSHIP_PAYMENT_SOURCES } from "@fitconnect/shared/types/enums";
+import type { PaymentStatus, PaymentSource } from "@fitconnect/shared/types/enums";
 
 /**
  * Collapse a payment aggregate into the giveaway shape the analytics response
@@ -100,6 +102,13 @@ export const paymentRepository = {
    * Run the `list payments` persistence operation for the payments module.
    * Repository methods own Prisma query shape and relation loading so service code can stay focused on domain flow.
    */
+  /**
+   * `sources` narrows the ledger to one of the gym's businesses.
+   *
+   * Passing none reads the whole ledger, which is what the member-scoped views
+   * and the exports want. The payments screen passes the membership sources, so
+   * a gym that sells more tubs than it signs members can still find a renewal.
+   */
   async listPayments(
     tenantId: string,
     page: number,
@@ -107,13 +116,21 @@ export const paymentRepository = {
     statusFilter?: string,
     search?: string,
     membershipId?: string,
+    sources?: PaymentSource[],
   ) {
-    const where: Record<string, unknown> = { tenantId };
+    // Typed against the schema rather than `Record<string, unknown>`: a filter
+    // built as loose keys compiles happily with a misspelled column and simply
+    // stops narrowing, which on this query would mean quietly listing another
+    // business's rows instead of failing.
+    const where: Prisma.PaymentWhereInput = { tenantId };
     if (statusFilter && ["PENDING", "COMPLETED", "FAILED", "REFUNDED"].includes(statusFilter)) {
       where.status = statusFilter as PaymentStatus;
     }
     if (membershipId) {
       where.membershipId = membershipId;
+    }
+    if (sources?.length) {
+      where.source = { in: sources };
     }
     const trimmedSearch = search?.trim();
     if (trimmedSearch) {
@@ -136,6 +153,7 @@ export const paymentRepository = {
           id: true,
           amount: true,
           status: true,
+          source: true,
           paidAt: true,
           validFrom: true,
           validUntil: true,
@@ -292,6 +310,16 @@ export const paymentRepository = {
     membershipId: string;
     subscriptionId?: string;
     chargeId?: string;
+    /**
+     * Which of the gym's two businesses this money belongs to.
+     *
+     * Required rather than derived from the ids above, because the one case the
+     * ids cannot express is the one that matters most: a store sale carries no
+     * `subscriptionId` and no `chargeId`, and its `StoreOrder` is written
+     * afterwards — so at the moment the payment row is created there is nothing
+     * on it to derive STORE from. Every caller says what it is selling.
+     */
+    source: PaymentSource;
     description?: string;
     note?: string;
     status?: "PENDING" | "COMPLETED";
@@ -1145,6 +1173,16 @@ export const paymentRepository = {
     const { from: startOfMonth, to: endOfMonth } = monthRange(month);
     const monthWindow = { gte: startOfMonth, lt: endOfMonth };
 
+    /**
+     * The membership business. Store sales are not this screen's subject.
+     *
+     * Without this every figure here counted the shop: one gym's September read
+     * ₹86,699 of "revenue", of which ₹77,899 was supplements — a number that
+     * described neither business and moved with whichever had the better month.
+     * The shop has its own page, with the cost of the goods beside the takings.
+     */
+    const membership = { source: { in: MEMBERSHIP_PAYMENT_SOURCES } };
+
     const [
       daily,
       weekly,
@@ -1169,28 +1207,28 @@ export const paymentRepository = {
       // Today's stats
       prisma.payment.groupBy({
         by: ["status"],
-        where: { tenantId, createdAt: { gte: startOfDay } },
+        where: { tenantId, ...membership, createdAt: { gte: startOfDay } },
         _sum: { amount: true },
         _count: true,
       }),
       // This week's stats
       prisma.payment.groupBy({
         by: ["status"],
-        where: { tenantId, createdAt: { gte: startOfWeek } },
+        where: { tenantId, ...membership, createdAt: { gte: startOfWeek } },
         _sum: { amount: true },
         _count: true,
       }),
       // This month's stats
       prisma.payment.groupBy({
         by: ["status"],
-        where: { tenantId, createdAt: monthWindow },
+        where: { tenantId, ...membership, createdAt: monthWindow },
         _sum: { amount: true },
         _count: true,
       }),
       // All-time stats
       prisma.payment.groupBy({
         by: ["status"],
-        where: { tenantId },
+        where: { tenantId, ...membership },
         _sum: { amount: true },
         _count: true,
       }),
@@ -1206,6 +1244,7 @@ export const paymentRepository = {
           COUNT(*) AS count
         FROM "Payment"
         WHERE "tenantId" = ${tenantId}
+          AND "source" IN (${Prisma.join(MEMBERSHIP_PAYMENT_SOURCES)})
           AND "createdAt" >= ${startOfMonth}
           AND "createdAt" < ${endOfMonth}
         GROUP BY day
@@ -1244,17 +1283,17 @@ export const paymentRepository = {
       // What was given away this month: coupons off the list price, and coins
       // spent against it. `amount` is already net of both.
       prisma.payment.aggregate({
-        where: { tenantId, status: "COMPLETED", createdAt: monthWindow },
+        where: { tenantId, ...membership, status: "COMPLETED", createdAt: monthWindow },
         _sum: { amount: true, listAmount: true, discountAmount: true, coinsRedeemed: true },
       }),
       prisma.payment.aggregate({
-        where: { tenantId, status: "COMPLETED" },
+        where: { tenantId, ...membership, status: "COMPLETED" },
         _sum: { amount: true, listAmount: true, discountAmount: true, coinsRedeemed: true },
       }),
       // How the money arrived. `gateway` is null for cash and other manual entries.
       prisma.payment.groupBy({
         by: ["gateway"],
-        where: { tenantId, status: "COMPLETED", createdAt: monthWindow },
+        where: { tenantId, ...membership, status: "COMPLETED", createdAt: monthWindow },
         _sum: { amount: true },
         _count: true,
       }),
@@ -1321,30 +1360,31 @@ export const paymentRepository = {
       0,
     );
 
-    /** Payment-ledger figures with the guest sales of the same window added. */
-    const withGuests = (rows: typeof daily, from: Date | null, to?: Date) => {
-      const stats = mapStats(rows);
-      const revenue = from === null ? allGuestRevenue : guestRevenue(from, to);
-      const count = from === null ? guestSales.length : guestCount(from, to);
-
-      return {
-        ...stats,
-        totalRevenue: stats.totalRevenue + revenue,
-        totalCount: stats.totalCount + count,
-        completed: stats.completed + count,
-        /** Of the revenue above, how much came from buyers with no account. */
-        guestRevenue: revenue,
-        guestCount: count,
-      };
-    };
+    /**
+     * Membership figures for a window, with the shop's counter sales beside them.
+     *
+     * Beside, not inside. These used to be added into `totalRevenue`, which —
+     * together with the store payments that were also being counted — made the
+     * revenue tile on the finance page a sum of two unrelated businesses: one
+     * gym's September read ₹86,699, of which ₹77,899 was supplements. The guest
+     * figures stay in the response because the counter-sales tile reports them
+     * honestly under their own name, and the shop's full picture, with the cost
+     * of the goods against it, is on the store analytics page.
+     */
+    const membershipStats = (rows: typeof daily, from: Date | null, to?: Date) => ({
+      ...mapStats(rows),
+      /** The shop's takings in the same window. Not part of the totals above. */
+      guestRevenue: from === null ? allGuestRevenue : guestRevenue(from, to),
+      guestCount: from === null ? guestSales.length : guestCount(from, to),
+    });
 
     return {
       /** The month these figures describe, echoed so the caller can be sure. */
       monthKey: month,
-      today: withGuests(daily, startOfDay),
-      week: withGuests(weekly, startOfWeek),
-      month: withGuests(monthly, startOfMonth, endOfMonth),
-      allTime: withGuests(allTime, null),
+      today: membershipStats(daily, startOfDay),
+      week: membershipStats(weekly, startOfWeek),
+      month: membershipStats(monthly, startOfMonth, endOfMonth),
+      allTime: membershipStats(allTime, null),
       dailyBreakdown: dailyBreakdown.map(
         (d: { day: string; revenue: number | bigint; count: number | bigint }) => ({
         day: d.day,

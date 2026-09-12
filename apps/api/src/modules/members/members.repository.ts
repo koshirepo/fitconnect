@@ -1023,4 +1023,41 @@ export const memberRepository = {
       },
     });
   },
+
+  /**
+   * Every window of membership this person has ever paid for.
+   *
+   * The whole ledger, not the ten rows the detail page shows: a gap history
+   * built from a page of payments would report holes where the older terms
+   * simply were not loaded, which is worse than reporting none.
+   *
+   * Only COMPLETED rows, and only those carrying both ends of a window. A
+   * pending renewal has bought no time yet, and a balance row against a term
+   * already granted deliberately carries no window of its own — counting either
+   * would close a gap that is really still open.
+   */
+  async membershipCoverageWindows(membershipId: string, tenantId: string) {
+    // `joinedAt` comes back with them: the wait between signing up and paying
+    // for the first time is one of the gaps, and reading it separately would be
+    // a second round trip for one column.
+    const [membership, windows] = await Promise.all([
+      prisma.tenantMembership.findFirst({
+        where: { id: membershipId, tenantId },
+        select: { joinedAt: true },
+      }),
+      prisma.payment.findMany({
+        where: {
+          membershipId,
+          tenantId,
+          status: "COMPLETED",
+          validFrom: { not: null },
+          validUntil: { not: null },
+        },
+        orderBy: { validFrom: "asc" },
+        select: { validFrom: true, validUntil: true },
+      }),
+    ]);
+
+    return { membership, windows };
+  },
 };

@@ -23,6 +23,15 @@ export function IncomeBySourceCard({ income }: { income: FinanceSummary["income"
     { label: "Other", bucket: bySource.other, noun: "payment", tone: "bg-muted-foreground/40" },
   ];
 
+  /**
+   * The bars are scaled against every source together, not the income tile.
+   *
+   * The tile above counts memberships only now that store revenue is reported
+   * apart from it — scaling against that would draw the store bar past the end
+   * of its track on any gym whose shop out-sells its sign-up desk.
+   */
+  const scale = rows.reduce((sum, row) => sum + row.bucket.amount, 0);
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -30,10 +39,13 @@ export function IncomeBySourceCard({ income }: { income: FinanceSummary["income"
           <TrendingUp className="h-4 w-4" />
           Income by source
         </CardTitle>
-        <CardDescription className="text-xs">Adds up to the income figure above.</CardDescription>
+        <CardDescription className="text-xs">
+          The whole ledger. The income tile above counts memberships only — the shop reaches the
+          bottom line through its profit, not its takings.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        {income.total === 0 ? (
+        {scale === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
             Nothing came in this month yet.
           </p>
@@ -47,7 +59,7 @@ export function IncomeBySourceCard({ income }: { income: FinanceSummary["income"
               <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                 <div
                   className={cn("h-full rounded-full", tone)}
-                  style={{ width: `${Math.max(0, (bucket.amount / income.total) * 100)}%` }}
+                  style={{ width: `${Math.max(0, (bucket.amount / scale) * 100)}%` }}
                 />
               </div>
               <p className="text-xs text-muted-foreground">

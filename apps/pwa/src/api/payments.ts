@@ -1,4 +1,4 @@
-import type { PaymentStatus } from "@/types/api";
+import type { PaymentStatus, PaymentSource } from "@/types/api";
 import { api } from "./client";
 import type {
   Payment,
@@ -18,6 +18,13 @@ import type {
 export const paymentsApi = {
   // ─── Payments ───────────────────────────────────────────────────────────────
 
+  /**
+   * `sources` reads one of the gym's two businesses.
+   *
+   * Omitting it reads the whole ledger, which is what a member's own history
+   * wants. The payments screen passes the membership sources, so a renewal is
+   * not buried under a day of counter sales.
+   */
   list: (
     tenantId: string,
     page = 1,
@@ -25,6 +32,7 @@ export const paymentsApi = {
     status?: string,
     search?: string,
     membershipId?: string,
+    sources?: PaymentSource[],
   ) =>
     api.get<PaginatedResponse<{ payments: Payment[] }>>(`/tenants/${tenantId}/payments`, {
       params: {
@@ -33,6 +41,7 @@ export const paymentsApi = {
         ...(status ? { status } : {}),
         ...(search ? { search } : {}),
         ...(membershipId ? { membershipId } : {}),
+        ...(sources?.length ? { source: sources.join(",") } : {}),
       },
     }),
 

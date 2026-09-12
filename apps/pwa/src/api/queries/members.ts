@@ -119,6 +119,22 @@ export function useMember(membershipId: string | undefined) {
   );
 }
 
+/**
+ * When this member was covered by a paid term, and when they were not.
+ *
+ * Separate from `useMember` because it reads the whole payment history rather
+ * than the ten rows the detail shows, and because a member with no gaps costs
+ * a page nothing to render.
+ */
+export function useMembershipCoverage(membershipId: string | undefined) {
+  return useTenantQuery(
+    (tenantId) => queryKeys.members.coverage(tenantId, membershipId ?? "none"),
+    async (tenantId) =>
+      unwrap(await tenantsApi.getMembershipCoverage(tenantId, membershipId!)),
+    { enabled: Boolean(membershipId) },
+  );
+}
+
 /** The referral leaderboard, paged for infinite scroll. */
 export function useReferralsInfinite(
   filters: { search?: string; order?: "asc" | "desc" } = {},

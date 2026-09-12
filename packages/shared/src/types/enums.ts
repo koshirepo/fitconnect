@@ -39,6 +39,63 @@ export const PaymentStatus = {
 export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus];
 
 /**
+ * What a payment was for, so the shop and the membership desk can be read apart.
+ *
+ * A gym sells two unrelated things through one ledger: time in the gym, and
+ * things off a shelf. Both write a `Payment` row — that is what lets the finance
+ * page reconcile a single figure for the month — but nothing on the row said
+ * which was which, so the payments screen listed a protein tub beside a renewal
+ * and the two could only be told apart by reading the description.
+ *
+ * The precedence is `subscriptionId`, then `chargeId`, then a linked
+ * `StoreOrder`, then nothing — the same order `financeRepository.incomeTotals`
+ * has always split by. Storing it makes that rule explicit, indexable, and
+ * impossible for a new reader to get subtly different.
+ *
+ * OTHER is a payment attached to none of the three: a manual entry somebody
+ * recorded against a member with no plan and no charge behind it.
+ */
+export const PaymentSource = {
+  SUBSCRIPTION: "SUBSCRIPTION",
+  CHARGE: "CHARGE",
+  STORE: "STORE",
+  OTHER: "OTHER",
+} as const;
+export type PaymentSource = (typeof PaymentSource)[keyof typeof PaymentSource];
+
+/** Every source, for validating a filter and for iterating a breakdown. */
+export const PAYMENT_SOURCES = Object.values(PaymentSource);
+
+/**
+ * The membership business: everything the shop is not.
+ *
+ * The payments screen shows these by default. A store sale is money the gym
+ * took, but it is not a membership payment, and mixing them made the ledger
+ * unreadable on any gym that sells more tubs than it signs members.
+ */
+export const MEMBERSHIP_PAYMENT_SOURCES: PaymentSource[] = [
+  PaymentSource.SUBSCRIPTION,
+  PaymentSource.CHARGE,
+  PaymentSource.OTHER,
+];
+
+/**
+ * Which source a membership-side payment belongs to, from what it points at.
+ *
+ * The precedence — plan, then charge, then neither — is the one rule, written
+ * once. A store sale never comes through here: it carries neither id, and its
+ * order is written after the payment row, so those callers name STORE outright.
+ */
+export function membershipPaymentSource(link: {
+  subscriptionId?: string | null;
+  chargeId?: string | null;
+}): PaymentSource {
+  if (link.subscriptionId) return PaymentSource.SUBSCRIPTION;
+  if (link.chargeId) return PaymentSource.CHARGE;
+  return PaymentSource.OTHER;
+}
+
+/**
  * Where an order is in its fulfilment, not its payment — see PaymentStatus.
  *
  * PENDING is an order that exists but has not been paid for. Everything from

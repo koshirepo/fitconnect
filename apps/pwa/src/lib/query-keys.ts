@@ -22,6 +22,10 @@ export const queryKeys = {
     list: (tenantId: string, params?: unknown) => ["members", tenantId, params ?? null] as const,
     detail: (tenantId: string, membershipId: string) =>
       ["members", tenantId, "detail", membershipId] as const,
+    // Under the members prefix, so recording a payment refreshes the gap
+    // history without this page having to know a payment happened.
+    coverage: (tenantId: string, membershipId: string) =>
+      ["members", tenantId, "coverage", membershipId] as const,
   },
   payments: {
     list: (tenantId: string, params?: unknown) => ["payments", tenantId, params ?? null] as const,
@@ -63,6 +67,10 @@ export const queryKeys = {
     // invalidates the store also refreshes the counts shown beside a product.
     productComments: (tenantId: string, productId: string) =>
       ["store", tenantId, "product", productId, "comments"] as const,
+    // Also under the store prefix, so ringing up a sale refreshes the month's
+    // figures without the analytics page having to know a sale happened.
+    analytics: (tenantId: string, month: string) =>
+      ["store", tenantId, "analytics", month] as const,
   },
   /** The record of chasing a member for money, by member and by payment. */
   reminders: {

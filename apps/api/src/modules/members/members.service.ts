@@ -15,6 +15,7 @@ import {
 } from "../../auth/password";
 import { memberRepository } from "./members.repository";
 import { flattenMemberUser, flattenNestedMember } from "../../lib/flatten";
+import { buildCoverage } from "./coverage";
 import {
   cleanupPreviousAsset,
   type BackgroundTaskScheduler,
@@ -1175,5 +1176,42 @@ Your membership card: ${idCardUrl}`
     });
 
     return { data: { generatedPassword: newPassword } };
+  },
+
+  /**
+   * When this member was covered, and when they were not.
+   *
+   * The gap history a gym asks for when a member is clearly around but keeps
+   * renewing a few days late: the due date says whether they are lapsed today,
+   * and this says whether that is a habit.
+   *
+   * Read behind the same grant as the rest of the member's record, and a member
+   * may read their own — it is their own payment history, seen a second way.
+   */
+  async getMembershipCoverage(
+    tenantId: string,
+    membershipId: string,
+    userId: string,
+    callerRole: TenantRole | null,
+  ) {
+    if (callerRole === 'MEMBER') {
+      const callerMembership = await memberRepository.findMembershipByUserId(tenantId, userId);
+      if (!callerMembership || callerMembership.id !== membershipId) {
+        return { error: 'You can only view your own membership.', status: 403 as const };
+      }
+    }
+
+    const { membership, windows } = await memberRepository.membershipCoverageWindows(
+      membershipId,
+      tenantId,
+    );
+    if (!membership) return { error: "Member not found.", status: 404 as const };
+
+    return {
+      data: buildCoverage(
+        windows.map((row) => ({ from: row.validFrom!, to: row.validUntil! })),
+        { asOf: new Date(), joinedAt: membership.joinedAt },
+      ),
+    };
   },
 };

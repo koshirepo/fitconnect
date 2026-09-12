@@ -7,6 +7,7 @@
  */
 import { api } from "./client";
 import type { ApiResponse } from "@/types/api";
+import type { StoreProfitSummary } from "./finance";
 import type {
   StoreBasketLine,
   StoreProduct,
@@ -80,7 +81,52 @@ export type StoreOrderRow = {
   }[];
 };
 
+/** Revenue, cost and profit for one slice of the shop's month. */
+export type StoreSlice = {
+  orders: number;
+  units: number;
+  /** What buyers actually paid, after coupons and coins. */
+  netSales: number;
+  /** What those units cost the gym, frozen on the line at the time of sale. */
+  cost: number;
+  /** Net sales less cost, leaving out lines that had no cost on record. */
+  profit: number;
+  /** Taken on the costed part alone, so it can look high beside a small profit. */
+  marginPercent: number | null;
+  /** How much of this slice had no purchase price behind it. */
+  uncostedSales: number;
+  uncostedUnits: number;
+};
+
+/**
+ * The shop's own month, kept apart from membership payments.
+ *
+ * Revenue alone says nothing about a shop — a gym can turn over ₹200,000 of
+ * supplements and keep ₹8,000 of it — so every figure here carries its cost and
+ * its margin beside it.
+ */
+export type StoreAnalytics = {
+  month: string;
+  totals: StoreProfitSummary;
+  /** Counter, online, pickup — whatever channels actually sold this month. */
+  byChannel: (StoreSlice & { channel: string })[];
+  /** A gym selling mostly to guests is a shop with a gym attached. */
+  byBuyer: { member: StoreSlice; guest: StoreSlice };
+  daily: (StoreSlice & { day: string })[];
+};
+
 export const storeApi = {
+  /**
+   * What the shop made this month, and what it cost.
+   *
+   * Behind `STORE_MANAGE` on the server: this reports purchase prices and
+   * margin, which is the owner's business rather than the desk's.
+   */
+  analytics: (tenantId: string, month: string) =>
+    api.get<ApiResponse<StoreAnalytics>>(`/tenants/${tenantId}/store/analytics`, {
+      params: { month },
+    }),
+
   listProducts: (tenantId: string, params?: { category?: string; includeInactive?: boolean }) =>
     api.get<ApiResponse<{ products: StoreProduct[] }>>(
       `/tenants/${tenantId}/store/products`,

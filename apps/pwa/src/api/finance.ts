@@ -17,6 +17,7 @@ export type ExpenseCategory =
   | "MAINTENANCE"
   | "MARKETING"
   | "SUPPLIES"
+  | "STOCK"
   | "TAX"
   | "OTHER";
 
@@ -68,8 +69,18 @@ export type StoreProfitSummary = {
 export type FinanceSummary = {
   month: string;
   income: {
+    /**
+     * The membership business only: plans, one-off charges, and manual entries.
+     *
+     * Product sales are deliberately not in here. A gym selling ₹130,000 of
+     * supplements used to see that inside its membership income, which said
+     * nothing true about either business. The shop is reported in `store`, and
+     * reaches the bottom line through its profit rather than its takings.
+     */
     total: number;
-    memberPayments: number;
+    count?: number;
+    /** The whole ledger, memberships and shop together. Never the headline. */
+    allPayments?: number;
     memberPaymentCount: number;
     guestStoreSales: number;
     guestStoreCount: number;
@@ -88,11 +99,22 @@ export type FinanceSummary = {
   store?: StoreProfitSummary;
   expenses: {
     total: number;
+    /**
+     * Everything except stock bought for the shop.
+     *
+     * The cost of the goods that actually sold is already subtracted through
+     * store profit, so counting the supplier invoice here as well would take
+     * the same money out twice. This is the figure the bottom line uses.
+     * Optional because an API deployed before the split does not send it.
+     */
+    operating?: number;
+    stockPurchases?: number;
     byCategory: { category: ExpenseCategory; amount: number }[];
     count: number;
     /** A share of `total`, not an addition to it. */
     salaryPaid: number;
   };
+  /** Membership income, plus what the shop *earned*, less operating costs. */
   net: number;
   unpostedRecurring: {
     id: string;

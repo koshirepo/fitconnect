@@ -5,7 +5,7 @@
  * - Treat these as the shape the API promises, not as a mirror of Prisma's own models.
  */
 
-import type { AccountStatus, PaymentStatus } from "../enums";
+import type { AccountStatus, PaymentStatus, PaymentSource } from "../enums";
 import type { Gender } from "./auth";
 import type { Badge } from "./operations";
 
@@ -52,6 +52,14 @@ export interface Payment {
   id: string;
   amount: number;
   status: PaymentStatus;
+  /**
+   * Which of the gym's two businesses this money was for.
+   *
+   * Optional because an API deployed before the column existed does not send
+   * it; a row without one is read as an ordinary membership payment, which is
+   * what every such row was before the shop had its own ledger view.
+   */
+  source?: PaymentSource;
   paidAt?: string | null;
   validFrom?: string | null;
   validUntil?: string | null;

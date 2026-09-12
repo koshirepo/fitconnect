@@ -110,6 +110,7 @@ const PublicStoreProductPage = React.lazy(
   () => import("@/features/store/PublicStoreProductPage"),
 );
 const StoreManagePage = React.lazy(() => import("@/features/store/StoreManagePage"));
+const StoreAnalyticsPage = React.lazy(() => import("@/features/store/StoreAnalyticsPage"));
 const StoreProductFormPage = React.lazy(
   () => import("@/features/store/StoreProductFormPage"),
 );
@@ -358,6 +359,7 @@ export default function App() {
               />
             </Route>
             <Route element={<RequirePermission anyOf={[Permission.STORE_MANAGE]} />}>
+              <Route path="/dashboard/store/analytics" element={<StoreAnalyticsPage />} />
               <Route path="/dashboard/store/manage" element={<StoreManagePage />} />
               <Route path="/dashboard/store/manage/new" element={<StoreProductFormPage />} />
               <Route
@@ -676,6 +678,7 @@ export default function App() {
                     />
                   </Route>
                   <Route element={<RequirePermission anyOf={[Permission.STORE_MANAGE]} />}>
+                    <Route path="/dashboard/store/analytics" element={<StoreAnalyticsPage />} />
                     <Route path="/dashboard/store/manage" element={<StoreManagePage />} />
                     <Route path="/dashboard/store/manage/new" element={<StoreProductFormPage />} />
                     <Route

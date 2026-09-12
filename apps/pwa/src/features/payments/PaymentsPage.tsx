@@ -3,7 +3,11 @@ import { PageHeader } from "@/components/ui/page-header";
 import * as React from "react";
 import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import {
+  MEMBERSHIP_PAYMENT_SOURCES,
+  PaymentSource,
+} from "@fitconnect/shared/types/enums";
 import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
 import { getApiError } from "@/api/client";
@@ -230,7 +234,23 @@ export default function PaymentsPage() {
   // The whole ledger is fetched once and filtered in the browser, the way the
   // member list works: one cached result serves every tab, so switching tabs
   // and typing in the search box cost nothing.
-  const allPaymentsQuery = useAllPayments({ enabled: canViewAllPayments });
+  /**
+   * Which of the gym's two businesses this screen is reading.
+   *
+   * Memberships by default. A gym that sells more tubs than it signs members
+   * used to open this page onto a wall of store sales with a renewal buried
+   * somewhere in it — the shop is a real ledger, but it is not this one, and it
+   * has its own page with cost and margin on it.
+   *
+   * Two separate fetches rather than one filtered in the browser: the hook keys
+   * its cache by scope, so switching is instant on the way back and the common
+   * case never pays to download a business it will not show.
+   */
+  const ledger = searchParams.get("ledger") === "store" ? "store" : "memberships";
+  const sources =
+    ledger === "store" ? [PaymentSource.STORE] : MEMBERSHIP_PAYMENT_SOURCES;
+
+  const allPaymentsQuery = useAllPayments({ enabled: canViewAllPayments, sources });
   const myPaymentsQuery = useMyPayments({ enabled: !canViewAllPayments });
 
   const payments = React.useMemo<Payment[]>(
@@ -687,6 +707,47 @@ export default function PaymentsPage() {
             <X className="h-3 w-3" />
             Clear dates
           </button>
+        </div>
+      )}
+
+      {/* Which business this ledger is showing. Memberships and the shop are
+          separate reads, so this is a switch rather than another status tab. */}
+      {canViewAllPayments && (
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex rounded-lg border border-border p-0.5">
+            {(
+              [
+                { value: "memberships", label: "Memberships" },
+                { value: "store", label: "Store sales" },
+              ] as const
+            ).map((option) => (
+              <button
+                key={option.value}
+                onClick={() => {
+                  const next = new URLSearchParams(searchParams);
+                  if (option.value === "store") next.set("ledger", "store");
+                  else next.delete("ledger");
+                  setSearchParams(next);
+                }}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-sm transition-colors",
+                  ledger === option.value
+                    ? "bg-muted font-semibold text-foreground"
+                    : "font-medium text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          {ledger === "store" && (
+            <Link
+              to="/dashboard/store/analytics"
+              className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              See what the shop earned →
+            </Link>
+          )}
         </div>
       )}
 

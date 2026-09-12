@@ -5,7 +5,11 @@
  * - Prefer placing workflow logic, derived calculations, and domain invariants here instead of inside controllers or repositories.
  * - Primary exports: paymentService.
  */
-import type { PaymentStatus } from "@fitconnect/shared/types/enums";
+import {
+  membershipPaymentSource,
+  type PaymentStatus,
+  type PaymentSource,
+} from "@fitconnect/shared/types/enums";
 import { memberRepository } from "../members/members.repository";
 import { pushService } from "../push/push.service";
 import { couponService, type Quote } from "../coupons/coupons.service";
@@ -61,6 +65,7 @@ export const paymentService = {
     statusFilter?: string,
     search?: string,
     membershipId?: string,
+    sources?: PaymentSource[],
   ) {
     const { payments, total } = await paymentRepository.listPayments(
       tenantId,
@@ -69,11 +74,13 @@ export const paymentService = {
       statusFilter,
       search,
       membershipId,
+      sources,
     );
     const flat = payments.map((p: {
       id: string;
       amount: number;
       status: string;
+      source: string;
       paidAt?: Date | null;
       validFrom?: Date | null;
       validUntil?: Date | null;
@@ -273,6 +280,7 @@ export const paymentService = {
       membershipId: input.membershipId,
       subscriptionId: input.subscriptionId,
       chargeId: input.chargeId,
+      source: membershipPaymentSource(input),
       description: input.description,
       note: input.note,
       status: input.status,
@@ -306,6 +314,8 @@ export const paymentService = {
             membershipId: input.membershipId,
             subscriptionId: input.subscriptionId,
             chargeId: input.chargeId,
+            // A balance belongs to whatever it is a balance *of*.
+            source: membershipPaymentSource(input),
             description: label ? `Balance — ${label}` : "Balance",
             note: input.note,
             status: "PENDING",
@@ -414,6 +424,7 @@ export const paymentService = {
         ...(duesResult.shortfall.subscriptionId
           ? { subscriptionId: duesResult.shortfall.subscriptionId }
           : {}),
+        source: membershipPaymentSource(duesResult.shortfall),
         description: duesResult.shortfall.description?.startsWith("Balance")
           ? duesResult.shortfall.description
           : `Balance — ${duesResult.shortfall.description ?? "dues"}`,
@@ -595,6 +606,7 @@ export const paymentService = {
         tenantId,
         membershipId,
         ...(due.subscriptionId ? { subscriptionId: due.subscriptionId } : {}),
+        source: membershipPaymentSource(due),
         description: due.description?.startsWith("Balance")
           ? due.description
           : `Balance — ${due.description ?? "payment"}`,
@@ -714,6 +726,7 @@ export const paymentService = {
             tenantId,
             membershipId: existing.membershipId!,
             ...(existing.subscriptionId ? { subscriptionId: existing.subscriptionId } : {}),
+            source: membershipPaymentSource(existing),
             description: existing.description?.startsWith("Balance")
               ? existing.description
               : `Balance — ${existing.description ?? "payment"}`,
@@ -918,7 +931,15 @@ export const paymentService = {
       financeRepository.incomeTotals(tenantId, resolvedMonth),
     ]);
 
-    const monthIncome = income.payments + income.guestStoreSales;
+    /**
+     * The month's membership income, as the books define it.
+     *
+     * Not `payments + guestStoreSales`, which is what this was: that summed the
+     * whole ledger — store payments included — with the shop's counter sales on
+     * top, and called the result revenue. The shop is reported in `revenueMix`
+     * and in full on its own page, with the cost of the goods against it.
+     */
+    const monthIncome = income.membership.amount;
     const mix = (bucket: { amount: number; count: number }) => ({
       revenue: bucket.amount,
       count: bucket.count,

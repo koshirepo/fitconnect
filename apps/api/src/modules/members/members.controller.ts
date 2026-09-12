@@ -398,4 +398,28 @@ export const memberController = {
 
     return ok(c, result.data);
   },
+
+  /**
+   * When this member was covered, and when they were not.
+   *
+   * Same grant as the rest of their record; a member reading their own is
+   * settled in the service, which is where the role is already known.
+   */
+  async getMembershipCoverage(c: AppContext) {
+    const tenantId = c.req.param('tenantId')!;
+    const membershipId = c.req.param('membershipId')!;
+
+    const result = await memberService.getMembershipCoverage(
+      tenantId,
+      membershipId,
+      c.get('authUser').id,
+      c.get('tenantAccess')?.role ?? null,
+    );
+    if ('error' in result) {
+      if (result.status === 403) return forbidden(c, result.error!);
+      return notFound(c, result.error!);
+    }
+
+    return ok(c, result.data);
+  },
 };

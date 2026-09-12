@@ -9,6 +9,7 @@ import type { PaymentStatus } from "@/types/api";
 import { keepPreviousData } from "@tanstack/react-query";
 import { paymentsApi } from "@/api/payments";
 import { queryKeys } from "@/lib/query-keys";
+import type { PaymentSource } from "@/types/api";
 import { getNetworkQuality } from "@/lib/network-status";
 import type {
   CreateSubscriptionPayload,
@@ -31,6 +32,8 @@ export type PaymentListFilters = {
   status?: string;
   search?: string;
   membershipId?: string;
+  /** Which of the gym's businesses to read. Omitted reads the whole ledger. */
+  sources?: PaymentSource[];
 };
 
 /** Everything a payment write can invalidate. */
@@ -55,6 +58,7 @@ export function usePayments(filters: PaymentListFilters = {}, options: { enabled
           filters.status,
           filters.search,
           filters.membershipId,
+          filters.sources,
         ),
       ),
     { placeholderData: keepPreviousData, ...options },
@@ -69,13 +73,21 @@ export function usePayments(filters: PaymentListFilters = {}, options: { enabled
  * result then serves every tab, which is why switching tabs is instant and why
  * a status change refreshes all of them at once.
  */
-export function useAllPayments(options: { enabled?: boolean; pageSize?: number } = {}) {
-  const { pageSize = 500 } = options;
+export function useAllPayments(
+  options: { enabled?: boolean; pageSize?: number; sources?: PaymentSource[] } = {},
+) {
+  const { pageSize = 500, sources } = options;
+  // Part of the cache key: the membership ledger and the shop's are different
+  // reads, and sharing one entry between them would serve whichever loaded first.
+  const scope = sources?.length ? [...sources].sort().join(",") : "all";
 
   return useTenantQuery(
-    (tenantId) => [...queryKeys.payments.list(tenantId), "all", pageSize],
+    (tenantId) => [...queryKeys.payments.list(tenantId), "all", pageSize, scope],
     async (tenantId) => {
-      const first = unwrapPaginated(await paymentsApi.list(tenantId, 1, pageSize));
+      const page = (n: number) =>
+        paymentsApi.list(tenantId, n, pageSize, undefined, undefined, undefined, sources);
+
+      const first = unwrapPaginated(await page(1));
       const totalPages = first.meta.totalPages;
       if (totalPages <= 1) return first.data.payments;
 
@@ -84,9 +96,7 @@ export function useAllPayments(options: { enabled?: boolean; pageSize?: number }
       if (getNetworkQuality().isSlow) return first.data.payments;
 
       const rest = await Promise.all(
-        Array.from({ length: totalPages - 1 }, (_, index) =>
-          paymentsApi.list(tenantId, index + 2, pageSize),
-        ),
+        Array.from({ length: totalPages - 1 }, (_, index) => page(index + 2)),
       );
 
       return [

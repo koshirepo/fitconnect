@@ -21,6 +21,7 @@ import { provisioningService } from "../attendance/provisioning.service";
 import { paymentRepository } from "./payments.repository";
 import { couponService } from "../coupons/coupons.service";
 import { pushService } from "../push/push.service";
+import { PaymentSource } from "@fitconnect/shared/types/enums";
 import type {
   UpdateGatewayInput,
   CheckoutInput,
@@ -472,6 +473,7 @@ export const gatewayService = {
         tenantId,
         membershipId: membership.id,
         subscriptionId: subscription.id,
+        source: PaymentSource.SUBSCRIPTION,
         description: subscription.title,
         status: "PENDING",
         amount: subscription.amount,
@@ -558,6 +560,7 @@ export const gatewayService = {
         tenantId,
         membershipId: membership.id,
         subscriptionId: subscription.id,
+        source: PaymentSource.SUBSCRIPTION,
         description: subscription.title,
         status: "COMPLETED",
         amount: 0,
@@ -616,6 +619,7 @@ export const gatewayService = {
       tenantId,
       membershipId: membership.id,
       subscriptionId: subscription.id,
+      source: PaymentSource.SUBSCRIPTION,
       description: subscription.title,
       status: "PENDING",
       // What the plan costs after any coupon and coins. The arrears keep

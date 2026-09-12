@@ -23,6 +23,7 @@ import {
   Coins,
   Tag,
   ClipboardList,
+  TrendingUp,
   ShoppingBag,
   BadgeIndianRupee,
   RotateCcw,
@@ -224,6 +225,18 @@ const tenantNav: NavItem[] = [
     label: "Store admin",
     icon: ClipboardList,
     anyOf: [Permission.STORE_MANAGE, Permission.STORE_SELL],
+    // Analytics is its own entry below, so this must not light up when
+    // somebody is standing on it.
+    excludePrefixes: ["/dashboard/store/analytics"],
+  },
+  {
+    // The shop's own books, kept off the payments screen: what it sold, what
+    // that stock cost, and what was left. Behind STORE_MANAGE alone — a coach
+    // who fulfils orders has no business seeing what the gym pays its supplier.
+    to: "/dashboard/store/analytics",
+    label: "Store analytics",
+    icon: TrendingUp,
+    anyOf: [Permission.STORE_MANAGE],
   },
   {
     to: "/attendance",

@@ -9,6 +9,7 @@ export type {
   TenantRole,
   AccountStatus,
   PaymentStatus,
+  PaymentSource,
   OrderStatus,
   ShipmentStatus,
   ReturnStatus,

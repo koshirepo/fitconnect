@@ -17,6 +17,31 @@ import type {
   ApiResponse,
 } from "@/types/api";
 
+/** One stretch of paid membership. Dates are plain days, "YYYY-MM-DD". */
+export type CoverageTerm = { from: string; to: string; days: number };
+
+/** One stretch with no paid membership behind it. */
+export type CoverageGap = CoverageTerm & {
+  /** The member is uncovered right now, and this counts up to today. */
+  open: boolean;
+  /** The wait between joining and paying the first time — not a lapse. */
+  beforeFirstTerm: boolean;
+};
+
+export type MembershipCoverage = {
+  terms: CoverageTerm[];
+  gaps: CoverageGap[];
+  totals: {
+    coveredDays: number;
+    gapDays: number;
+    gapCount: number;
+    longestGapDays: number;
+    /** Mean lapse between terms. Null when they have never let one run out. */
+    averageGapDays: number | null;
+    currentlyUncovered: boolean;
+  };
+};
+
 export const tenantsApi = {
   // ─── Tenant CRUD ────────────────────────────────────────────────────────────
 
@@ -117,6 +142,18 @@ export const tenantsApi = {
 
   getMemberDetail: (tenantId: string, membershipId: string) =>
     api.get<ApiResponse<{ member: MemberDetail }>>(`/tenants/${tenantId}/members/${membershipId}`),
+
+  /**
+   * When this member was covered by a paid term, and when they were not.
+   *
+   * Its own call rather than a field on the detail: the detail loads ten
+   * payments, and a gap history built from a page of them would report holes
+   * where the older terms simply were not fetched.
+   */
+  getMembershipCoverage: (tenantId: string, membershipId: string) =>
+    api.get<ApiResponse<MembershipCoverage>>(
+      `/tenants/${tenantId}/members/${membershipId}/coverage`,
+    ),
 
   updateMember: (tenantId: string, membershipId: string, data: UpdateMemberPayload) =>
     api.patch<ApiResponse<{ member: MemberDetail }>>(

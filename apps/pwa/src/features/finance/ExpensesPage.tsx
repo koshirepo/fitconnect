@@ -67,6 +67,7 @@ const CATEGORIES: ExpenseCategory[] = [
   "MAINTENANCE",
   "MARKETING",
   "SUPPLIES",
+  "STOCK",
   "TAX",
   "OTHER",
 ];
@@ -79,6 +80,7 @@ const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   MAINTENANCE: "Maintenance",
   MARKETING: "Marketing",
   SUPPLIES: "Supplies",
+  STOCK: "Stock for resale",
   TAX: "Tax",
   OTHER: "Other",
 };
@@ -264,16 +266,17 @@ export default function ExpensesPage() {
               <CardContent>
                 <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground sm:text-xs">
                   <TrendingUp className="size-3.5 shrink-0 text-emerald-600" />
-                  Income
+                  Membership income
                 </p>
                 <p className="mt-1 truncate text-lg font-bold tabular-nums text-emerald-600 sm:text-xl">
                   {formatCurrency(summary?.income.total ?? 0)}
                 </p>
+                {/* Named for what it is. This tile used to add the shop's
+                    takings in, which made a gym with a busy counter look like
+                    it was signing members it was not. */}
                 <p className="mt-1 text-[10px] text-muted-foreground sm:text-[11px]">
-                  {summary?.income.memberPaymentCount ?? 0} member payments
-                  {(summary?.income.guestStoreCount ?? 0) > 0
-                    ? ` · ${summary?.income.guestStoreCount} counter sales`
-                    : ""}
+                  {summary?.income.count ?? summary?.income.memberPaymentCount ?? 0} payments · shop
+                  counted separately
                 </p>
               </CardContent>
             </Card>
@@ -304,6 +307,14 @@ export default function ExpensesPage() {
                     includes {formatCurrency(summary?.expenses.salaryPaid ?? 0)} salary
                   </p>
                 )}
+                {/* Stock is reported but held out of the net: the cost of the
+                    goods that actually sold is already subtracted through shop
+                    profit, and stock still on the shelf is not a cost yet. */}
+                {(summary?.expenses.stockPurchases ?? 0) > 0 && (
+                  <p className="mt-1 text-[10px] text-muted-foreground sm:text-[11px]">
+                    incl. {formatCurrency(summary?.expenses.stockPurchases ?? 0)} stock, not in net
+                  </p>
+                )}
               </CardContent>
             </Card>
 
@@ -320,6 +331,16 @@ export default function ExpensesPage() {
                   )}
                 >
                   {formatCurrency(summary?.net ?? 0)}
+                </p>
+                {/* What the bottom line is made of, because it is no longer
+                    "income less expenses". The shop contributes its profit, not
+                    its takings, and stock bought for it is left out — the cost
+                    of what actually sold is already inside that profit. */}
+                <p className="mt-1 text-[10px] text-muted-foreground sm:text-[11px]">
+                  memberships
+                  {summary?.store ? ` + ${formatCurrency(summary.store.profit)} shop profit` : ""} −{" "}
+                  {formatCurrency(summary?.expenses.operating ?? summary?.expenses.total ?? 0)}{" "}
+                  running costs
                 </p>
                 {(summary?.unpostedTotal ?? 0) > 0 && (
                   <p className="mt-1 text-[10px] text-amber-600 sm:text-[11px]">
