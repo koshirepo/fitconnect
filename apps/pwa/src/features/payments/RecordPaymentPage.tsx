@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AlertCircle, Plus } from "lucide-react";
+import { StartDateCalendar } from "./StartDateCalendar";
 import type {
   Badge as BadgeModel,
   CreatePaymentPayload,
@@ -92,12 +93,40 @@ export default function RecordPaymentPage() {
   // Settling money owed is a coach's job; deciding what it should have been is
   // not, so the price is theirs to read rather than to set.
   const canEditAmount = can(Permission.PAYMENTS_UPDATE);
+  /**
+   * Who may see and change the day the term ends.
+   *
+   * The same grant that lets somebody edit a payment after the fact, and for
+   * the same reason: the end date decides what the gym is owed and when, so a
+   * coach taking cash at the desk picks the start and the plan settles the
+   * rest. An admin can overrule it.
+   */
+  const canSetValidUntil = can(Permission.PAYMENTS_UPDATE);
 
   // Form state
   const [fMembershipId, setFMembershipId] = React.useState(membershipId ?? "");
   const [fSubscriptionId, setFSubscriptionId] = React.useState("");
   const [fAmount, setFAmount] = React.useState("");
-  const [fValidUntil, setFValidUntil] = React.useState("");
+  /**
+   * The day the new term begins.
+   *
+   * The form used to ask for the end date instead, which put the desk in charge
+   * of arithmetic the plan already answers: a one-month term starting on the
+   * 3rd ends on a date nobody should be typing, and a slip there sells somebody
+   * a fortnight or a quarter by accident. The start is the input now; the end
+   * is derived below from the chosen plan's own duration.
+   */
+  const [fValidFrom, setFValidFrom] = React.useState("");
+  /**
+   * An admin's override of the end date the plan works out.
+   *
+   * Empty means "whatever the plan says", which is the answer in almost every
+   * case and the only one a coach can send. An admin gets the box because the
+   * exceptions are real — a goodwill fortnight, a term honoured from a paper
+   * receipt — and they are decisions about what the gym is owed, which is not a
+   * call the person taking the cash should be making on their own.
+   */
+  const [fValidUntilOverride, setFValidUntilOverride] = React.useState("");
   const [fNote, setFNote] = React.useState("");
   const [fPaidAmount, setFPaidAmount] = React.useState("");
   /** Whether the desk typed its own figure, which the prefill must not overwrite. */
@@ -238,7 +267,8 @@ export default function RecordPaymentPage() {
     setFSubscriptionId("");
     setFAmount("");
     setFPaidAmount("");
-    setFValidUntil("");
+    setFValidFrom("");
+    setFValidUntilOverride("");
   }, [availableSubscriptions, fSubscriptionId]);
 
   const handleMemberChange = (memberId: string) => {
@@ -248,7 +278,8 @@ export default function RecordPaymentPage() {
     setFSubscriptionId("");
     setFAmount("");
     setFPaidAmount("");
-    setFValidUntil("");
+    setFValidFrom("");
+    setFValidUntilOverride("");
   };
 
   const handleSubChange = (subId: string) => {
@@ -266,7 +297,8 @@ export default function RecordPaymentPage() {
       paidAmountEdited.current = false;
       setFAmount("");
       setFPaidAmount("");
-      setFValidUntil("");
+      setFValidFrom("");
+      setFValidUntilOverride("");
       return;
     }
     amountEdited.current = true;
@@ -276,16 +308,33 @@ export default function RecordPaymentPage() {
     // belonged to a different plan.
     paidAmountEdited.current = false;
     setFPaidAmount(String(sub.amount));
-    // Stacked on cover the member still holds, matching what the server
-    // does when a member pays for themselves: somebody paying early is
-    // paying in advance, not restarting their membership from today. Still
-    // only a prefill — the desk can overwrite the date.
+    // Stacked on cover the member still holds, matching what the server does
+    // when a member pays for themselves: somebody paying early is paying in
+    // advance, not restarting their membership from today. Still only a
+    // prefill — the calendar below lets the desk start the term anywhere.
     const due = selectedMember?.dueDate?.slice(0, 10) ?? null;
-    const start = due && due > today ? due : today;
-    const validUntil = new Date(start);
-    validUntil.setDate(validUntil.getDate() + sub.durationDays);
-    setFValidUntil(validUntil.toISOString().slice(0, 10));
+    setFValidFrom(due && due > today ? due : today);
   };
+
+  /**
+   * When the term the desk is selling runs out.
+   *
+   * The plan's duration counted from the chosen start, which is the sum the
+   * form used to make somebody do in their head. An admin's override wins when
+   * they have set one; everybody else sends this.
+   */
+  const derivedValidUntil = React.useMemo(() => {
+    const plan = subscriptions.find((s) => s.id === fSubscriptionId);
+    if (!plan || !fValidFrom) return "";
+
+    const end = new Date(`${fValidFrom}T00:00:00`);
+    end.setDate(end.getDate() + plan.durationDays);
+    return `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(
+      end.getDate(),
+    ).padStart(2, "0")}`;
+  }, [subscriptions, fSubscriptionId, fValidFrom]);
+
+  const effectiveValidUntil = fValidUntilOverride || derivedValidUntil;
 
   const coinBalance = useCoinBalance(fMembershipId || undefined);
   const couponQuote = useCouponQuote();
@@ -390,8 +439,8 @@ export default function RecordPaymentPage() {
 
     // Validity comes from the plan being bought. Settling a debt buys no time,
     // so there is no date to ask for.
-    if (!duesOnly && !fValidUntil) {
-      setError("Please select a valid until date");
+    if (!duesOnly && !fValidFrom) {
+      setError("Please choose the day this term starts");
       return;
     }
 
@@ -500,7 +549,8 @@ export default function RecordPaymentPage() {
         // so a row paid elsewhere since the form loaded is simply skipped.
         ...(settleDueIds.length > 0 ? { settlePendingIds: settleDueIds } : {}),
         note: fNote || undefined,
-        validUntil: fValidUntil,
+        validFrom: fValidFrom,
+        validUntil: effectiveValidUntil,
         // Display metadata for offline pending list (stripped by Zod on server)
         _memberName: selectedMember?.name,
         _memberAvatarUrl: selectedMember?.avatarUrl,
@@ -534,7 +584,7 @@ export default function RecordPaymentPage() {
           duesLine: duesTotal > 0 ? `Pending dues cleared: ${formatCurrency(duesTotal)}\n` : "",
           balanceLine:
             shortfallAmount > 0 ? `Still pending: ${formatCurrency(shortfallAmount)}\n` : "",
-          validUntilLine: fValidUntil ? `Valid until: ${fValidUntil}\n` : "",
+          validUntilLine: effectiveValidUntil ? `Valid until: ${effectiveValidUntil}\n` : "",
           noteLine: fNote ? `Note: ${fNote}\n` : "",
         });
         const whatsappUrl = buildWhatsAppUrl(selectedMember.phone, msg);
@@ -893,7 +943,7 @@ export default function RecordPaymentPage() {
               </div>
             )}
 
-            {/* Valid Until.
+            {/* When the term runs.
 
                 Hidden when settling dues: validity comes from the plan being
                 bought, and a debt buys none. Asking for a date here would
@@ -901,17 +951,65 @@ export default function RecordPaymentPage() {
                 for. */}
             {!duesOnly && (
               <div className="space-y-2">
-                <Label htmlFor="validUntil">Valid Until *</Label>
-                <Input
-                  id="validUntil"
-                  type="date"
-                  value={fValidUntil}
-                  onChange={(e) => setFValidUntil(e.target.value)}
-                  min={today}
-                  required
-                />
-                {!fValidUntil && error.includes("valid until") && (
+                <Label>Starts from *</Label>
+
+                {/* The calendar needs a member to have a history to draw. Until
+                    one is chosen there is nothing to show, so the field says so
+                    rather than rendering an empty grid. */}
+                {fMembershipId ? (
+                  <StartDateCalendar
+                    membershipId={fMembershipId}
+                    value={fValidFrom}
+                    onChange={setFValidFrom}
+                  />
+                ) : (
+                  <p className="rounded-lg border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
+                    Choose a member to see their attendance and cover.
+                  </p>
+                )}
+
+                {!fValidFrom && error.includes("term starts") && (
                   <p className="text-sm text-destructive-foreground">{error}</p>
+                )}
+
+                {/* What the plan works out to. Read-only for a coach, and not
+                    shown at all until there is something to compute from. */}
+                {derivedValidUntil && !canSetValidUntil && (
+                  <p className="text-xs text-muted-foreground">
+                    Runs to <span className="font-medium text-foreground">{derivedValidUntil}</span>{" "}
+                    on this plan.
+                  </p>
+                )}
+
+                {canSetValidUntil && (
+                  <div className="space-y-1.5 pt-1">
+                    <Label htmlFor="validUntil" className="text-xs text-muted-foreground">
+                      Valid until
+                    </Label>
+                    <Input
+                      id="validUntil"
+                      type="date"
+                      value={effectiveValidUntil}
+                      onChange={(e) => setFValidUntilOverride(e.target.value)}
+                      min={fValidFrom || today}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {fValidUntilOverride ? (
+                        <>
+                          Overriding the plan.{" "}
+                          <button
+                            type="button"
+                            onClick={() => setFValidUntilOverride("")}
+                            className="underline underline-offset-2 hover:text-foreground"
+                          >
+                            Use the plan's {derivedValidUntil || "duration"}
+                          </button>
+                        </>
+                      ) : (
+                        "Worked out from the plan's duration. Change it only if this term is an exception."
+                      )}
+                    </p>
+                  </div>
                 )}
               </div>
             )}

@@ -16,6 +16,7 @@ import {
 import { memberRepository } from "./members.repository";
 import { flattenMemberUser, flattenNestedMember } from "../../lib/flatten";
 import { buildCoverage } from "./coverage";
+import { attendanceRepository } from "../attendance/attendance.repository";
 import {
   cleanupPreviousAsset,
   type BackgroundTaskScheduler,
@@ -1201,11 +1202,16 @@ Your membership card: ${idCardUrl}`
       }
     }
 
-    const { membership, windows } = await memberRepository.membershipCoverageWindows(
-      membershipId,
-      tenantId,
-    );
+    const [{ membership, windows }, zone] = await Promise.all([
+      memberRepository.membershipCoverageWindows(membershipId, tenantId),
+      // Days are bucketed on the gym's calendar, not the server's. A term
+      // ending at 20:08 UTC is the next day in Delhi, and the expiry tile at
+      // the top of this member's page already says so.
+      attendanceRepository.getTenantTimezone(tenantId),
+    ]);
     if (!membership) return { error: "Member not found.", status: 404 as const };
+
+    const timezone = zone?.timezone ?? "Asia/Kolkata";
 
     return {
       data: buildCoverage(
@@ -1227,7 +1233,7 @@ Your membership card: ${idCardUrl}`
 
           return { from, to, inferredStart: recorded === null };
         }),
-        { asOf: new Date(), joinedAt: membership.joinedAt },
+        { asOf: new Date(), joinedAt: membership.joinedAt, timezone },
       ),
     };
   },

@@ -8,8 +8,10 @@ import { useAppNavigate } from "@/lib/use-app-navigate";
 import { useAuthStore } from "@/stores/auth";
 import { useTenantRoleMatrix } from "@/api/queries/roles";
 import { useQueryClient } from "@tanstack/react-query";
+import { coveredDays } from "@/lib/coverage-days";
 import {
   useMember,
+  useMembershipCoverage,
   useRemoveMember,
   useUpdateMember,
   useUpdateMemberRole,
@@ -73,7 +75,6 @@ import { DetailPageSkeleton } from "@/components/ui/skeleton";
 // Aliased: `Badge` in this file is the gym's own badge type, which a member
 // holds several of, and the two would shadow each other.
 import { Badge as StatusBadge } from "@/components/ui/badge";
-import { StatCard } from "@/components/ui/stat-card";
 import {
   Menu,
   MenuContent,
@@ -104,7 +105,6 @@ import {
   ChevronLeft,
   ChevronRight,
   CalendarDays,
-  CalendarClock,
   Cake,
   Briefcase,
   MoreVertical,
@@ -333,6 +333,19 @@ export default function MemberDetailPage() {
   const calDates = React.useMemo(
     () => new Set(calendarQuery.data?.dates ?? []),
     [calendarQuery.data],
+  );
+
+  /**
+   * The days a paid term was running, drawn behind the attendance.
+   *
+   * The same terms the gaps card lists and the start-date picker shades, from
+   * the same call — one answer about when this member was covered, so no two
+   * screens can shade the same week differently.
+   */
+  const coverageQuery = useMembershipCoverage(membershipId);
+  const coveredDaySet = React.useMemo(
+    () => coveredDays(coverageQuery.data?.terms ?? []),
+    [coverageQuery.data],
   );
   const calTotal = calendarQuery.data?.total ?? 0;
   const calLoading = calendarQuery.isLoading;
@@ -782,6 +795,30 @@ export default function MemberDetailPage() {
               </h1>
             </div>
 
+            {/* The one fact the desk opens this page for, beside the name
+                rather than in a tile of its own further down. It used to head a
+                three-tile row whose other two — days attended, payments on
+                record — both restated a section further down the page, so the
+                row is gone and this is the only place the date appears. */}
+            {isMemberProfile && (
+              <div className="hidden shrink-0 border-l pl-4 text-right sm:block">
+                <p className="text-xs text-muted-foreground">
+                  {isDue ? "Expired" : "Valid to"}
+                </p>
+                <p
+                  className={cn(
+                    "text-lg font-bold tabular-nums",
+                    isDue ? "text-red-600" : "text-emerald-600",
+                  )}
+                >
+                  {validUntilDate ? shortDate(new Date(validUntilDate).toISOString()) : "—"}
+                </p>
+                {!validUntilDate && (
+                  <p className="text-[11px] text-muted-foreground">No paid term yet</p>
+                )}
+              </div>
+            )}
+
             {/* Everything that changes or ends this membership, behind one
                 control. Edit sat beside Delete on the old header, which put a
                 destructive button under the thumb of anyone reaching for the
@@ -859,15 +896,10 @@ export default function MemberDetailPage() {
                 {memberAge}
               </StatusBadge>
             )}
-            {coinBalance > 0 && (
-              <StatusBadge
-                variant="outline"
-                className="border-amber-500/40 text-amber-700 dark:text-amber-400"
-              >
-                <Coins className="h-3 w-3" />
-                {coinBalance}
-              </StatusBadge>
-            )}
+            {/* No coin chip here. The balance is on the "give coins" button in
+                the profile card, which carries the same number and does
+                something with it — two copies of one figure is one too many,
+                and the copy that acts is the one worth keeping. */}
           </div>
         </div>
 
@@ -920,40 +952,22 @@ export default function MemberDetailPage() {
         </a>
       )}
 
-      {/* ── Where this membership stands ─────────────────────────────────────
-          Three figures the desk acts on, replacing four tiles that counted
-          things — badges, plans — nobody opened this page to count. */}
+      {/* On a phone the header has no room beside the name, so the expiry gets
+          its own line here instead of a tile. Same single fact, one breakpoint
+          apart — never both at once. */}
       {isMemberProfile && (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-          <StatCard
-            icon={CalendarClock}
-            label={isDue ? "Membership expired" : "Membership valid to"}
-            value={validUntilDate ? shortDate(new Date(validUntilDate).toISOString()) : "—"}
-            subtext={validUntilDate ? undefined : "No paid term yet"}
-            color={isDue ? "text-red-600" : "text-emerald-600"}
-            onClick={() =>
-              paymentsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-            }
-          />
-          <StatCard
-            icon={CalendarDays}
-            label={`Attended · ${formatMonthLabel(calMonth).split(" ")[0]}`}
-            value={calLoading ? "…" : calTotal}
-            subtext={calTotal === 1 ? "day" : "days"}
-            onClick={() =>
-              document.getElementById("attendance")?.scrollIntoView({ behavior: "smooth" })
-            }
-          />
-          <StatCard
-            icon={CreditCard}
-            label="Payments"
-            value={member.payments.length}
-            subtext="on record"
-            className="col-span-2 lg:col-span-1"
-            onClick={() =>
-              paymentsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-            }
-          />
+        <div className="flex items-baseline justify-between gap-3 rounded-lg border px-4 py-2.5 sm:hidden">
+          <span className="text-xs text-muted-foreground">
+            {isDue ? "Membership expired" : "Membership valid to"}
+          </span>
+          <span
+            className={cn(
+              "text-base font-bold tabular-nums",
+              isDue ? "text-red-600" : "text-emerald-600",
+            )}
+          >
+            {validUntilDate ? shortDate(new Date(validUntilDate).toISOString()) : "No paid term"}
+          </span>
         </div>
       )}
 
@@ -963,7 +977,7 @@ export default function MemberDetailPage() {
           <CardTitle>Profile</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+          <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 xl:grid-cols-3">
             {facts.map((fact) => (
               <div key={fact.label} className="flex items-start gap-2.5">
                 <fact.icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
@@ -1117,29 +1131,46 @@ export default function MemberDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Above the membership cards, and for every role rather than members
-          only. Admins and coaches walk through the same door and are on the
-          same readers — and whether somebody can get in at all is the first
-          thing the desk needs from this page, ahead of how their terms have
-          run. The PIN it defaults to is the membership's own number, which
-          every membership has. */}
-      {membershipId && (
-        <MemberRfidCard
-          membershipId={membershipId}
-          memberId={member.memberId}
-          deviceUserPin={member.deviceUserPin}
-          rfidCardNumber={member.rfidCardNumber}
-          onChanged={() => void memberQuery.refetch()}
-        />
-      )}
+      {/*
+        Two columns from `xl`, one below it.
 
-      {/* ── What the desk does to a membership ─────────────────────────────── */}
-      {isMemberProfile && membershipId && <FreezeCard membershipId={membershipId} isStaff />}
+        Everything under the header used to be a single stack of full-width
+        cards, which on a wide screen ran a 148px card across 1100px of nothing
+        while the timeline and the payment table — the things that actually want
+        the width — got no more of it than the "assign a card" box did.
 
-      {/* Whether this person keeps their membership running, or lets it lapse a
-          few days between every term on purpose. Only for members: staff have
-          no terms to leave gaps between. */}
-      {isMemberProfile && membershipId && <MembershipGapsCard membershipId={membershipId} />}
+        The split is by what a card is *for*, not by length: the left column is
+        the member's record, read top to bottom, and the right is the handful of
+        things the desk does to the membership. `items-start` so neither column
+        stretches to the other's height.
+      */}
+      <div className="grid gap-3 sm:gap-5 xl:grid-cols-3 xl:items-start">
+        {/* What the desk does. First in the DOM so a phone, which has one
+            column, still meets these before a year of history. */}
+        <div className="space-y-3 sm:space-y-5 xl:order-2 xl:col-span-1">
+          {/* Every role, not members only: admins and coaches walk through the
+              same door and are on the same readers. The PIN it defaults to is
+              the membership's own number, which every membership has. */}
+          {membershipId && (
+            <MemberRfidCard
+              membershipId={membershipId}
+              memberId={member.memberId}
+              deviceUserPin={member.deviceUserPin}
+              rfidCardNumber={member.rfidCardNumber}
+              onChanged={() => void memberQuery.refetch()}
+            />
+          )}
+
+          {isMemberProfile && membershipId && <FreezeCard membershipId={membershipId} isStaff />}
+        </div>
+
+        {/* The record itself, widest because it is the part with tables and a
+            calendar in it. */}
+        <div className="space-y-3 sm:space-y-5 xl:order-1 xl:col-span-2">
+          {/* Whether this person keeps their membership running, or lets it
+              lapse a few days between every term on purpose. Only for members:
+              staff have no terms to leave gaps between. */}
+          {isMemberProfile && membershipId && <MembershipGapsCard membershipId={membershipId} />}
 
       {/* ── Attendance ─────────────────────────────────────────────────────── */}
       {isMemberProfile && (
@@ -1192,12 +1223,28 @@ export default function MemberDetailPage() {
                   const dateStr = `${calMonth}-${String(d).padStart(2, "0")}`;
                   const present = calDates.has(dateStr);
                   const isToday = dateStr === todayStr;
+                  /**
+                   * Whether the gym was being paid for this day.
+                   *
+                   * The pair is the point. A day they trained on and were paid
+                   * up for is the ordinary case and stays green; a day they
+                   * trained on with no term behind it is amber, because that is
+                   * somebody using the gym for free and it is invisible on a
+                   * calendar that only knows who turned up.
+                   */
+                  const covered = coveredDaySet.has(dateStr);
                   cells.push(
                     <div
                       key={d}
+                      title={`${covered ? "Covered" : "No cover"}${present ? " · attended" : ""}`}
                       className={cn(
                         "flex min-h-10 flex-col items-center justify-center rounded-md p-1 text-sm",
-                        present ? "bg-emerald-500 font-medium text-white" : "text-muted-foreground",
+                        present && covered && "bg-emerald-500 font-medium text-white",
+                        present && !covered && "bg-amber-500 font-medium text-white",
+                        // Not here, but paid up: a faint wash, so a term reads
+                        // as a block behind the days they actually came.
+                        !present && covered && "bg-emerald-500/10 text-muted-foreground",
+                        !present && !covered && "text-muted-foreground",
                         isToday && "ring-2 ring-primary",
                       )}
                     >
@@ -1206,17 +1253,36 @@ export default function MemberDetailPage() {
                   );
                 }
                 return (
-                  <div className="grid grid-cols-7 gap-1">
-                    {WEEKDAYS.map((w) => (
-                      <div
-                        key={w}
-                        className="py-1 text-center text-xs font-medium text-muted-foreground"
-                      >
-                        {w}
-                      </div>
-                    ))}
-                    {cells}
-                  </div>
+                  <>
+                    <div className="grid grid-cols-7 gap-1">
+                      {WEEKDAYS.map((w) => (
+                        <div
+                          key={w}
+                          className="py-1 text-center text-xs font-medium text-muted-foreground"
+                        >
+                          {w}
+                        </div>
+                      ))}
+                      {cells}
+                    </div>
+
+                    {/* Four states in three colours needs saying out loud. The
+                        amber one is the reason the cover is drawn here at all. */}
+                    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t pt-2 text-[11px] text-muted-foreground">
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" />
+                        Attended
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2.5 w-2.5 rounded-sm bg-amber-500" />
+                        Attended, no paid term
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500/20" />
+                        Covered, did not come
+                      </span>
+                    </div>
+                  </>
                 );
               })()
             )}
@@ -1377,6 +1443,8 @@ export default function MemberDetailPage() {
           </CardContent>
         </Card>
       )}
+        </div>
+      </div>
 
       {/* ── What it has taken to collect from this member ──────────────────── */}
       {isMemberProfile && canSeeMoney && reminders.length > 0 && (

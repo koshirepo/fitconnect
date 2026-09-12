@@ -13,12 +13,24 @@ const d = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
 
 const term = (from: string, to: string) => ({ from: d(from), to: d(to) });
 
+/**
+ * `buildCoverage` with a timezone already chosen.
+ *
+ * UTC by default so the dates written above are the days that come back. The
+ * gym-timezone case has its own test at the bottom, where the difference is
+ * the point rather than noise.
+ */
+const cover = (
+  windows: Parameters<typeof buildCoverage>[0],
+  opts: Omit<Parameters<typeof buildCoverage>[1], "timezone"> & { timezone?: string },
+) => buildCoverage(windows, { timezone: "UTC", ...opts });
+
 /** Well after every date in this file, so nothing is accidentally "open". */
 const LATER = d("2026-12-31");
 
 describe("buildCoverage", () => {
   it("reports a single term with no gaps", () => {
-    const coverage = buildCoverage([term("2026-01-01", "2026-01-31")], { asOf: d("2026-01-15") });
+    const coverage = cover([term("2026-01-01", "2026-01-31")], { asOf: d("2026-01-15") });
 
     expect(coverage.terms).toEqual([{ from: "2026-01-01", to: "2026-01-31", days: 31 }]);
     expect(coverage.gaps).toEqual([]);
@@ -28,7 +40,7 @@ describe("buildCoverage", () => {
 
   // The boundary the whole feature turns on.
   it("treats renewing the day after expiry as continuous cover", () => {
-    const coverage = buildCoverage(
+    const coverage = cover(
       [term("2026-01-01", "2026-01-31"), term("2026-02-01", "2026-02-28")],
       { asOf: LATER },
     );
@@ -39,7 +51,7 @@ describe("buildCoverage", () => {
   });
 
   it("counts a one-day hole as a one-day gap", () => {
-    const coverage = buildCoverage(
+    const coverage = cover(
       [term("2026-01-01", "2026-01-31"), term("2026-02-02", "2026-02-28")],
       { asOf: LATER },
     );
@@ -50,7 +62,7 @@ describe("buildCoverage", () => {
 
   // The behaviour the gym actually asked for: somebody who deliberately waits.
   it("finds the deliberate five-day break between two terms", () => {
-    const coverage = buildCoverage(
+    const coverage = cover(
       [term("2026-01-01", "2026-01-31"), term("2026-02-06", "2026-03-05")],
       { asOf: LATER },
     );
@@ -61,7 +73,7 @@ describe("buildCoverage", () => {
   });
 
   it("merges overlapping terms rather than counting the shared days twice", () => {
-    const coverage = buildCoverage(
+    const coverage = cover(
       [term("2026-01-01", "2026-01-31"), term("2026-01-20", "2026-02-19")],
       { asOf: LATER },
     );
@@ -72,7 +84,7 @@ describe("buildCoverage", () => {
   });
 
   it("handles terms recorded out of order", () => {
-    const coverage = buildCoverage(
+    const coverage = cover(
       [term("2026-03-01", "2026-03-31"), term("2026-01-01", "2026-01-31")],
       { asOf: LATER },
     );
@@ -82,7 +94,7 @@ describe("buildCoverage", () => {
   });
 
   it("leaves the current lapse open and counts it up to today", () => {
-    const coverage = buildCoverage([term("2026-01-01", "2026-01-31")], { asOf: d("2026-02-10") });
+    const coverage = cover([term("2026-01-01", "2026-01-31")], { asOf: d("2026-02-10") });
 
     const open = coverage.gaps.find((g) => g.open);
     expect(open).toMatchObject({ from: "2026-02-01", to: "2026-02-10", days: 10 });
@@ -90,14 +102,14 @@ describe("buildCoverage", () => {
   });
 
   it("does not open a gap while the term is still running", () => {
-    const coverage = buildCoverage([term("2026-01-01", "2026-03-31")], { asOf: d("2026-02-10") });
+    const coverage = cover([term("2026-01-01", "2026-03-31")], { asOf: d("2026-02-10") });
 
     expect(coverage.gaps).toEqual([]);
     expect(coverage.totals.currentlyUncovered).toBe(false);
   });
 
   it("names the wait between joining and the first payment apart from a lapse", () => {
-    const coverage = buildCoverage([term("2026-01-10", "2026-02-09")], {
+    const coverage = cover([term("2026-01-10", "2026-02-09")], {
       asOf: LATER,
       joinedAt: d("2026-01-01"),
     });
@@ -109,7 +121,7 @@ describe("buildCoverage", () => {
 
   // Joining and paying the same day, or the next, is not a wait worth reporting.
   it("reports no joining gap when the first term starts straight away", () => {
-    const coverage = buildCoverage([term("2026-01-02", "2026-02-01")], {
+    const coverage = cover([term("2026-01-02", "2026-02-01")], {
       asOf: LATER,
       joinedAt: d("2026-01-01"),
     });
@@ -118,7 +130,7 @@ describe("buildCoverage", () => {
   });
 
   it("shows a member who joined and never paid as uncovered since joining", () => {
-    const coverage = buildCoverage([], { asOf: d("2026-01-20"), joinedAt: d("2026-01-01") });
+    const coverage = cover([], { asOf: d("2026-01-20"), joinedAt: d("2026-01-01") });
 
     expect(coverage.terms).toEqual([]);
     expect(coverage.gaps).toHaveLength(1);
@@ -132,7 +144,7 @@ describe("buildCoverage", () => {
    * and has renewed on time ever since as an habitual lapser.
    */
   it("averages the lapses between terms and leaves the joining wait out", () => {
-    const coverage = buildCoverage(
+    const coverage = cover(
       [
         term("2026-02-01", "2026-02-28"),
         term("2026-03-05", "2026-04-04"),
@@ -150,7 +162,7 @@ describe("buildCoverage", () => {
   });
 
   it("has nothing to report for a membership with no terms and no join date", () => {
-    const coverage = buildCoverage([], { asOf: LATER });
+    const coverage = cover([], { asOf: LATER });
 
     expect(coverage.terms).toEqual([]);
     expect(coverage.gaps).toEqual([]);
@@ -168,7 +180,7 @@ describe("buildCoverage", () => {
    * reported as reconstructed.
    */
   it("counts a term whose start was inferred, and says how many were", () => {
-    const coverage = buildCoverage(
+    const coverage = cover(
       [
         term("2026-01-08", "2026-02-01"),
         { from: d("2026-04-06"), to: d("2026-05-06"), inferredStart: true },
@@ -189,13 +201,37 @@ describe("buildCoverage", () => {
   });
 
   it("reports nothing inferred when every term recorded its own start", () => {
-    const coverage = buildCoverage([term("2026-01-01", "2026-01-31")], { asOf: LATER });
+    const coverage = cover([term("2026-01-01", "2026-01-31")], { asOf: LATER });
 
     expect(coverage.totals.inferredStarts).toBe(0);
   });
 
+  /**
+   * A term ends on the gym's calendar, not the server's.
+   *
+   * `2026-10-09T20:08Z` is the tenth of October in Delhi. Bucketing it in UTC
+   * ended the term a day early here while the expiry tile at the top of the
+   * member's page — which renders in local time — said the tenth. Two dates for
+   * one fact on one screen.
+   */
+  it("ends a term on the gym's day, not the server's", () => {
+    const lateEvening = new Date("2026-10-09T20:08:54.260Z");
+
+    const utc = cover([{ from: d("2026-09-10"), to: lateEvening }], {
+      asOf: d("2026-09-20"),
+      timezone: "UTC",
+    });
+    const delhi = cover([{ from: d("2026-09-10"), to: lateEvening }], {
+      asOf: d("2026-09-20"),
+      timezone: "Asia/Kolkata",
+    });
+
+    expect(utc.terms[0]!.to).toBe("2026-10-09");
+    expect(delhi.terms[0]!.to).toBe("2026-10-10");
+  });
+
   it("ignores a window that ends before it starts rather than inventing cover", () => {
-    const coverage = buildCoverage(
+    const coverage = cover(
       [{ from: d("2026-03-01"), to: d("2026-02-01") }, term("2026-01-01", "2026-01-31")],
       { asOf: LATER },
     );

@@ -113,7 +113,7 @@ export function MemberRfidCard({
         <div className="flex items-center justify-between gap-3">
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-4 w-4" />
-            Attendance card
+            Door access card
           </CardTitle>
           {assigned ? (
             <Badge variant="success">Assigned</Badge>

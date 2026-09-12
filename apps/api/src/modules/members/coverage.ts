@@ -4,9 +4,10 @@
  * - A member's terms are not a tidy sequence. They overlap when somebody renews early, they butt up against each other when somebody renews on the day, and they leave holes when somebody takes a fortnight off on purpose. This turns a pile of validity windows into one honest timeline of both.
  * - Gaps are the point. A gym can see who has lapsed from the due date alone; what it cannot see is the member who has quietly been taking five days off between every term for a year, which is a different conversation and a different kind of customer.
  * - Freezes need no special handling. Freezing a term pushes that payment's `validUntil` forward, so paused time is already inside the window rather than beside it — a frozen fortnight is covered, not a gap, which is exactly what the member paid for.
- * - Whole days throughout, counted in UTC. A term is a day-level promise — nobody sells a membership that ends at 14:32 — and counting in days sidesteps the hour that daylight saving would otherwise add or drop from a gap.
+ * - Whole days throughout, counted on the gym's own calendar. A term is a day-level promise — nobody sells a membership that ends at 14:32 — and bucketing by the gym's timezone is what keeps this timeline agreeing with the expiry date shown at the top of the same page.
  * - Primary exports: buildCoverage, type CoverageWindow, type Coverage.
  */
+import { zoneDayString } from "../../lib/timezone";
 
 /**
  * One paid term, as the payment recorded it.
@@ -63,11 +64,16 @@ export type Coverage = {
   };
 };
 
-/** Whole days since the epoch, in UTC. */
-function dayNumber(date: Date) {
-  return Math.floor(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) / 86_400_000,
-  );
+/**
+ * Whole days since the epoch, on the gym's own calendar.
+ *
+ * Bucketing in UTC was wrong by a day for half the gym's records. A term ending
+ * `2026-10-09T20:08Z` is the tenth of October in Delhi, and the tile at the top
+ * of the member's page says so — reading it as the ninth made this timeline
+ * disagree with the rest of the screen about when cover ran out.
+ */
+function dayNumber(date: Date, timezone: string) {
+  return Math.floor(Date.parse(`${zoneDayString(date, timezone)}T00:00:00.000Z`) / 86_400_000);
 }
 
 function dayKey(day: number) {
@@ -86,16 +92,16 @@ function dayKey(day: number) {
  */
 export function buildCoverage(
   windows: CoverageWindow[],
-  { asOf, joinedAt }: { asOf: Date; joinedAt?: Date | null },
+  { asOf, joinedAt, timezone }: { asOf: Date; joinedAt?: Date | null; timezone: string },
 ): Coverage {
-  const today = dayNumber(asOf);
+  const today = dayNumber(asOf, timezone);
 
   // A window whose end precedes its start buys nothing; it is a data error, not
   // a negative term, and letting it through would make a gap look like cover.
   const sorted = windows
     .map((w) => ({
-      from: dayNumber(w.from),
-      to: dayNumber(w.to),
+      from: dayNumber(w.from, timezone),
+      to: dayNumber(w.to, timezone),
       inferredStart: w.inferredStart === true,
     }))
     .filter((w) => w.to >= w.from)
@@ -118,7 +124,7 @@ export function buildCoverage(
   const gaps: CoverageGap[] = [];
 
   // Joined, then waited before paying for anything.
-  const joined = joinedAt ? dayNumber(joinedAt) : null;
+  const joined = joinedAt ? dayNumber(joinedAt, timezone) : null;
   const firstTerm = merged[0];
   if (joined !== null && firstTerm && firstTerm.from > joined + 1) {
     gaps.push({

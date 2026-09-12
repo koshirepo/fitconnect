@@ -92,10 +92,16 @@ export function MembershipGapsCard({ membershipId }: { membershipId: string }) {
     );
   }
 
-  // A member with no paid term and no join date on record has nothing to plot.
-  if (!coverage || (coverage.terms.length === 0 && coverage.gaps.length === 0)) {
-    return null;
-  }
+  /**
+   * Nothing to show unless there is a gap.
+   *
+   * A member who has never let a term lapse produced a card whose entire
+   * content was a sentence saying so — a section that only ever reports "all
+   * fine" is one the reader learns to scroll past, which is exactly when it
+   * stops being noticed on the member who is not fine. It appears when it has
+   * something to say.
+   */
+  if (!coverage || coverage.totals.gapCount === 0) return null;
 
   const { totals } = coverage;
 
@@ -177,17 +183,11 @@ export function MembershipGapsCard({ membershipId }: { membershipId: string }) {
           </p>
         )}
 
-        {totals.gapCount === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Unbroken cover — this member has never let a term run out.
-          </p>
-        ) : (
-          <ul className="space-y-2.5">
-            {timeline.map((row) => (
-              <Row key={`${row.kind}-${row.from}`} {...row} />
-            ))}
-          </ul>
-        )}
+        <ul className="space-y-2.5">
+          {timeline.map((row) => (
+            <Row key={`${row.kind}-${row.from}`} {...row} />
+          ))}
+        </ul>
       </CardContent>
     </Card>
   );
