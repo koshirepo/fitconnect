@@ -107,6 +107,7 @@ import {
   Cake,
   Briefcase,
   MoreVertical,
+  Printer,
   Trash2,
 } from "lucide-react";
 import type { Badge, MemberDetail, Shift, TenantMember } from "@/types/api";
@@ -1088,6 +1089,28 @@ export default function MemberDetailPage() {
                 size="sm"
                 className="h-auto rounded-full px-3 py-1 text-xs"
               />
+            )}
+
+            {member.idCardUrl && (
+              /* Straight to the card printer at the desk.
+                 Opens the card on its own page with `print=1`, which puts the
+                 print dialog up as soon as it has drawn — one click from here
+                 to a card coming out, rather than finding the page first. */
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-auto rounded-full px-3 py-1 text-xs"
+                onClick={() =>
+                  window.open(
+                    `${member.idCardUrl}${member.idCardUrl!.includes("?") ? "&" : "?"}print=1`,
+                    "_blank",
+                    "noopener",
+                  )
+                }
+              >
+                <Printer className="h-3.5 w-3.5 shrink-0" />
+                Print card
+              </Button>
             )}
           </div>
         </CardContent>

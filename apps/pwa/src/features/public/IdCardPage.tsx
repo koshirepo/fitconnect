@@ -10,7 +10,7 @@
  * - Primary exports: IdCardPage.
  */
 import * as React from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { publicApi } from "@/api/public";
 import { getApiError } from "@/api/client";
 import { resolveAssetUrl } from "@/lib/assets";
@@ -18,7 +18,7 @@ import { qrPath } from "@/lib/qr";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/spinner";
-import { AlertCircle, Download, RefreshCw } from "lucide-react";
+import { AlertCircle, Download, Printer, RefreshCw } from "lucide-react";
 import type { MemberIdCard } from "@/types/api";
 import { useSeo } from "@/lib/seo";
 
@@ -598,6 +598,27 @@ export default function IdCardPage() {
   const [error, setError] = React.useState("");
   const [downloading, setDownloading] = React.useState(false);
 
+  /**
+   * `?print=1` opens the print dialog as soon as the card is drawn.
+   *
+   * The desk opens this page to print a card and nothing else, so making them
+   * find a button first is a step for its own sake. A member following the link
+   * from their own message gets no such thing — they came to look at it.
+   */
+  const [searchParams] = useSearchParams();
+  const autoPrint = searchParams.get("print") === "1";
+  const printed = React.useRef(false);
+
+  React.useEffect(() => {
+    if (!autoPrint || !svg || printed.current) return;
+    printed.current = true;
+
+    // A frame first, so the card is actually painted when the dialog takes its
+    // snapshot of the page rather than a blank rectangle where it will be.
+    const frame = window.requestAnimationFrame(() => window.print());
+    return () => window.cancelAnimationFrame(frame);
+  }, [autoPrint, svg]);
+
   const load = React.useCallback(async () => {
     if (!token) return;
     setLoading(true);
@@ -696,14 +717,34 @@ export default function IdCardPage() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col items-center gap-6 p-4 py-8">
+      {/* `id-card-print` is what the print stylesheet keeps: on paper this is
+          the only thing on the page, at exactly CR80 size. */}
       <img
         src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`}
         alt={`Membership card for ${card.member.name} at ${card.gym.name}`}
-        className="w-full rounded-2xl border shadow-lg"
+        className="id-card-print w-full rounded-2xl border shadow-lg"
       />
 
       <div className="flex w-full flex-col gap-2">
-        <Button onClick={handleDownload} disabled={downloading} className="w-full">
+        {/*
+          Straight to the printer the desk already has.
+
+          A PVC card printer installs as an ordinary Windows printer, so this
+          needs nothing installed: the browser hands the job to the spooler like
+          any other document. The page is sized to the card in the stylesheet,
+          so the only thing to get right at the printer is portrait orientation
+          with scaling off.
+         */}
+        <Button onClick={() => window.print()} className="w-full">
+          <Printer className="mr-2 h-4 w-4" />
+          Print card
+        </Button>
+        <Button
+          variant="outline"
+          onClick={handleDownload}
+          disabled={downloading}
+          className="w-full"
+        >
           <Download className="mr-2 h-4 w-4" />
           {downloading ? "Preparing…" : "Download card"}
         </Button>

@@ -286,3 +286,71 @@
     animation: none;
   }
 }
+
+/* ─── Printing a membership card ──────────────────────────────────────────────
+ *
+ * A card is the one thing in this app that leaves it as a physical object, and
+ * a PVC card printer is an ordinary Windows printer — so printing one needs no
+ * service, no agent and no install beyond the driver. What it does need is a
+ * page the exact size of the card, because anything else is scaled to fit and
+ * arrives a few millimetres wrong.
+ *
+ * CR80 is 85.6mm x 54mm, and the card is drawn as a vertical badge — so it is
+ * printed 54mm wide by 85.6mm tall, whatever the paper is.
+ *
+ * Deliberately no `size` on the page. Naming a card-sized page makes Chrome lay
+ * out a card-sized page box and then centre that box on whatever sheet is
+ * actually loaded, which on an A4 printer puts the card in the middle of the
+ * paper. Letting the printer's own paper win and pinning the card to the
+ * top-left corner is right in both places this gets printed: the corner of an
+ * A4 PVC sheet on an ordinary inkjet, and the whole of a CR80 card on a card
+ * printer, where the corner and the card are the same thing.
+ *
+ * For a front desk that should not see a dialog at all, launch Chrome with
+ * --kiosk-printing and make the card printer the machine's default. The button
+ * then prints straight to it.
+ */
+@media print {
+  @page {
+    margin: 0;
+  }
+
+  /* Everything but the card. `visibility` rather than `display` because
+     collapsing the layout underneath moves the card off its own page. */
+  body * {
+    visibility: hidden !important;
+  }
+
+  .id-card-print,
+  .id-card-print * {
+    visibility: visible !important;
+  }
+
+  /* The page's own layout is flattened so nothing can offset the card: the
+     screen centres it in a flex column, and that centring is exactly what put
+     it in the middle of the sheet. */
+  html,
+  body,
+  #root {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  .id-card-print {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 54mm !important;
+    height: 85.6mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    /* Browsers drop background colours when printing unless told otherwise,
+       and a card whose gym colours have been stripped is not the card. */
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
