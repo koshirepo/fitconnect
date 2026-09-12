@@ -1209,7 +1209,24 @@ Your membership card: ${idCardUrl}`
 
     return {
       data: buildCoverage(
-        windows.map((row) => ({ from: row.validFrom!, to: row.validUntil! })),
+        windows.map((row) => {
+          const to = row.validUntil!;
+          /**
+           * A term with no start recorded begins when the money arrived.
+           *
+           * That is the best evidence there is, and it is the reading that
+           * agrees with the payment list: a renewal taken on the 24th, running
+           * to the 27th of next month, covered the member from the 24th.
+           *
+           * Clamped so a payment settled after its own term ended — an arrear
+           * recorded late — cannot produce a window that runs backwards.
+           */
+          const recorded = row.validFrom;
+          const fallback = row.paidAt ?? row.createdAt;
+          const from = recorded ?? (fallback > to ? to : fallback);
+
+          return { from, to, inferredStart: recorded === null };
+        }),
         { asOf: new Date(), joinedAt: membership.joinedAt },
       ),
     };

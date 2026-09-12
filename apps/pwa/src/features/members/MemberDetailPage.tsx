@@ -1117,18 +1117,12 @@ export default function MemberDetailPage() {
         </CardContent>
       </Card>
 
-      {/* ── What the desk does to a membership ─────────────────────────────── */}
-      {isMemberProfile && membershipId && <FreezeCard membershipId={membershipId} isStaff />}
-
-      {/* Whether this person keeps their membership running, or lets it lapse a
-          few days between every term on purpose. Only for members: staff have
-          no terms to leave gaps between. */}
-      {isMemberProfile && membershipId && <MembershipGapsCard membershipId={membershipId} />}
-
-      {/* Every role, not only members. Admins and coaches walk through the same
-          door and are on the same readers — and a gym that pays staff by hours
-          worked has more reason to card them than anybody. The PIN it defaults
-          to is the membership's own number, which every membership has. */}
+      {/* Above the membership cards, and for every role rather than members
+          only. Admins and coaches walk through the same door and are on the
+          same readers — and whether somebody can get in at all is the first
+          thing the desk needs from this page, ahead of how their terms have
+          run. The PIN it defaults to is the membership's own number, which
+          every membership has. */}
       {membershipId && (
         <MemberRfidCard
           membershipId={membershipId}
@@ -1138,6 +1132,14 @@ export default function MemberDetailPage() {
           onChanged={() => void memberQuery.refetch()}
         />
       )}
+
+      {/* ── What the desk does to a membership ─────────────────────────────── */}
+      {isMemberProfile && membershipId && <FreezeCard membershipId={membershipId} isStaff />}
+
+      {/* Whether this person keeps their membership running, or lets it lapse a
+          few days between every term on purpose. Only for members: staff have
+          no terms to leave gaps between. */}
+      {isMemberProfile && membershipId && <MembershipGapsCard membershipId={membershipId} />}
 
       {/* ── Attendance ─────────────────────────────────────────────────────── */}
       {isMemberProfile && (

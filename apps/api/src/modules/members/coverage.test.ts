@@ -158,6 +158,42 @@ describe("buildCoverage", () => {
     expect(coverage.totals.currentlyUncovered).toBe(false);
   });
 
+  /**
+   * Imported terms carry an end date and no start.
+   *
+   * The first cut of this required both ends and dropped them, which put a
+   * member covered to next month into a 223-day gap — on the same screen as the
+   * payment list saying otherwise. The start is reconstructed by the caller;
+   * what is checked here is that a reconstructed term counts as cover and is
+   * reported as reconstructed.
+   */
+  it("counts a term whose start was inferred, and says how many were", () => {
+    const coverage = buildCoverage(
+      [
+        term("2026-01-08", "2026-02-01"),
+        { from: d("2026-04-06"), to: d("2026-05-06"), inferredStart: true },
+        { from: d("2026-05-06"), to: d("2026-06-01"), inferredStart: true },
+      ],
+      { asOf: d("2026-05-20") },
+    );
+
+    expect(coverage.totals.inferredStarts).toBe(2);
+    expect(coverage.totals.currentlyUncovered).toBe(false);
+    // 2 Feb to 5 Apr is a real gap; the terms after it are real cover.
+    expect(coverage.gaps).toHaveLength(1);
+    expect(coverage.gaps[0]).toMatchObject({ from: "2026-02-02", to: "2026-04-05" });
+    expect(coverage.terms).toEqual([
+      { from: "2026-01-08", to: "2026-02-01", days: 25 },
+      { from: "2026-04-06", to: "2026-06-01", days: 57 },
+    ]);
+  });
+
+  it("reports nothing inferred when every term recorded its own start", () => {
+    const coverage = buildCoverage([term("2026-01-01", "2026-01-31")], { asOf: LATER });
+
+    expect(coverage.totals.inferredStarts).toBe(0);
+  });
+
   it("ignores a window that ends before it starts rather than inventing cover", () => {
     const coverage = buildCoverage(
       [{ from: d("2026-03-01"), to: d("2026-02-01") }, term("2026-01-01", "2026-01-31")],

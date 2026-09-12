@@ -1045,16 +1045,24 @@ export const memberRepository = {
         where: { id: membershipId, tenantId },
         select: { joinedAt: true },
       }),
+      /**
+       * Only `validUntil` is required, not both ends.
+       *
+       * Requiring `validFrom` too silently dropped every imported term — this
+       * gym's own history has rows carrying an end date and no start — and the
+       * timeline then reported months of "no cover" over terms the member had
+       * plainly paid for, contradicting the payment list on the same screen.
+       * The start is reconstructed from `paidAt` instead, and marked as such.
+       */
       prisma.payment.findMany({
         where: {
           membershipId,
           tenantId,
           status: "COMPLETED",
-          validFrom: { not: null },
           validUntil: { not: null },
         },
-        orderBy: { validFrom: "asc" },
-        select: { validFrom: true, validUntil: true },
+        orderBy: { validUntil: "asc" },
+        select: { validFrom: true, validUntil: true, paidAt: true, createdAt: true },
       }),
     ]);
 

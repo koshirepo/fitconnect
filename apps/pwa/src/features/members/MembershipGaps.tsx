@@ -100,10 +100,16 @@ export function MembershipGapsCard({ membershipId }: { membershipId: string }) {
   const { totals } = coverage;
 
   /**
-   * The terms and the gaps woven back into one list, oldest first.
+   * The terms and the gaps woven back into one list, newest first.
    *
    * Two separate lists would make the reader do the interleaving in their head,
    * and the whole point is to see a term, then the hole, then the next term.
+   *
+   * Newest at the top because the payments table further down this page is
+   * ordered that way too, and two histories of the same member running in
+   * opposite directions is a good way to misread both. It also puts the row
+   * that matters most — where this member stands right now — where the eye
+   * lands rather than at the end of a year of history.
    */
   const timeline = [
     ...coverage.terms.map((t) => ({ ...t, kind: "term" as const, note: undefined as string | undefined })),
@@ -116,7 +122,7 @@ export function MembershipGapsCard({ membershipId }: { membershipId: string }) {
           ? "No cover — still running"
           : "No cover between terms",
     })),
-  ].sort((a, b) => a.from.localeCompare(b.from));
+  ].sort((a, b) => b.from.localeCompare(a.from));
 
   return (
     <Card>

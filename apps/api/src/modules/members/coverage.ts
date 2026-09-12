@@ -8,8 +8,14 @@
  * - Primary exports: buildCoverage, type CoverageWindow, type Coverage.
  */
 
-/** One paid term, as the payment recorded it. */
-export type CoverageWindow = { from: Date; to: Date };
+/**
+ * One paid term, as the payment recorded it.
+ *
+ * `inferredStart` marks a term whose `validFrom` the payment never carried —
+ * imported history, mostly — and whose start had to be taken from the day the
+ * money arrived. The end date is always the recorded one.
+ */
+export type CoverageWindow = { from: Date; to: Date; inferredStart?: boolean };
 
 export type CoverageTerm = { from: string; to: string; days: number };
 
@@ -46,6 +52,14 @@ export type Coverage = {
     averageGapDays: number | null;
     /** True while the member is in a gap right now. */
     currentlyUncovered: boolean;
+    /**
+     * How many terms had their start date inferred from the payment date.
+     *
+     * Surfaced rather than hidden: on a gym whose history was imported, most of
+     * the timeline can rest on a reconstructed start, and a gap either side of
+     * one is softer evidence than a gap between two recorded terms.
+     */
+    inferredStarts: number;
   };
 };
 
@@ -79,9 +93,15 @@ export function buildCoverage(
   // A window whose end precedes its start buys nothing; it is a data error, not
   // a negative term, and letting it through would make a gap look like cover.
   const sorted = windows
-    .map((w) => ({ from: dayNumber(w.from), to: dayNumber(w.to) }))
+    .map((w) => ({
+      from: dayNumber(w.from),
+      to: dayNumber(w.to),
+      inferredStart: w.inferredStart === true,
+    }))
     .filter((w) => w.to >= w.from)
     .sort((a, b) => a.from - b.from || a.to - b.to);
+
+  const inferredStarts = sorted.filter((w) => w.inferredStart).length;
 
   // Merge what overlaps, and what merely touches. Renewing the day after a term
   // ends is continuous cover, not a zero-day gap, so `+ 1` is the join.
@@ -171,6 +191,7 @@ export function buildCoverage(
         ? Math.round((lapses.reduce((sum, gap) => sum + gap.days, 0) / lapses.length) * 10) / 10
         : null,
       currentlyUncovered: gaps.some((gap) => gap.open),
+      inferredStarts,
     },
   };
 }
