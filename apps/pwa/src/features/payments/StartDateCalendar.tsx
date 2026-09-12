@@ -14,14 +14,26 @@ import { formatMonthLabel, shiftMonth } from "@/lib/month";
 import { localDayKey } from "@/lib/coverage-days";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+/** "12 Sept 2026", the way the rest of the app writes a date. */
+function longDay(day: string) {
+  return new Date(`${day}T00:00:00`).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 export function StartDateCalendar({
   membershipId,
   value,
+  endDate,
   onChange,
 }: {
   membershipId: string;
   /** The chosen start, "YYYY-MM-DD". Empty until the desk picks one. */
   value: string;
+  /** Where the plan runs to. Empty until a plan is chosen. */
+  endDate?: string;
   onChange: (day: string) => void;
 }) {
   const today = localDayKey(new Date());
@@ -74,21 +86,23 @@ export function StartDateCalendar({
         month={month}
         selectedDay={value}
         onSelectDay={onChange}
+        pendingRange={value && endDate ? { from: value, to: endDate } : null}
         className="p-3"
       />
 
-      {/* Spelled out as well as ringed: the grid shows one month, and a term
-          starting in the next one is a click away from being read wrong. */}
+      {/* Spelled out as well as drawn: a three-month term crosses months the
+          grid is not showing, so the span has to be readable without paging. */}
       {value && (
         <p className="border-t px-3 py-2 text-xs">
-          Starting{" "}
-          <span className="font-medium">
-            {new Date(`${value}T00:00:00`).toLocaleDateString("en-IN", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })}
-          </span>
+          <span className="font-medium">{longDay(value)}</span>
+          {endDate ? (
+            <>
+              {" → "}
+              <span className="font-medium">{longDay(endDate)}</span>
+            </>
+          ) : (
+            <span className="text-muted-foreground"> — choose a plan for the end date</span>
+          )}
         </p>
       )}
     </div>

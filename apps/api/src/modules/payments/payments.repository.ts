@@ -6,6 +6,7 @@
  * - Primary exports: paymentRepository.
  */
 import { prisma } from "../../lib/prisma";
+import { proratedDays } from "@fitconnect/shared/prorata";
 import { Prisma } from "../../generated/prisma/client";
 import { monthRange } from "../../lib/month";
 import { MEMBERSHIP_PAYMENT_SOURCES } from "@fitconnect/shared/types/enums";
@@ -75,27 +76,14 @@ const gatewayPaymentSelect = {
 } as const;
 
 /**
- * Days a payment buys, in proportion to the money it carried.
+ * Re-exported so this module's existing callers keep one import.
  *
- * A ₹600 plan running 30 days part-paid ₹300 buys 15 days, and the ₹300 balance
- * buys the other 15 when it arrives — the shares sum back to exactly one period
- * however many instalments it comes in.
- *
- * Floored, so a rounding error never hands out a day nobody paid for; a payment
- * too small to buy one grants none rather than a token. A row with no basis is
- * a payment in full of whatever it was for, which is what every row recorded
- * before this rule existed.
+ * The rule itself moved to the shared package: the record-payment screen now
+ * draws the term it is about to sell across a calendar before saving it, and a
+ * client working the length out its own way would show one term and store
+ * another.
  */
-export function proratedDays(
-  durationDays: number,
-  paidAmount: number,
-  basisAmount: number | null,
-): number {
-  if (!basisAmount || basisAmount <= 0) return durationDays;
-  if (paidAmount >= basisAmount) return durationDays;
-
-  return Math.max(0, Math.floor((durationDays * paidAmount) / basisAmount));
-}
+export { proratedDays };
 
 export const paymentRepository = {
   /**
@@ -256,6 +244,9 @@ export const paymentRepository = {
         id: true,
         // Names the balance row when a payment is only partly made.
         title: true,
+        // How long the term runs, so the service can work out the window a
+        // desk payment grants rather than trusting a date the client sent.
+        durationDays: true,
         badges: {
           select: { id: true },
         },

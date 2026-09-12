@@ -19,6 +19,7 @@
     "./whatsapp-templates": "./src/whatsapp-templates.ts",
     "./consent": "./src/consent.ts",
     "./store-pricing": "./src/store-pricing.ts",
+    "./prorata": "./src/prorata.ts",
     "./profanity": "./src/profanity.ts",
     "./variant-name": "./src/variant-name.ts"
   },

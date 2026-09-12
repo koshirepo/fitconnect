@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/select";
 import { AlertCircle, Plus } from "lucide-react";
 import { StartDateCalendar } from "./StartDateCalendar";
+import { proratedDays } from "@fitconnect/shared/prorata";
 import type {
   Badge as BadgeModel,
   CreatePaymentPayload,
@@ -316,26 +317,6 @@ export default function RecordPaymentPage() {
     setFValidFrom(due && due > today ? due : today);
   };
 
-  /**
-   * When the term the desk is selling runs out.
-   *
-   * The plan's duration counted from the chosen start, which is the sum the
-   * form used to make somebody do in their head. An admin's override wins when
-   * they have set one; everybody else sends this.
-   */
-  const derivedValidUntil = React.useMemo(() => {
-    const plan = subscriptions.find((s) => s.id === fSubscriptionId);
-    if (!plan || !fValidFrom) return "";
-
-    const end = new Date(`${fValidFrom}T00:00:00`);
-    end.setDate(end.getDate() + plan.durationDays);
-    return `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(
-      end.getDate(),
-    ).padStart(2, "0")}`;
-  }, [subscriptions, fSubscriptionId, fValidFrom]);
-
-  const effectiveValidUntil = fValidUntilOverride || derivedValidUntil;
-
   const coinBalance = useCoinBalance(fMembershipId || undefined);
   const couponQuote = useCouponQuote();
   const availableCoins = coinBalance.data?.balance ?? 0;
@@ -392,6 +373,35 @@ export default function RecordPaymentPage() {
    */
   const collectionTotal = totalAmount + duesTotal;
   const receivedAmount = fPaidAmount === "" ? collectionTotal : Number(fPaidAmount) || 0;
+
+  /**
+   * When the term the desk is selling runs out.
+   *
+   * Pro-rated, exactly as the server will do it: half the plan's price buys
+   * half its days, and the balance buys the rest when it arrives. The form used
+   * to show the plan's full length whatever was handed over, and then *send*
+   * that date — which the server took as final, so a half-paid month granted a
+   * whole one. It now sends only the start and lets the server decide, and this
+   * is the preview of that decision, from the same shared function.
+   */
+  const plan = subscriptions.find((subscription) => subscription.id === fSubscriptionId);
+  /** What of the money reached the plan, once ticked dues have taken theirs. */
+  const towardsPlan = Math.min(Math.min(receivedAmount, collectionTotal), totalAmount);
+
+  const derivedValidUntil = React.useMemo(() => {
+    if (!plan || !fValidFrom) return "";
+
+    const days =
+      proratedDays(plan.durationDays, towardsPlan, totalAmount) + (quote?.bonusDays ?? 0);
+    const end = new Date(`${fValidFrom}T00:00:00`);
+    end.setDate(end.getDate() + days);
+
+    return `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(
+      end.getDate(),
+    ).padStart(2, "0")}`;
+  }, [plan, fValidFrom, towardsPlan, totalAmount, quote?.bonusDays]);
+
+  const effectiveValidUntil = fValidUntilOverride || derivedValidUntil;
 
   // A coupon, spent coins, or a due being unticked all move the total after the
   // plan was picked, so the prefilled figure follows it. An edited field is
@@ -550,7 +560,15 @@ export default function RecordPaymentPage() {
         ...(settleDueIds.length > 0 ? { settlePendingIds: settleDueIds } : {}),
         note: fNote || undefined,
         validFrom: fValidFrom,
-        validUntil: effectiveValidUntil,
+        /**
+         * Only an admin's deliberate override travels.
+         *
+         * The plan's own length is the server's to work out, from the money
+         * actually collected — sending the date the form drew would hand back
+         * the very bug this fixes, because the server treats a supplied
+         * `validUntil` as final and skips the pro-rata.
+         */
+        ...(fValidUntilOverride ? { validUntil: fValidUntilOverride } : {}),
         // Display metadata for offline pending list (stripped by Zod on server)
         _memberName: selectedMember?.name,
         _memberAvatarUrl: selectedMember?.avatarUrl,
@@ -960,6 +978,7 @@ export default function RecordPaymentPage() {
                   <StartDateCalendar
                     membershipId={fMembershipId}
                     value={fValidFrom}
+                    endDate={effectiveValidUntil}
                     onChange={setFValidFrom}
                   />
                 ) : (

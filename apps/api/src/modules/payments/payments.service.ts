@@ -18,6 +18,7 @@ import { referralRewardService } from "../members/referral-rewards.service";
 import { reminderService } from "../reminders/reminders.service";
 import { provisioningService } from "../attendance/provisioning.service";
 import { paymentRepository } from "./payments.repository";
+import { proratedDays } from "@fitconnect/shared/prorata";
 // The books own the definition of a month's income; see `getAnalytics`.
 import { financeRepository } from "../finance/finance.repository";
 import { currentMonth } from "../../lib/month";
@@ -236,6 +237,9 @@ export const paymentService = {
           )
         : input.validUntil;
 
+    /** Days a coupon added on top of whatever the plan itself grants. */
+    const bonusDays = quote?.bonusDays ?? 0;
+
     // A part payment: the member hands over less than the price now, and the
     // rest is written as a second row they still owe. The membership still
     // gets its validity window — the desk decided to let them train, and the
@@ -275,6 +279,33 @@ export const paymentService = {
     /** What is left for the dues once the plan has taken its share. */
     const duesBudget = Math.max(collected - paidAmount, 0);
 
+    /**
+     * The window this payment grants, when the caller did not name one.
+     *
+     * The desk used to send an end date it had worked out itself, always at the
+     * plan's full length — so a part payment bought a whole month, and then the
+     * balance, settled later, bought its pro-rata share *on top*: ₹600 of a
+     * 30-day plan paid in two halves came to 45 days. Now the desk sends only
+     * the start, and the length is decided here, once, by the same rule that
+     * settles the balance.
+     *
+     * An explicit `validUntil` still wins outright. That is the admin override
+     * on the form, and a date somebody typed deliberately is not something to
+     * recompute behind them.
+     */
+    const grantedWindow =
+      !validUntilWithBonus && subscription && input.status === "COMPLETED"
+        ? (() => {
+            const start = input.validFrom ?? new Date();
+            const days =
+              proratedDays(subscription.durationDays, paidAmount, payableAmount) + bonusDays;
+            return {
+              validFrom: start,
+              validUntil: new Date(start.getTime() + days * 24 * 60 * 60 * 1000),
+            };
+          })()
+        : null;
+
     const payment = await paymentRepository.createPayment({
       tenantId,
       membershipId: input.membershipId,
@@ -299,8 +330,8 @@ export const paymentService = {
         : {}),
       collectorId: collector?.id,
       paidAt: input.status === "COMPLETED" ? new Date() : undefined,
-      validFrom: input.validFrom,
-      validUntil: validUntilWithBonus,
+      validFrom: grantedWindow?.validFrom ?? input.validFrom,
+      validUntil: grantedWindow?.validUntil ?? validUntilWithBonus,
     });
 
     // The balance carries no validity of its own — the row above already gave

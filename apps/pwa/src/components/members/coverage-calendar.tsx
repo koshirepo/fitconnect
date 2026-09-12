@@ -21,6 +21,15 @@ export function CoverageCalendar({
   /** Set when the day is the caller's business — the picker. Read-only without it. */
   selectedDay,
   onSelectDay,
+  /**
+   * A term being sold but not yet saved, drawn over the history.
+   *
+   * The desk picks a start and the plan decides the end, and until this was
+   * drawn the only thing on screen was a ring around one day — leaving "how
+   * long does this actually run, and does it overlap what they already have"
+   * as arithmetic in somebody's head.
+   */
+  pendingRange,
   className,
 }: {
   membershipId: string;
@@ -28,6 +37,7 @@ export function CoverageCalendar({
   month: string;
   selectedDay?: string;
   onSelectDay?: (day: string) => void;
+  pendingRange?: { from: string; to: string } | null;
   className?: string;
 }) {
   const attendanceQuery = useMemberAttendanceCalendar(membershipId, month);
@@ -44,6 +54,21 @@ export function CoverageCalendar({
 
   const today = localDayKey(new Date());
   const selectable = typeof onSelectDay === "function";
+
+  // Destructured so the memo depends on the two dates rather than the object,
+  // which callers rebuild on every render.
+  const pendingFrom = pendingRange?.from ?? "";
+  const pendingTo = pendingRange?.to ?? "";
+
+  // The same expansion the saved terms get, so the proposed term and the real
+  // ones are measured the same way and a one-day disagreement is impossible.
+  const pending = React.useMemo(
+    () =>
+      pendingFrom && pendingTo
+        ? coveredDays([{ from: pendingFrom, to: pendingTo }])
+        : new Set<string>(),
+    [pendingFrom, pendingTo],
+  );
 
   const cells = React.useMemo(() => {
     const first = new Date(`${month}-01T00:00:00`);
@@ -87,9 +112,10 @@ export function CoverageCalendar({
           const isCovered = covered.has(cell.day);
           const isToday = cell.day === today;
           const isSelected = cell.day === selectedDay;
+          const isPending = pending.has(cell.day);
 
           const tone = cn(
-            "flex min-h-10 flex-col items-center justify-center rounded-md p-1 text-sm transition-colors",
+            "relative flex min-h-10 flex-col items-center justify-center rounded-md p-1 text-sm transition-colors",
             // Came, and the gym was being paid for it: the ordinary case.
             isAttended && isCovered && "bg-emerald-500 font-medium text-white",
             // Came, and nobody was charging. The whole reason cover is drawn here.
@@ -105,12 +131,34 @@ export function CoverageCalendar({
             selectable && "cursor-pointer hover:opacity-80",
           );
 
-          const title = `${isCovered ? "Covered" : "No cover"}${isAttended ? " · attended" : ""}`;
+          const title = [
+            isCovered ? "Covered" : "No cover",
+            isAttended ? "attended" : null,
+            isPending ? "in the new term" : null,
+          ]
+            .filter(Boolean)
+            .join(" · ");
+
+          /**
+           * The proposed term as a bar under the day, not a fill.
+           *
+           * A fill would have to fight the four the cell already uses, and the
+           * new term regularly lands on days that are covered or attended —
+           * which is exactly when the reader needs to see both at once.
+           */
+          const body = (
+            <>
+              {cell.label}
+              {isPending && (
+                <span className="absolute inset-x-1 bottom-0.5 h-0.5 rounded-full bg-primary" />
+              )}
+            </>
+          );
 
           if (!selectable) {
             return (
               <div key={cell.key} title={title} className={tone}>
-                {cell.label}
+                {body}
               </div>
             );
           }
@@ -125,7 +173,7 @@ export function CoverageCalendar({
               onClick={() => onSelectDay(cell.day)}
               className={tone}
             >
-              {cell.label}
+              {body}
             </button>
           );
         })}
@@ -145,6 +193,14 @@ export function CoverageCalendar({
           <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500/20" />
           Covered, did not come
         </span>
+        {/* Only named when there is one on screen — the member's own page
+            sells nothing and has no bar to explain. */}
+        {pending.size > 0 && (
+          <span className="flex items-center gap-1.5">
+            <span className="h-0.5 w-3 rounded-full bg-primary" />
+            New term
+          </span>
+        )}
       </div>
     </div>
   );
