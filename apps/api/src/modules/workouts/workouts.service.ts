@@ -95,7 +95,12 @@ export const workoutService = {
    * Execute the `create plan` workflow for the workouts module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
-  async createPlan(tenantId: string, userId: string, input: CreatePlanInput) {
+  async createPlan(
+    tenantId: string,
+    userId: string,
+    input: CreatePlanInput,
+    canWriteForOthers = true,
+  ) {
     const membership = await workoutRepository.findMembership(tenantId, userId);
     if (!membership) {
       return { error: "Not a member of this tenant.", status: 403 as const };
@@ -108,6 +113,18 @@ export const workoutService = {
       description: input.description,
       exercises: input.exercises,
     });
+
+    /**
+     * A member's own plan is assigned to them as it is written.
+     *
+     * Without this it would exist and be invisible: a member's list is the
+     * plans assigned to them, so their own routine would vanish the moment
+     * they saved it. A coach's plan is not assigned to anybody here — who it
+     * is for is a separate decision, made on the list screen.
+     */
+    if (!canWriteForOthers) {
+      await workoutRepository.createAssignment(plan.id, membership.id);
+    }
 
     return { data: { plan } };
   },
@@ -122,14 +139,16 @@ export const workoutService = {
     userId: string,
     role: string | undefined,
     input: UpdatePlanInput,
+    canWriteForOthers = true,
   ) {
     const existing = await workoutRepository.findPlan(planId, tenantId);
     if (!existing) {
       return { error: "Workout plan not found.", status: 404 as const };
     }
 
-    // Coaches can only update their own plans
-    if (role === "COACH") {
+    // Coaches can only update their own plans, and so can a member editing the
+    // routine they wrote for themselves.
+    if (role === "COACH" || !canWriteForOthers) {
       const membership = await workoutRepository.findMembership(tenantId, userId);
       if (existing.creatorId !== membership?.id) {
         return { error: "You can only update your own plans.", status: 403 as const };
@@ -144,10 +163,25 @@ export const workoutService = {
    * Execute the `delete plan` workflow for the workouts module.
    * Keep business rules, orchestration, and derived state updates in this layer instead of duplicating them in controllers or repositories.
    */
-  async deletePlan(tenantId: string, planId: string) {
+  async deletePlan(
+    tenantId: string,
+    planId: string,
+    userId?: string,
+    canWriteForOthers = true,
+  ) {
     const existing = await workoutRepository.findPlan(planId, tenantId);
     if (!existing) {
       return { error: "Workout plan not found.", status: 404 as const };
+    }
+
+    // A member may throw away their own routine and nothing else.
+    if (!canWriteForOthers) {
+      const membership = userId
+        ? await workoutRepository.findMembership(tenantId, userId)
+        : null;
+      if (existing.creatorId !== membership?.id) {
+        return { error: "You can only delete your own plans.", status: 403 as const };
+      }
     }
 
     await workoutRepository.deletePlan(planId);

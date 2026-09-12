@@ -1096,7 +1096,11 @@ export default function MemberDetailPage() {
       {/* ── What the desk does to a membership ─────────────────────────────── */}
       {isMemberProfile && membershipId && <FreezeCard membershipId={membershipId} isStaff />}
 
-      {isMemberProfile && membershipId && (
+      {/* Every role, not only members. Admins and coaches walk through the same
+          door and are on the same readers — and a gym that pays staff by hours
+          worked has more reason to card them than anybody. The PIN it defaults
+          to is the membership's own number, which every membership has. */}
+      {membershipId && (
         <MemberRfidCard
           membershipId={membershipId}
           memberId={member.memberId}

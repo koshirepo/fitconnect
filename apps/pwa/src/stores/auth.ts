@@ -5,6 +5,12 @@ import { signInWithPasskey } from "@/api/passkeys";
 import type { User, TenantMembershipSummary } from "@/types/api";
 import { authApi } from "@/api/auth";
 import { resolveClientPermissions, type Permission } from "@/lib/permissions";
+import {
+  clearSharedSession,
+  readSharedSession,
+  writeSharedSession,
+  type SharedSession,
+} from "@/lib/session-cookie";
 import type { PlatformRole, TenantRole } from "@fitconnect/shared/types/enums";
 
 interface AuthState {
@@ -94,6 +100,15 @@ export const useAuthStore = create<AuthState>()(
           const { data: resp } = await authApi.login(email, password);
           const { accessToken, refreshToken, user } = resp.data;
 
+          // Written where every host of this app can read it, not just this
+          // origin: somebody signing in on a gym address is then signed in on
+          // the platform's public pages too.
+          writeSharedSession({
+            accessToken,
+            refreshToken,
+            tenantId: user.membership?.tenantId ?? null,
+          });
+
           set({
             user,
             accessToken,
@@ -112,6 +127,12 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           const { accessToken, refreshToken, user } = await signInWithPasskey();
+
+          writeSharedSession({
+            accessToken,
+            refreshToken,
+            tenantId: user.membership?.tenantId ?? null,
+          });
 
           set({
             user,
@@ -132,6 +153,12 @@ export const useAuthStore = create<AuthState>()(
         if (rt) {
           authApi.logout(rt).catch(() => {});
         }
+
+        // Ends the session on every host, not only this one. Without it the
+        // other address keeps a working copy and signs the user straight back
+        // in the next time they open it.
+        clearSharedSession();
+
         set({
           user: null,
           accessToken: null,
@@ -150,8 +177,17 @@ export const useAuthStore = create<AuthState>()(
        * `isAuthenticated` left them holding a valid session the app did not
        * believe in — every guard read the flag, so the member was bounced
        * back out to log in with a password they had never chosen.
+       *
+       * Also where a refreshed pair lands, which is why it writes the shared
+       * cookie: otherwise the other hosts keep a refresh token this one has
+       * already spent.
        */
       setTokens: (accessToken: string, refreshToken: string) => {
+        writeSharedSession({
+          accessToken,
+          refreshToken,
+          tenantId: get().currentTenantId,
+        });
         set({ accessToken, refreshToken, isAuthenticated: true });
       },
 
@@ -180,13 +216,92 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "gms-auth",
+      /**
+       * The cache, not the session.
+       *
+       * Tokens and the signed-in flag live in the shared cookie, which every
+       * host of this app can read; a second copy per origin is exactly what
+       * let a sign-out on one address leave a working session on another. The
+       * user is still kept here so a reload paints a name and an avatar before
+       * `fetchMe` answers.
+       */
       partialize: (state) => ({
-        accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
         currentTenantId: state.currentTenantId,
         user: state.user,
-        isAuthenticated: state.isAuthenticated,
       }),
     },
   ),
 );
+
+/** Tokens left behind by the build that persisted them per origin. */
+function readLegacyTokens(): SharedSession | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.localStorage.getItem("gms-auth");
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as {
+      state?: {
+        accessToken?: string | null;
+        refreshToken?: string | null;
+        currentTenantId?: string | null;
+      };
+    };
+
+    const state = parsed.state;
+    if (!state?.accessToken || !state?.refreshToken) return null;
+
+    return {
+      accessToken: state.accessToken,
+      refreshToken: state.refreshToken,
+      tenantId: state.currentTenantId ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Settle who is signed in, before anything renders.
+ *
+ * Three cases, once at startup:
+ * - a shared cookie exists, so this host adopts it — which is how somebody
+ *   signed in on a gym address arrives on the platform's public pages already
+ *   signed in;
+ * - no cookie, but this origin still holds tokens from the build that kept
+ *   them in `localStorage`, so they are promoted to the cookie and the upgrade
+ *   signs nobody out;
+ * - neither, so this origin is signed out including anything it had cached —
+ *   the cookie is the truth, and a stale cache must not outvote it.
+ *
+ * Called before the first render rather than from an effect: a guard running
+ * first would read `isAuthenticated: false` and bounce a signed-in user to the
+ * login page before this could correct it.
+ */
+export function initSharedSession() {
+  const session = readSharedSession() ?? readLegacyTokens();
+
+  if (!session) {
+    useAuthStore.setState({
+      user: null,
+      accessToken: null,
+      refreshToken: null,
+      currentTenantId: null,
+      isAuthenticated: false,
+    });
+    return;
+  }
+
+  // A legacy session exists only in `localStorage`; writing it back is what
+  // moves it to where the other hosts can see it. Re-writing one already read
+  // from the cookie is harmless and refreshes its expiry.
+  writeSharedSession(session);
+
+  useAuthStore.setState({
+    accessToken: session.accessToken,
+    refreshToken: session.refreshToken,
+    ...(session.tenantId ? { currentTenantId: session.tenantId } : {}),
+    isAuthenticated: true,
+  });
+}

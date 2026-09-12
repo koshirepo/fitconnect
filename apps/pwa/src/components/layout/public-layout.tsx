@@ -4,11 +4,13 @@ import { PublicHeader } from "./public-header";
 import { WhatsAppFab } from "@/components/ui/whatsapp-fab";
 import { SiteFooter } from "./site-footer";
 import { publicApi } from "@/api/public";
+import { useAuthStore } from "@/stores/auth";
 import { getTenantSlugFromHostname, isTenantSubdomain } from "@/lib/subdomain";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 
 const navItems = [
   { label: "Home", to: "/" },
+  { label: "Exercises", to: "/exercises" },
   { label: "Store", to: "/shop" },
   { label: "About", to: "/about" },
   { label: "Contact", to: "/contact" },
@@ -18,6 +20,9 @@ const DEFAULT_WHATSAPP_URL = "https://wa.me/919479422951";
 
 export function PublicLayout() {
   const resolvedSlug = getTenantSlugFromHostname();
+  // The session is shared across every host of this app, so these pages see a
+  // gym's member signed in just as readily as platform staff.
+  const signedIn = useAuthStore((state) => state.isAuthenticated);
   const [tenantWhatsAppUrl, setTenantWhatsAppUrl] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -64,7 +69,7 @@ export function PublicLayout() {
       </main>
 
       {/* On this host the footer speaks as the product, not as a gym. */}
-      <SiteFooter variant="app" />
+      <SiteFooter variant="app" signedIn={signedIn} />
 
       <WhatsAppFab url={whatsappUrl} />
     </div>

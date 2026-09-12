@@ -20,8 +20,17 @@ type VariantRow = {
 type ProductRow = {
   photos: unknown;
   variants?: VariantRow[];
-  _count?: { likes: number; comments: number };
 };
+
+/**
+ * Likes and comments for a product, where the caller has them to hand.
+ *
+ * They no longer come from the product row: reactions moved to one shared table
+ * keyed by subject, which a relation count cannot reach. Whoever lists products
+ * fetches the counts for the whole page in one query and passes them in, and a
+ * caller with nothing to pass gets zeroes rather than a wrong number.
+ */
+export type ProductCounts = { likeCount: number; commentCount: number };
 
 /** Photos are stored as JSON; anything that is not a list of strings is noise. */
 function toStringList(value: unknown): string[] {
@@ -53,13 +62,14 @@ type StorefrontExtras = {
  */
 export function toStorefrontProduct<T extends ProductRow>(
   product: T,
-): Omit<T, "_count" | "photos" | "variants"> & StorefrontExtras {
-  const { _count, ...rest } = product;
+  counts?: ProductCounts,
+): Omit<T, "photos" | "variants"> & StorefrontExtras {
+  const { ...rest } = product;
   const variants = product.variants ?? [];
   const sellable = variants.filter((variant) => variant.isActive);
 
   return {
-    ...(rest as Omit<T, "_count" | "photos" | "variants">),
+    ...(rest as Omit<T, "photos" | "variants">),
     photos: toStringList(product.photos),
     videos: [],
     variants,
@@ -68,7 +78,7 @@ export function toStorefrontProduct<T extends ProductRow>(
     price: sellable.length > 0 ? Math.min(...sellable.map((variant) => variant.price)) : 0,
     stock: sellable.reduce((total, variant) => total + variant.stock, 0),
     hasChoice: sellable.length > 1,
-    likeCount: _count?.likes ?? 0,
-    commentCount: _count?.comments ?? 0,
+    likeCount: counts?.likeCount ?? 0,
+    commentCount: counts?.commentCount ?? 0,
   };
 }

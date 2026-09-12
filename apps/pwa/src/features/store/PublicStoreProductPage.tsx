@@ -11,11 +11,11 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 import { basketTotalQuantity, readBasket, setBasketQuantity, type BasketEntry } from "./basket";
 import {
-  useAddProductComment,
-  useDeleteProductComment,
-  useProductComments,
-  useToggleProductLike,
-} from "@/api/queries/social";
+  useAddComment,
+  useComments,
+  useDeleteComment,
+  useToggleLike,
+} from "@/api/queries/reactions";
 import { useCurrentTenantId } from "@/api/queries/shared";
 import { LikeButton } from "@/components/social/LikeButton";
 import { useToast } from "@/components/ui/toast";
@@ -51,10 +51,12 @@ export default function PublicStoreProductPage() {
   const memberTenantId = useCurrentTenantId();
   const asMember = Boolean(isAuthenticated && memberTenantId);
 
-  const memberFeed = useProductComments(asMember ? productId : undefined);
-  const toggleLike = useToggleProductLike(productId);
-  const addComment = useAddProductComment(productId);
-  const deleteComment = useDeleteProductComment();
+  // A visitor reads the public snapshot below; a member gets the live thread,
+  // which is also what the like button and the delete control read from.
+  const memberFeed = useComments("PRODUCT", productId, { enabled: asMember });
+  const toggleLike = useToggleLike("PRODUCT", productId);
+  const addComment = useAddComment("PRODUCT", productId);
+  const deleteComment = useDeleteComment("PRODUCT", productId);
 
   const [product, setProduct] = React.useState<StoreProduct | null>(null);
   // Only for the share text — "Shaker Bottle at Rudra Gym" says more in a

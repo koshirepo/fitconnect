@@ -22,7 +22,8 @@ import { freezeRoutes } from "./modules/freezes/freezes.routes";
 import { reminderRoutes } from "./modules/reminders/reminders.routes";
 import { platformPayoutRoutes, tenantPayoutRoutes } from "./modules/payouts/payouts.routes";
 import { storeRoutes } from "./modules/store/store.routes";
-import { socialRoutes } from "./modules/social/social.routes";
+import { reactionRoutes } from "./modules/reactions/reactions.routes";
+import { exerciseRoutes } from "./modules/exercises/exercises.routes";
 import { auditRoutes } from "./modules/audit/audit.routes";
 import { publicRoutes } from "./modules/public/public.routes";
 import { commerceRoutes } from "./modules/commerce/commerce.routes";
@@ -183,7 +184,6 @@ app.route("/tenants", freezeRoutes);
 app.route("/tenants", reminderRoutes);
 app.route("/tenants", storeRoutes);
 app.route("/tenants", tenantPayoutRoutes);
-app.route("/tenants", socialRoutes);
 app.route("/tenants", settingsRoutes);
 app.route("/tenants", attendanceRoutes);
 app.route("/tenants", shiftRoutes);
@@ -193,6 +193,11 @@ app.route("/tenants", financeRoutes);
 app.route("/platform", platformRoleRoutes);
 // Platform-wide, not per gym: every member form reads the same occupation list.
 app.route("/occupations", occupationRoutes);
+// The exercise library, likewise: one catalogue every gym trains from.
+app.route("/exercises", exerciseRoutes);
+// Likes and comments on anything — a gym, a product, an exercise. The subject
+// is in the path; the gym being acted in comes from the tenant header.
+app.route("/reactions", reactionRoutes);
 app.route("/audit", auditRoutes);
 app.route("/public", publicRoutes);
 app.route("/", commerceRoutes);

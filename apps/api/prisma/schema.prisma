@@ -59,8 +59,10 @@ model User {
   coinAdjustments          CoinLedgerEntry[]      @relation("CoinLedgerActor")
   pushSubscriptions        PushSubscription[]
   recordedPlatformPayments PlatformPayment[]
-  tenantLikes              TenantLike[]
-  tenantComments           TenantComment[]
+  /// Likes and comments on anything at all — a gym, a product, an exercise.
+  /// See `Reaction` and `Comment`, which is where all three now live.
+  reactions                Reaction[]
+  authoredComments         Comment[]
 
   @@index([email])
   @@index([occupationId])
@@ -281,8 +283,6 @@ model Tenant {
   bankAccount       TenantBankAccount?
   payouts           TenantPayout[]
   storeOrders       StoreOrder[]
-  likes             TenantLike[]
-  comments          TenantComment[]
   paymentReminders  PaymentReminder[]
   bodyMetrics       BodyMetric[]
   staffPay          StaffCompensation[]
@@ -479,8 +479,6 @@ model TenantMembership {
   coinLedger             CoinLedgerEntry[]
   freezes                MembershipFreeze[]
   storeOrders            StoreOrder[]            @relation("StoreOrderBuyer")
-  storeLikes             ProductLike[]
-  storeComments          ProductComment[]
   soldStoreOrders        StoreOrder[]            @relation("StoreOrderSeller")
   paymentReminders       PaymentReminder[]
   sentReminders          PaymentReminder[]       @relation("ReminderActor")
@@ -954,8 +952,6 @@ model Product {
   variants   ProductVariant[]
   orderItems OrderItem[]
   reviews    ProductReview[]
-  likes      ProductLike[]
-  comments   ProductComment[]
 
   @@index([isActive])
   @@index([tenantId])
@@ -1320,6 +1316,111 @@ model WorkoutPlanAssignment {
   @@index([membershipId])
 }
 
+/// ─── The exercise library ────────────────────────────────────────────────────
+///
+/// Platform-owned and shared by every gym, the way `Occupation` is: the platform
+/// writes it, and a gym's members and coaches only read from it. Deliberately no
+/// tenantId — one gym renaming a lift would rename it for all of them, and a
+/// per-gym copy of the same 600 clips is 600 copies to keep in step.
+
+/// One exercise, with the clips that show it.
+///
+/// Both clips hang off the one row rather than two rows for the same lift. The
+/// library was filmed twice, once with a man and once with a woman, and somebody
+/// searching "sit-ups" means one exercise either way — so the two share a name, a
+/// muscle group and one comment thread, and the player shows whichever clip suits
+/// whoever is watching.
+model Exercise {
+  id               String   @id @default(cuid())
+  name             String
+  /// Lowercase and hyphenated, unique across the library: "45-degree-side-bend".
+  /// A URL and a plan line both name an exercise by this rather than by title.
+  slug             String   @unique
+  /// What it trains, as the library files it: "Abs", "Back", "Hips".
+  muscleGroup      String
+  /// Anything else it works, for search and the filter rail. JSON because a
+  /// handful of strings is not worth a second table and nothing joins on them.
+  secondaryMuscles Json     @default("[]")
+  /// "Barbell", "Cable", "Bodyweight" — free text, usually read off the name.
+  equipment        String?
+  /// One plain line, shown under the name on a card.
+  description      String?
+  /// The long form, written and rendered as markdown: how the movement is done,
+  /// what it works, what to watch out for. Kept apart from `description` for the
+  /// same reason a product's is — one is a caption, the other is a page.
+  markdown         String?
+  /// R2 object keys, not URLs. The API builds the playable address, so moving
+  /// the bucket or putting a CDN in front of it never reaches a stored row.
+  maleVideoKey     String?
+  femaleVideoKey   String?
+  /// Retired exercises stay readable: a plan written last year still names one.
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([muscleGroup])
+  @@index([isActive])
+  @@index([muscleGroup, isActive])
+}
+
+/// ─── Likes and comments, for anything ───────────────────────────────────────
+///
+/// One pair of tables behind every reaction in the app: a gym's public page, a
+/// product in a gym's store, and an exercise in the platform library. There used
+/// to be a pair per subject — `ProductLike`/`ProductComment` keyed by membership,
+/// `TenantLike`/`TenantComment` keyed by account — which meant the same rules
+/// written three times, and a fourth pair to write for every new thing worth
+/// liking. Migration 0054 folded them into these two and dropped the originals.
+///
+/// `subjectType` and `subjectId` name what is being reacted to. There is no
+/// foreign key to the subject, because a foreign key points at one table and
+/// this deliberately points at several; the service that deletes a subject
+/// clears its reactions in the same breath.
+///
+/// Keyed by `userId` throughout, including for store products, which used to
+/// hang off a membership: somebody who trains at two gyms is one person with one
+/// opinion, and moderation compares against the account either way.
+
+/// One person's like of one thing.
+///
+/// `subjectType` is a string rather than an enum because D1 has no enums, and
+/// because a new subject should cost a constant rather than a migration:
+///   "GYM"      — a gym's public profile
+///   "PRODUCT"  — a product in a gym's store
+///   "EXERCISE" — an entry in the platform exercise library
+model Reaction {
+  id          String   @id @default(cuid())
+  subjectType String
+  subjectId   String
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  /// One like per person per thing: what makes the button a toggle rather than
+  /// a counter anybody can run up.
+  @@unique([subjectType, subjectId, userId])
+  @@index([subjectType, subjectId])
+  @@index([userId])
+}
+
+/// What somebody wrote about one thing. Plain text on purpose: these are
+/// comment boxes, not documents, and anything richer needs moderation nobody
+/// staffs.
+model Comment {
+  id          String   @id @default(cuid())
+  subjectType String
+  subjectId   String
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  /// Newest first, per subject: exactly how a thread is read.
+  @@index([subjectType, subjectId, createdAt])
+  @@index([userId])
+}
+
 // Badges
 
 model Badge {
@@ -1492,66 +1593,6 @@ model PushSubscription {
 /// Keyed by user rather than membership, unlike the product tables: the people
 /// who react to a gym's page include prospects deciding whether to join, and a
 /// membership id would shut exactly those people out.
-model TenantLike {
-  id        String   @id @default(cuid())
-  tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-
-  @@unique([tenantId, userId])
-  @@index([tenantId])
-  @@index([userId])
-}
-
-/// What somebody said about a gym on its public page.
-model TenantComment {
-  id        String   @id @default(cuid())
-  tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  body      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([tenantId, createdAt])
-  @@index([userId])
-}
-
-/// A member's approval of a product. One per member per product — the unique
-/// key is what makes the button a toggle rather than a counter anyone can run up.
-/// A member liking a product in their gym's store.
-model ProductLike {
-  id           String           @id @default(cuid())
-  productId    String
-  product      Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  membershipId String
-  membership   TenantMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
-  createdAt    DateTime         @default(now())
-
-  @@unique([productId, membershipId])
-  @@index([productId])
-  @@index([membershipId])
-}
-
-/// What a member said about a product. Plain text on purpose: this is a gym's
-/// shop, not a forum, and anything richer would need moderation nobody staffs.
-model ProductComment {
-  id           String           @id @default(cuid())
-  productId    String
-  product      Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  membershipId String
-  membership   TenantMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
-  body         String
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-
-  @@index([productId, createdAt])
-  @@index([membershipId])
-}
-
 model StoreOrder {
   id           String            @id @default(cuid())
   tenantId     String

@@ -56,17 +56,43 @@ async function handleUpload(c: AppContext, folder: string) {
   return ok(c, { url: getAssetUrl(c, result.key) });
 }
 
-uploadRoutes.get("/file/:folder/:filename", async (c) => {
-  const folder = c.req.param("folder");
-  const filename = c.req.param("filename");
+/**
+ * Serve a stored object.
+ *
+ * A wildcard rather than `:folder/:filename`: an exercise clip is filed under
+ * `exercise/girl/Abs/Sit-ups.mp4`, four segments deep, and a two-segment route
+ * simply never matched it. Every segment is decoded on its own, so a key keeps
+ * its shape and a name with a space or a bracket still resolves.
+ *
+ * Range requests are passed to R2 and answered with a 206, because a video
+ * player needs them: without one the browser can play only from the start, and
+ * dragging the scrubber re-downloads the whole file. Images are unaffected —
+ * a request with no Range header still gets a plain 200.
+ */
+uploadRoutes.get("/file/*", async (c) => {
   const bucket = c.env?.UPLOADS_BUCKET ?? c.env?.FILES;
 
   if (!bucket) {
     return c.text("Storage bucket is not configured.", 500);
   }
 
-  const key = `${folder}/${filename}`;
-  const object = await bucket.get(key);
+  const raw = new URL(c.req.url).pathname.split("/uploads/file/")[1] ?? "";
+  const segments = raw.split("/").map((segment) => {
+    try {
+      return decodeURIComponent(segment);
+    } catch {
+      return segment;
+    }
+  });
+
+  // No empty, "." or ".." segments: a key is a stored path, never a traversal.
+  if (segments.length === 0 || segments.some((s) => !s || s === "." || s === "..")) {
+    return c.text("File not found.", 404);
+  }
+
+  const key = segments.join("/");
+  const rangeHeader = c.req.header("range");
+  const object = await bucket.get(key, rangeHeader ? { range: c.req.raw.headers } : undefined);
   if (!object) {
     /**
      * Fetch it from the bucket's public address before giving up.
@@ -104,10 +130,21 @@ uploadRoutes.get("/file/:folder/:filename", async (c) => {
   object.writeHttpMetadata(headers);
   headers.set("etag", object.httpEtag);
   headers.set("cache-control", "public, max-age=31536000, immutable");
+  // Advertised even on a plain 200, which is how a player learns it may seek.
+  headers.set("accept-ranges", "bytes");
 
-  return new Response(object.body, {
-    headers,
-  });
+  const body = "body" in object ? object.body : null;
+  const part = object.range as { offset?: number; length?: number } | undefined;
+
+  if (rangeHeader && part) {
+    const offset = part.offset ?? 0;
+    const length = part.length ?? object.size - offset;
+    headers.set("content-range", `bytes ${offset}-${offset + length - 1}/${object.size}`);
+    headers.set("content-length", String(length));
+    return new Response(body, { status: 206, headers });
+  }
+
+  return new Response(body, { headers });
 });
 
 uploadRoutes.post("/logo", authenticate, requirePermissions(Permission.UPLOADS_WRITE), async (c) => {

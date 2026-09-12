@@ -9,7 +9,7 @@
 import { Hono } from "hono";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { authenticate } from "../../middleware/authenticate";
-import { requireTenantPermissions } from "../../middleware/authorize";
+import { requireAnyTenantPermission, requireTenantPermissions } from "../../middleware/authorize";
 import { workoutController } from "./workouts.controller";
 import type { AppBindings } from "../../types/app-context";
 
@@ -29,24 +29,33 @@ workoutRoutes.get(
   workoutController.getPlan,
 );
 
+/**
+ * Writing a plan.
+ *
+ * Two grants reach these, and the difference is whose plan it is. A coach holds
+ * `workouts:create` and writes plans for the gym; a member holds
+ * `workouts:create:self` and writes their own, which the service assigns to them
+ * and to nobody else. The same pair guards editing and deleting, where the
+ * service holds a member to their own plans.
+ */
 workoutRoutes.post(
   "/:tenantId/workout-plans",
   authenticate,
-  requireTenantPermissions(Permission.WORKOUTS_CREATE),
+  requireAnyTenantPermission(Permission.WORKOUTS_CREATE, Permission.WORKOUTS_CREATE_SELF),
   workoutController.createPlan,
 );
 
 workoutRoutes.patch(
   "/:tenantId/workout-plans/:planId",
   authenticate,
-  requireTenantPermissions(Permission.WORKOUTS_UPDATE),
+  requireAnyTenantPermission(Permission.WORKOUTS_UPDATE, Permission.WORKOUTS_CREATE_SELF),
   workoutController.updatePlan,
 );
 
 workoutRoutes.delete(
   "/:tenantId/workout-plans/:planId",
   authenticate,
-  requireTenantPermissions(Permission.WORKOUTS_DELETE),
+  requireAnyTenantPermission(Permission.WORKOUTS_DELETE, Permission.WORKOUTS_CREATE_SELF),
   workoutController.deletePlan,
 );
 

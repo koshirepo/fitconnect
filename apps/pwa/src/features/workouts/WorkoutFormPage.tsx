@@ -21,10 +21,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormPageSkeleton } from "@/components/ui/skeleton";
-import { AlertCircle, ArrowLeft, Plus, X } from "lucide-react";
-import type { Exercise } from "@/types/api";
+import { ExercisePickerDialog } from "@/features/exercises/ExercisePickerDialog";
+import { useExercisesByIds } from "@/api/queries/exercises";
+import { AlertCircle, ArrowLeft, Dumbbell, Plus, X } from "lucide-react";
+import type { Exercise } from "@fitconnect/shared/types/models";
+import type { PlanExercise } from "@/types/api";
 
-type ExerciseField = keyof Exercise;
+type PlanExerciseKey = keyof PlanExercise;
 type WorkoutPlan = NonNullable<ReturnType<typeof useWorkoutPlan>["data"]>;
 
 export default function WorkoutFormPage() {
@@ -32,7 +35,17 @@ export default function WorkoutFormPage() {
   const { planId } = useParams<{ planId?: string }>();
   const isEdit = Boolean(planId);
   const { can } = usePermissions();
-  const allowed = isEdit ? can(Permission.WORKOUTS_UPDATE) : can(Permission.WORKOUTS_CREATE);
+  /**
+   * Who may open this form.
+   *
+   * A member writing their own plan holds `workouts:create:self` and neither of
+   * the gym-wide grants, which the API accepts on all three writes — so gating
+   * this page on `workouts:create` alone bounced them off a page the server
+   * would have let them use.
+   */
+  const allowed = isEdit
+    ? can(Permission.WORKOUTS_UPDATE) || can(Permission.WORKOUTS_CREATE_SELF)
+    : can(Permission.WORKOUTS_CREATE) || can(Permission.WORKOUTS_CREATE_SELF);
 
   const planQuery = useWorkoutPlan(allowed && isEdit ? planId : undefined);
   const plan = planQuery.data;
@@ -89,21 +102,39 @@ function WorkoutForm({
 
   const [title, setTitle] = React.useState(plan?.title ?? "");
   const [description, setDescription] = React.useState(plan?.description ?? "");
-  const [exercises, setExercises] = React.useState<Exercise[]>(plan?.exercises ?? []);
+  const [exercises, setExercises] = React.useState<PlanExercise[]>(plan?.exercises ?? []);
   const [error, setError] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
+  // Picking from the library is the usual way a line gets here; typing a name
+  // by hand stays for anything the library does not have.
+  const [pickerOpen, setPickerOpen] = React.useState(false);
 
   const createPlan = useCreateWorkoutPlan();
   const updatePlan = useUpdateWorkoutPlan();
+
+  /**
+   * The library entries behind the lines that came from it.
+   *
+   * A line keeps its own name, so the form reads correctly without this; what
+   * the lookup adds is the clip, which is how somebody scanning a plan sees at
+   * a glance that row four is the movement they meant. Lines typed by hand
+   * carry no id and simply have no clip to show.
+   */
+  const libraryIds = React.useMemo(
+    () => exercises.map((entry) => entry.exerciseId).filter((id): id is string => Boolean(id)),
+    [exercises],
+  );
+  const library = useExercisesByIds(libraryIds).data;
 
   const addExercise = () => {
     setExercises((prev) => [...prev, { name: "", sets: 3, reps: 10 }]);
   };
 
-  const updateExercise = <K extends ExerciseField>(idx: number, field: K, value: Exercise[K]) => {
+
+  const updateExercise = <K extends PlanExerciseKey>(idx: number, field: K, value: PlanExercise[K]) => {
     setExercises((prev) =>
       prev.map((exercise, index) =>
-        index === idx ? ({ ...exercise, [field]: value } as Exercise) : exercise,
+        index === idx ? ({ ...exercise, [field]: value } as PlanExercise) : exercise,
       ),
     );
   };
@@ -190,20 +221,37 @@ function WorkoutForm({
                 <CardTitle>Exercises</CardTitle>
                 <CardDescription>Sets, reps, and any coaching notes.</CardDescription>
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={addExercise}>
-                <Plus className="h-3 w-3" />
-                Add Exercise
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button type="button" size="sm" onClick={() => setPickerOpen(true)}>
+                  <Plus className="h-3 w-3" />
+                  Add from library
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={addExercise}>
+                  <Plus className="h-3 w-3" />
+                  Type one
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
             {exercises.length === 0 && (
               <p className="text-sm text-muted-foreground">
-                No exercises yet. A plan can be saved without them and filled in later.
+                No exercises yet. Add them from the library, or type one in. A plan can also be
+                saved empty and filled in later.
               </p>
             )}
+
+            <ExercisePickerDialog
+              open={pickerOpen}
+              onOpenChange={setPickerOpen}
+              onAdd={(lines) => setExercises((prev) => [...prev, ...lines])}
+            />
             {exercises.map((ex, idx) => (
-              <div key={idx} className="grid grid-cols-12 gap-2 items-end rounded-md border p-3">
+              <div key={idx} className="flex items-end gap-3 rounded-md border p-3">
+                <PlanExerciseClip
+                  exercise={ex.exerciseId ? library?.get(ex.exerciseId) : undefined}
+                />
+                <div className="grid flex-1 grid-cols-12 gap-2 items-end">
                 <div className="col-span-4">
                   <Label className="text-xs">Name</Label>
                   <Input
@@ -250,6 +298,7 @@ function WorkoutForm({
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
+                </div>
               </div>
             ))}
           </CardContent>
@@ -277,5 +326,53 @@ function WorkoutForm({
         </div>
       </form>
     </div>
+  );
+}
+
+/**
+ * The clip beside one plan line, where that line came from the library.
+ *
+ * Declared at module scope rather than inside the form on purpose: a component
+ * defined during render is a new component type on every render, so React would
+ * unmount and remount every one of these — reloading each video — on each
+ * keystroke in a sets or reps field.
+ *
+ * Plays on hover, like the cards in the library and the rows in the picker. A
+ * line typed by hand has no library entry and shows the placeholder instead.
+ */
+function PlanExerciseClip({ exercise }: { exercise?: Exercise }) {
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const source = exercise?.videos.female ?? exercise?.videos.male;
+
+  if (!source) {
+    return (
+      <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md border bg-muted/40 text-muted-foreground">
+        <Dumbbell className="h-5 w-5 opacity-40" />
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className="h-14 w-14 shrink-0 overflow-hidden rounded-md border bg-muted/40"
+      onMouseEnter={() => void videoRef.current?.play().catch(() => {})}
+      onMouseLeave={() => {
+        const video = videoRef.current;
+        if (!video) return;
+        video.pause();
+        video.currentTime = 0;
+      }}
+    >
+      <video
+        ref={videoRef}
+        src={source}
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        title={exercise?.name}
+        className="h-full w-full object-cover"
+      />
+    </span>
   );
 }

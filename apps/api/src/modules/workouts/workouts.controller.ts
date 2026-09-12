@@ -6,6 +6,7 @@
  * - Primary exports: workoutController.
  */
 import type { Context } from "hono";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { workoutService } from "./workouts.service";
 import { auditLog } from "../../lib/audit";
 import { parseBody } from "../../lib/http";
@@ -15,6 +16,23 @@ import { createPlanSchema, updatePlanSchema, assignPlanSchema } from "./workouts
 import type { AppBindings } from "../../types/app-context";
 
 type AppContext = Context<AppBindings>;
+
+/**
+ * Whether this caller writes plans for the gym, or only for themselves.
+ *
+ * A member holding `workouts:create:self` reaches the same routes as a coach;
+ * what they may do with them is decided from here down, so the service never
+ * has to know what a permission is called.
+ */
+function canWriteForOthers(c: AppContext) {
+  const permissions = c.get("permissions");
+  return (
+    permissions.has(Permission.WORKOUTS_CREATE) ||
+    permissions.has(Permission.WORKOUTS_UPDATE) ||
+    permissions.has(Permission.WORKOUTS_DELETE)
+  );
+}
+
 export const workoutController = {
   /**
    * Handle the `list plans` HTTP action for the workouts module.
@@ -64,7 +82,12 @@ export const workoutController = {
     const parsed = await parseBody(c, createPlanSchema);
     if (!parsed.ok) return parsed.response;
 
-    const result = await workoutService.createPlan(tenantId, c.get("authUser").id, parsed.data);
+    const result = await workoutService.createPlan(
+      tenantId,
+      c.get("authUser").id,
+      parsed.data,
+      canWriteForOthers(c),
+    );
 
     if ("error" in result) return forbidden(c, result.error!);
 
@@ -96,6 +119,7 @@ export const workoutController = {
       c.get("authUser").id,
       c.get("tenantAccess")?.role,
       parsed.data,
+      canWriteForOthers(c),
     );
 
     if ("error" in result) {
@@ -123,8 +147,15 @@ export const workoutController = {
     const tenantId = c.req.param("tenantId")!;
     const planId = c.req.param("planId")!;
 
-    const result = await workoutService.deletePlan(tenantId, planId);
-    if ("error" in result) return notFound(c, result.error!);
+    const result = await workoutService.deletePlan(
+      tenantId,
+      planId,
+      c.get("authUser").id,
+      canWriteForOthers(c),
+    );
+    if ("error" in result) {
+      return result.status === 403 ? forbidden(c, result.error!) : notFound(c, result.error!);
+    }
 
     await auditLog({
       action: "DELETE",

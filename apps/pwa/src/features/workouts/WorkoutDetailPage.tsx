@@ -25,7 +25,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DetailPageSkeleton } from "@/components/ui/skeleton";
 import { formatDate } from "@/lib/utils";
 import { Dumbbell, Pencil, Plus, Trash2, UserPlus, Users, X } from "lucide-react";
-import type { Exercise, TenantMember } from "@/types/api";
+import type { PlanExercise, TenantMember } from "@/types/api";
 import AvatarCard from "@/components/ui/avatarCard";
 import MemberSelector from "@/components/ui/memberSelector";
 
@@ -57,7 +57,7 @@ export default function WorkoutDetailPage() {
   const [saving, setSaving] = React.useState(false);
   const [formTitle, setFormTitle] = React.useState("");
   const [formDesc, setFormDesc] = React.useState("");
-  const [formExercises, setFormExercises] = React.useState<Exercise[]>([]);
+  const [formExercises, setFormExercises] = React.useState<PlanExercise[]>([]);
 
   // Delete
   const [confirmOpen, setConfirmOpen] = React.useState(false);
@@ -142,7 +142,7 @@ export default function WorkoutDetailPage() {
     setFormExercises([...formExercises, { name: "", sets: 3, reps: 10 }]);
   };
 
-  const updateExercise = (idx: number, field: keyof Exercise, value: string | number) => {
+  const updateExercise = (idx: number, field: keyof PlanExercise, value: string | number) => {
     const updated = [...formExercises];
     (updated[idx] as unknown as Record<string, unknown>)[field] = value;
     setFormExercises(updated);

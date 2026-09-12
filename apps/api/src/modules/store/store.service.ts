@@ -7,6 +7,7 @@
  * - Primary exports: storeService.
  */
 import { storeRepository } from "./store.repository";
+import { reactionRepository } from "../reactions/reactions.repository";
 import type {
   AdjustStockInput,
   CreateProductInput,
@@ -108,6 +109,14 @@ export const storeService = {
     try {
       const deleted = await storeRepository.deleteProduct(tenantId, productId);
       if (!deleted) return { error: "Product not found.", status: 404 as const };
+
+      // Reactions point at a subject by id rather than by foreign key, so the
+      // rows a deleted product leaves behind have to be cleared here or they
+      // are unreachable for ever.
+      await reactionRepository.deleteForSubject({
+        subjectType: "PRODUCT",
+        subjectId: productId,
+      });
 
       return { data: { deleted: true, retained: false } };
     } catch {

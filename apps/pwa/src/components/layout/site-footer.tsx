@@ -26,7 +26,15 @@ export type SiteFooterProps =
       /** True while somebody is signed in, so the footer stops inviting them to join. */
       signedIn?: boolean;
     }
-  | { variant: "app" };
+  | {
+      variant: "app";
+      /**
+       * True while somebody is signed in. The session is shared across every
+       * host now, so this footer sees gym members as readily as platform
+       * staff, and inviting a signed-in person to sign in reads as a bug.
+       */
+      signedIn?: boolean;
+    };
 
 /** The gym's own pages. Short on purpose: there are not many, and that is fine. */
 function tenantColumns(signedIn: boolean): Column[] {
@@ -55,31 +63,49 @@ function tenantColumns(signedIn: boolean): Column[] {
   ];
 }
 
-const APP_COLUMNS: Column[] = [
-  {
-    heading: "FitConnect",
-    links: [
-      { label: "Home", to: "/" },
-      { label: "About", to: "/about" },
-      { label: "Contact", to: "/contact" },
-    ],
-  },
-  {
-    heading: "Shop",
-    links: [
-      { label: "Browse", to: "/shop" },
-      { label: "Your basket", to: "/shop/cart" },
-      { label: "Track an order", to: "/shop/orders/lookup" },
-    ],
-  },
-];
+function appColumns(signedIn: boolean): Column[] {
+  return [
+    {
+      heading: "FitConnect",
+      links: [
+        { label: "Home", to: "/" },
+        { label: "About", to: "/about" },
+        { label: "Contact", to: "/contact" },
+        { label: "Exercises", to: "/exercises" },
+      ],
+    },
+    {
+      heading: "Shop",
+      links: [
+        { label: "Browse", to: "/shop" },
+        { label: "Your basket", to: "/shop/cart" },
+        { label: "Track an order", to: "/shop/orders/lookup" },
+      ],
+    },
+    {
+      heading: "Account",
+      // Deliberately not a dashboard link: where that is depends on whether
+      // this account belongs to a gym or to the platform, and it is often on
+      // another host entirely. The header's account menu knows; a footer
+      // column of static links does not.
+      links: signedIn
+        ? [{ label: "Track an order", to: "/shop/orders/lookup" }]
+        : [
+            { label: "Sign in", to: "/login" },
+            { label: "List your gym", to: "/register-gym" },
+          ],
+    },
+  ];
+}
 
 export function SiteFooter(props: SiteFooterProps) {
   const isTenant = props.variant === "tenant";
   const gym = isTenant ? props.gym : null;
 
   const name = isTenant ? (gym?.name ?? "This gym") : "FitConnect";
-  const columns = isTenant ? tenantColumns(Boolean(props.signedIn)) : APP_COLUMNS;
+  const columns = isTenant
+    ? tenantColumns(Boolean(props.signedIn))
+    : appColumns(Boolean(props.signedIn));
   const whatsappUrl = buildWhatsAppUrl(gym?.phone);
 
   return (

@@ -2,6 +2,7 @@ import * as React from "react";
 import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { buildTenantDashboardUrl, isTenantSubdomain } from "@/lib/subdomain";
+import { resolvePrivateHome, servesCurrentUser } from "@/lib/session-scope";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, Building2 } from "lucide-react";
@@ -180,14 +181,56 @@ export function RequirePermission({
  * happened. Signing in *while here* is the whole point of being here.
  */
 export function RedirectIfAuth() {
-  const target = isTenantSubdomain() ? "/" : "/dashboard";
-
   // Read from the store rather than subscribed to it: this has to be the
   // value at mount, and a subscription would make it the current one.
   const [wasAuthenticated] = React.useState(() => useAuthStore.getState().isAuthenticated);
+  // Where this account's own private area is, which is not necessarily on this
+  // host: a member who signed in at their gym and then opened the platform's
+  // sign-in page belongs back at their gym, not on a platform dashboard.
+  const [home] = React.useState(() => resolvePrivateHome(useAuthStore.getState().user));
 
-  if (wasAuthenticated) {
-    return <Navigate to={target} replace />;
-  }
-  return <Outlet />;
+  const leaveTo = wasAuthenticated && home?.external ? home.href : null;
+
+  React.useEffect(() => {
+    if (leaveTo) window.location.replace(leaveTo);
+  }, [leaveTo]);
+
+  if (!wasAuthenticated) return <Outlet />;
+  // Crossing hosts; the effect above is doing it.
+  if (leaveTo) return null;
+
+  // Their own area on this host, or the public home when nothing private
+  // belongs to them anywhere — which is the state a member is in mid-signup.
+  return <Navigate to={home?.href ?? "/"} replace />;
+}
+
+/**
+ * Keeps each kind of user in the private area that is actually theirs.
+ *
+ * A gym's address serves that gym's members; the app's own address serves
+ * platform staff. An account holding both keeps both, each on its own address,
+ * and somebody who arrives on the wrong one is sent to their own rather than
+ * shown a dashboard with nothing in it for them.
+ *
+ * Signed-out visitors are not this guard's business — `RequireAuth` has
+ * already turned them away — and neither are public pages, which stay open to
+ * everybody on both hosts.
+ *
+ * Crossing between the two is a page load rather than a route change, because
+ * they are separate origins and the app has to start again on the other side.
+ */
+export function RequireHostScope() {
+  const user = useAuthStore((state) => state.user);
+  const allowed = servesCurrentUser(user);
+  const home = resolvePrivateHome(user);
+  const leaveTo = !allowed && home?.external ? home.href : null;
+
+  React.useEffect(() => {
+    if (leaveTo) window.location.replace(leaveTo);
+  }, [leaveTo]);
+
+  if (allowed) return <Outlet />;
+  if (leaveTo) return null;
+
+  return <Navigate to="/" replace />;
 }

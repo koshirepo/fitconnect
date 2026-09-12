@@ -35,6 +35,7 @@ import {
   LogOut,
   X,
   CalendarCheck,
+  PlayCircle,
   UserPlus,
   ShieldCheck,
   User,
@@ -132,6 +133,12 @@ const platformNav: NavItem[] = [
     anyOf: [Permission.PLATFORM_OCCUPATIONS_MANAGE],
   },
   {
+    to: "/platform-exercises",
+    label: "Exercise library",
+    icon: PlayCircle,
+    anyOf: [Permission.PLATFORM_EXERCISES_MANAGE],
+  },
+  {
     to: "/platform-audit",
     label: "Audit Logs",
     icon: ScrollText,
@@ -153,6 +160,14 @@ const tenantNav: NavItem[] = [
     to: "/workouts",
     label: "Workout Plans",
     icon: Dumbbell,
+    anyOf: [Permission.WORKOUTS_READ],
+  },
+  {
+    // The platform's library, read by every gym. No permission of its own:
+    // whoever may see a plan may see what the movements in it look like.
+    to: "/exercises",
+    label: "Exercises",
+    icon: PlayCircle,
     anyOf: [Permission.WORKOUTS_READ],
   },
   {

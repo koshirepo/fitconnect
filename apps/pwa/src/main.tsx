@@ -8,10 +8,16 @@ import { registerSW } from "./lib/register-sw";
 import { initSyncListener } from "./lib/sync-listener";
 import { PERSIST_MAX_AGE_MS, queryClient, queryPersister } from "./lib/query-client";
 import { captureInstallPrompt } from "./lib/install-prompt-event";
+import { initSharedSession } from "./stores/auth";
 
 // Before the first render: Chrome fires `beforeinstallprompt` once, and a
 // listener attached later in a component's effect misses it outright.
 captureInstallPrompt();
+
+// Also before the first render. The session is shared across the app host and
+// every gym subdomain by cookie, and a route guard running first would read an
+// empty store and bounce a signed-in user out to the login page.
+initSharedSession();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

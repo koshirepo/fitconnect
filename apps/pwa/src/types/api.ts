@@ -81,7 +81,10 @@ export type {
   UpdateWarehousePayload,
   PickupRequest,
   SchedulePickupPayload,
+  // The library entry, and one line of a plan — different things since the
+  // exercise library arrived, which is why the plan line is no longer `Exercise`.
   Exercise,
+  PlanExercise,
   WorkoutPlan,
   CreateWorkoutPlanPayload,
   UpdateWorkoutPlanPayload,

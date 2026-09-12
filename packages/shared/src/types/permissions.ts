@@ -85,6 +85,14 @@ export const Permission = {
   WORKOUTS_UPDATE: "workouts:update",
   WORKOUTS_DELETE: "workouts:delete",
   WORKOUTS_ASSIGN: "workouts:assign",
+  /**
+   * Build a plan for oneself, out of the exercise library.
+   *
+   * Separate from WORKOUTS_CREATE, which is a coach's grant: a plan written
+   * under this one is assigned to its author and to nobody else, so a member
+   * can keep their own routine without being able to write plans for the gym.
+   */
+  WORKOUTS_CREATE_SELF: "workouts:create:self",
 
   /// Freeze or unfreeze a membership. A desk action, not a plan-editing one.
   MEMBERS_FREEZE: "members:freeze",
@@ -194,6 +202,14 @@ export const Permission = {
    * renaming "Student" would rename it for all of them.
    */
   PLATFORM_OCCUPATIONS_MANAGE: "platform:occupations:manage",
+  /**
+   * Edit the exercise library every gym trains from.
+   *
+   * Reading it needs no permission, exactly as the occupation list works: every
+   * member browses the same videos and every plan is built from them. Only the
+   * platform writes, because one gym renaming a lift would rename it for all.
+   */
+  PLATFORM_EXERCISES_MANAGE: "platform:exercises:manage",
   PLATFORM_ROLES_READ: "platform:roles:read",
   PLATFORM_ROLES_UPDATE: "platform:roles:update",
 
@@ -247,6 +263,9 @@ const MEMBER_PERMISSIONS: Permission[] = [
   Permission.PAYMENTS_CHECKOUT_SELF,
   Permission.SUBSCRIPTIONS_READ,
   Permission.WORKOUTS_READ,
+  // Their own routine, assigned to themselves and nobody else. Writing plans
+  // for other people stays with WORKOUTS_CREATE, which coaches hold.
+  Permission.WORKOUTS_CREATE_SELF,
   Permission.BADGES_READ,
   Permission.MEMBERS_FREEZE_SELF,
   Permission.COUPONS_READ,
@@ -401,6 +420,7 @@ const SUPPORT_PERMISSIONS: Permission[] = [
   Permission.PLATFORM_PRODUCTS_CREATE,
   Permission.PLATFORM_PRODUCTS_UPDATE,
   Permission.PLATFORM_PRODUCTS_DELETE,
+  Permission.PLATFORM_EXERCISES_MANAGE,
 ];
 
 export const PLATFORM_ROLE_PERMISSIONS: Record<PlatformRole, readonly Permission[]> = {
@@ -628,6 +648,7 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [Permission.WORKOUTS_UPDATE]: "Edit workout plans",
   [Permission.WORKOUTS_DELETE]: "Delete workout plans",
   [Permission.WORKOUTS_ASSIGN]: "Assign workout plans",
+  [Permission.WORKOUTS_CREATE_SELF]: "Create a workout plan for yourself",
   [Permission.BADGES_READ]: "View badges",
   [Permission.BADGES_CREATE]: "Create badges",
   [Permission.BADGES_UPDATE]: "Edit badges",
@@ -673,6 +694,7 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [Permission.PLATFORM_ORDERS_UPDATE]: "Update platform orders",
   [Permission.PLATFORM_ORDERS_DELETE]: "Delete platform orders",
   [Permission.PLATFORM_OCCUPATIONS_MANAGE]: "Manage the occupation list",
+  [Permission.PLATFORM_EXERCISES_MANAGE]: "Manage the exercise library",
   [Permission.PLATFORM_ROLES_READ]: "View platform roles and permissions",
   [Permission.PLATFORM_ROLES_UPDATE]: "Edit platform role permissions",
 };

@@ -16,6 +16,7 @@ import {
 } from "../../lib/razorpay";
 import { gatewayService } from "../payments/gateway.service";
 import { toStorefrontProduct } from "../catalogue/catalogue.service";
+import { reactionRepository } from "../reactions/reactions.repository";
 import { commerceRepository } from "./commerce.repository";
 import { shippingRepository } from "./shipping.repository";
 import { shippingService } from "./shipping.service";
@@ -115,7 +116,17 @@ export const commerceService = {
       category,
       search,
     );
-    return { data: { products: products.map(mapProduct) }, total };
+    // Likes and comments live in one shared table keyed by subject, so they are
+    // counted for the whole page in one query rather than through a relation.
+    const counts = await reactionRepository.countsFor(
+      "PRODUCT",
+      products.map((product) => product.id),
+    );
+
+    return {
+      data: { products: products.map((product) => mapProduct(product, counts.get(product.id))) },
+      total,
+    };
   },
 
   /**
@@ -125,7 +136,8 @@ export const commerceService = {
   async getPublicProductById(productId: string) {
     const product = await commerceRepository.findPublicProductById(productId);
     if (!product) return { error: "Product not found.", status: 404 as const };
-    return { data: { product: mapProduct(product) } };
+    const counts = await reactionRepository.countsFor("PRODUCT", [product.id]);
+    return { data: { product: mapProduct(product, counts.get(product.id)) } };
   },
 
   /**
@@ -146,7 +158,17 @@ export const commerceService = {
       category,
       search,
     );
-    return { data: { products: products.map(mapProduct) }, total };
+    // Likes and comments live in one shared table keyed by subject, so they are
+    // counted for the whole page in one query rather than through a relation.
+    const counts = await reactionRepository.countsFor(
+      "PRODUCT",
+      products.map((product) => product.id),
+    );
+
+    return {
+      data: { products: products.map((product) => mapProduct(product, counts.get(product.id))) },
+      total,
+    };
   },
 
   /**
@@ -156,7 +178,8 @@ export const commerceService = {
   async getAdminProductById(productId: string) {
     const product = await commerceRepository.findProductById(productId);
     if (!product) return { error: "Product not found.", status: 404 as const };
-    return { data: { product: mapProduct(product) } };
+    const counts = await reactionRepository.countsFor("PRODUCT", [product.id]);
+    return { data: { product: mapProduct(product, counts.get(product.id)) } };
   },
 
   /**
@@ -171,7 +194,8 @@ export const commerceService = {
       };
     }
     const product = await commerceRepository.createProduct(input);
-    return { data: { product: mapProduct(product) } };
+    const counts = await reactionRepository.countsFor("PRODUCT", [product.id]);
+    return { data: { product: mapProduct(product, counts.get(product.id)) } };
   },
 
   /**
@@ -193,7 +217,8 @@ export const commerceService = {
 
     const product = await commerceRepository.updateProduct(productId, input);
     if (!product) return { error: "Product not found.", status: 404 as const };
-    return { data: { product: mapProduct(product) } };
+    const counts = await reactionRepository.countsFor("PRODUCT", [product.id]);
+    return { data: { product: mapProduct(product, counts.get(product.id)) } };
   },
 
   /**
@@ -216,7 +241,8 @@ export const commerceService = {
     // Null means the id was not in the platform catalogue — a gym's product, or
     // nothing at all. Either way the shop admin has no business deleting it.
     if (!product) return { error: "Product not found.", status: 404 as const };
-    return { data: { product: mapProduct(product) } };
+    const counts = await reactionRepository.countsFor("PRODUCT", [product.id]);
+    return { data: { product: mapProduct(product, counts.get(product.id)) } };
   },
 
   /**

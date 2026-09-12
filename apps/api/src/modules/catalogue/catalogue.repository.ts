@@ -74,10 +74,6 @@ export const catalogueProductSelect = {
   isActive: true,
   createdAt: true,
   updatedAt: true,
-  // Counts rather than the rows: a catalogue page wants to say "12 likes", and
-  // loading twelve rows per product to render one number would not scale past
-  // a gym that is doing well.
-  _count: { select: { likes: true, comments: true } },
   variants: {
     select: {
       id: true,

@@ -66,6 +66,26 @@ migrations_dir = "prisma/migrations"
 [[r2_buckets]]
 binding = "FILES"
 bucket_name = "fit-bucket"
+# Local development reads the real bucket instead of an empty simulated one.
+#
+# `wrangler dev` otherwise binds a miniflare bucket that starts empty, and
+# nothing can be put into it from outside: `wrangler r2 object put --local`
+# writes to .wrangler/state/v3/r2/<bucket>, while the dev server reads
+# .wrangler/state/v3/r2/miniflare-R2BucketObject. Two different stores, so the
+# CLI upload is invisible to the running server — with or without --env.
+#
+# That is why the exercise clips never played locally. They are in the bucket;
+# the dev server was looking somewhere else, and the R2_PUBLIC_URL fallback
+# below belongs to a different bucket that has no exercise/ keys.
+#
+# The trade, and it is a real one: with this on, media uploaded while
+# developing is written to the real bucket too. Comment it out to go back to
+# an empty local bucket and no clips.
+#
+# `remote`, not `experimental_remote` — the prefixed spelling is rejected by
+# this wrangler as an unknown field, which leaves the binding local and looks
+# exactly like the bug it was meant to fix.
+remote = true
 
 # Caps unauthenticated signup attempts per IP. `namespace_id` is an arbitrary
 # positive integer that scopes the counter; the limit is per Worker, not global.

@@ -9,8 +9,7 @@ import { normalizeTenantHost, publicRepository } from "./public.repository";
 import { storeGuestService } from "../store/store-sale.service";
 import type { GuestOrderInput, GuestOrderLookupInput } from "../store/store.schema";
 import { storeRepository } from "../store/store.repository";
-import { socialRepository } from "../social/social.repository";
-import { socialService } from "../social/social.service";
+import { reactionRepository } from "../reactions/reactions.repository";
 
 export const publicService = {
   /**
@@ -73,7 +72,11 @@ export const publicService = {
     // that apart from a product the gym never stocked, and no reason to.
     if (!product || !product.isActive) return { error: "Product not found.", status: 404 as const };
 
-    const { comments } = await socialRepository.listProductComments(productId, 1, 50);
+    const { comments } = await reactionRepository.listComments(
+      { subjectType: "PRODUCT", subjectId: productId },
+      1,
+      50,
+    );
 
     return {
       data: {
@@ -98,8 +101,15 @@ export const publicService = {
     const tenant = await publicRepository.findTenantBySlug(slug);
     if (!tenant) return { error: "Tenant not found.", status: 404 as const };
 
-    const result = await socialService.listTenantComments(tenant.id, null, 1, 50);
-    return { data: { tenantId: tenant.id, ...result.data } };
+    const subject = { subjectType: "GYM" as const, subjectId: tenant.id };
+    const [{ comments }, likeCount] = await Promise.all([
+      reactionRepository.listComments(subject, 1, 50),
+      reactionRepository.countLikes(subject),
+    ]);
+
+    // `liked` is false for want of anybody to have liked it: this is the
+    // unauthenticated read, and there is no account in the request to check.
+    return { data: { tenantId: tenant.id, comments, likeCount, liked: false } };
   },
 
   async getTenantBrandingByHost(host: string) {

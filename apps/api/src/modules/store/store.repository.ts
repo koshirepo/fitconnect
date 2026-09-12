@@ -12,6 +12,7 @@ import {
   catalogueRepository,
   tenantCatalogue,
 } from "../catalogue/catalogue.repository";
+import { reactionRepository } from "../reactions/reactions.repository";
 import { toStorefrontProduct } from "../catalogue/catalogue.service";
 import type {
   CreateProductInput,
@@ -37,20 +38,35 @@ export const storeRepository = {
       orderBy: [{ name: "asc" }],
     });
 
-    if (filters.includeInactive) return products.map(toStorefrontProduct);
+    // Likes and comments live in one shared table keyed by subject, so they are
+    // counted for the whole page in one query rather than through a relation.
+    const counts = await reactionRepository.countsFor(
+      "PRODUCT",
+      products.map((product) => product.id),
+    );
+
+    if (filters.includeInactive) {
+      return products.map((product) => toStorefrontProduct(product, counts.get(product.id)));
+    }
 
     // A shopper sees only what can be bought, down to the variant.
     return products.map((product) =>
-      toStorefrontProduct({
-        ...product,
-        variants: product.variants.filter((variant) => variant.isActive),
-      }),
+      toStorefrontProduct(
+        {
+          ...product,
+          variants: product.variants.filter((variant) => variant.isActive),
+        },
+        counts.get(product.id),
+      ),
     );
   },
 
   async findProduct(tenantId: string, productId: string) {
     const product = await catalogueRepository.findProduct(tenantCatalogue(tenantId), productId);
-    return product ? toStorefrontProduct(product) : null;
+    if (!product) return null;
+
+    const counts = await reactionRepository.countsFor("PRODUCT", [product.id]);
+    return toStorefrontProduct(product, counts.get(product.id));
   },
 
   /**

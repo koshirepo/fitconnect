@@ -75,9 +75,29 @@ export const queryKeys = {
     payment: (tenantId: string, paymentId: string) =>
       ["reminders", tenantId, "payment", paymentId] as const,
   },
-  /** Reactions to the gym itself, which outlive any one store product. */
-  social: {
-    tenantComments: (tenantId: string) => ["social", tenantId, "comments"] as const,
+  /**
+   * Likes and comments on anything: a gym, a store product, an exercise.
+   *
+   * Keyed by the subject rather than by the gym, because the table behind them
+   * is. A product's counts still ride on the store prefix as well, which is why
+   * a write invalidates both.
+   */
+  reactions: {
+    subject: (subjectType: string, subjectId: string) =>
+      ["reactions", subjectType, subjectId] as const,
+    comments: (subjectType: string, subjectId: string) =>
+      ["reactions", subjectType, subjectId, "comments"] as const,
+  },
+  /** The platform exercise library. One catalogue, so no tenant id. */
+  exercises: {
+    all: () => ["exercises"] as const,
+    list: (params?: unknown) => ["exercises", "list", params ?? null] as const,
+    detail: (idOrSlug: string) => ["exercises", "detail", idOrSlug] as const,
+    /** A plan's own lines, looked up together. Sorted by the caller so the
+        same set of ids is the same key however the plan was ordered. */
+    byIds: (ids: readonly string[]) => ["exercises", "by-ids", ids] as const,
+    muscleGroups: (includeInactive: boolean) =>
+      ["exercises", "muscle-groups", includeInactive] as const,
   },
   /**
    * Platform shop reviews. Not gym-scoped: a product in the platform catalogue

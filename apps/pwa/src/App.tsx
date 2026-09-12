@@ -6,6 +6,7 @@ import {
   RequireTenantPlatformAccess,
   RequirePermission,
   RequireTenantHost,
+  RequireHostScope,
   RedirectIfAuth,
 } from "@/features/auth/route-guards";
 import { AppLayout } from "@/components/layout/app-layout";
@@ -162,6 +163,15 @@ const AdminWarehousesPage = React.lazy(
 const AdminOrderDetailPage = React.lazy(
   () => import("@/features/commerce/AdminOrderDetailPage"),
 );
+const ExerciseLibraryPage = React.lazy(
+  () => import("@/features/exercises/ExerciseLibraryPage"),
+);
+const ExerciseDetailPage = React.lazy(
+  () => import("@/features/exercises/ExerciseDetailPage"),
+);
+const PlatformExercisesPage = React.lazy(
+  () => import("@/features/exercises/PlatformExercisesPage"),
+);
 const RolesPage = React.lazy(() => import("@/features/roles/RolesPage"));
 const RoleFormPage = React.lazy(() => import("@/features/roles/RoleFormPage"));
 
@@ -255,6 +265,11 @@ export default function App() {
       </Route>
 
       <Route element={<RequireAuth />}>
+        {/* This address serves this gym's members. Platform staff with no
+            membership here are sent to the app host, where their own screens
+            live — each kind of user in the area that belongs to them. The
+            public pages above stay open to everybody either way. */}
+        <Route element={<RequireHostScope />}>
         <Route element={<AppLayout />}>
           <Route element={<RequireTenantPlatformAccess />}>
             <Route path="/dashboard" element={<DashboardPage />} />
@@ -439,6 +454,7 @@ export default function App() {
             </Route>
           </Route>
         </Route>
+        </Route>
       </Route>
 
       <Route path="*" element={<TenantPathNormalizer />} />
@@ -485,6 +501,12 @@ export default function App() {
                     gym's — it lives on the root host beside the marketing
                     pages, never on a tenant subdomain. */}
                 <Route path="/register-gym" element={<RegisterGymPage />} />
+                {/* The exercise library, open to anybody. It belongs to the
+                    platform rather than to a gym, and somebody looking up how a
+                    lift is done should not have to join one first. Signed in,
+                    the same pages gain the like button and the comment box. */}
+                <Route path="/exercises" element={<ExerciseLibraryPage />} />
+                <Route path="/exercises/:slug" element={<ExerciseDetailPage />} />
                 <Route path="/about" element={<AboutUsPage />} />
                 <Route path="/contact" element={<ContactUsPage />} />
               </Route>
@@ -497,12 +519,17 @@ export default function App() {
               {/* Protected routes */}
               <Route element={<RequireAuth />}>
                 <Route element={<AppLayout />}>
-                  {/* Account-level, not gym-scoped: fine on the app's own host. */}
-                  <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route
-                    path="/orders/history"
-                    element={<UserOrderHistoryPage />}
-                  />
+                  {/* The app's own host serves platform staff. A gym member
+                      who lands here — from a bookmark, or the Dashboard button
+                      on a public page — is sent to their gym's dashboard
+                      instead of this one, which holds nothing for them. */}
+                  <Route element={<RequireHostScope />}>
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route
+                      path="/orders/history"
+                      element={<UserOrderHistoryPage />}
+                    />
+                  </Route>
 
                   {/*
                     Every gym page below is registered here only so a deep link
@@ -542,10 +569,29 @@ export default function App() {
                       element={<WorkoutDetailPage />}
                     />
                   </Route>
-                  <Route element={<RequirePermission anyOf={[Permission.WORKOUTS_CREATE]} />}>
+                  {/* The platform's exercise library, read by every gym. Behind
+                      the same grant as plans: whoever may see a plan may see
+                      what the movements in it look like. */}
+                  <Route element={<RequirePermission anyOf={[Permission.WORKOUTS_READ]} />}>
+                    <Route path="/exercises" element={<ExerciseLibraryPage />} />
+                    <Route path="/exercises/:slug" element={<ExerciseDetailPage />} />
+                  </Route>
+                  <Route
+                    element={
+                      <RequirePermission
+                        anyOf={[Permission.WORKOUTS_CREATE, Permission.WORKOUTS_CREATE_SELF]}
+                      />
+                    }
+                  >
                     <Route path="/workouts/new" element={<WorkoutFormPage />} />
                   </Route>
-                  <Route element={<RequirePermission anyOf={[Permission.WORKOUTS_UPDATE]} />}>
+                  <Route
+                    element={
+                      <RequirePermission
+                        anyOf={[Permission.WORKOUTS_UPDATE, Permission.WORKOUTS_CREATE_SELF]}
+                      />
+                    }
+                  >
                     <Route path="/workouts/:planId/edit" element={<WorkoutFormPage />} />
                   </Route>
                   <Route element={<RequirePermission anyOf={[Permission.TODOS_READ]} />}>
@@ -763,6 +809,12 @@ export default function App() {
                         path="/tenants/:tenantId/payments/record"
                         element={<RecordPlatformPaymentPage />}
                       />
+                    </Route>
+
+                    <Route
+                      element={<RequirePermission anyOf={[Permission.PLATFORM_EXERCISES_MANAGE]} />}
+                    >
+                      <Route path="/platform-exercises" element={<PlatformExercisesPage />} />
                     </Route>
 
                     <Route

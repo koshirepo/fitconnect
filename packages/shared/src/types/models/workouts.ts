@@ -5,7 +5,20 @@
  * - Treat these as the shape the API promises, not as a mirror of Prisma's own models.
  */
 
-export interface Exercise {
+/**
+ * One line of a plan.
+ *
+ * Named `PlanExercise` rather than `Exercise`, which is now the library entry a
+ * line usually points at. The two are different things: the library owns the
+ * name and the video, while this owns the sets and reps somebody was asked for.
+ *
+ * `name` stays on the line even when `exerciseId` is set, so a plan written
+ * today still reads correctly if the library entry is later renamed or retired —
+ * the same reason an order line keeps the name it sold under.
+ */
+export interface PlanExercise {
+  /** The library exercise this line came from, when it came from the library. */
+  exerciseId?: string;
   name: string;
   sets?: number;
   reps?: number;
@@ -17,7 +30,7 @@ export interface WorkoutPlan {
   id: string;
   title: string;
   description?: string | null;
-  exercises?: Exercise[];
+  exercises?: PlanExercise[];
   createdAt: string;
   updatedAt?: string;
   creator?: {
@@ -37,11 +50,11 @@ export interface WorkoutPlan {
 export interface CreateWorkoutPlanPayload {
   title: string;
   description?: string;
-  exercises?: Exercise[];
+  exercises?: PlanExercise[];
 }
 
 export interface UpdateWorkoutPlanPayload {
   title?: string;
   description?: string;
-  exercises?: Exercise[];
+  exercises?: PlanExercise[];
 }

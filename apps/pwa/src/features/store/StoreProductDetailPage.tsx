@@ -17,11 +17,12 @@ import { usePermissions } from "@/features/auth/permission-gate";
 import { Permission } from "@fitconnect/shared/types/permissions";
 import { useStoreProduct } from "@/api/queries/store";
 import {
-  useAddProductComment,
-  useDeleteProductComment,
-  useProductComments,
-  useToggleProductLike,
-} from "@/api/queries/social";
+  useAddComment,
+  useComments,
+  useDeleteComment,
+  useToggleLike,
+} from "@/api/queries/reactions";
+import { queryKeys } from "@/lib/query-keys";
 import { getApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,10 +49,13 @@ export default function StoreProductDetailPage() {
   const [basket, setBasket] = React.useState<BasketEntry[]>(() => readBasket(tenantId));
 
   const productQuery = useStoreProduct(productId);
-  const commentsQuery = useProductComments(productId);
-  const toggleLike = useToggleProductLike(productId);
-  const addComment = useAddProductComment(productId);
-  const deleteComment = useDeleteProductComment();
+  // A card in the grid shows the same counts this page does, so every write
+  // clears the store prefix alongside the thread itself.
+  const alsoStore = React.useMemo(() => [queryKeys.store.root(tenantId)], [tenantId]);
+  const commentsQuery = useComments("PRODUCT", productId);
+  const toggleLike = useToggleLike("PRODUCT", productId, alsoStore);
+  const addComment = useAddComment("PRODUCT", productId, alsoStore);
+  const deleteComment = useDeleteComment("PRODUCT", productId, alsoStore);
 
   const feed = commentsQuery.data;
 

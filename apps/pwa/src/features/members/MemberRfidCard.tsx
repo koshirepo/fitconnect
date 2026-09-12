@@ -137,8 +137,8 @@ export function MemberRfidCard({
               </div>
             ) : (
               <p className="text-muted-foreground">
-                This member has no card. Assign one and it is enrolled on every reader automatically
-                — there is no need to go to the machine.
+                No card assigned. Add one and it is enrolled on every reader automatically — there
+                is no need to go to the machine.
               </p>
             )}
 
@@ -196,8 +196,8 @@ export function MemberRfidCard({
               </div>
             ) : (
               <p className="text-xs text-muted-foreground">
-                The readers will file this member under{" "}
-                <span className="font-medium text-foreground">#{pin}</span>, their own member
+                The readers will file them under{" "}
+                <span className="font-medium text-foreground">#{pin}</span>, their own membership
                 number.{" "}
                 <button
                   type="button"

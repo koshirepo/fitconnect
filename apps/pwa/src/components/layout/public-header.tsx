@@ -1,10 +1,19 @@
 import * as React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
+import { resolvePrivateHome } from "@/lib/session-scope";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ui/mode-toggle";
+import {
+  Menu as AccountMenu,
+  MenuContent,
+  MenuItem,
+  MenuSeparator,
+  MenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { ArrowRight, Menu, X } from "lucide-react";
+import { getInitials } from "@fitconnect/shared";
+import { ArrowRight, ChevronDown, LayoutDashboard, LogOut, Menu, X } from "lucide-react";
 
 interface NavItem {
   label: string;
@@ -19,8 +28,31 @@ interface PublicHeaderProps {
 
 export function PublicHeader({ navItems = [], maxWidth = "max-w-7xl" }: PublicHeaderProps) {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user, logout } = useAuthStore();
   const [open, setOpen] = React.useState(false);
+
+  /**
+   * Where this account's private area is, which need not be on this host.
+   *
+   * These pages are the platform's own, but a gym's member is just as likely to
+   * be reading them — the exercise library is public and shared by every gym —
+   * and their dashboard lives on their gym's address, not this one.
+   */
+  const home = resolvePrivateHome(user);
+
+  const goHome = () => {
+    setOpen(false);
+    if (!home) return;
+    // A different origin has to be loaded, not routed to.
+    if (home.external) window.location.assign(home.href);
+    else navigate(home.href);
+  };
+
+  const signOut = () => {
+    setOpen(false);
+    logout();
+    navigate("/");
+  };
 
   return (
     <>
@@ -72,10 +104,53 @@ export function PublicHeader({ navItems = [], maxWidth = "max-w-7xl" }: PublicHe
           <div className="flex items-center gap-3">
             <ModeToggle />
             {isAuthenticated ? (
-              <Button onClick={() => navigate("/dashboard")}>
-                Dashboard
-                <ArrowRight className="h-4 w-4" />
-              </Button>
+              /* Who you are signed in as, rather than a bare button. These
+                 pages are public but the session is not host-specific any
+                 more, so somebody arriving from their gym should see their own
+                 account here and not be invited to sign in again. */
+              <AccountMenu>
+                <MenuTrigger className="flex items-center gap-2 rounded-lg px-1.5 py-1 text-left transition-colors hover:bg-muted">
+                  <span className="grid h-8 w-8 shrink-0 overflow-hidden rounded-full bg-muted text-[11px] font-semibold text-muted-foreground ring-1 ring-border">
+                    {user?.avatarUrl ? (
+                      <img src={user.avatarUrl} alt="" className="size-full object-cover" />
+                    ) : (
+                      <span className="grid place-items-center">
+                        {getInitials(user?.name ?? "User")}
+                      </span>
+                    )}
+                  </span>
+                  <span className="hidden min-w-0 flex-col sm:flex">
+                    <span className="truncate text-sm leading-tight font-medium">
+                      {user?.name ?? "Account"}
+                    </span>
+                    {user?.membership?.tenantName && (
+                      <span className="truncate text-[11px] leading-tight text-muted-foreground">
+                        {user.membership.tenantName}
+                      </span>
+                    )}
+                  </span>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </MenuTrigger>
+
+                <MenuContent align="end" side="bottom">
+                  {/* Absent for an account with nothing private anywhere — a
+                      member mid-signup, before a membership exists. */}
+                  {home && (
+                    <MenuItem onClick={goHome}>
+                      <LayoutDashboard />
+                      Dashboard
+                    </MenuItem>
+                  )}
+                  {home && <MenuSeparator />}
+                  <MenuItem
+                    className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                    onClick={signOut}
+                  >
+                    <LogOut />
+                    Sign out
+                  </MenuItem>
+                </MenuContent>
+              </AccountMenu>
             ) : (
               <>
                 <Button
@@ -134,16 +209,23 @@ export function PublicHeader({ navItems = [], maxWidth = "max-w-7xl" }: PublicHe
             </nav>
             <div className="border-t p-4 space-y-2">
               {isAuthenticated ? (
-                <Button
-                  className="w-full"
-                  onClick={() => {
-                    setOpen(false);
-                    navigate("/dashboard");
-                  }}
-                >
-                  Dashboard
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
+                <>
+                  {/* The name is worth the line on a phone too: it is the only
+                      thing here that says which account this is. */}
+                  <p className="truncate px-1 pb-1 text-sm font-medium">
+                    {user?.name ?? "Account"}
+                  </p>
+                  {home && (
+                    <Button className="w-full" onClick={goHome}>
+                      Dashboard
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <Button variant="outline" className="w-full" onClick={signOut}>
+                    <LogOut className="h-4 w-4" />
+                    Sign out
+                  </Button>
+                </>
               ) : (
                 <>
                   <Button

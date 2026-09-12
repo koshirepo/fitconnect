@@ -8,6 +8,18 @@
 import { z } from "zod";
 
 const exerciseSchema = z.object({
+  /**
+   * The library entry this line was picked from, where it was picked from one.
+   *
+   * Kept *beside* the copied name rather than instead of it. The name is what
+   * the plan says and stays readable if the library later renames or retires
+   * the exercise; the id is what lets a screen show that exercise's clip. A
+   * line somebody typed by hand carries no id and needs none.
+   *
+   * Unknown keys are stripped here, so a line arriving without this field in
+   * the schema loses its id silently — which is exactly what used to happen.
+   */
+  exerciseId: z.string().max(120).optional(),
   name: z.string(),
   sets: z.number().int().min(1).optional(),
   reps: z.number().int().min(1).optional(),
