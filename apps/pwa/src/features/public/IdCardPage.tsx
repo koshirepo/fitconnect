@@ -70,13 +70,13 @@ function fit(value: string, max: number) {
 const ADDRESS_INSET = 32;
 const ADDRESS_WIDTH = CARD_WIDTH - ADDRESS_INSET * 2;
 /**
- * Characters that fit that width at 16px bold.
+ * Characters that fit that width at 24px bold.
  *
  * Bold Inter averages a little over half its size per character, so 576px is
- * roughly 62 of them. An address that beats the estimate is squeezed to fit by
+ * roughly 46 of them. An address that beats the estimate is squeezed to fit by
  * `fitToWidth` rather than allowed over the edge.
  */
-const ADDRESS_MAX_CHARS = 62;
+const ADDRESS_MAX_CHARS = 46;
 
 /**
  * Hold a line inside the card when it turns out wider than the estimate.
@@ -284,7 +284,7 @@ function readableOn(hex: string) {
  * reads and what a hover shows.
  */
 function roleBadge(cx: number, cy: number, role: string, ink: string, fill: string) {
-  const r = 19;
+  const r = 24;
   const key = role.toUpperCase();
 
   const glyph =
@@ -310,7 +310,7 @@ function roleBadge(cx: number, cy: number, role: string, ink: string, fill: stri
           : // A custom role the gym invented: its initial, since nothing here
             // can know what it means.
             `<text x="${cx}" y="${cy + 6}" text-anchor="middle" font-family="${FONT}"
-                   font-size="17" font-weight="700" fill="${ink}">${escapeXml(key.slice(0, 1))}</text>`;
+                   font-size="26" font-weight="700" fill="${ink}">${escapeXml(key.slice(0, 1))}</text>`;
 
   return `<g><title>${escapeXml(role)}</title>
     <circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="${ink}" stroke-opacity="0.28" stroke-width="1.5" />
@@ -319,11 +319,11 @@ function roleBadge(cx: number, cy: number, role: string, ink: string, fill: stri
 }
 
 function label(x: number, y: number, text: string) {
-  return `<text x="${x}" y="${y}" font-family="${FONT}" font-size="15" font-weight="600" letter-spacing="1.4" fill="${SUBTLE}">${escapeXml(text)}</text>`;
+  return `<text x="${x}" y="${y}" font-family="${FONT}" font-size="23" font-weight="600" letter-spacing="1.4" fill="${SUBTLE}">${escapeXml(text)}</text>`;
 }
 
 function value(x: number, y: number, text: string) {
-  return `<text x="${x}" y="${y}" text-anchor="end" font-family="${FONT}" font-size="19" font-weight="700" fill="${INK}">${escapeXml(text)}</text>`;
+  return `<text x="${x}" y="${y}" text-anchor="end" font-family="${FONT}" font-size="29" font-weight="700" fill="${INK}">${escapeXml(text)}</text>`;
 }
 
 /** One row of the detail strip: a label on the left, its value on the right. */
@@ -377,7 +377,7 @@ function buildCardSvg(
              preserveAspectRatio="xMidYMid slice" clip-path="url(#photoClip)" />`
     : `<rect x="${PHOTO.x}" y="${PHOTO.y}" width="${PHOTO.size}" height="${PHOTO.size}" rx="18" fill="${c.tint}" />
        <text x="${PHOTO.x + PHOTO.size / 2}" y="${PHOTO.y + PHOTO.size / 2 + 26}" text-anchor="middle"
-             font-family="${FONT}" font-size="72" font-weight="700" fill="${brand}" opacity="0.55">${escapeXml(initials)}</text>`;
+             font-family="${FONT}" font-size="108" font-weight="700" fill="${brand}" opacity="0.55">${escapeXml(initials)}</text>`;
 
   const logoBlock = logo
     ? `<rect x="36" y="48" width="92" height="92" rx="22" fill="#ffffff" opacity="0.94" />
@@ -397,8 +397,8 @@ function buildCardSvg(
    * that should be cut. Two steps down in size buy eight more characters
    * before the ellipsis is reached at all.
    */
-  const nameSize = member.name.length > 18 ? 24 : member.name.length > 14 ? 27 : 31;
-  const nameMax = nameSize === 31 ? 15 : nameSize === 27 ? 18 : 23;
+  const nameSize = member.name.length > 18 ? 29 : member.name.length > 14 ? 32 : 37;
+  const nameMax = nameSize === 37 ? 15 : nameSize === 32 ? 18 : 23;
 
   // The strip of facts. The expiry is dropped from the saved copy, and the
   // rows below simply close up — which is why the panel is measured rather
@@ -406,10 +406,10 @@ function buildCardSvg(
   const rows: DetailRow[] = [
     { label: "MEMBER SINCE", value: formatDate(member.joinedAt) },
     ...(includeValidUntil ? [{ label: "VALID UNTIL", value: formatDate(member.validUntil) }] : []),
-    { label: "SHIFT", value: fit(shiftLine, 24) },
+    { label: "SHIFT", value: fit(shiftLine, 16) },
   ];
 
-  const PANEL = { x: 44, y: 452, w: 552, padY: 26, rowH: 56 };
+  const PANEL = { x: 44, y: 452, w: 552, padY: 24, rowH: 68 };
   const panelH = PANEL.padY * 2 + (rows.length - 1) * PANEL.rowH + 12;
   const panelBottom = PANEL.y + panelH;
 
@@ -418,7 +418,7 @@ function buildCardSvg(
       const y = PANEL.y + PANEL.padY + 12 + index * PANEL.rowH;
       const rule =
         index < rows.length - 1
-          ? `<line x1="${PANEL.x + 28}" y1="${y + 24}" x2="${PANEL.x + PANEL.w - 28}" y2="${y + 24}" stroke="${c.tintEdge}" stroke-width="1.5" />`
+          ? `<line x1="${PANEL.x + 28}" y1="${y + 30}" x2="${PANEL.x + PANEL.w - 28}" y2="${y + 30}" stroke="${c.tintEdge}" stroke-width="1.5" />`
           : "";
       return `${label(PANEL.x + 28, y, row.label)}
     ${value(PANEL.x + PANEL.w - 28, y, row.value)}
@@ -439,7 +439,7 @@ function buildCardSvg(
   const stubMid = (perforationY + FOOTER_Y) / 2;
 
   const qr = qrPath(qrData);
-  const QR = { size: 168, x: 70 };
+  const QR = { size: 156, x: 40 };
   const qrY = stubMid - QR.size / 2;
   const qrScale = QR.size / qr.count;
 
@@ -453,7 +453,7 @@ function buildCardSvg(
   // photographed, and the number on it was the gym's own contact detail rather
   // than anything the holder needs.
   const addressLines = wrap(gym.address ?? gym.name, ADDRESS_MAX_CHARS, 2);
-  const addressTop = FOOTER_Y + (addressLines.length > 1 ? 40 : 52);
+  const addressTop = FOOTER_Y + (addressLines.length > 1 ? 36 : 54);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${CARD_WIDTH}" height="${CARD_HEIGHT}" viewBox="0 0 ${CARD_WIDTH} ${CARD_HEIGHT}">
   <defs>
@@ -500,9 +500,9 @@ function buildCardSvg(
     <path d="M 380 0 L 640 0 L 640 ${HEADER_H} L 236 ${HEADER_H} Z" fill="#ffffff" opacity="0.05" />
 
     ${logoBlock}
-    <text x="${headerTextX}" y="94" font-family="${FONT}" font-size="31" font-weight="700" fill="${onBrand}">${escapeXml(fit(gym.name, 20))}</text>
-    <text x="${headerTextX}" y="124" font-family="${FONT}" font-size="14" font-weight="700" letter-spacing="3.2" fill="${onBrand}" opacity="0.8">MEMBERSHIP CARD</text>
-    <text x="${headerTextX}" y="152" font-family="${FONT}" font-size="14" fill="${onBrand}" opacity="0.62">${escapeXml(webAddress)}</text>
+    <text x="${headerTextX}" y="92" font-family="${FONT}" font-size="47" font-weight="700" fill="${onBrand}">${escapeXml(fit(gym.name, 18))}</text>
+    <text x="${headerTextX}" y="130" font-family="${FONT}" font-size="21" font-weight="700" letter-spacing="3.2" fill="${onBrand}" opacity="0.8">MEMBERSHIP CARD</text>
+    <text x="${headerTextX}" y="162" font-family="${FONT}" font-size="21" fill="${onBrand}" opacity="0.62">${escapeXml(webAddress)}</text>
 
     <!-- The rule that carries the whole palette across the card -->
     <rect y="${HEADER_H}" width="${CARD_WIDTH}" height="7" fill="url(#ruleFill)" />
@@ -514,13 +514,13 @@ function buildCardSvg(
 
     <!-- Who this is -->
     <text x="${RIGHT}" y="${PHOTO.y + 50}" font-family="${FONT}" font-size="${nameSize}" font-weight="700" fill="${INK}">${escapeXml(fit(member.name, nameMax))}</text>
-    <text x="${RIGHT}" y="${PHOTO.y + 88}" font-family="${FONT}" font-size="21" font-weight="700" fill="${brand}">Member #${member.memberId}</text>
+    <text x="${RIGHT}" y="${PHOTO.y + 90}" font-family="${FONT}" font-size="32" font-weight="700" fill="${brand}">Member #${member.memberId}</text>
 
     <!-- Standing and role, on one line: are they in good standing, and what
          are they here as. -->
-    <rect x="${RIGHT}" y="${PHOTO.y + 110}" width="132" height="36" rx="18" fill="${statusFill}" stroke="${statusInk}" stroke-opacity="0.3" />
-    <text x="${RIGHT + 66}" y="${PHOTO.y + 134}" text-anchor="middle" font-family="${FONT}" font-size="15" font-weight="700" letter-spacing="1.2" fill="${statusInk}">${active ? "ACTIVE" : "INACTIVE"}</text>
-    ${roleBadge(RIGHT + 165, PHOTO.y + 128, member.role, brand, c.tint)}
+    <rect x="${RIGHT}" y="${PHOTO.y + 112}" width="152" height="44" rx="22" fill="${statusFill}" stroke="${statusInk}" stroke-opacity="0.3" />
+    <text x="${RIGHT + 76}" y="${PHOTO.y + 141}" text-anchor="middle" font-family="${FONT}" font-size="23" font-weight="700" letter-spacing="1.2" fill="${statusInk}">${active ? "ACTIVE" : "INACTIVE"}</text>
+    ${roleBadge(RIGHT + 190, PHOTO.y + 134, member.role, brand, c.tint)}
 
     <!-- What it entitles them to, on a wash of the gym's colour -->
     <rect x="${PANEL.x}" y="${PANEL.y}" width="${PANEL.w}" height="${panelH}" rx="20" fill="${c.tint}" stroke="${c.tintEdge}" stroke-width="2" />
@@ -539,9 +539,9 @@ function buildCardSvg(
       <path d="${qr.path}" fill="${INK}" shape-rendering="crispEdges" />
     </g>
 
-    <text x="${QR.x + QR.size + 44}" y="${stubMid - 18}" font-family="${FONT}" font-size="22" font-weight="700" fill="${INK}">Scan for member details</text>
-    <text x="${QR.x + QR.size + 44}" y="${stubMid + 12}" font-family="${FONT}" font-size="15" fill="${SUBTLE}">Opens this member's record.</text>
-    <text x="${QR.x + QR.size + 44}" y="${stubMid + 36}" font-family="${FONT}" font-size="15" fill="${SUBTLE}">Staff sign-in required.</text>
+    <text x="${QR.x + QR.size + 30}" y="${stubMid - 26}" font-family="${FONT}" font-size="33" font-weight="700" fill="${INK}">Scan for member details</text>
+    <text x="${QR.x + QR.size + 30}" y="${stubMid + 16}" font-family="${FONT}" font-size="23" fill="${SUBTLE}">Opens this member's record.</text>
+    <text x="${QR.x + QR.size + 30}" y="${stubMid + 48}" font-family="${FONT}" font-size="23" fill="${SUBTLE}">Staff sign-in required.</text>
 
     <!-- The gym, in full -->
     <rect y="${FOOTER_Y}" width="${CARD_WIDTH}" height="${FOOTER_H}" fill="url(#footerFill)" />
@@ -550,12 +550,12 @@ function buildCardSvg(
     ${addressLines
       .map(
         (line, index) =>
-          `<text x="320" y="${addressTop + index * 24}" text-anchor="middle" font-family="${FONT}" font-size="16" font-weight="700" fill="${onDeep}"${fitToWidth(line)}>${escapeXml(line)}</text>`,
+          `<text x="320" y="${addressTop + index * 32}" text-anchor="middle" font-family="${FONT}" font-size="24" font-weight="700" fill="${onDeep}"${fitToWidth(line)}>${escapeXml(line)}</text>`,
       )
       .join("")}
 
     <line x1="232" y1="${FOOTER_Y + 82}" x2="408" y2="${FOOTER_Y + 82}" stroke="${onDeep}" stroke-opacity="0.25" stroke-width="1.5" />
-    <text x="320" y="${FOOTER_Y + 104}" text-anchor="middle" font-family="${FONT}" font-size="12" font-weight="600" letter-spacing="2.4" fill="${onDeep}" opacity="0.7">POWERED BY FITCONNECT</text>
+    <text x="320" y="${FOOTER_Y + 106}" text-anchor="middle" font-family="${FONT}" font-size="18" font-weight="600" letter-spacing="2.4" fill="${onDeep}" opacity="0.7">POWERED BY FITCONNECT</text>
   </g>
 </svg>`;
 }
