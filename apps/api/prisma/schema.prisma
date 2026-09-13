@@ -273,6 +273,7 @@ model Tenant {
   shifts            Shift[]
   payments          Payment[]
   workoutPlans      WorkoutPlan[]
+  dietPlans         DietPlan[]
   badges            Badge[]
   auditLogs         AuditLog[]
   settings          TenantSettings?
@@ -478,6 +479,8 @@ model TenantMembership {
   collectedPayments      Payment[]               @relation("PaymentCollector")
   createdPlans           WorkoutPlan[]           @relation("PlanCreator")
   planAssignments        WorkoutPlanAssignment[] @relation("PlanAssignment")
+  createdDietPlans       DietPlan[]              @relation("DietPlanCreator")
+  dietPlanAssignments    DietPlanAssignment[]    @relation("DietPlanAssignment")
   attendances            Attendance[]
   markedAttendances      Attendance[]            @relation("AttendanceMarkedBy")
   createdTodos           Todo[]                  @relation("TodoCreatedBy")
@@ -1387,6 +1390,104 @@ model Exercise {
   @@index([muscleGroup])
   @@index([isActive])
   @@index([muscleGroup, isActive])
+}
+
+/// ─── The food library ───────────────────────────────────────────────────────
+///
+/// The exercise library's counterpart for eating: one catalogue of foods, owned
+/// by the platform and read by every gym. A diet plan line is picked from here
+/// the way a workout line is picked from the exercise library.
+
+/// One food, with what one serving of it holds.
+///
+/// Every nutrient is per serving, and the serving is stated beside them —
+/// "100 g", "1 piece", "250 ml" — because "12 g protein" means nothing until
+/// you know of how much. The five a plan totals are required; the rest are
+/// optional because most labels and tables do not give all of them.
+model FoodItem {
+  id                String   @id @default(cuid())
+  name              String
+  /// Lowercase and hyphenated, unique across the library: "paneer-tikka".
+  slug              String   @unique
+  /// How the library files it: "Grains", "Dairy", "Fruits", "Pulses".
+  category          String
+  /// "Veg", "Non-Veg", "Egg", "Vegan" — free text, for the filter and a badge.
+  foodType          String?
+  /// How much one serving is. Every nutrient below is for this amount.
+  servingSize       Float
+  servingUnit       String
+  calories          Float
+  proteinGrams      Float
+  carbsGrams        Float
+  fatGrams          Float
+  fibreGrams        Float
+  sugarGrams        Float?
+  saturatedFatGrams Float?
+  sodiumMg          Float?
+  cholesterolMg     Float?
+  potassiumMg       Float?
+  calciumMg         Float?
+  ironMg            Float?
+  /// One plain line, shown under the name.
+  description       String?
+  /// The photo, as the upload route returned it.
+  imageUrl          String?
+  /// Retired foods stay readable in the plans that already name them.
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([category])
+  @@index([isActive])
+  @@index([category, isActive])
+}
+
+/// ─── Diet plans ─────────────────────────────────────────────────────────────
+///
+/// A gym's own eating plans, arranged exactly like `WorkoutPlan`: written by a
+/// coach or admin and assigned to members, or written by a member for
+/// themselves. The meals are JSON for the same reason a workout's exercises
+/// are — a plan is read whole and nothing joins on a breakfast.
+///
+/// Unlike the workout tables, both membership links cascade. Deleting a member
+/// takes their plans and assignments with them without the members module
+/// having to know these tables exist.
+model DietPlan {
+  id             String           @id @default(cuid())
+  tenantId       String
+  tenant         Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  creatorId      String
+  creator        TenantMembership @relation("DietPlanCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  title          String
+  description    String?
+  /// "Weight Loss", "Muscle Gain" — free text.
+  goal           String?
+  /// "Veg", "Non-Veg", "Vegan" — free text.
+  dietType       String?
+  /// What the plan aims for a day. The meals' own totals are computed, not stored.
+  targetCalories Int?
+  /// Meals, each holding food lines that carry a copy of the nutrients they were
+  /// picked with. See `DietPlanMeal` in the shared types.
+  meals          Json             @default("[]")
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  assignments DietPlanAssignment[]
+
+  @@index([tenantId])
+  @@index([creatorId])
+}
+
+model DietPlanAssignment {
+  id           String           @id @default(cuid())
+  planId       String
+  plan         DietPlan         @relation(fields: [planId], references: [id], onDelete: Cascade)
+  membershipId String
+  membership   TenantMembership @relation("DietPlanAssignment", fields: [membershipId], references: [id], onDelete: Cascade)
+  assignedAt   DateTime         @default(now())
+
+  @@unique([planId, membershipId])
+  @@index([membershipId])
 }
 
 /// ─── Likes and comments, for anything ───────────────────────────────────────

@@ -5,7 +5,7 @@
  * - The half-hour offset is the point of the quarter-hour buckets, so it is tested directly. India is +5:30 and every gym on the platform is in it; an implementation that assumed whole hours would pass a UTC test and misfile every visit here.
  */
 import { describe, expect, it } from "vitest";
-import { buildHeatmapGrid, type CheckInBucket } from "./attendance.heatmap";
+import { buildHeatmapGrid, buildOccupancyGrid, type CheckInBucket } from "./attendance.heatmap";
 
 /** One bucket, spelled out so each test reads as a time rather than a fixture. */
 function at(hourKey: string, quarter = 0, visits = 1): CheckInBucket {
@@ -128,5 +128,81 @@ describe("buildHeatmapGrid", () => {
 
     expect(total).toBe(0);
     expect(unplaced).toBe(3);
+  });
+});
+
+describe("buildOccupancyGrid", () => {
+  /**
+   * 2026-09-03 was a Thursday. 01:10–02:40 UTC is 06:40–08:10 in India, so the
+   * visit covers twenty minutes of the 6am hour, all of 7am and ten minutes of
+   * 8am. Over one week that is a third of a person, one person, and a sixth.
+   */
+  it("spreads a visit across the local hours it covered", () => {
+    const { grid, peakDay, peakHour, averageStayMinutes, sessions } = buildOccupancyGrid(
+      [
+        {
+          checkInAt: new Date("2026-09-03T01:10:00.000Z"),
+          checkOutAt: new Date("2026-09-03T02:40:00.000Z"),
+          open: false,
+        },
+      ],
+      "Asia/Kolkata",
+      1,
+    );
+
+    expect(sessions).toBe(1);
+    expect(grid[3]![6]).toBe(0.3);
+    expect(grid[3]![7]).toBe(1);
+    expect(grid[3]![8]).toBe(0.2);
+    expect([peakDay, peakHour]).toEqual([3, 7]);
+    expect(averageStayMinutes).toBe(90);
+  });
+
+  it("averages over the weeks in the window", () => {
+    const visit = {
+      checkInAt: new Date("2026-09-03T01:30:00.000Z"), // 07:00 IST
+      checkOutAt: new Date("2026-09-03T02:30:00.000Z"), // 08:00 IST
+      open: false,
+    };
+    const { grid } = buildOccupancyGrid([visit, visit], "Asia/Kolkata", 4);
+
+    // Two people for an hour, once in four weeks: half a person on average.
+    expect(grid[3]![7]).toBe(0.5);
+  });
+
+  it("counts somebody still inside up to now, and leaves out a visit nobody closed", () => {
+    const now = new Date("2026-09-03T02:00:00.000Z"); // 07:30 IST
+    const { grid, sessions, withoutCheckout, averageStayMinutes } = buildOccupancyGrid(
+      [
+        { checkInAt: new Date("2026-09-03T01:30:00.000Z"), checkOutAt: null, open: true },
+        { checkInAt: new Date("2026-09-02T01:30:00.000Z"), checkOutAt: null, open: false },
+      ],
+      "Asia/Kolkata",
+      1,
+      now,
+    );
+
+    expect(sessions).toBe(1);
+    expect(withoutCheckout).toBe(1);
+    expect(grid[3]![7]).toBe(0.5);
+    // An open visit has no length yet, so it does not move the average stay.
+    expect(averageStayMinutes).toBeNull();
+  });
+
+  it("refuses a span too long to be one visit", () => {
+    const { sessions, withoutCheckout } = buildOccupancyGrid(
+      [
+        {
+          checkInAt: new Date("2026-09-03T01:30:00.000Z"),
+          checkOutAt: new Date("2026-09-03T12:30:00.000Z"),
+          open: false,
+        },
+      ],
+      "Asia/Kolkata",
+      1,
+    );
+
+    expect(sessions).toBe(0);
+    expect(withoutCheckout).toBe(1);
   });
 });

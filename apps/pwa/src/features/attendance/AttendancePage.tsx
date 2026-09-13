@@ -1,3 +1,5 @@
+import { SessionTimes } from "./SessionTimes";
+import { sessionState } from "./session";
 import { getMonthStr, parseMonth, formatMonthLabel } from "@/lib/month";
 import { PageHeader } from "@/components/ui/page-header";
 import * as React from "react";
@@ -63,6 +65,12 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
  * desk. Kept rather than deleted because the flow it renders still works.
  */
 const SHOW_SELF_CHECKIN_CARD = false;
+
+/** Today's date as `YYYY-MM-DD` on the viewer's own calendar. */
+function todayLocalIso() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+}
 
 export default function AttendancePage() {
   const navigate = useAppNavigate();
@@ -596,10 +604,28 @@ export default function AttendancePage() {
                 where the eye can compare it down the column, and the remove
                 control quiet until it is reached for. */}
               <Card className="overflow-hidden py-0">
-                <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
                   <h2 className="text-base font-semibold">Present</h2>
-                  <span className="text-sm tabular-nums text-muted-foreground">
-                    {records.length} {records.length === 1 ? "member" : "members"}
+                  {/* In and out at a glance: who is still on the floor, who has
+                      left, and who never tapped out. Counted over the rows
+                      loaded so far, which is the whole day for most gyms. */}
+                  <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs tabular-nums text-muted-foreground">
+                    <span>
+                      {records.length} {records.length === 1 ? "visit" : "visits"}
+                    </span>
+                    {isToday && records.some((r) => sessionState(r, true) === "inside") && (
+                      <span className="inline-flex items-center gap-1 font-medium text-emerald-700 dark:text-emerald-400">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        {records.filter((r) => sessionState(r, true) === "inside").length} inside
+                      </span>
+                    )}
+                    <span>{records.filter((r) => r.checkOutAt).length} checked out</span>
+                    {records.some((r) => sessionState(r, isToday) === "no-checkout") && (
+                      <span className="text-amber-700 dark:text-amber-400">
+                        {records.filter((r) => sessionState(r, isToday) === "no-checkout").length} no
+                        check-out
+                      </span>
+                    )}
                   </span>
                 </div>
 
@@ -634,24 +660,21 @@ export default function AttendancePage() {
                             )}
                             {r.memberName}
                           </span>
-                          {/* Who marked them, when somebody did. A member who
-                            walked in and scanned needs no second line. */}
-                          {r.markedBy && (
+                          {/* The shift, and who marked them when somebody did.
+                            A member who walked in and scanned needs no name. */}
+                          {(r.shiftName || r.markedBy) && (
                             <span className="block truncate text-xs text-muted-foreground">
-                              by {r.markedBy.name}
+                              {[r.shiftName, r.markedBy ? `by ${r.markedBy.name}` : null]
+                                .filter(Boolean)
+                                .join(" · ")}
                             </span>
                           )}
                         </span>
                       </button>
 
-                      {/* The time, in a column of its own so the morning rush
+                      {/* In and out, in a column of its own so the morning rush
                         reads as a shape rather than as fifty separate lines. */}
-                      <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                        {new Date(r.checkInAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
+                      <SessionTimes session={r} isToday={isToday} />
 
                       {canDeleteAttendance && (
                         <Button
@@ -812,18 +835,20 @@ export default function AttendancePage() {
               {records.map((record) => (
                 <Card key={record.id}>
                   <div className="flex items-center justify-between p-3">
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-sm font-medium">{formatDate(String(record.date))}</p>
-                      {record.note && (
-                        <p className="text-xs text-muted-foreground">{record.note}</p>
+                      {(record.shiftName || record.note) && (
+                        <p className="truncate text-xs text-muted-foreground">
+                          {[record.shiftName, record.note].filter(Boolean).join(" · ")}
+                        </p>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Clock3 className="h-4 w-4" />
-                      {new Date(record.checkInAt).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Clock3 className="h-4 w-4 shrink-0" />
+                      <SessionTimes
+                        session={record}
+                        isToday={String(record.date).slice(0, 10) === todayLocalIso()}
+                      />
                     </div>
                   </div>
                 </Card>

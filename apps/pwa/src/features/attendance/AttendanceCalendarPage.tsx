@@ -9,10 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CardSkeleton } from "@/components/ui/skeleton";
 import { MonthNav } from "@/components/ui/month-nav";
-import { CalendarDays, Users, List, X } from "lucide-react";
+import { CalendarDays, Clock3, LogOut, Timer, Users, List, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getTenantDashboardPath } from "@/lib/subdomain";
 import AvatarCard from "@/components/ui/avatarCard";
+import { SessionTimes } from "./SessionTimes";
+import { sessionState as visitState, stayLabel, stayMinutes } from "./session";
 
 /**
  * One day of the calendar, taken from the API client rather than restated.
@@ -24,7 +26,28 @@ import AvatarCard from "@/components/ui/avatarCard";
  */
 type DayData = NonNullable<ReturnType<typeof useAttendanceCalendar>["data"]>["days"][string];
 
+type Visit = DayData["members"][number];
+
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+/**
+ * A day's visits under their shifts, each shift in the order it began.
+ *
+ * Visits outside every shift window come last: they are the exceptions — a
+ * desk mark for a past day, a tap at an hour the gym did not roster.
+ */
+function groupByShift(visits: Visit[]) {
+  const groups = new Map<string, { name: string; visits: Visit[] }>();
+  for (const visit of [...visits].sort((a, b) => a.checkInAt.localeCompare(b.checkInAt))) {
+    const key = visit.shiftId ?? "none";
+    const group = groups.get(key) ?? { name: visit.shiftName ?? "Outside shift hours", visits: [] };
+    group.visits.push(visit);
+    groups.set(key, group);
+  }
+  const outside = groups.get("none");
+  groups.delete("none");
+  return [...groups.values(), ...(outside ? [outside] : [])];
+}
 
 export default function AttendanceCalendarPage() {
   const navigate = useAppNavigate();
@@ -64,7 +87,26 @@ export default function AttendanceCalendarPage() {
   const activeDays = Object.keys(days).length;
   const maxCount = Math.max(1, ...Object.values(days).map((d) => d.count));
 
+  // How long a visit lasts, across every visit this month that was tapped out.
+  const completedStays = Object.values(days)
+    .flatMap((d) => d.members)
+    .map(stayMinutes)
+    .filter((minutes): minutes is number => minutes !== null && minutes > 0);
+  const averageStay = completedStays.length
+    ? completedStays.reduce((sum, minutes) => sum + minutes, 0) / completedStays.length
+    : null;
+
   const selectedDayData = selectedDate ? days[selectedDate] : null;
+  const selectedIsToday = selectedDate === todayStr;
+  const selectedVisits = selectedDayData?.members ?? [];
+  const selectedStates = selectedVisits.map((visit) => visitState(visit, selectedIsToday));
+  const selectedStays = selectedVisits
+    .map(stayMinutes)
+    .filter((minutes): minutes is number => minutes !== null && minutes > 0);
+  const selectedPeople = new Set(selectedVisits.map((visit) => visit.id)).size;
+  const insideCount = days[todayStr]
+    ? days[todayStr].members.filter((visit) => visitState(visit, true) === "inside").length
+    : 0;
 
   return (
     <div className="space-y-5 sm:space-y-6">
@@ -111,6 +153,25 @@ export default function AttendanceCalendarPage() {
                   <CalendarDays className="h-3 w-3" />
                   {activeDays} day{activeDays !== 1 ? "s" : ""}
                 </span>
+                {averageStay !== null && (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Timer className="h-3 w-3" />
+                    {stayLabel(averageStay)} avg stay
+                  </span>
+                )}
+                {insideCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDate(todayStr)}
+                    className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400"
+                  >
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                    </span>
+                    {insideCount} in the gym now
+                  </button>
+                )}
               </div>
             </MonthNav>
 
@@ -185,52 +246,93 @@ export default function AttendanceCalendarPage() {
               })}
             </div>
 
-            {/* Selected day member list — inline */}
+            {/* Selected day: every visit, in and out, under its shift. */}
             {selectedDate && selectedDayData && (
               <div className="mt-4 pt-4 border-t">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-sm">
-                    {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-IN", {
-                      weekday: "long",
-                      day: "numeric",
-                      month: "short",
-                    })}
-                    <span className="ml-2 text-xs font-normal text-muted-foreground">
-                      {selectedDayData.count} member{selectedDayData.count !== 1 ? "s" : ""}
-                    </span>
-                  </h3>
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="min-w-0 space-y-2">
+                    <h3 className="font-semibold text-sm">
+                      {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-IN", {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "short",
+                      })}
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">
+                        {selectedDayData.count} visit{selectedDayData.count !== 1 ? "s" : ""}
+                        {selectedPeople !== selectedDayData.count
+                          ? ` · ${selectedPeople} member${selectedPeople !== 1 ? "s" : ""}`
+                          : ""}
+                      </span>
+                    </h3>
+                    <div className="flex flex-wrap gap-1.5 text-[11px]">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+                        <LogOut className="h-3 w-3" />
+                        {selectedStates.filter((state) => state === "out").length} checked out
+                      </span>
+                      {selectedStates.includes("inside") && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-700 dark:text-emerald-400">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          {selectedStates.filter((state) => state === "inside").length} still inside
+                        </span>
+                      )}
+                      {selectedStates.includes("no-checkout") && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-amber-700 dark:text-amber-400">
+                          {selectedStates.filter((state) => state === "no-checkout").length} no check-out
+                        </span>
+                      )}
+                      {selectedStays.length > 0 && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+                          <Timer className="h-3 w-3" />
+                          {stayLabel(
+                            selectedStays.reduce((sum, minutes) => sum + minutes, 0) /
+                              selectedStays.length,
+                          )}{" "}
+                          avg stay
+                        </span>
+                      )}
+                    </div>
+                  </div>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7"
+                    className="h-7 w-7 shrink-0"
                     onClick={() => setSelectedDate(null)}
                   >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="space-y-1 overflow-y-auto -mx-1 px-1">
-                  {selectedDayData.members.map((m) => (
-                    <button
-                      key={m.id}
-                      type="button"
-                      className="flex w-full rounded-lg px-2.5 py-2 text-left hover:bg-muted/60 transition-colors"
-                      onClick={() => navigate(getTenantDashboardPath(`/members/${m.id}`))}
-                    >
-                      <AvatarCard
-                        name={m.name}
-                        avatarUrl={m.avatarUrl}
-                        memberId={m.memberId ?? undefined}
-                        variant="sm"
-                        wrapName
-                        className="min-w-0 flex-1"
-                      />
-                      <span className="shrink-0 self-center pl-3 text-xs text-muted-foreground tabular-nums">
-                        {new Date(m.checkInAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </button>
+
+                <div className="space-y-4">
+                  {groupByShift(selectedVisits).map((group) => (
+                    <section key={group.name} className="space-y-1">
+                      <h4 className="flex items-center gap-2 px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        <Clock3 className="h-3 w-3" />
+                        {group.name}
+                        <span className="font-normal normal-case tracking-normal">
+                          · {group.visits.length}
+                        </span>
+                      </h4>
+                      {group.visits.map((visit) => {
+                        return (
+                          <button
+                            key={`${visit.id}:${visit.checkInAt}`}
+                            type="button"
+                            className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left hover:bg-muted/60 transition-colors"
+                            onClick={() => navigate(getTenantDashboardPath(`/members/${visit.id}`))}
+                          >
+                            <AvatarCard
+                              name={visit.name}
+                              avatarUrl={visit.avatarUrl}
+                              memberId={visit.memberId ?? undefined}
+                              variant="sm"
+                              wrapName
+                              className="min-w-0 flex-1"
+                            />
+                            <SessionTimes session={visit} isToday={selectedIsToday} />
+                          </button>
+                        );
+                      })}
+                    </section>
                   ))}
                 </div>
               </div>

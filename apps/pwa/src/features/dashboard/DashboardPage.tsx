@@ -12,6 +12,8 @@ import {
 } from "@/lib/whatsapp-templates";
 import { useMyPayments, usePayments, usePaymentAnalytics } from "@/api/queries/payments";
 import { useWorkoutPlans } from "@/api/queries/catalog";
+import { useCoinOverview } from "@/api/queries/coupons";
+import { useDietPlansInfinite } from "@/api/queries/diet-plans";
 import {
   useAdminOrders,
   useAdminProducts,
@@ -34,10 +36,12 @@ import {
   CalendarClock,
   CheckCircle2,
   Clock3,
+  Coins,
   CreditCard,
   Dumbbell,
   MessageCircle,
   PackageOpen,
+  Salad,
   ScrollText,
   ShoppingBag,
   Users,
@@ -96,6 +100,8 @@ export default function DashboardPage() {
   const canViewGymMembers = can(Permission.MEMBERS_READ);
   const canViewAllPayments = can(Permission.PAYMENTS_READ);
   const canViewFinance = can(Permission.PAYMENTS_ANALYTICS_READ);
+  const canViewCoins = can(Permission.COUPONS_ANALYTICS_READ);
+  const canViewDietPlans = can(Permission.DIET_PLANS_READ);
   // ─── Platform overview ──────────────────────────────────────────────────────
   // Each query is disabled unless this session actually renders that panel, so a
   // gym member never issues platform requests and vice versa.
@@ -140,6 +146,21 @@ export default function DashboardPage() {
   // say. This is the number a gym owner opens the dashboard for.
   const analyticsQuery = usePaymentAnalytics(undefined, { enabled: canViewFinance });
   const monthRevenue = analyticsQuery.data?.analytics?.month?.totalRevenue ?? null;
+
+  /**
+   * What the gym still owes in coins.
+   *
+   * Coins have no sidebar entry: this tile is how staff who track them get
+   * there, with the one figure that says whether to look.
+   */
+  const coinOverviewQuery = useCoinOverview({ enabled: isTenantDashboard && canViewCoins });
+  const coinsOutstanding = coinOverviewQuery.data?.outstanding ?? null;
+
+  // One small page is enough: the tile needs only the total.
+  const dietPlansQuery = useDietPlansInfinite(1, {
+    enabled: isTenantDashboard && canViewDietPlans,
+  });
+  const dietPlanTotal = dietPlansQuery.data?.pages[0]?.meta.total ?? null;
 
   const memberCountQuery = useMembers(
     { page: 1, limit: 1 },
@@ -479,6 +500,15 @@ export default function DashboardPage() {
           onClick={() => navigate("/workouts")}
         />
 
+        {canViewDietPlans && (
+          <StatCard
+            icon={Salad}
+            label={canViewGymMembers ? "Diet plans" : "My diet plans"}
+            value={dietPlanTotal ?? "—"}
+            onClick={() => navigate("/diet-plans")}
+          />
+        )}
+
         <StatCard
           icon={CreditCard}
           label={canViewAllPayments ? "Payments" : "My payments"}
@@ -494,6 +524,17 @@ export default function DashboardPage() {
             subtext="Collected so far"
             color="text-emerald-600"
             onClick={() => navigate("/finance")}
+          />
+        )}
+
+        {canViewCoins && (
+          <StatCard
+            icon={Coins}
+            label="Coins owed"
+            value={coinsOutstanding === null ? "—" : coinsOutstanding.toLocaleString("en-IN")}
+            subtext="Held by members"
+            color="text-amber-600"
+            onClick={() => navigate("/coins")}
           />
         )}
       </div>

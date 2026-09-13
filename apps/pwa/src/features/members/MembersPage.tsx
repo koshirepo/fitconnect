@@ -56,6 +56,7 @@ import {
   CheckCircle2,
   IndianRupee,
   SlidersHorizontal,
+  UserPlus,
 } from "lucide-react";
 import type { TenantMember } from "@/types/api";
 import { usePendingMutations } from "@/lib/use-pending-mutations";
@@ -662,6 +663,18 @@ export default function MembersPage() {
         actions={
           <>
             <div className="flex items-center gap-2">
+              {/* Who brought whom in. A view of the roster, so it opens from
+                  here rather than from a sidebar entry of its own. */}
+              {can(Permission.MEMBERS_REFERRALS_READ) && (
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/referrals")}
+                  title="Referrals"
+                >
+                  <UserPlus className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Referrals</span>
+                </Button>
+              )}
               {isAdmin && (
                 <Button
                   variant="outline"

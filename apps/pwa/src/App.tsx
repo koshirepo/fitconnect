@@ -173,6 +173,20 @@ const ExerciseDetailPage = React.lazy(
 const PlatformExercisesPage = React.lazy(
   () => import("@/features/exercises/PlatformExercisesPage"),
 );
+const FoodItemLibraryPage = React.lazy(
+  () => import("@/features/food-items/FoodItemLibraryPage"),
+);
+const FoodItemDetailPage = React.lazy(
+  () => import("@/features/food-items/FoodItemDetailPage"),
+);
+const PlatformFoodItemsPage = React.lazy(
+  () => import("@/features/food-items/PlatformFoodItemsPage"),
+);
+const DietPlansPage = React.lazy(() => import("@/features/diet-plans/DietPlansPage"));
+const DietPlanDetailPage = React.lazy(
+  () => import("@/features/diet-plans/DietPlanDetailPage"),
+);
+const DietPlanFormPage = React.lazy(() => import("@/features/diet-plans/DietPlanFormPage"));
 const RolesPage = React.lazy(() => import("@/features/roles/RolesPage"));
 const RoleFormPage = React.lazy(() => import("@/features/roles/RoleFormPage"));
 
@@ -306,6 +320,34 @@ export default function App() {
             <Route element={<RequirePermission anyOf={[Permission.WORKOUTS_READ]} />}>
               <Route path="/dashboard/exercises" element={<ExerciseLibraryPage />} />
               <Route path="/dashboard/exercises/:slug" element={<ExerciseDetailPage />} />
+            </Route>
+            {/* The platform's food library, read from inside a gym's dashboard
+                the same way the exercise library is. Public, so no grant. */}
+            <Route path="/dashboard/food-items" element={<FoodItemLibraryPage />} />
+            <Route path="/dashboard/food-items/:slug" element={<FoodItemDetailPage />} />
+            {/* A gym's diet plans, gated like workout plans. The write routes
+                also admit the self grant, so a member can design their own. */}
+            <Route element={<RequirePermission anyOf={[Permission.DIET_PLANS_READ]} />}>
+              <Route path="/dashboard/diet-plans" element={<DietPlansPage />} />
+              <Route path="/dashboard/diet-plans/:planId" element={<DietPlanDetailPage />} />
+            </Route>
+            <Route
+              element={
+                <RequirePermission
+                  anyOf={[Permission.DIET_PLANS_CREATE, Permission.DIET_PLANS_CREATE_SELF]}
+                />
+              }
+            >
+              <Route path="/dashboard/diet-plans/new" element={<DietPlanFormPage />} />
+            </Route>
+            <Route
+              element={
+                <RequirePermission
+                  anyOf={[Permission.DIET_PLANS_UPDATE, Permission.DIET_PLANS_CREATE_SELF]}
+                />
+              }
+            >
+              <Route path="/dashboard/diet-plans/:planId/edit" element={<DietPlanFormPage />} />
             </Route>
             <Route element={<RequirePermission anyOf={[Permission.TODOS_READ]} />}>
               <Route path="/dashboard/todos" element={<TodosPage />} />
@@ -521,6 +563,9 @@ export default function App() {
                 <Route element={<PublicPageContainer />}>
                   <Route path="/exercises" element={<ExerciseLibraryPage />} />
                   <Route path="/exercises/:slug" element={<ExerciseDetailPage />} />
+                  {/* The food library, on the same public footing. */}
+                  <Route path="/food-items" element={<FoodItemLibraryPage />} />
+                  <Route path="/food-items/:slug" element={<FoodItemDetailPage />} />
                 </Route>
                 <Route path="/about" element={<AboutUsPage />} />
                 <Route path="/contact" element={<ContactUsPage />} />
@@ -590,6 +635,28 @@ export default function App() {
                   <Route element={<RequirePermission anyOf={[Permission.WORKOUTS_READ]} />}>
                     <Route path="/exercises" element={<ExerciseLibraryPage />} />
                     <Route path="/exercises/:slug" element={<ExerciseDetailPage />} />
+                  </Route>
+                  <Route element={<RequirePermission anyOf={[Permission.DIET_PLANS_READ]} />}>
+                    <Route path="/diet-plans" element={<DietPlansPage />} />
+                    <Route path="/diet-plans/:planId" element={<DietPlanDetailPage />} />
+                  </Route>
+                  <Route
+                    element={
+                      <RequirePermission
+                        anyOf={[Permission.DIET_PLANS_CREATE, Permission.DIET_PLANS_CREATE_SELF]}
+                      />
+                    }
+                  >
+                    <Route path="/diet-plans/new" element={<DietPlanFormPage />} />
+                  </Route>
+                  <Route
+                    element={
+                      <RequirePermission
+                        anyOf={[Permission.DIET_PLANS_UPDATE, Permission.DIET_PLANS_CREATE_SELF]}
+                      />
+                    }
+                  >
+                    <Route path="/diet-plans/:planId/edit" element={<DietPlanFormPage />} />
                   </Route>
                   <Route
                     element={
@@ -831,6 +898,12 @@ export default function App() {
                       element={<RequirePermission anyOf={[Permission.PLATFORM_EXERCISES_MANAGE]} />}
                     >
                       <Route path="/platform-exercises" element={<PlatformExercisesPage />} />
+                    </Route>
+
+                    <Route
+                      element={<RequirePermission anyOf={[Permission.PLATFORM_FOOD_ITEMS_MANAGE]} />}
+                    >
+                      <Route path="/platform-food-items" element={<PlatformFoodItemsPage />} />
                     </Route>
 
                     <Route

@@ -85,6 +85,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import {
   Shield,
   Dumbbell,
+  Salad,
   Clock,
   CreditCard,
   Coins,
@@ -689,8 +690,8 @@ export default function MemberDetailPage() {
           "member");
   const deleteDialogTitle = isMemberProfile ? "Delete member?" : `Delete ${viewedRoleLabel}?`;
   const deleteDialogDescription = isMemberProfile
-    ? "This will permanently delete the member along with their payments, assigned workout plans, and plans they created. This action cannot be undone."
-    : `This will permanently delete this ${viewedRoleLabel} profile. Workout plans assigned to them and workout plans created by them will be deleted. Payments they collected and attendance entries they marked will be kept, but the collected-by and marked-by references will be cleared. This action cannot be undone.`;
+    ? "This will permanently delete the member along with their payments, assigned workout and diet plans, and plans they created. This action cannot be undone."
+    : `This will permanently delete this ${viewedRoleLabel} profile. Workout and diet plans assigned to them or created by them will be deleted. Payments they collected and attendance entries they marked will be kept, but the collected-by and marked-by references will be cleared. This action cannot be undone.`;
 
   /** The membership tile's headline: when this term runs out, or that it has. */
   const validUntilDate = member.payments
@@ -1338,6 +1339,45 @@ export default function MemberDetailPage() {
                     </div>
                     <span className="shrink-0 text-xs text-muted-foreground">
                       {formatDate(pa.assignedAt)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Diet plans ─────────────────────────────────────────────────────── */}
+      {isMemberProfile && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <Salad className="h-5 w-5" />
+              Diet plans
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {(member.dietPlanAssignments ?? []).length === 0 ? (
+              <p className="text-sm text-muted-foreground">No diet plans assigned.</p>
+            ) : (
+              <div className="space-y-2">
+                {(member.dietPlanAssignments ?? []).map((assignment) => (
+                  <div
+                    key={assignment.id}
+                    className="flex cursor-pointer items-center justify-between gap-3 rounded-md border px-4 py-3 transition-colors hover:bg-muted/50"
+                    onClick={() => navigate(`/diet-plans/${assignment.plan.id}`)}
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{assignment.plan.title}</p>
+                      {assignment.plan.description && (
+                        <p className="truncate text-sm text-muted-foreground">
+                          {assignment.plan.description}
+                        </p>
+                      )}
+                    </div>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {formatDate(assignment.assignedAt)}
                     </span>
                   </div>
                 ))}

@@ -100,6 +100,7 @@ export const APEX_ONLY_SEGMENTS = new Set([
   "platform-roles",
   "platform-audit",
   "platform-occupations",
+  "platform-food-items",
   "platform-commerce",
   "shop",
 ]);

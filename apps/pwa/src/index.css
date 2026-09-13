@@ -362,11 +362,18 @@
      the finished thing to read correctly. Without it the name is backwards and
      the QR code will not scan.
 
-     `scaleX(-1)` flips about the element's own centre, and the element is
-     already pinned to the page corner at exactly card size, so the flip stays
-     inside the same box and the printed geometry does not move.
+     `scale`, not `transform`, and deliberately so: the preview flips with
+     Tailwind's `-scale-x-100`, which sets the `scale` property. The two
+     properties compose rather than override, so writing `transform: scaleX(-1)`
+     here would flip an already-flipped card back to normal and print exactly
+     the sheet this is meant to avoid. Same property, so the two are idempotent
+     and the card is mirrored once however both are applied.
+
+     It flips about the element's own centre, and the element is already pinned
+     to the page corner at exactly card size, so the printed geometry does not
+     move.
   */
   .id-card-print.id-card-mirror {
-    transform: scaleX(-1) !important;
+    scale: -1 1 !important;
   }
 }

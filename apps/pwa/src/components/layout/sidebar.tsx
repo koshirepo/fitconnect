@@ -17,10 +17,8 @@ import {
   Building2,
   Users,
   Dumbbell,
-  BellRing,
   CreditCard,
   Package,
-  Coins,
   Tag,
   ClipboardList,
   TrendingUp,
@@ -37,7 +35,8 @@ import {
   X,
   CalendarCheck,
   PlayCircle,
-  UserPlus,
+  Salad,
+  Apple,
   ShieldCheck,
   User,
   Globe,
@@ -83,195 +82,254 @@ type NavItem = {
   exact?: boolean;
 };
 
-const platformNav: NavItem[] = [
+/**
+ * A headed run of entries. A group whose entries are all hidden from the caller
+ * is dropped whole, so nobody sees a heading with nothing under it.
+ */
+type NavGroup = { label?: string; items: NavItem[] };
+
+/**
+ * The platform's own screens, by what they are for.
+ *
+ * The libraries sit together because they are the same kind of work — curating
+ * one catalogue every gym reads — even though each has its own permission.
+ */
+const platformNav: NavGroup[] = [
   {
-    to: "/tenants",
-    label: "Tenants",
-    icon: Building2,
-    anyOf: [Permission.PLATFORM_TENANTS_READ],
-  },
-  {
-    to: "/platform-commerce",
-    label: "Commerce",
-    icon: ShoppingBag,
-    anyOf: [Permission.PLATFORM_PRODUCTS_READ],
-    // Orders and warehouses are their own entries below, so the catalog link
-    // must not light up when the user is standing on one of them.
-    excludePrefixes: [
-      "/platform-commerce/orders",
-      "/platform-commerce/returns",
-      "/platform-commerce/warehouses",
+    label: "Gyms",
+    items: [
+      {
+        to: "/tenants",
+        label: "Tenants",
+        icon: Building2,
+        anyOf: [Permission.PLATFORM_TENANTS_READ],
+      },
     ],
   },
   {
-    to: "/platform-commerce/orders",
-    label: "Orders",
-    icon: Package,
-    anyOf: [Permission.PLATFORM_ORDERS_READ],
+    label: "Commerce",
+    items: [
+      {
+        to: "/platform-commerce",
+        label: "Products",
+        icon: ShoppingBag,
+        anyOf: [Permission.PLATFORM_PRODUCTS_READ],
+        // Orders and warehouses are their own entries below, so the catalog link
+        // must not light up when the user is standing on one of them.
+        excludePrefixes: [
+          "/platform-commerce/orders",
+          "/platform-commerce/returns",
+          "/platform-commerce/warehouses",
+        ],
+      },
+      {
+        to: "/platform-commerce/orders",
+        label: "Orders",
+        icon: Package,
+        anyOf: [Permission.PLATFORM_ORDERS_READ],
+      },
+      {
+        to: "/platform-commerce/returns",
+        label: "Returns",
+        icon: RotateCcw,
+        anyOf: [Permission.PLATFORM_ORDERS_READ],
+      },
+      {
+        to: "/platform-commerce/warehouses",
+        label: "Warehouses",
+        icon: Warehouse,
+        anyOf: [Permission.PLATFORM_PRODUCTS_READ],
+      },
+    ],
   },
   {
-    to: "/platform-commerce/returns",
-    label: "Returns",
-    icon: RotateCcw,
-    anyOf: [Permission.PLATFORM_ORDERS_READ],
+    label: "Libraries",
+    items: [
+      {
+        to: "/platform-exercises",
+        label: "Exercise library",
+        icon: PlayCircle,
+        anyOf: [Permission.PLATFORM_EXERCISES_MANAGE],
+      },
+      {
+        to: "/platform-food-items",
+        label: "Food library",
+        icon: Apple,
+        anyOf: [Permission.PLATFORM_FOOD_ITEMS_MANAGE],
+      },
+      {
+        to: "/platform-occupations",
+        label: "Occupations",
+        icon: Briefcase,
+        anyOf: [Permission.PLATFORM_OCCUPATIONS_MANAGE],
+      },
+    ],
   },
   {
-    to: "/platform-commerce/warehouses",
-    label: "Warehouses",
-    icon: Warehouse,
-    anyOf: [Permission.PLATFORM_PRODUCTS_READ],
-  },
-  {
-    to: "/platform-roles",
-    label: "Roles & Permissions",
-    icon: ShieldCheck,
-    anyOf: [Permission.PLATFORM_ROLES_READ],
-  },
-  {
-    to: "/platform-occupations",
-    label: "Occupations",
-    icon: Briefcase,
-    anyOf: [Permission.PLATFORM_OCCUPATIONS_MANAGE],
-  },
-  {
-    to: "/platform-exercises",
-    label: "Exercise library",
-    icon: PlayCircle,
-    anyOf: [Permission.PLATFORM_EXERCISES_MANAGE],
-  },
-  {
-    to: "/platform-audit",
-    label: "Audit Logs",
-    icon: ScrollText,
-    anyOf: [Permission.AUDIT_PLATFORM_READ],
+    label: "Administration",
+    items: [
+      {
+        to: "/platform-roles",
+        label: "Roles & Permissions",
+        icon: ShieldCheck,
+        anyOf: [Permission.PLATFORM_ROLES_READ],
+      },
+      {
+        to: "/platform-audit",
+        label: "Audit Logs",
+        icon: ScrollText,
+        anyOf: [Permission.AUDIT_PLATFORM_READ],
+      },
+    ],
   },
 ];
 
-const tenantNav: NavItem[] = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { to: "/members", label: "Members", icon: Users, anyOf: [Permission.MEMBERS_READ] },
+/**
+ * A gym's screens, grouped by the job somebody opened the app to do.
+ *
+ * The sidebar lists destinations, not every screen. A page that is only ever
+ * visited on the way from another is linked from that page instead:
+ *
+ * - Referrals, from Members — it is a view of who brought whom in.
+ * - Reminders, from Payments — it is the record of chasing what is owed.
+ * - Coins, from the dashboard and from Coupons — a figure to glance at, and the
+ *   other half of the rewards a coupon grants.
+ * - Store analytics, from Store admin. Roles, from Settings.
+ * - The exercise and food libraries, from Workout Plans and Diet Plans, which
+ *   are built out of them.
+ */
+const tenantNav: NavGroup[] = [
   {
-    to: "/referrals",
-    label: "Referrals",
-    icon: UserPlus,
-    anyOf: [Permission.MEMBERS_REFERRALS_READ],
-  },
-  { to: "/todos", label: "Todos", icon: ListTodo, anyOf: [Permission.TODOS_READ] },
-  {
-    to: "/workouts",
-    label: "Workout Plans",
-    icon: Dumbbell,
-    anyOf: [Permission.WORKOUTS_READ],
-  },
-  {
-    // The platform's library, read by every gym. No permission of its own:
-    // whoever may see a plan may see what the movements in it look like.
-    to: "/exercises",
-    label: "Exercises",
-    icon: PlayCircle,
-    anyOf: [Permission.WORKOUTS_READ],
+    items: [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true }],
   },
   {
-    to: "/payments",
-    label: "Payments",
-    icon: CreditCard,
-    anyOf: [Permission.PAYMENTS_READ, Permission.PAYMENTS_READ_SELF],
+    label: "Members & attendance",
+    items: [
+      { to: "/members", label: "Members", icon: Users, anyOf: [Permission.MEMBERS_READ] },
+      {
+        to: "/attendance",
+        label: "Attendance",
+        icon: CalendarCheck,
+        anyOf: [Permission.ATTENDANCE_READ, Permission.ATTENDANCE_CHECKIN_SELF],
+        // The machines live under this page and under Settings rather than in the
+        // sidebar, so this stays lit while somebody is on them.
+      },
+      { to: "/badges", label: "Badges", icon: Award, anyOf: [Permission.BADGES_READ] },
+    ],
   },
   {
-    to: "/reminders",
-    label: "Reminders",
-    icon: BellRing,
-    anyOf: [Permission.PAYMENTS_READ],
+    label: "Training",
+    items: [
+      {
+        to: "/workouts",
+        label: "Workout Plans",
+        icon: Dumbbell,
+        anyOf: [Permission.WORKOUTS_READ],
+      },
+      {
+        to: "/diet-plans",
+        label: "Diet Plans",
+        icon: Salad,
+        anyOf: [Permission.DIET_PLANS_READ],
+      },
+    ],
   },
   {
-    to: "/subscriptions",
-    label: "Subscriptions",
-    icon: Package,
-    anyOf: [Permission.SUBSCRIPTIONS_READ],
+    label: "Payments & finance",
+    items: [
+      {
+        to: "/payments",
+        label: "Payments",
+        icon: CreditCard,
+        anyOf: [Permission.PAYMENTS_READ, Permission.PAYMENTS_READ_SELF],
+      },
+      {
+        to: "/subscriptions",
+        label: "Subscriptions",
+        icon: Package,
+        anyOf: [Permission.SUBSCRIPTIONS_READ],
+      },
+      {
+        to: "/coupons",
+        label: "Coupons",
+        icon: Tag,
+        anyOf: [Permission.COUPONS_READ],
+      },
+      {
+        // The gym's performance and its books. Income and expenses, and the
+        // salary list, are one click away from this page. It had no entry at
+        // all before, and was reachable only from a dashboard tile.
+        to: "/finance",
+        label: "Analytics",
+        icon: TrendingUp,
+        anyOf: [Permission.PAYMENTS_ANALYTICS_READ],
+      },
+    ],
   },
   {
-    to: "/coupons",
-    label: "Coupons",
-    icon: Tag,
-    anyOf: [Permission.COUPONS_READ],
-  },
-  {
-    // Its own entry, not a tab under coupons: coins also come from referrals
-    // and staff gifts, and what a gym owes in coins is a different question
-    // from which discount code is working.
-    to: "/coins",
-    label: "Coins",
-    icon: Coins,
-    // The gym-wide figures, not a member's own balance — which is why this is
-    // not COUPONS_READ, a grant every member holds so they can browse offers.
-    anyOf: [Permission.COUPONS_ANALYTICS_READ],
-  },
-  {
-    // The shop itself. Public, and the only place anybody buys anything.
-    //
-    // Points at the storefront, not the counter. Both of these entries used to
-    // lead to the same path, so whichever page won the route match served both
-    // links and the other was unreachable from the sidebar.
-    to: "/shop",
     label: "Store",
-    icon: ShoppingBag,
-    anyOf: [Permission.STORE_READ],
-    public: true,
+    items: [
+      {
+        // The shop itself. Public, and the only place anybody buys anything.
+        //
+        // Points at the storefront, not the counter. Both of these entries used to
+        // lead to the same path, so whichever page won the route match served both
+        // links and the other was unreachable from the sidebar.
+        to: "/shop",
+        label: "Store",
+        icon: ShoppingBag,
+        anyOf: [Permission.STORE_READ],
+        public: true,
+      },
+      {
+        // The other side of the counter: orders to hand over, payments to settle,
+        // stock to correct. Not a shop, so it is not called one. Its analytics
+        // are a button on the page, and this stays lit while somebody is there.
+        to: "/dashboard/store",
+        label: "Store admin",
+        icon: ClipboardList,
+        anyOf: [Permission.STORE_MANAGE, Permission.STORE_SELL],
+      },
+    ],
   },
   {
-    // The other side of the counter: orders to hand over, payments to settle,
-    // stock to correct. Not a shop, so it is not called one.
-    to: "/dashboard/store",
-    label: "Store admin",
-    icon: ClipboardList,
-    anyOf: [Permission.STORE_MANAGE, Permission.STORE_SELL],
-    // Analytics is its own entry below, so this must not light up when
-    // somebody is standing on it.
-    excludePrefixes: ["/dashboard/store/analytics"],
+    label: "Me",
+    items: [
+      { to: "/orders/history", label: "My Orders", icon: ShoppingBag },
+      {
+        // Their own payslips. Staff who can see everybody's reach it through the
+        // salary list instead, so this is hidden for them rather than duplicated.
+        to: "/my-salary",
+        label: "My salary",
+        icon: BadgeIndianRupee,
+        anyOf: [Permission.SALARY_READ_SELF],
+        noneOf: [Permission.SALARY_READ],
+      },
+    ],
   },
   {
-    // The shop's own books, kept off the payments screen: what it sold, what
-    // that stock cost, and what was left. Behind STORE_MANAGE alone — a coach
-    // who fulfils orders has no business seeing what the gym pays its supplier.
-    to: "/dashboard/store/analytics",
-    label: "Store analytics",
-    icon: TrendingUp,
-    anyOf: [Permission.STORE_MANAGE],
+    label: "Admin",
+    items: [
+      { to: "/todos", label: "Todos", icon: ListTodo, anyOf: [Permission.TODOS_READ] },
+      {
+        to: "/settings",
+        label: "Settings",
+        icon: Settings,
+        anyOf: [Permission.SETTINGS_UPDATE],
+      },
+      {
+        // Reached from Settings by anybody who can open Settings. Listed here
+        // only for somebody who may read roles but not change settings, who
+        // would otherwise have no way in.
+        to: "/settings/roles",
+        label: "Roles & Permissions",
+        icon: ShieldCheck,
+        anyOf: [Permission.ROLES_READ],
+        noneOf: [Permission.SETTINGS_UPDATE],
+      },
+      { to: "/audit", label: "Audit Logs", icon: ScrollText, anyOf: [Permission.AUDIT_TENANT_READ] },
+    ],
   },
-  {
-    to: "/attendance",
-    label: "Attendance",
-    icon: CalendarCheck,
-    anyOf: [Permission.ATTENDANCE_READ, Permission.ATTENDANCE_CHECKIN_SELF],
-    // The machines live under this page and under Settings rather than in the
-    // sidebar, so this stays lit while somebody is on them.
-  },
-  { to: "/orders/history", label: "My Orders", icon: ShoppingBag },
-  {
-    // Their own payslips. Staff who can see everybody's reach it through the
-    // salary list instead, so this is hidden for them rather than duplicated.
-    to: "/my-salary",
-    label: "My salary",
-    icon: BadgeIndianRupee,
-    anyOf: [Permission.SALARY_READ_SELF],
-    noneOf: [Permission.SALARY_READ],
-  },
-  { to: "/badges", label: "Badges", icon: Award, anyOf: [Permission.BADGES_READ] },
-  {
-    to: "/settings",
-    label: "Settings",
-    icon: Settings,
-    anyOf: [Permission.SETTINGS_UPDATE],
-    // Roles has its own entry below and is nested under /settings.
-    excludePrefixes: ["/settings/roles"],
-  },
-  {
-    to: "/settings/roles",
-    label: "Roles & Permissions",
-    icon: ShieldCheck,
-    anyOf: [Permission.ROLES_READ],
-  },
-  { to: "/audit", label: "Audit Logs", icon: ScrollText, anyOf: [Permission.AUDIT_TENANT_READ] },
 ];
 
 export function Sidebar() {
@@ -285,7 +343,6 @@ export function Sidebar() {
   const { sidebarOpen, setSidebarOpen, isMobile } = useUIStore();
   const { canAny } = usePermissions();
   const navigate = useNavigate();
-  const location = useLocation();
   const [currentTenant, setCurrentTenant] = React.useState<Tenant | null>(null);
 
   const membership = currentMembership();
@@ -296,6 +353,11 @@ export function Sidebar() {
       : "/";
   const onTenantHost = isTenantSubdomain();
   const getTenantRoute = (path: string) => (onTenantHost ? getTenantDashboardPath(path) : path);
+
+  /** Whether the caller holds what an entry asks for, and nothing that supersedes it. */
+  const visible = (item: NavItem) =>
+    (!item.anyOf?.length || canAny(...item.anyOf)) &&
+    !(item.noneOf?.length && canAny(...item.noneOf));
 
   const handleLogout = () => {
     logout();
@@ -395,37 +457,12 @@ export function Sidebar() {
               addresses rather than linking across. */}
           {!onTenantHost && isPlatformStaff() && (
             <>
-              <p className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Platform
-              </p>
-              {platformNav
-                .filter(
-                  (item) =>
-                    (!item.anyOf?.length || canAny(...item.anyOf)) &&
-                    !(item.noneOf?.length && canAny(...item.noneOf)),
-                )
-                .map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    end={item.exact}
-                    onClick={() => isMobile && setSidebarOpen(false)}
-                    className={({ isActive }) =>
-                      cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 hover:bg-sidebar-accent",
-                        isActive &&
-                          !item.excludePrefixes?.some((prefix) =>
-                            location.pathname.startsWith(prefix),
-                          ) &&
-                          "bg-primary/10 text-primary border-l-2 border-primary",
-                      )
-                    }
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
-                  </NavLink>
-                ))}
-              <div className="my-2 border-b" />
+              <NavGroups
+                groups={platformNav}
+                visible={visible}
+                resolve={(item) => item.to}
+                onNavigate={() => isMobile && setSidebarOpen(false)}
+              />
             </>
           )}
 
@@ -438,36 +475,13 @@ export function Sidebar() {
               from the wrong side. */}
           {onTenantHost && currentTenantId && (
             <>
-              <p className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Gym
-              </p>
-              {tenantNav
-                .filter(
-                  (item) =>
-                    (!item.anyOf?.length || canAny(...item.anyOf)) &&
-                    !(item.noneOf?.length && canAny(...item.noneOf)),
-                )
-                .map((item) => (
-                  <NavLink
-                    key={`${item.to}:${item.label}`}
-                    to={item.public ? item.to : getTenantRoute(item.to)}
-                    end={item.exact}
-                    onClick={() => isMobile && setSidebarOpen(false)}
-                    className={({ isActive }) =>
-                      cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 hover:bg-sidebar-accent",
-                        isActive &&
-                          !item.excludePrefixes?.some((prefix) =>
-                            location.pathname.startsWith(getTenantRoute(prefix)),
-                          ) &&
-                          "bg-primary/10 text-primary border-l-2 border-primary",
-                      )
-                    }
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
-                  </NavLink>
-                ))}
+              <NavGroups
+                groups={tenantNav}
+                visible={visible}
+                resolve={(item) => (item.public ? item.to : getTenantRoute(item.to))}
+                matchPrefix={getTenantRoute}
+                onNavigate={() => isMobile && setSidebarOpen(false)}
+              />
             </>
           )}
         </nav>
@@ -526,6 +540,70 @@ export function Sidebar() {
           </Menu>
         </div>
       </aside>
+    </>
+  );
+}
+
+/**
+ * One side of the sidebar, under its headings.
+ *
+ * `resolve` gives the address this host serves an entry at, and `matchPrefix`
+ * does the same for the prefixes that keep an entry unlit.
+ */
+function NavGroups({
+  groups,
+  visible,
+  resolve,
+  matchPrefix = (path) => path,
+  onNavigate,
+}: {
+  groups: NavGroup[];
+  visible: (item: NavItem) => boolean;
+  resolve: (item: NavItem) => string;
+  matchPrefix?: (path: string) => string;
+  onNavigate: () => void;
+}) {
+  const location = useLocation();
+
+  return (
+    <>
+      {groups.map((group, index) => {
+        const items = group.items.filter(visible);
+        if (items.length === 0) return null;
+
+        return (
+          <div key={group.label ?? `group-${index}`} className={cn(index > 0 && "pt-3")}>
+            {group.label && (
+              <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {group.label}
+              </p>
+            )}
+            <div className="space-y-1">
+              {items.map((item) => (
+                <NavLink
+                  key={`${item.to}:${item.label}`}
+                  to={resolve(item)}
+                  end={item.exact}
+                  onClick={onNavigate}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 hover:bg-sidebar-accent",
+                      isActive &&
+                        !item.excludePrefixes?.some((prefix) =>
+                          location.pathname.startsWith(matchPrefix(prefix)),
+                        ) &&
+                        "bg-primary/10 text-primary border-l-2 border-primary",
+                    )
+                  }
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
+          </div>
+        );
+      })}
     </>
   );
 }

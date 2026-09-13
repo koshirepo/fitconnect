@@ -72,6 +72,7 @@ function appColumns(signedIn: boolean): Column[] {
         { label: "About", to: "/about" },
         { label: "Contact", to: "/contact" },
         { label: "Exercises", to: "/exercises" },
+        { label: "Food Items", to: "/food-items" },
       ],
     },
     {

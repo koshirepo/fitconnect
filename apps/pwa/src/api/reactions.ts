@@ -12,7 +12,7 @@ import type { ApiResponse, PaginatedResponse } from "@/types/api";
 import type { SocialComment, SocialState } from "@fitconnect/shared/types/models";
 
 /** What can be liked and commented on. */
-export type ReactionSubject = "GYM" | "PRODUCT" | "EXERCISE";
+export type ReactionSubject = "GYM" | "PRODUCT" | "EXERCISE" | "DIET_PLAN";
 
 /** A comment list, with the state its like button should show. */
 export type CommentFeed = SocialState & { comments: SocialComment[] };

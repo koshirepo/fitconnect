@@ -240,6 +240,7 @@ export const attendanceRepository = {
           checkInAt: true,
           checkOutAt: true,
           shiftId: true,
+          shift: { select: { name: true } },
           closedAutomatically: true,
           note: true,
           member: {
@@ -280,6 +281,7 @@ export const attendanceRepository = {
           checkInAt: true,
           checkOutAt: true,
           shiftId: true,
+          shift: { select: { name: true } },
           closedAutomatically: true,
           note: true,
           markedBy: {
@@ -420,6 +422,9 @@ export const attendanceRepository = {
         // calendar lists who came, and when is half of that.
         checkInAt: true,
         checkOutAt: true,
+        closedAutomatically: true,
+        // The shift's name, for grouping a day by session on the calendar.
+        shift: { select: { id: true, name: true } },
         member: {
           select: {
             id: true,
@@ -428,7 +433,7 @@ export const attendanceRepository = {
           },
         },
       },
-      orderBy: { date: "asc" },
+      orderBy: [{ date: "asc" }, { checkInAt: "asc" }],
     });
     return records;
   },
@@ -562,6 +567,21 @@ export const attendanceRepository = {
         AND "checkInAt" < ${to}
       GROUP BY hourKey, quarter
     `;
+  },
+
+  /**
+   * Self check-ins in the window as spans of time, for the occupancy grid.
+   *
+   * The same population as the arrival buckets — staff marks are left out for
+   * the same reason — but read as rows rather than counted in SQL, because a
+   * visit has to be spread across every hour it covered. Bounded by the
+   * heatmap's twelve-week ceiling.
+   */
+  listSessionSpans(tenantId: string, from: Date, to: Date) {
+    return prisma.attendance.findMany({
+      where: { tenantId, markedById: null, checkInAt: { gte: from, lt: to } },
+      select: { checkInAt: true, checkOutAt: true, closedAutomatically: true },
+    });
   },
 
   /**

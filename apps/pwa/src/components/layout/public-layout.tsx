@@ -11,6 +11,7 @@ import { buildWhatsAppUrl } from "@/lib/whatsapp";
 const navItems = [
   { label: "Home", to: "/" },
   { label: "Exercises", to: "/exercises" },
+  { label: "Food Items", to: "/food-items" },
   { label: "Store", to: "/shop" },
   { label: "About", to: "/about" },
   { label: "Contact", to: "/contact" },

@@ -15,6 +15,11 @@ import { Button } from "@/components/ui/button";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { PhotoCapture } from "@/components/ui/photo-capture";
 
+async function uploadProductPhoto(file: File) {
+  const response = await uploadsApi.uploadProductPhoto(file);
+  return response.data.data.url;
+}
+
 export function PhotoListInput({
   value,
   onChange,
@@ -22,6 +27,7 @@ export function PhotoListInput({
   disabled = false,
   cropAspectRatio = 1,
   prompt = "Add a photo",
+  upload = uploadProductPhoto,
 }: {
   value: string[];
   onChange: (next: string[]) => void;
@@ -30,6 +36,8 @@ export function PhotoListInput({
   /** Shape the crop is held to, so every photo in the list matches. */
   cropAspectRatio?: number;
   prompt?: string;
+  /** Where a chosen photo is sent, returning its URL. The shop's by default. */
+  upload?: (file: File) => Promise<string>;
 }) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
@@ -51,10 +59,7 @@ export function PhotoListInput({
     setUploading(true);
     try {
       const uploaded = await Promise.all(
-        Array.from(files).map(async (file) => {
-          const response = await uploadsApi.uploadProductPhoto(file);
-          return response.data.data.url;
-        }),
+        Array.from(files).map((file) => upload(file)),
       );
       onChange([...value, ...uploaded]);
     } catch (caught) {
@@ -90,8 +95,7 @@ export function PhotoListInput({
     setError("");
     setUploading(true);
     try {
-      const response = await uploadsApi.uploadProductPhoto(file);
-      onChange([...value, response.data.data.url]);
+      onChange([...value, await upload(file)]);
     } catch (caught) {
       setError(getApiError(caught));
     } finally {

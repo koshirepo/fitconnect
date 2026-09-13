@@ -14,6 +14,8 @@ export * from "./models/platform";
 export * from "./models/commerce";
 export * from "./models/workouts";
 export * from "./models/exercises";
+export * from "./models/food-items";
+export * from "./models/diet-plans";
 export * from "./models/operations";
 export * from "./models/attendance";
 export * from "./models/coupons";

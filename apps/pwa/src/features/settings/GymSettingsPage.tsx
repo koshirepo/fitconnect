@@ -11,6 +11,8 @@ import { formatCurrency } from "@fitconnect/shared/utils";
 import { PageHeader } from "@/components/ui/page-header";
 import * as React from "react";
 import { useAppNavigate } from "@/lib/use-app-navigate";
+import { usePermissions } from "@/features/auth/permission-gate";
+import { Permission } from "@fitconnect/shared/types/permissions";
 import { tenantsApi } from "@/api/tenants";
 import { BrandColorCard } from "@/components/tenants/BrandColorCard";
 import { useAuthStore } from "@/stores/auth";
@@ -52,6 +54,7 @@ import {
   Palette,
   CalendarClock,
   Plug,
+  ShieldCheck,
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -81,6 +84,7 @@ function isTab(value: string | null): value is TabValue {
 export default function GymSettingsPage() {
   const { currentTenantId } = useAuthStore();
   const navigate = useAppNavigate();
+  const { can } = usePermissions();
 
   // In the URL rather than component state: a refresh, the back button, and a
   // link someone was sent all land on the section they were looking at.
@@ -372,6 +376,17 @@ export default function GymSettingsPage() {
       <PageHeader
         title="Gym Settings"
         description="Everything that changes how this gym runs, grouped by what it affects."
+        actions={
+          // Who may do what is a setting too, so it opens from here. The
+          // sidebar lists it only for somebody who can read roles but not
+          // change settings.
+          can(Permission.ROLES_READ) ? (
+            <Button variant="outline" onClick={() => navigate("/settings/roles")}>
+              <ShieldCheck className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Roles &amp; permissions</span>
+            </Button>
+          ) : undefined
+        }
       />
 
       {error && (

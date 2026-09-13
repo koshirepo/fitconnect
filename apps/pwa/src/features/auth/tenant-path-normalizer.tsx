@@ -8,33 +8,7 @@
  */
 import { Navigate, useLocation } from "react-router-dom";
 import { APEX_ONLY_SEGMENTS, buildApexUrl, toTenantDashboardPath } from "@/lib/subdomain";
-
-/**
- * Top-level segments that belong to the signed-in gym dashboard.
- *
- * Keep this in step with the dashboard routes in `App.tsx`: a segment missing
- * here is a link that silently lands on the public page instead of the screen
- * it names.
- */
-const GYM_PATH_SEGMENTS = new Set([
-  "members",
-  "referrals",
-  "todos",
-  "workouts",
-  "exercises",
-  "payments",
-  "subscriptions",
-  "coupons",
-  "store",
-  "reminders",
-  "attendance",
-  "badges",
-  "settings",
-  "audit",
-  "finance",
-  "profile",
-  "orders",
-]);
+import { GYM_PATH_SEGMENTS } from "@/lib/use-app-navigate";
 
 export function TenantPathNormalizer() {
   const location = useLocation();

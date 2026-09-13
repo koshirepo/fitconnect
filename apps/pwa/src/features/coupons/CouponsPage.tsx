@@ -163,6 +163,14 @@ export default function CouponsPage() {
         description="Discounts, coins, and extra days"
         actions={
           <>
+            {/* Coins are the other reward a coupon grants, and their gym-wide
+                figures live one click away rather than in the sidebar. */}
+            {can(Permission.COUPONS_ANALYTICS_READ) && (
+              <Button variant="outline" onClick={() => navigate("/coins")} title="Coins">
+                <Coins className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Coins</span>
+              </Button>
+            )}
             {canCreate && (
               <Button onClick={openCreate}>
                 <Plus className="h-4 w-4" />

@@ -62,6 +62,8 @@ export interface AttendanceRecord {
   checkOutAt?: string | null;
   /** The shift the session belongs to, absent for a visit outside every one. */
   shiftId?: string | null;
+  /** That shift's name, for the register. */
+  shiftName?: string | null;
   /** True when the nightly sweep gave up on an unclosed session. */
   closedAutomatically?: boolean;
   note?: string | null;
@@ -132,6 +134,26 @@ export interface AttendanceHeatmap {
   /** `[day][hour]` visit counts. Day 0 is Monday, hour 0 is local midnight. */
   grid: number[][];
   summary: AttendanceHeatmapSummary;
+  /** How full the floor was, from whole visits: check-in to check-out. */
+  occupancy?: AttendanceOccupancy;
+}
+
+export interface AttendanceOccupancy {
+  /**
+   * `[day][hour]` average headcount over the window. 6.5 means that on a
+   * typical day at that hour six or seven people were inside.
+   */
+  grid: number[][];
+  peakDay: number | null;
+  peakHour: number | null;
+  /** The fullest cell's value. */
+  peak: number;
+  /** Mean length of a completed visit, in minutes. */
+  averageStayMinutes: number | null;
+  /** Visits spread onto the grid. */
+  sessions: number;
+  /** Visits left out because nobody tapped out, so their length is unknown. */
+  withoutCheckout: number;
 }
 
 export interface AttendanceHeatmapSummary {

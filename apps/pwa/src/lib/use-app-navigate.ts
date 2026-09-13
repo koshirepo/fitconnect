@@ -10,17 +10,32 @@ import * as React from "react";
 import { useNavigate, type NavigateOptions, type To } from "react-router-dom";
 import { isTenantSubdomain, toTenantDashboardPath } from "@/lib/subdomain";
 
-/** Top-level segments that belong to the signed-in gym dashboard. */
+/**
+ * Top-level segments that belong to the signed-in gym dashboard.
+ *
+ * The one list both directions read: `useAppNavigate` adds the `/dashboard`
+ * prefix on a gym subdomain for these, and the path normalizers redirect a bare
+ * or prefixed link to the right form. Two copies of it had drifted — coupons and
+ * reminders were missing here, coins and salary there — so a link to one of
+ * those worked on one host and dead-ended on the other. Keep it in step with the
+ * dashboard routes in `App.tsx`.
+ */
 export const GYM_PATH_SEGMENTS = new Set([
   "members",
   "referrals",
   "todos",
   "workouts",
-  // The platform's library, but on a gym address it is read from inside the
-  // dashboard like everything else — so a link to it needs the same prefix.
+  // The platform libraries, but on a gym address they are read from inside the
+  // dashboard like everything else — so a link to them needs the same prefix.
   "exercises",
+  "food-items",
+  "diet-plans",
   "payments",
+  "reminders",
   "subscriptions",
+  "coupons",
+  "coins",
+  "store",
   "attendance",
   "badges",
   "settings",
@@ -31,7 +46,6 @@ export const GYM_PATH_SEGMENTS = new Set([
   "my-salary",
   "profile",
   "orders",
-  "store",
 ]);
 
 /** True when a path addresses a gym screen rather than a public or platform one. */

@@ -8,7 +8,7 @@
 import { attendanceRepository } from "./attendance.repository";
 import { freezeService } from "../freezes/freezes.service";
 import { daysBetween, toDay, toDayString, zoneDayStart, zoneToday } from "../../lib/timezone";
-import { buildHeatmapGrid } from "./attendance.heatmap";
+import { buildHeatmapGrid, buildOccupancyGrid } from "./attendance.heatmap";
 import { resolvePunchShift, type ShiftWindow } from "./shift-window";
 import type {
   MarkAttendanceInput,
@@ -471,6 +471,7 @@ export const attendanceService = {
           checkInAt: r.checkInAt,
           checkOutAt: r.checkOutAt,
           shiftId: r.shiftId,
+          shiftName: r.shift?.name ?? null,
           closedAutomatically: r.closedAutomatically,
           note: r.note,
           membershipId: r.member.id,
@@ -514,6 +515,7 @@ export const attendanceService = {
           checkInAt: r.checkInAt,
           checkOutAt: r.checkOutAt,
           shiftId: r.shiftId,
+          shiftName: r.shift?.name ?? null,
           closedAutomatically: r.closedAutomatically,
           note: r.note,
           markedBy: r.markedBy ? { id: r.markedBy.id, name: r.markedBy.user.name } : null,
@@ -679,10 +681,22 @@ export const attendanceService = {
     const to = new Date(startOfToday.getTime() + 86_400_000);
     const from = new Date(to.getTime() - weeks * 7 * 86_400_000);
 
-    const [buckets, manualMarks] = await Promise.all([
+    const [buckets, manualMarks, spans] = await Promise.all([
       attendanceRepository.listCheckInBuckets(tenantId, from, to),
       attendanceRepository.countManualMarks(tenantId, from, to),
+      attendanceRepository.listSessionSpans(tenantId, from, to),
     ]);
+
+    // How full the floor was, from whole visits rather than arrivals.
+    const occupancy = buildOccupancyGrid(
+      spans.map((span) => ({
+        checkInAt: span.checkInAt,
+        checkOutAt: span.checkOutAt,
+        open: !span.checkOutAt && !span.closedAutomatically,
+      })),
+      timezone,
+      weeks,
+    );
 
     const { grid, total, busiestHour, busiestDay, unplaced } = buildHeatmapGrid(
       buckets.map((bucket) => ({
@@ -708,6 +722,7 @@ export const attendanceService = {
           from: from.toISOString(),
           to: to.toISOString(),
         },
+        occupancy,
       },
     };
   },
@@ -732,6 +747,10 @@ export const attendanceService = {
           checkInAt: Date;
           /** Null while they are still inside, or were never checked out. */
           checkOutAt: Date | null;
+          /** True when the nightly sweep closed a session nobody tapped out of. */
+          closedAutomatically: boolean;
+          shiftId: string | null;
+          shiftName: string | null;
         }[];
       }
     > = {};
@@ -746,6 +765,9 @@ export const attendanceService = {
         avatarUrl: r.member.user.avatarUrl ?? null,
         checkInAt: r.checkInAt,
         checkOutAt: r.checkOutAt ?? null,
+        closedAutomatically: Boolean(r.closedAutomatically),
+        shiftId: r.shift?.id ?? null,
+        shiftName: r.shift?.name ?? null,
       });
     }
 

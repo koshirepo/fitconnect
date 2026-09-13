@@ -24,6 +24,7 @@
     "seed:shipping": "node scripts/seed-shipping.mjs",
     "seed:attendance": "node scripts/seed-attendance.mjs",
     "seed:freezes": "node scripts/seed-freezes.mjs",
+    "seed:diet": "node scripts/seed-diet.mjs",
     "import:legacy:tenant": "node scripts/import-legacy-tenant.mjs",
     "db:migration:init": "prisma migrate diff --from-empty --to-schema ./prisma/schema.prisma --script --output prisma/migrations/0001_init.sql",
     "db:migration:diff": "prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script",

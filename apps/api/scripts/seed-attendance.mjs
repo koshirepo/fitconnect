@@ -3,7 +3,8 @@
  *
  * - The deterministic seeder spreads check-ins evenly across the clock, which is fine for a register and useless for anything that reads the shape of them. A heatmap built on it is flat, and the at-risk list is empty because everybody attended last week. This writes attendance that behaves like a gym instead: a morning rush, an evening rush, quiet middays, lighter weekends, and members who drift away.
  * - Writes SQL and hands it to `wrangler d1 execute`, the same way `seed-store.mjs` does, so the database wiring in `wrangler.toml` is reused and nothing has to be remembered.
- * - Every row it writes is prefixed `attseed_`, and it clears exactly that prefix before writing. Re-running resets its own data and never touches a real check-in or one the main seeder made.
+ * - Visits are sessions, as the API records them: a check-in, a check-out, and the shift it belongs to. Most members tap out after a believable stay; some forget and are closed by the sweep with no leaving time invented; desk-marked visits have no tap out; a few regulars train in both shifts; and anybody whose session has not ended yet is still inside. Nothing is dated after the moment the script runs.
+ * - Every row it writes is prefixed `attseed_`, and it clears exactly that prefix before writing. Re-running resets its own data and never touches a real check-in: a seeded session that would collide with a real one for the same member, shift and day is skipped.
  * - Times are generated in the gym's local zone and stored as UTC, which is the round trip the whole feature depends on — if this script and the API disagreed about the offset, the heatmap would look right and be wrong.
  * - Usage: `pnpm run seed:attendance --workspace @fitconnect/api -- --tenant seed-gym-1` (add `--weeks 12`, or `--remote` for production).
  */
@@ -246,7 +247,9 @@ function d1Rows(sql) {
 
 // ─── What we are seeding into ─────────────────────────────────────────────────
 
-const tenant = d1Rows('SELECT id, name FROM "Tenant" WHERE slug = ' + q(tenantSlug))[0];
+const tenant = d1Rows(
+  'SELECT "id", "name", "timezone" FROM "Tenant" WHERE "slug" = ' + q(tenantSlug),
+)[0];
 if (!tenant) {
   console.error(
     'No gym found with slug "' + tenantSlug + '" in the ' + (remote ? "remote" : "local") + " database.",
@@ -254,10 +257,47 @@ if (!tenant) {
   process.exit(1);
 }
 
-const settings = d1Rows(
-  'SELECT "timezone" FROM "TenantSettings" WHERE "tenantId" = ' + q(tenant.id),
-)[0];
-const timezone = settings?.timezone || "Asia/Kolkata";
+// The gym's own clock, which is what shift windows are written in.
+const timezone = tenant.timezone || "Asia/Kolkata";
+
+/**
+ * The windows a visit is filed under.
+ *
+ * Matched with the API's own rules — an hour's grace either side, a window that
+ * contains the tap beating one that only reaches it through grace, then the
+ * nearest start — so a seeded session sits in exactly the shift a real tap at
+ * that minute would have landed in.
+ */
+const shifts = d1Rows(
+  'SELECT "id", "name", "startTime", "endTime" FROM "Shift" WHERE "tenantId" = ' +
+    q(tenant.id) +
+    ' AND "isActive" = 1 ORDER BY "startTime"',
+)
+  .map((shift) => {
+    const [sh, sm] = String(shift.startTime).split(":").map(Number);
+    const [eh, em] = String(shift.endTime).split(":").map(Number);
+    return { ...shift, start: sh * 60 + sm, end: eh * 60 + em };
+  })
+  // Arrivals are drawn between opening and closing, so a window that runs past
+  // midnight never has a tap on its far side here; it is still matched on its
+  // evening half.
+  .map((shift) => ({ ...shift, end: shift.end <= shift.start ? shift.end + 1440 : shift.end }));
+
+const GRACE_MINUTES = 60;
+
+function shiftFor(localHours) {
+  const minutes = Math.floor(localHours * 60);
+  let best = null;
+  for (const shift of shifts) {
+    if (minutes < shift.start - GRACE_MINUTES || minutes > shift.end + GRACE_MINUTES) continue;
+    const core = minutes >= shift.start && minutes <= shift.end;
+    const distance = Math.abs(minutes - shift.start);
+    if (!best || (core && !best.core) || (core === best.core && distance < best.distance)) {
+      best = { shift, core, distance };
+    }
+  }
+  return best?.shift ?? null;
+}
 
 // Only real members get visits. Staff hold membership rows too, and a gym that
 // does not make its own coaches badge in would otherwise get a roster of
@@ -284,11 +324,78 @@ const staff = d1Rows(
 
 // ─── Generate ─────────────────────────────────────────────────────────────────
 
+/**
+ * How long somebody stays, in minutes.
+ *
+ * Centred on a normal session for the cohort and bounded both ways: nobody
+ * trains for five minutes, and a four-hour visit is somebody who forgot to tap
+ * out and came back, which is a different row in real data.
+ */
+function drawStayMinutes(random, cohort) {
+  const [centre, spread] =
+    cohort.name === "regular" ? [85, 20] : cohort.name === "casual" ? [55, 15] : [70, 18];
+  const minutes = centre + gaussian(random) * spread;
+  return Math.round(Math.min(150, Math.max(35, minutes)));
+}
+
+/** Share of self check-ins that never tap out, and are closed by the night's sweep. */
+const FORGOT_CHECKOUT = 0.07;
+
+/** Share of a regular's weekday visits that come back for the other shift. */
+const SECOND_SESSION = 0.1;
+
+const now = new Date();
 const totalDays = weeks * 7;
 const rows = [];
 const faderCutoffByMember = new Map();
-let selfCount = 0;
-let markedCount = 0;
+const tally = { self: 0, marked: 0, checkedOut: 0, forgot: 0, inside: 0, doubles: 0 };
+
+/**
+ * One session, finished as the API would have left it by now.
+ *
+ * A session whose leaving time has not arrived yet is somebody still in the
+ * building: no check-out, not closed. One that should have ended but never got
+ * a tap out is closed by the sweep with `checkOutAt` left null, exactly as the
+ * nightly job does — the flag says it was never closed, and no leaving time is
+ * invented for it.
+ */
+function pushSession({ member, dayIso, localHours, stayMinutes, markedById, forgot }) {
+  const checkInAt = localToUtc(dayIso, localHours, timezone);
+  // A visit later than now has not happened yet.
+  if (checkInAt.getTime() > now.getTime()) return false;
+
+  const shift = shiftFor(localHours);
+  const plannedOut = new Date(checkInAt.getTime() + stayMinutes * 60000);
+  const stillInside = !markedById && !forgot && plannedOut.getTime() > now.getTime();
+
+  let checkOutAt = null;
+  let closedAutomatically = 0;
+
+  if (stillInside) {
+    tally.inside += 1;
+  } else if (markedById || forgot) {
+    // A desk mark is one tap with nothing after it; a forgotten tap out is the
+    // same. Today's are left for tonight's sweep, earlier ones already swept.
+    closedAutomatically = dayIso === localDayBack(0, timezone) ? 0 : 1;
+    tally.forgot += markedById ? 0 : 1;
+  } else {
+    checkOutAt = plannedOut;
+    tally.checkedOut += 1;
+  }
+
+  rows.push({
+    id: "attseed_" + member.id + "_" + dayIso.replace(/-/g, "") + "_" + (shift?.id ?? "none").slice(-8),
+    membershipId: member.id,
+    date: dayIso + "T00:00:00.000Z",
+    checkInAt: checkInAt.toISOString(),
+    checkOutAt: checkOutAt ? checkOutAt.toISOString() : null,
+    shiftId: shift?.id ?? null,
+    shiftKey: shift?.id ?? "none",
+    closedAutomatically,
+    markedById,
+  });
+  return true;
+}
 
 for (const member of members) {
   const cohort = cohortFor(member.id);
@@ -311,9 +418,7 @@ for (const member of members) {
 
     // The seven days of this week, each resolved to the real calendar day it
     // is — the window does not start on a Monday, so a slot's position in it
-    // says nothing about which weekday it is. Getting this wrong is invisible
-    // in the row count and obvious on the chart: the weekend cohort would train
-    // on whichever two days the window happened to end on.
+    // says nothing about which weekday it is.
     const dayPool = [0, 1, 2, 3, 4, 5, 6]
       .map((slot) => {
         const dayIndex = week * 7 + slot;
@@ -324,9 +429,8 @@ for (const member of members) {
       })
       .filter(Boolean);
 
-    // Shuffled without replacement so one member never gets two visits on one
-    // day — the table forbids it, and a seeder that leaned on the constraint to
-    // dedupe would drop rows silently.
+    // Shuffled without replacement so one member never gets two first visits
+    // on one day.
     for (let i = dayPool.length - 1; i > 0; i -= 1) {
       const j = Math.floor(random() * (i + 1));
       [dayPool[i], dayPool[j]] = [dayPool[j], dayPool[i]];
@@ -342,28 +446,98 @@ for (const member of members) {
       if (dayIndex > fadesAfterDay) continue;
 
       // Roughly one visit in seven is recorded by staff rather than by the
-      // member. Those carry the time the desk did its paperwork, which is what
-      // makes them useless to the heatmap and worth excluding from it — this
-      // seeder exists partly to make that difference visible.
-      const handMarked = staff && random() < 0.15;
+      // member, near closing, which is what makes them useless to the heatmap.
+      const handMarked = Boolean(staff) && random() < 0.15;
+      const localHours = handMarked
+        ? 21.5 + random() * 0.9
+        : drawArrivalHour(random, isWeekend);
+      const forgot = !handMarked && random() < FORGOT_CHECKOUT;
 
-      let checkInAt;
-      if (handMarked) {
-        // The desk clears its backlog near closing.
-        checkInAt = localToUtc(dayIso, 21.5 + random() * 0.9, timezone);
-        markedCount += 1;
-      } else {
-        checkInAt = localToUtc(dayIso, drawArrivalHour(random, isWeekend), timezone);
-        selfCount += 1;
-      }
-
-      rows.push({
-        id: "attseed_" + member.id + "_" + dayIso.replace(/-/g, ""),
-        membershipId: member.id,
-        date: dayIso + "T00:00:00.000Z",
-        checkInAt: checkInAt.toISOString(),
+      const written = pushSession({
+        member,
+        dayIso,
+        localHours,
+        stayMinutes: drawStayMinutes(random, cohort),
         markedById: handMarked ? staff.id : null,
+        forgot,
       });
+      if (!written) continue;
+      if (handMarked) tally.marked += 1;
+      else tally.self += 1;
+
+      /**
+       * A regular who trains twice: weights before work, cardio after it.
+       *
+       * Only where the gym runs more than one shift, because the table holds
+       * one session per member per shift per day — a second visit inside the
+       * same window is the same session, not another one.
+       */
+      const firstShift = shiftFor(localHours);
+      if (
+        !handMarked &&
+        !isWeekend &&
+        cohort.name === "regular" &&
+        shifts.length > 1 &&
+        firstShift &&
+        random() < SECOND_SESSION
+      ) {
+        const other = shifts.find((shift) => shift.id !== firstShift.id);
+        const otherHours = other.start / 60 + 0.25 + random() * 1.5;
+        if (shiftFor(otherHours)?.id === other.id) {
+          const second = pushSession({
+            member,
+            dayIso,
+            localHours: otherHours,
+            stayMinutes: 35 + Math.floor(random() * 25),
+            markedById: null,
+            forgot: false,
+          });
+          if (second) {
+            tally.self += 1;
+            tally.doubles += 1;
+          }
+        }
+      }
+    }
+  }
+}
+
+// ─── Somebody in the building right now ───────────────────────────────────────
+//
+// The drawn visits rarely straddle the moment the script runs, so "who is inside"
+// would usually be empty. While the doors are open, a handful of regulars who
+// have no session yet in the current shift arrived within the last hour and have
+// not left.
+
+{
+  const todayIso = localDayBack(0, timezone);
+  const localNow = new Date(now.getTime() + zoneOffsetMinutes(now, timezone) * 60000);
+  const nowHours = localNow.getUTCHours() + localNow.getUTCMinutes() / 60;
+  const currentShift = shiftFor(nowHours);
+
+  if (nowHours >= OPENS_AT && nowHours < CLOSES_AT) {
+    const random = makeRandom(hashString("inside-now:" + todayIso));
+    const taken = new Set(
+      rows
+        .filter((row) => row.date.startsWith(todayIso) && row.shiftKey === (currentShift?.id ?? "none"))
+        .map((row) => row.membershipId),
+    );
+    const candidates = members.filter(
+      (member) => !taken.has(member.id) && ["regular", "steady"].includes(cohortFor(member.id).name),
+    );
+
+    for (const member of candidates.slice(0, 6)) {
+      const minutesAgo = 5 + Math.floor(random() * 55);
+      const written = pushSession({
+        member,
+        dayIso: todayIso,
+        localHours: Math.max(OPENS_AT, nowHours - minutesAgo / 60),
+        // Longer than they have been here, so the session is still open.
+        stayMinutes: minutesAgo + 30,
+        markedById: null,
+        forgot: false,
+      });
+      if (written) tally.self += 1;
     }
   }
 }
@@ -372,9 +546,7 @@ for (const member of members) {
 //
 // `dueDate` is normally derived from payments; this writes it directly, which
 // is demo dressing rather than a real membership term. It is confined to the
-// faders — the members this list is about — and to two of them, so the urgent
-// tier on the screen has something in it without the roster reading as though
-// half the gym is about to lapse.
+// faders — the members this list is about — and to two of them.
 
 const fadersDueSoon = [...faderCutoffByMember.keys()].slice(0, 2);
 
@@ -386,7 +558,9 @@ const statements = [
 
 for (const row of rows) {
   statements.push(
-    'INSERT INTO "Attendance" ("id","tenantId","membershipId","markedById","date","checkInAt","note","createdAt") VALUES (' +
+    // OR IGNORE: a real visit already holding this member's session for that
+    // shift and day wins. The seeder adds around real data, never over it.
+    'INSERT OR IGNORE INTO "Attendance" ("id","tenantId","membershipId","markedById","date","checkInAt","checkOutAt","shiftId","shiftKey","closedAutomatically","note","createdAt") VALUES (' +
       [
         q(row.id),
         q(tenant.id),
@@ -394,10 +568,14 @@ for (const row of rows) {
         row.markedById ? q(row.markedById) : "NULL",
         q(row.date),
         q(row.checkInAt),
+        q(row.checkOutAt),
+        q(row.shiftId),
+        q(row.shiftKey),
+        row.closedAutomatically,
         "NULL",
         q(row.checkInAt),
       ].join(",") +
-      ');',
+      ");",
   );
 }
 
@@ -417,23 +595,12 @@ mkdirSync(path.dirname(outFile), { recursive: true });
 writeFileSync(outFile, statements.join("\n"), "utf8");
 
 console.log(
-  "Seeding " +
-    rows.length +
-    " check-ins (" +
-    selfCount +
-    " self, " +
-    markedCount +
-    " hand-marked) across " +
-    weeks +
-    " weeks for " +
-    members.length +
-    ' members of "' +
-    tenant.name +
-    '" [' +
-    timezone +
-    "], " +
-    (remote ? "remote" : "local") +
-    "...",
+  `Seeding ${rows.length} sessions (${tally.self} self, ${tally.marked} hand-marked) across ${weeks} weeks ` +
+    `for ${members.length} members of "${tenant.name}" [${timezone}], ${remote ? "remote" : "local"}...`,
+);
+console.log(
+  `  ${tally.checkedOut} checked out · ${tally.forgot} never tapped out · ${tally.inside} still inside now · ` +
+    `${tally.doubles} second sessions · shifts: ${shifts.map((s) => s.name).join(", ") || "none"}`,
 );
 
 d1(["--file", outFile], { json: false });

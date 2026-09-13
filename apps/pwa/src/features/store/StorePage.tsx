@@ -18,6 +18,7 @@ import {
   Phone,
   Settings,
   X,
+  TrendingUp,
 } from "lucide-react";
 
 import { usePermissions } from "@/features/auth/permission-gate";
@@ -177,6 +178,15 @@ export default function StorePage() {
                 <Button variant="outline" onClick={() => navigate("/dashboard/store/manage")}>
                   <Settings className="h-4 w-4" />
                   Products &amp; stock
+                </Button>
+              )}
+              {/* The shop's own books. Behind STORE_MANAGE alone, as the page is:
+                  a coach who fulfils orders has no business seeing what the gym
+                  pays its supplier. */}
+              {canManage && (
+                <Button variant="outline" onClick={() => navigate("/dashboard/store/analytics")}>
+                  <TrendingUp className="h-4 w-4" />
+                  Analytics
                 </Button>
               )}
             </div>

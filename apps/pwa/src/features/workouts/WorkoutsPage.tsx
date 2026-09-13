@@ -27,7 +27,7 @@ import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/utils";
 import { useInfiniteScroll } from "@/lib/use-infinite-scroll";
-import { Plus, Dumbbell, Trash2, UserPlus } from "lucide-react";
+import { Plus, Dumbbell, PlayCircle, Trash2, UserPlus } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import MemberSelector from "@/components/ui/memberSelector";
 import type { WorkoutPlan, TenantMember } from "@/types/api";
@@ -131,6 +131,12 @@ export default function WorkoutsPage() {
         description={canReadAllPlans ? "Manage workout plans" : "Your assigned plans"}
         actions={
           <>
+            {/* The exercise library lives here rather than in the sidebar: it
+                is what plans are built from. */}
+            <Button variant="outline" onClick={() => navigate("/exercises")}>
+              <PlayCircle className="h-4 w-4" />
+              Exercises
+            </Button>
             {canCreate && (
               <Button onClick={() => navigate("/workouts/new")}>
                 <Plus className="h-4 w-4" />

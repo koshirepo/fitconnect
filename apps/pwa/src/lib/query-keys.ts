@@ -107,6 +107,14 @@ export const queryKeys = {
     muscleGroups: (includeInactive: boolean) =>
       ["exercises", "muscle-groups", includeInactive] as const,
   },
+  /** The platform's food library. Not gym-scoped, like `exercises`. */
+  foodItems: {
+    all: () => ["food-items"] as const,
+    list: (params?: unknown) => ["food-items", "list", params ?? null] as const,
+    detail: (idOrSlug: string) => ["food-items", "detail", idOrSlug] as const,
+    categories: (includeInactive: boolean) =>
+      ["food-items", "categories", includeInactive] as const,
+  },
   /**
    * Platform shop reviews. Not gym-scoped: a product in the platform catalogue
    * is the same product whichever gym you came from, so these keys carry no
@@ -132,6 +140,11 @@ export const queryKeys = {
   workouts: {
     list: (tenantId: string) => ["workouts", tenantId] as const,
     detail: (tenantId: string, planId: string) => ["workouts", tenantId, planId] as const,
+  },
+  /** A gym's diet plans, keyed like `workouts`. */
+  dietPlans: {
+    list: (tenantId: string) => ["diet-plans", tenantId] as const,
+    detail: (tenantId: string, planId: string) => ["diet-plans", tenantId, planId] as const,
   },
   badges: {
     list: (tenantId: string) => ["badges", tenantId] as const,

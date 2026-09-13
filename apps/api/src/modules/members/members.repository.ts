@@ -969,6 +969,14 @@ export const memberRepository = {
             },
           },
         },
+        dietPlanAssignments: {
+          orderBy: { assignedAt: "desc" },
+          select: {
+            id: true,
+            assignedAt: true,
+            plan: { select: { id: true, title: true, description: true } },
+          },
+        },
         _count: {
           select: {
             referrals: true,

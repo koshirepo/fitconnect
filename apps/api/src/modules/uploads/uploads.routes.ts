@@ -3,7 +3,7 @@
  *
  * - Declares the Hono routes and middleware chain for R2-backed media uploads for logos, avatars, and product images. This route set is mounted from `/uploads` in the application entrypoint.
  * - Keep routing and authorization wiring here, and delegate request handling to the companion controller instead of placing business logic in route callbacks.
- * - Relative endpoints declared in this file: POST /logo, POST /avatar, POST /product-photo.
+ * - Relative endpoints declared in this file: GET /file/*, POST /logo, POST /avatar, POST /product-photo, POST /food-item-photo.
  * - Primary exports: uploadRoutes.
  */
 import { Hono, type Context } from "hono";
@@ -158,4 +158,13 @@ uploadRoutes.post("/avatar", authenticate, requirePermissions(Permission.UPLOADS
 uploadRoutes.post("/product-photo", authenticate, requirePermissions(Permission.UPLOADS_WRITE), async (c) => {
   return handleUpload(c, "products");
 });
+
+// A food's photo in the platform library. Behind the library's own grant rather
+// than the general upload one: nobody else has a library food to photograph.
+uploadRoutes.post(
+  "/food-item-photo",
+  authenticate,
+  requirePermissions(Permission.PLATFORM_FOOD_ITEMS_MANAGE),
+  async (c) => handleUpload(c, "food-items"),
+);
 

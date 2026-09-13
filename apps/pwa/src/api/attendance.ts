@@ -135,6 +135,10 @@ export const attendanceApi = {
               avatarUrl: string | null;
               checkInAt: string;
               checkOutAt: string | null;
+              /** The nightly sweep closed it: nobody tapped out. */
+              closedAutomatically: boolean;
+              shiftId: string | null;
+              shiftName: string | null;
             }[];
           }
         >;

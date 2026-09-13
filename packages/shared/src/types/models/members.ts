@@ -228,6 +228,16 @@ export interface MemberDetail {
       description?: string | null;
     };
   }[];
+  /** Diet plans assigned to this member, shaped like `planAssignments`. */
+  dietPlanAssignments?: {
+    id: string;
+    assignedAt: string;
+    plan: {
+      id: string;
+      title: string;
+      description?: string | null;
+    };
+  }[];
 }
 
 /** What a member ID card prints. Re-read on every open, never stored. */

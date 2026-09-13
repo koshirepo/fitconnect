@@ -943,9 +943,13 @@ export default function IdCardPage() {
       <div className="relative w-full">
         {/* `id-card-print` is what the print stylesheet keeps: on paper this is
             the only thing on the page, at exactly CR80 size. */}
-        {/* Mirrored on screen too, not only on paper: somebody about to spend a
-            transfer sheet should be able to see that it is reversed before the
-            dialog opens, rather than after the press. */}
+        {/* Flipped on screen as well as on paper.
+
+            `-scale-x-100` is the preview; `id-card-mirror` is what the print
+            stylesheet keys off. Both, because the preview is how somebody
+            confirms the sheet is reversed before pressing it onto a blank they
+            cannot un-press — and a preview that lied about that would be worse
+            than no preview at all. */}
         <img
           src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`}
           alt={`Membership card for ${card.member.name} at ${card.gym.name}${
@@ -953,7 +957,7 @@ export default function IdCardPage() {
           }`}
           className={cn(
             "id-card-print w-full rounded-2xl border shadow-lg",
-            mirrored && "id-card-mirror",
+            mirrored && "id-card-mirror -scale-x-100",
           )}
         />
 
@@ -977,6 +981,24 @@ export default function IdCardPage() {
           }}
         />
       </div>
+
+      {/* The preview stays flipped after a mirrored print, which is honest but
+          startling if you have forgotten why. This says why, and undoes it. */}
+      {mirrored && (
+        <div className="flex w-full items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+          <span className="flex items-center gap-1.5">
+            <FlipHorizontal className="h-3.5 w-3.5 shrink-0" />
+            Mirrored for a transfer sheet
+          </span>
+          <button
+            type="button"
+            onClick={() => setMirrored(false)}
+            className="shrink-0 font-medium underline underline-offset-2"
+          >
+            Show normal
+          </button>
+        </div>
+      )}
 
       <div className="flex w-full flex-col gap-2">
         {/*

@@ -24,6 +24,8 @@ import { platformPayoutRoutes, tenantPayoutRoutes } from "./modules/payouts/payo
 import { storeRoutes } from "./modules/store/store.routes";
 import { reactionRoutes } from "./modules/reactions/reactions.routes";
 import { exerciseRoutes } from "./modules/exercises/exercises.routes";
+import { dietPlanRoutes } from "./modules/diet-plans/diet-plans.routes";
+import { foodItemRoutes } from "./modules/food-items/food-items.routes";
 import { auditRoutes } from "./modules/audit/audit.routes";
 import { publicRoutes } from "./modules/public/public.routes";
 import { commerceRoutes } from "./modules/commerce/commerce.routes";
@@ -177,6 +179,7 @@ app.route("/auth", authRoutes);
 app.route("/tenants", tenantRoutes);
 app.route("/tenants", memberRoutes);
 app.route("/tenants", workoutRoutes);
+app.route("/tenants", dietPlanRoutes);
 app.route("/tenants", paymentRoutes);
 app.route("/tenants", badgeRoutes);
 app.route("/tenants", couponRoutes);
@@ -195,6 +198,8 @@ app.route("/platform", platformRoleRoutes);
 app.route("/occupations", occupationRoutes);
 // The exercise library, likewise: one catalogue every gym trains from.
 app.route("/exercises", exerciseRoutes);
+// And the food library diet plans are built from, read the same way.
+app.route("/food-items", foodItemRoutes);
 // Likes and comments on anything — a gym, a product, an exercise. The subject
 // is in the path; the gym being acted in comes from the tenant header.
 app.route("/reactions", reactionRoutes);

@@ -48,10 +48,11 @@ export function useCoinBalance(
 // ─── Gym-wide analytics ──────────────────────────────────────────────────────
 
 /** Coins issued, spent, and still owed, for the whole gym. */
-export function useCoinOverview() {
+export function useCoinOverview(options: { enabled?: boolean } = {}) {
   return useTenantQuery(
     (tenantId) => queryKeys.coupons.coinOverview(tenantId),
     async (tenantId) => unwrap(await couponsApi.coinOverview(tenantId)),
+    options,
   );
 }
 

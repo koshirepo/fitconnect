@@ -51,6 +51,7 @@ import {
   Wallet,
   RotateCcw,
   SlidersHorizontal,
+  BellRing,
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { Payment } from "@/types/api";
@@ -509,6 +510,18 @@ export default function PaymentsPage() {
         actions={
           <>
             <div className="flex items-center gap-2">
+              {/* The record of chasing what is owed, which only makes sense
+                  beside the payments it is chasing. */}
+              {canViewAllPayments && (
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/reminders")}
+                  title="Reminders"
+                >
+                  <BellRing className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Reminders</span>
+                </Button>
+              )}
               {isAdmin && (
                 <Button variant="outline" onClick={handleExportPayments}>
                   <Download className="h-4 w-4" />

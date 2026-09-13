@@ -21,4 +21,10 @@ export const uploadsApi = {
     formData.append("file", file);
     return api.post<ApiResponse<{ url: string }>>("/uploads/product-photo", formData);
   },
+
+  uploadFoodItemPhoto: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post<ApiResponse<{ url: string }>>("/uploads/food-item-photo", formData);
+  },
 };
