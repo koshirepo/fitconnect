@@ -365,9 +365,18 @@ export const attendanceRepository = {
     });
   },
 
+  /**
+   * A membership, for checking whose attendance records these are.
+   *
+   * Any status but deleted. The callers ask "is this the caller's own
+   * membership", not "is it paid up": a new member who has not paid yet is
+   * SUSPENDED, can already check in (see `findMembershipForCheckIn`), and was
+   * then refused their own history — so the check-in they had just made
+   * vanished from their screen on the next refresh.
+   */
   findMembership(tenantId: string, membershipId: string) {
     return prisma.tenantMembership.findFirst({
-      where: { id: membershipId, tenantId, status: "ACTIVE" },
+      where: { id: membershipId, tenantId, status: { not: "DELETED" } },
       select: { id: true, userId: true },
     });
   },

@@ -1,5 +1,5 @@
 import { SessionTimes } from "./SessionTimes";
-import { sessionState } from "./session";
+import { clockTime, sessionState, stayLabel, stayMinutes } from "./session";
 import { getMonthStr, parseMonth, formatMonthLabel } from "@/lib/month";
 import { PageHeader } from "@/components/ui/page-header";
 import * as React from "react";
@@ -53,6 +53,7 @@ import {
   QrCode as QrCodeIcon,
   Clock3,
   Radio,
+  LogOut,
 } from "lucide-react";
 import { AtRiskPanel } from "./AtRiskPanel";
 import { AttendanceHeatmap } from "./AttendanceHeatmap";
@@ -101,8 +102,14 @@ export default function AttendancePage() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   });
   const [checkingIn, setCheckingIn] = React.useState(false);
-  // Set optimistically after a successful check-in, before the list refetches.
-  const [justCheckedIn, setJustCheckedIn] = React.useState(false);
+  /**
+   * The session the last tap returned.
+   *
+   * The list refetches before the tap resolves, so this is normally redundant.
+   * It matters offline, where the write is queued and the list cannot catch up
+   * until the connection does.
+   */
+  const [lastTap, setLastTap] = React.useState<AttendanceRecord | null>(null);
   const [actionError, setActionError] = React.useState("");
 
   // Bulk marking state
@@ -167,13 +174,38 @@ export default function AttendancePage() {
   const markAll = useMarkAllAttendance();
   const removeAttendance = useRemoveAttendance();
 
-  // The member's own list tells us whether today is already recorded.
-  const checkedIn = React.useMemo(
-    () =>
-      justCheckedIn ||
-      (!isStaff && records.some((record) => String(record.date).slice(0, 10) === date)),
-    [justCheckedIn, isStaff, records, date],
-  );
+  /**
+   * The caller's own session today, if there is one: the latest, since a member
+   * who trains in both shifts has two.
+   *
+   * A member's list is only their own visits. A member of staff checking
+   * themselves in reads the day's register, so theirs is picked out by
+   * membership.
+   */
+  const mySession = React.useMemo(() => {
+    const listed = records
+      .filter(
+        (record) =>
+          String(record.date).slice(0, 10) === date &&
+          (!isStaff || record.membershipId === membershipId),
+      )
+      .sort((a, b) => b.checkInAt.localeCompare(a.checkInAt))[0];
+    if (listed && (!lastTap || listed.id === lastTap.id || listed.checkInAt >= lastTap.checkInAt)) {
+      return listed.id === lastTap?.id && lastTap.checkOutAt && !listed.checkOutAt ? lastTap : listed;
+    }
+    return lastTap && String(lastTap.date).slice(0, 10) === date ? lastTap : listed ?? null;
+  }, [records, date, isStaff, membershipId, lastTap]);
+
+  /**
+   * Where today stands for the caller.
+   *
+   * "inside" and an unclosed session both offer Check Out: the next tap closes
+   * the session either way. Once checked out, the button rests — a further tap
+   * in the same shift would only move the check-out later.
+   */
+  const myState = mySession ? sessionState(mySession, true) : "none";
+  const checkedIn = myState !== "none";
+  const canCheckOut = myState === "inside" || myState === "no-checkout";
 
   const loadMoreRef = useInfiniteScroll({
     hasMore,
@@ -198,16 +230,12 @@ export default function AttendancePage() {
     setCheckingIn(true);
     setActionError("");
     try {
-      await selfCheckIn.mutateAsync({ date });
-      setJustCheckedIn(true);
+      // The same call checks in and out: the server decides from the session
+      // already open, exactly as it does for a card tap at the reader.
+      const result = await selfCheckIn.mutateAsync({ date });
+      if (result?.attendance) setLastTap(result.attendance);
     } catch (err) {
-      const msg = getApiError(err);
-      // A duplicate check-in means the goal is already met, not a failure.
-      if (msg.toLowerCase().includes("unique") || msg.toLowerCase().includes("already")) {
-        setJustCheckedIn(true);
-      } else {
-        setActionError(msg);
-      }
+      setActionError(getApiError(err));
     } finally {
       setCheckingIn(false);
     }
@@ -333,11 +361,20 @@ export default function AttendancePage() {
                 </Button>
               )}
               {isToday && (
-                <Button onClick={handleSelfCheckIn} disabled={checkingIn || checkedIn}>
-                  {checkedIn ? (
+                <Button
+                  onClick={handleSelfCheckIn}
+                  disabled={checkingIn || myState === "out"}
+                  variant={canCheckOut ? "outline" : "default"}
+                >
+                  {myState === "out" ? (
                     <>
                       <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
-                      Checked In
+                      Checked out
+                    </>
+                  ) : canCheckOut ? (
+                    <>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      {checkingIn ? "Checking out..." : "Check Out"}
                     </>
                   ) : (
                     <>
@@ -717,10 +754,26 @@ export default function AttendancePage() {
         <div className="space-y-4">
           <Card>
             <CardContent className="py-8 text-center">
-              {checkedIn ? (
+              {mySession && canCheckOut ? (
                 <div className="space-y-2">
                   <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto" />
-                  <p className="text-lg font-medium">You're checked in for today!</p>
+                  <p className="text-lg font-medium">You're in the gym</p>
+                  <p className="text-sm text-muted-foreground">
+                    Checked in at {clockTime(mySession.checkInAt)}
+                    {mySession.shiftName ? ` · ${mySession.shiftName}` : ""}. Tap Check Out when
+                    you leave.
+                  </p>
+                </div>
+              ) : mySession ? (
+                <div className="space-y-2">
+                  <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto" />
+                  <p className="text-lg font-medium">Done for today — well trained!</p>
+                  <p className="text-sm tabular-nums text-muted-foreground">
+                    {clockTime(mySession.checkInAt)} → {mySession.checkOutAt ? clockTime(mySession.checkOutAt) : "—"}
+                    {stayMinutes(mySession) !== null
+                      ? ` · ${stayLabel(stayMinutes(mySession)!)}`
+                      : ""}
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-2">

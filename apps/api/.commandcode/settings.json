@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Shell(type \"D:\\FitConnect\\apps\\pwa\\src\\features\\attendance\\AttendancePage.tsx\" 2>nul; echo ---SEP---; type \"D:\\FitConnect\\apps\\pwa\\src\\api\\attendance.ts\" 2>nul)"
+    ],
+    "deny": [],
+    "defaultMode": "default"
+  }
+}

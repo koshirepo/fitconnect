@@ -41,7 +41,14 @@ export type CheckedInMember = {
 export const attendanceApi = {
   /** Self check-in */
   checkIn: (tenantId: string, data: MarkAttendancePayload = {}) =>
-    api.post<ApiResponse<{ attendance: AttendanceRecord; member: CheckedInMember }>>(
+    api.post<
+      ApiResponse<{
+        attendance: AttendanceRecord;
+        member: CheckedInMember;
+        /** What the tap turned out to be: the first of the session, a later one, or a repeat. */
+        direction: "CHECKED_IN" | "CHECKED_OUT" | "IGNORED";
+      }>
+    >(
       `/tenants/${tenantId}/attendance`,
       data,
     ),
